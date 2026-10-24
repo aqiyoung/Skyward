@@ -310,7 +310,31 @@ void main() {
     container.listen(localIpProvider, (_, _) {});
     container.read(localIpProvider.notifier).value = '192.168.100.200';
     final failures = <String>[];
-    List<String> clipped() => [
+    // Names the row that is too wide: the pixel count alone does not say which
+    // card to look at, and the exception carries only that count.
+    List<String> wideRows() {
+      final rows = <String>[];
+      for (final flex in tester.allRenderObjects.whereType<RenderFlex>()) {
+        if (flex.direction != Axis.horizontal) {
+          continue;
+        }
+        var total = 0.0;
+        flex.visitChildren((child) {
+          total += child.size.width;
+          return true;
+        });
+        final over = total - flex.size.width;
+        if (over <= 0.5) {
+          continue;
+        }
+        final creator = flex.debugCreator?.toString() ?? 'unknown';
+        rows.add(
+          '${creator.length > 110 ? '${creator.substring(0, 110)}…' : creator}'
+          ' +${over.toStringAsFixed(1)}',
+        );
+      }
+      return rows;
+    }    List<String> clipped() => [
       for (final paragraph in tester.renderObjectList<RenderParagraph>(
         find.byType(RichText),
       ))
@@ -336,6 +360,10 @@ void main() {
         final cut = clipped();
         if (cut.isNotEmpty) {
           failures.add('$size x$textScale: clipped ${cut.join(' | ')}');
+        }
+        final wide = wideRows();
+        if (wide.isNotEmpty) {
+          failures.add('$size x$textScale: ${wide.join(' | ')}');
         }
         final error = tester.takeException();
         if (error != null) {
