@@ -320,8 +320,9 @@ void main() {
         }
         var total = 0.0;
         flex.visitChildren((child) {
-          total += child.size.width;
-          return true;
+          if (child is RenderBox) {
+            total += child.size.width;
+          }
         });
         final over = total - flex.size.width;
         if (over <= 0.5) {
@@ -334,7 +335,9 @@ void main() {
         );
       }
       return rows;
-    }    List<String> clipped() => [
+    }
+
+    List<String> clipped() => [
       for (final paragraph in tester.renderObjectList<RenderParagraph>(
         find.byType(RichText),
       ))
