@@ -310,33 +310,6 @@ void main() {
     container.listen(localIpProvider, (_, _) {});
     container.read(localIpProvider.notifier).value = '192.168.100.200';
     final failures = <String>[];
-    // Names the row that is too wide: the pixel count alone does not say which
-    // card to look at, and the exception carries only that count.
-    List<String> wideRows() {
-      final rows = <String>[];
-      for (final flex in tester.allRenderObjects.whereType<RenderFlex>()) {
-        if (flex.direction != Axis.horizontal) {
-          continue;
-        }
-        var total = 0.0;
-        flex.visitChildren((child) {
-          if (child is RenderBox) {
-            total += child.size.width;
-          }
-        });
-        final over = total - flex.size.width;
-        if (over <= 0.5) {
-          continue;
-        }
-        final creator = flex.debugCreator?.toString() ?? 'unknown';
-        rows.add(
-          '${creator.length > 110 ? '${creator.substring(0, 110)}…' : creator}'
-          ' +${over.toStringAsFixed(1)}',
-        );
-      }
-      return rows;
-    }
-
     List<String> clipped() => [
       for (final paragraph in tester.renderObjectList<RenderParagraph>(
         find.byType(RichText),
@@ -364,12 +337,15 @@ void main() {
         if (cut.isNotEmpty) {
           failures.add('$size x$textScale: clipped ${cut.join(' | ')}');
         }
-        final wide = wideRows();
-        if (wide.isNotEmpty) {
-          failures.add('$size x$textScale: ${wide.join(' | ')}');
-        }
         final error = tester.takeException();
-        if (error != null) {
+        if (error is FlutterError) {
+          // The message alone is the pixel count; the parts after it name the
+          // widget that could not fit.
+          failures.add(
+            '$size x$textScale:\n'
+            '${error.diagnostics.take(6).map((node) => node.toString()).join('\n')}',
+          );
+        } else if (error != null) {
           failures.add('$size x$textScale: $error');
         }
       }
