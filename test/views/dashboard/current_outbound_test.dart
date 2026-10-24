@@ -295,7 +295,7 @@ void main() {
       expect(find.text('AS64500'), findsOneWidget);
     });
 
-    testWidgets('a phone puts the two rates side by side under the address', (
+    testWidgets('a phone puts the two rates side by side at the header end', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -304,14 +304,15 @@ void main() {
       await tester.pump();
 
       // The speed card folded into this one: both directions read here now,
-      // one beside the other rather than stacked in the corner.
+      // one beside the other at the end of the title row, leaving the card's
+      // body to the address it leads with.
       final rates = find.textContaining('/s');
       expect(rates, findsNWidgets(2));
       final up = tester.getRect(rates.first);
       final down = tester.getRect(rates.last);
       expect(up.center.dy, closeTo(down.center.dy, 0.5));
       expect(up.right, lessThan(down.left));
-      expect(up.top, greaterThan(tester.getRect(find.text(_ip)).bottom));
+      expect(up.bottom, lessThan(tester.getRect(find.text(_ip)).top));
       expect(find.byGlyph(AppGlyphs.arrowUp), findsOneWidget);
       expect(find.byGlyph(AppGlyphs.arrowDown), findsOneWidget);
       expect(tester.takeException(), isNull);

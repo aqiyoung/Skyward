@@ -309,6 +309,7 @@ void main() {
   testWidgets('larger text grows the box of every line', (tester) async {
     container.listen(localIpProvider, (_, _) {});
     container.read(localIpProvider.notifier).value = '192.168.100.200';
+    final failures = <String>[];
     List<String> clipped() => [
       for (final paragraph in tester.renderObjectList<RenderParagraph>(
         find.byType(RichText),
@@ -329,10 +330,21 @@ void main() {
           platform: platform,
           textScale: textScale,
         );
-        expect(clipped(), isEmpty, reason: '$size x$textScale');
-        expect(tester.takeException(), isNull);
+        // Both checks are kept and reported together: a clipped line and the
+        // overflow that caused it are the same bug seen twice, and stopping at
+        // the first one leaves the other sizes unexamined.
+        final cut = clipped();
+        if (cut.isNotEmpty) {
+          failures.add('$size x$textScale: clipped ${cut.join(' | ')}');
+        }
+        final error = tester.takeException();
+        if (error != null) {
+          failures.add('$size x$textScale: $error');
+        }
       }
     }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
 
     await teardown(tester);
   });
