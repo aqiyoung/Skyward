@@ -10,7 +10,11 @@ const _editorSizes = ['lib/pages/editor.dart', 'lib/features/editor/'];
 
 final _textTheme = RegExp(r'\btextTheme\b');
 final _fontSize = RegExp(r'\bfontSize:');
-final _fontWeight = RegExp(r'\bfontWeight:');
+
+// A weight written out here is one that AppTextStyle never heard of. A weight
+// taken from a named rung -- DashboardWeight for the dashboard -- is the
+// opposite: one place decides it, and the call site only says which rung.
+final _fontWeight = RegExp(r'\bfontWeight:\s*FontWeight\.w\d');
 
 bool _isGenerated(String path) =>
     path.contains('/generated/') ||
@@ -45,8 +49,9 @@ void main() {
         }
         if (checksSize && _fontWeight.hasMatch(line)) {
           offenders.add(
-            '$path:${i + 1} — sets a font weight outside lib/ui; pass '
-            'emphasized to AppTextStyle.of.',
+            '$path:${i + 1} — names a font weight outside lib/ui; take one '
+            'from a rung (DashboardWeight), or pass emphasized to '
+            'AppTextStyle.of.',
           );
         }
       }

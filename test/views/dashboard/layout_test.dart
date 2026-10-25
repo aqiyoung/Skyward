@@ -309,6 +309,7 @@ void main() {
   testWidgets('larger text grows the box of every line', (tester) async {
     container.listen(localIpProvider, (_, _) {});
     container.read(localIpProvider.notifier).value = '192.168.100.200';
+    final failures = <String>[];
     List<String> clipped() => [
       for (final paragraph in tester.renderObjectList<RenderParagraph>(
         find.byType(RichText),
@@ -329,10 +330,48 @@ void main() {
           platform: platform,
           textScale: textScale,
         );
-        expect(clipped(), isEmpty, reason: '$size x$textScale');
-        expect(tester.takeException(), isNull);
+        // A card settles over two frames: the first lays the text out at the
+        // size the system reports, the second at the size the measurements
+        // that first frame produced. This test is about where the lines end
+        // up, so the first frame's report is dropped and the check runs on the
+        // one the reader sees.
+        tester.takeException();
+        await tester.pump();
+        // Both checks are kept and reported together: a clipped line and the
+        // overflow that caused it are the same bug seen twice, and stopping at
+        // the first one leaves the other sizes unexamined.
+        final cut = clipped();
+        if (cut.isNotEmpty) {
+          failures.add('$size x$textScale: clipped ${cut.join(' | ')}');
+        }
+        final error = tester.takeException();
+        if (error != null) {
+          failures.add('$size x$textScale: $error');
+          // Only on failure, and only once: walking the tree costs a frame's
+          // worth of work, and the widgets that built the row are what the
+          // pixel count leaves out.
+          for (final flex in tester.allRenderObjects.whereType<RenderFlex>()) {
+            if (flex.direction != Axis.horizontal) {
+              continue;
+            }
+            var total = 0.0;
+            flex.visitChildren((child) {
+              if (child is RenderBox) {
+                total += child.size.width;
+              }
+            });
+            final over = total - flex.size.width;
+            if (over > 0.5) {
+              failures.add(
+                '  ${flex.debugCreator} +${over.toStringAsFixed(1)}',
+              );
+            }
+          }
+        }
       }
     }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
 
     await teardown(tester);
   });
