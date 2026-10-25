@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The process window opens before Flutter has drawn anything, and the app
+         follows the system's light/dark setting. Left to the framework the same
+         plate is used in both modes, so a dark-mode launch opens on a light
+         field and then drops into a dark UI: that reads as a flash, not as a
+         splash. This is a neutral dark close to the scheme's own surface, whose
+         exact tone is generated per user seed and cannot be named here. -->
+    <color name="splash_background">#111318</color>
+</resources>
