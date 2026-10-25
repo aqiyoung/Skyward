@@ -166,8 +166,14 @@ class _RouteMapPainter extends CustomPainter {
 
   /// The same device keeps the same width, so the dot field is worth keeping;
   /// the outline is 3800 cells and only its geometry is cached.
-  static Size? _cachedSize;
-  static List<Offset>? _cachedLand;
+  ///
+  /// One slot per size, because the dashboard shows the map at two of them at
+  /// once -- the card, and the sheet opened over it -- and a single slot made
+  /// them take turns throwing each other out, which cost the full scan on every
+  /// frame. The cap keeps a window being dragged from growing the map without
+  /// bound; a dragged size is not one that comes back.
+  static const _landCacheLimit = 4;
+  static final Map<Size, List<Offset>> _landCache = {};
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -195,11 +201,13 @@ class _RouteMapPainter extends CustomPainter {
   }
 
   void _paintLand(Canvas canvas, Size size) {
-    var points = _cachedLand;
-    if (points == null || _cachedSize != size) {
+    var points = _landCache[size];
+    if (points == null) {
+      if (_landCache.length >= _landCacheLimit) {
+        _landCache.remove(_landCache.keys.first);
+      }
       points = _landPoints(size);
-      _cachedLand = points;
-      _cachedSize = size;
+      _landCache[size] = points;
     }
     canvas.drawPoints(
       PointMode.points,
