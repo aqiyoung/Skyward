@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:skyward/common/constant.dart';
@@ -394,11 +395,17 @@ final _targetSources = <_TargetSource>[
 /// Where [target] sits, asked of a provider that takes the target in its path.
 ///
 /// [ipLocationSources] answer "where am I", which is the wrong question about a
-/// destination. The providers here are asked one at a time and the first usable
-/// answer wins, because they are not interchangeable: only `ip-api.com` reads a
-/// name, and only it answers over plain HTTP. [proxyName] is tried first so the
-/// question leaves by the same hop the traffic does; an answer that never comes
-/// is asked again over whatever the rules decide.
+/// destination. Of the providers that do take the target, only `ip-api.com`
+/// reads a name, and only it answers over plain HTTP, so a name is put to it
+/// alone. An address can be put to all three, and there the three are
+/// interchangeable -- so they are asked at once and the first usable answer
+/// wins. One at a time, a provider that hangs held the card for its whole
+/// timeout before the next was tried, which was the difference between a
+/// destination and a blank reading.
+///
+/// [proxyName] is tried first so the question leaves by the same hop the traffic
+/// does; an answer that never comes is asked again over whatever the rules
+/// decide.
 Future<IpLocation?> lookupTargetLocation(
   CoreController core,
   String target, {
@@ -406,25 +413,68 @@ Future<IpLocation?> lookupTargetLocation(
   Duration timeout = outboundIpTimeoutDuration,
 }) async {
   final address = ipAddressOf(target) != null;
+  final sources = <_TargetSource>[
+    for (final source in _targetSources)
+      if (address || !source.addressesOnly) source,
+  ];
   final proxies = proxyName.isEmpty ? const [''] : [proxyName, ''];
   for (final proxy in proxies) {
-    for (final source in _targetSources) {
-      if (source.addressesOnly && !address) {
-        continue;
-      }
-      final location = await _askTargetSource(
+    final location = await _firstTargetAnswer(
+      core,
+      sources,
+      target,
+      proxy: proxy,
+      timeout: timeout,
+    );
+    if (location != null) {
+      return location;
+    }
+  }
+  return null;
+}
+
+/// The first of [sources] to name a place, or null when none of them does.
+///
+/// Each source carries its own timeout and answers null rather than throwing,
+/// so this ends at the first answer or at the slowest timeout, never at their
+/// sum.
+Future<IpLocation?> _firstTargetAnswer(
+  CoreController core,
+  List<_TargetSource> sources,
+  String target, {
+  required String proxy,
+  required Duration timeout,
+}) {
+  if (sources.length == 1) {
+    return _askTargetSource(
+      core,
+      sources.single,
+      target,
+      proxy: proxy,
+      timeout: timeout,
+    );
+  }
+  final completer = Completer<IpLocation?>();
+  var pending = sources.length;
+  for (final source in sources) {
+    unawaited(
+      _askTargetSource(
         core,
         source,
         target,
         proxy: proxy,
         timeout: timeout,
-      );
-      if (location != null) {
-        return location;
-      }
-    }
+      ).then((location) {
+        if (location != null && !completer.isCompleted) {
+          completer.complete(location);
+        }
+        if (--pending == 0 && !completer.isCompleted) {
+          completer.complete(null);
+        }
+      }),
+    );
   }
-  return null;
+  return completer.future;
 }
 
 Future<IpLocation?> _askTargetSource(

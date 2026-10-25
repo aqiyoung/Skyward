@@ -14,6 +14,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const ServiceCheckParams(timeout: 0));
     registerFallbackValue(const OutboundIpParams(timeout: 0));
+    registerFallbackValue(const ProbeParams(url: '', timeout: 0));
   });
 
   late _MockCore core;
@@ -228,6 +229,69 @@ void main() {
           isNull,
         );
       }
+    });
+  });
+
+  group('lookupTargetLocation', () {
+    test('puts an address to every provider at once', () async {
+      final asked = <String>[];
+      when(() => core.probe(any())).thenAnswer((invocation) async {
+        final params = invocation.positionalArguments.single as ProbeParams;
+        asked.add(params.url);
+        // The plain-HTTP provider is the one that hangs on a network that
+        // filters it. The answer has to come from the others without waiting
+        // out its timeout first.
+        if (params.url.contains('ip-api.com')) {
+          return const ProbeResult(error: 'timeout');
+        }
+        return ProbeResult(
+          statusCode: 200,
+          body: jsonEncode({
+            'ip': '198.51.100.4',
+            'country_code': 'JP',
+            'region': 'Tokyo',
+            'city': 'Shinjuku',
+          }),
+        );
+      });
+
+      final location = await lookupTargetLocation(controller, '198.51.100.4');
+
+      expect(location?.countryCode, 'JP');
+      expect(location?.region, 'Tokyo');
+      expect(
+        asked.where((url) => url.contains('ipwho.is')),
+        isNotEmpty,
+        reason: 'the address takers are interchangeable and asked together',
+      );
+      expect(asked.where((url) => url.contains('api.ip.sb')), isNotEmpty);
+    });
+
+    test('puts a name to the one provider that reads one', () async {
+      final asked = <String>[];
+      when(() => core.probe(any())).thenAnswer((invocation) async {
+        final params = invocation.positionalArguments.single as ProbeParams;
+        asked.add(params.url);
+        return const ProbeResult(
+          statusCode: 200,
+          body:
+              '{"countryCode":"US","regionName":"California","city":"San Jose"}',
+        );
+      });
+
+      final location = await lookupTargetLocation(controller, 'example.com');
+
+      expect(location?.countryCode, 'US');
+      expect(asked, hasLength(1));
+      expect(asked.single, startsWith('http://ip-api.com/json/example.com'));
+    });
+
+    test('gives up when no provider names a place', () async {
+      when(
+        () => core.probe(any()),
+      ).thenAnswer((_) async => const ProbeResult(statusCode: 500));
+
+      expect(await lookupTargetLocation(controller, '203.0.113.9'), isNull);
     });
   });
 }
