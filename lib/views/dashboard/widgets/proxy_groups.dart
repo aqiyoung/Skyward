@@ -34,11 +34,17 @@ Future<void> showProxiesSheet(BuildContext context, {String? groupName}) async {
   final query = queryProvider(QueryTag.proxies);
   final pageQuery = container.read(query);
   container.read(query.notifier).value = '';
-  await showSheet<void>(
-    context: context,
-    builder: (_) => const ProxiesView(picker: true),
-  );
-  container.read(query.notifier).value = pageQuery;
+  try {
+    await showSheet<void>(
+      context: context,
+      builder: (_) => const ProxiesView(picker: true),
+    );
+  } finally {
+    // The page keeps filtering by its own query while the sheet is open, so it
+    // is handed back even when the sheet closes badly -- otherwise the proxies
+    // page would come back to an empty search box.
+    container.read(query.notifier).value = pageQuery;
+  }
 }
 
 /// Drawn in the proportions of the proxies page's group header, always
@@ -67,23 +73,35 @@ class _GroupIconState extends ConsumerState<_GroupIcon> {
   /// GLOBAL takes the exit from the probe the status card drives, so it drives
   /// that probe itself as well: the tile has to work on a dashboard the status
   /// card was taken off.
-  OutboundIpProbe? _probe;
+  late final OutboundIpProbe _probe;
+
+  /// What this tile holds the probe for, or null when it does not hold it.
+  String? _watching;
 
   @override
   void initState() {
     super.initState();
-    if (!GroupMonogram.isGlobal(widget.group.name)) {
-      return;
-    }
-    final probe = ref.read(outboundIpProbeProvider.notifier);
-    _probe = probe;
-    probe.watch(routedOutbound);
+    _probe = ref.read(outboundIpProbeProvider.notifier);
   }
 
   @override
   void dispose() {
-    _probe?.unwatch(routedOutbound);
+    _showGroup(null);
     super.dispose();
+  }
+
+  /// Ties the probe to this tile for as long as the tile shows GLOBAL.
+  ///
+  /// Which group sits under a tile is a question for every frame, not for the
+  /// one that created it: the list carries no keys, so a state outlives the
+  /// group it was built for, and a subscription changed under it would leave
+  /// the watch on a group this tile no longer shows.
+  void _showGroup(String? node) {
+    final previous = _watching;
+    if (node == previous) return;
+    _watching = node;
+    if (node != null) _probe.watch(node);
+    if (previous != null) _probe.unwatch(previous);
   }
 
   /// The country the Core routes by, and only while it is up: with no answer to
@@ -106,6 +124,7 @@ class _GroupIconState extends ConsumerState<_GroupIcon> {
     final size = widget.size;
     final ring = widget.ring;
     final inset = size * _inset;
+    _showGroup(GroupMonogram.isGlobal(group.name) ? routedOutbound : null);
     return Container(
       width: size,
       height: size,

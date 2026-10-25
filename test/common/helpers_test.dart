@@ -137,6 +137,20 @@ void main() {
       expect(compareVersions('1.0.0', '1.0.0.1'), 0);
     });
 
+    test('a preview build comes before the releases of its line', () {
+      // A preview carries the day's build number, which outranks every revision
+      // by orders of magnitude. Read literally it would be the newer of the
+      // two forever, and the user of a preview would never be told a release
+      // exists -- which is exactly how a preview stops receiving updates.
+      expect(compareVersions('1.0.0.14', '1.0.0.2090029702'), greaterThan(0));
+      expect(compareVersions('1.0.0.2090029702', '1.0.0.14'), lessThan(0));
+    });
+
+    test('a preview still compares on the components above the slot', () {
+      expect(compareVersions('1.0.1.1', '1.0.0.2090029702'), greaterThan(0));
+      expect(compareVersions('1.0.0.1', '1.0.1.2090029702'), lessThan(0));
+    });
+
     test('handles build number', () {
       expect(compareVersions('1.0.0+1', '1.0.0+2'), lessThan(0));
       expect(compareVersions('1.0.0+2', '1.0.0+1'), greaterThan(0));
@@ -144,6 +158,119 @@ void main() {
 
     test('handles missing minor/patch', () {
       expect(compareVersions('1', '1.0.0'), 0);
+    });
+  });
+
+  group('shouldOfferUpdate', () {
+    const release = '1.0.0.14';
+    const releaseBuild = 2090029703;
+
+    test('a release is offered to the preview it postdates', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isTrue,
+      );
+    });
+
+    test('a release is withheld from a preview that already outranks it', () {
+      // Android refuses a downgrade, so offering this one would be a promise
+      // the install cannot keep.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.2090029704',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a release compares by version on a build that is not a preview', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.14',
+        ),
+        isTrue,
+      );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: release,
+        ),
+        isFalse,
+      );
+    });
+
+    test('falls back to the version when the notes carry no number', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.14',
+        ),
+        isTrue,
+      );
+    });
+
+    test('withholds a release it cannot place on the build counter', () {
+      // The release page redirect the API falls back to once its quota is
+      // spent carries the tag alone. Without the number there is no way to say
+      // whether this release outranks the preview that is installed, and
+      // reading the names instead would always answer that it does.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('releaseVersionOf', () {
+    test('drops the tag prefix and nothing else', () {
+      expect(releaseVersionOf('v1.0.0.14'), '1.0.0.14');
+      expect(releaseVersionOf('1.0.0.14'), '1.0.0.14');
+      // A version that carries a `v` of its own keeps it.
+      expect(releaseVersionOf('v1.0.0-dev'), '1.0.0-dev');
+    });
+  });
+
+  group('releaseBuildNumber', () {
+    test('reads the comment the release writes', () {
+      expect(
+        releaseBuildNumber('notes\n<!-- skyward:build-number:2090029703 -->\n'),
+        2090029703,
+      );
+    });
+
+    test('reads the number older releases state in prose', () {
+      expect(
+        releaseBuildNumber('- 构建号：`2090029703`（APK 的 versionCode）'),
+        2090029703,
+      );
+    });
+
+    test('null when the notes say nothing', () {
+      expect(releaseBuildNumber('no number here'), isNull);
+      expect(releaseBuildNumber(null), isNull);
+      expect(releaseBuildNumber(42), isNull);
     });
   });
 

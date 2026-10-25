@@ -43,6 +43,32 @@ void main() {
     });
   });
 
+  group('safeCopy', () {
+    test('copies the file and creates the directory it lands in', () async {
+      final source = File(join(root.path, 'home', '1.yaml'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('mixed-port: 7890');
+
+      expect(await source.safeCopy(join(root.path, 'next', '1.yaml')), isTrue);
+
+      expect(
+        File(join(root.path, 'next', '1.yaml')).readAsStringSync(),
+        'mixed-port: 7890',
+      );
+    });
+
+    test('reports a missing source instead of writing one', () async {
+      final source = File(join(root.path, 'home', '2.yaml'));
+      final target = join(root.path, 'next', '2.yaml');
+
+      // Whoever keeps a record of the copy goes on naming a file either way, so
+      // a blank one would be worse than none: nothing is created on either side.
+      expect(await source.safeCopy(target), isFalse);
+      expect(source.existsSync(), isFalse);
+      expect(File(target).existsSync(), isFalse);
+    });
+  });
+
   group('writeAsStringAtomically', () {
     test('replaces the file and leaves nothing beside it', () async {
       final file = File(join(root.path, 'config.yaml'))

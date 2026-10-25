@@ -7,16 +7,23 @@ const _replaceRetryDelay = Duration(milliseconds: 50);
 const _ageArmorHeader = '-----BEGIN AGE ENCRYPTED FILE-----';
 
 extension FileExt on File {
-  Future<void> safeCopy(String newPath) async {
+  /// Copies this file over [newPath], creating the directory it lands in.
+  ///
+  /// Answers whether there was anything to copy. A source that is already gone
+  /// is not a copy to make: writing an empty file on either side of it would
+  /// hand the caller a blank document where it expected a copy, and whoever
+  /// keeps a record naming that file -- the profile list does -- would go on
+  /// naming a document that says nothing.
+  Future<bool> safeCopy(String newPath) async {
     if (!await exists()) {
-      await create(recursive: true);
-      return;
+      return false;
     }
     final targetFile = File(newPath);
     if (!await targetFile.exists()) {
       await targetFile.create(recursive: true);
     }
     await copy(newPath);
+    return true;
   }
 
   Future<bool> get isAgeEncrypted async {

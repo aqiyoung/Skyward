@@ -606,7 +606,12 @@ Future<MigrationData> migrateLegacyConfig({
       targetPath,
       BackupEntries.profile(profileId),
     );
-    await sourceFile.safeCopy(targetFilePath);
+    // A record whose file is already gone has nothing to carry over. Adding it
+    // anyway would leave the new directory with a profile that names a file
+    // which is not there, and applying that profile fails on the spot.
+    if (!await sourceFile.safeCopy(targetFilePath)) {
+      continue;
+    }
     profiles.add(Profile.fromJson(rawProfile));
   }
   final currentProfileId = configMap['currentProfileId'];

@@ -35,6 +35,16 @@ int compareVersions(String version1, String version2) {
   if (patch1 != patch2) {
     return patch1.compareTo(patch2);
   }
+  // A preview build stamps the day's build number into the fourth slot
+  // (`1.0.0.2090029702`) where a release puts its revision (`1.0.0.14`). Read
+  // as numbers the preview always wins, so a preview build never learns that a
+  // release exists -- and the release is where its user belongs. A preview is
+  // a snapshot of the line it was cut from, so it is the earlier side.
+  final preview1 = _isPreviewBuild(v1);
+  final preview2 = _isPreviewBuild(v2);
+  if (preview1 != preview2) {
+    return preview1 ? -1 : 1;
+  }
   // This fork's releases carry a fourth component -- the revision we iterate
   // on top of upstream's version -- and their tags are exactly that version.
   // Upstream builds have no fourth component, and neither do this fork's
@@ -55,6 +65,77 @@ int compareVersions(String version1, String version2) {
       : 0;
   return build1.compareTo(build2);
 }
+
+/// Every revision this fork will ever cut is a small count -- one per release.
+/// A build number shares the slot only in preview builds, and those start in
+/// the billions (a day's prefix times a hundred), so nothing on the release
+/// line can reach this.
+const _revisionCeiling = 1000000;
+
+bool _isPreviewBuild(List<String> parts) {
+  if (parts.length <= 3) return false;
+  final revision = int.tryParse(parts[3]);
+  return revision != null && revision >= _revisionCeiling;
+}
+
+/// Where the release notes carry the build number, as a comment: the prose in
+/// the notes says the same thing in words, and words are not something the app
+/// should be parsing.
+const releaseBuildNumberMarker = 'skyward:build-number:';
+
+/// The build number a release was cut with. Every channel draws from that one
+/// counter -- a preview and the release that follows it are neighbours in it --
+/// so two numbers read from it are directly comparable. Releases published
+/// before the comment existed still state the number in their notes.
+int? releaseBuildNumber(Object? body) {
+  if (body is! String) return null;
+  final marked = RegExp(
+    '<!--\\s*$releaseBuildNumberMarker(\\d+)\\s*-->',
+  ).firstMatch(body)?.group(1);
+  final noted = RegExp(r'构建号：`(\d+)`').firstMatch(body)?.group(1);
+  final value = marked ?? noted;
+  return value == null ? null : int.tryParse(value);
+}
+
+/// Whether [remoteVersion] should be offered to someone running
+/// [installedVersion].
+///
+/// A preview carries its build number in the fourth slot (`1.0.0.2090029702`)
+/// where a release carries a revision, and both draw from the same build
+/// counter -- so those two numbers are comparable, and the release replaces the
+/// preview exactly while it is the larger one. Comparing version names instead
+/// offers a preview a release its own build already outranks, and Android
+/// refuses a downgrade: the app would promise an update it cannot install.
+/// Every other build keeps the version comparison, where that slot counts
+/// releases.
+bool shouldOfferUpdate({
+  required String remoteVersion,
+  required int? remoteBuildNumber,
+  required String installedVersion,
+}) {
+  final parts = installedVersion.split('+')[0].split('.');
+  final installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
+  if (_isPreviewBuild(parts)) {
+    // A release that does not state its number cannot be placed on the
+    // counter, and the version names are not comparable across the two
+    // conventions -- the preview's fourth slot always reads larger. That is
+    // every answer taken from the release page redirect, which carries the tag
+    // and nothing else: the fallback the API drops to once its quota is spent.
+    // Saying nothing is the only honest answer there. Guessing by name would
+    // promise a preview the update it cannot install.
+    if (remoteBuildNumber == null || installedBuildNumber == null) return false;
+    // Otherwise nothing else to weigh: the counter is monotone across days and
+    // channels, so a larger number is both newer and installable over this
+    // build.
+    return remoteBuildNumber > installedBuildNumber;
+  }
+  return compareVersions(remoteVersion, installedVersion) > 0;
+}
+
+/// A release tag names its version behind a `v`. Only that first character is
+/// the prefix -- anything else in the tag is part of the version it carries.
+String releaseVersionOf(String tag) =>
+    tag.startsWith('v') ? tag.substring(1) : tag;
 
 const releaseNotesBeginMarker = '<!-- flclash:changelog:begin -->';
 const releaseNotesEndMarker = '<!-- flclash:changelog:end -->';
