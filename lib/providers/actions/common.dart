@@ -87,6 +87,11 @@ class CommonAction extends _$CommonAction {
     final Map<String, dynamic>? res;
     try {
       res = await request.checkForUpdate();
+      // Announcing it needs a mounted navigator, and startup does not always
+      // have one yet. The handler steps aside in that case; the check itself
+      // is best effort, so a failed announcement must not travel out of an
+      // unawaited future.
+      await checkUpdateResultHandle(data: res);
     } catch (error) {
       commonPrint.log(
         'checkForUpdate failed: ${compactError(error)}',
@@ -94,7 +99,6 @@ class CommonAction extends _$CommonAction {
       );
       return false;
     }
-    await checkUpdateResultHandle(data: res);
     return res != null;
   }
 
@@ -188,7 +192,10 @@ class CommonAction extends _$CommonAction {
     bool isUser = false,
   }) async {
     if (data != null) {
-      final context = globalState.navigatorKey.currentContext!;
+      final context = globalState.navigatorKey.currentContext;
+      if (context == null) {
+        return;
+      }
       final res = await dialogs.showMessage(
         title: currentAppLocalizations.discoverNewVersion,
         message: _releaseSpan(

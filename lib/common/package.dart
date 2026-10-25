@@ -115,15 +115,27 @@ bool shouldOfferUpdate({
 }) {
   final parts = installedVersion.split('+')[0].split('.');
   final installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
-  if (remoteBuildNumber != null &&
-      installedBuildNumber != null &&
-      _isPreviewBuild(parts)) {
-    // Nothing else to weigh: the counter is monotone across days and channels,
-    // so a larger number is both newer and installable over this build.
+  if (_isPreviewBuild(parts)) {
+    // A release that does not state its number cannot be placed on the
+    // counter, and the version names are not comparable across the two
+    // conventions -- the preview's fourth slot always reads larger. That is
+    // every answer taken from the release page redirect, which carries the tag
+    // and nothing else: the fallback the API drops to once its quota is spent.
+    // Saying nothing is the only honest answer there. Guessing by name would
+    // promise a preview the update it cannot install.
+    if (remoteBuildNumber == null || installedBuildNumber == null) return false;
+    // Otherwise nothing else to weigh: the counter is monotone across days and
+    // channels, so a larger number is both newer and installable over this
+    // build.
     return remoteBuildNumber > installedBuildNumber;
   }
   return compareVersions(remoteVersion, installedVersion) > 0;
 }
+
+/// A release tag names its version behind a `v`. Only that first character is
+/// the prefix -- anything else in the tag is part of the version it carries.
+String releaseVersionOf(String tag) =>
+    tag.startsWith('v') ? tag.substring(1) : tag;
 
 const releaseNotesBeginMarker = '<!-- flclash:changelog:begin -->';
 const releaseNotesEndMarker = '<!-- flclash:changelog:end -->';

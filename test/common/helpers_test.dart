@@ -217,14 +217,38 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('withholds a release it cannot place on the build counter', () {
+      // The release page redirect the API falls back to once its quota is
+      // spent carries the tag alone. Without the number there is no way to say
+      // whether this release outranks the preview that is installed, and
+      // reading the names instead would always answer that it does.
       expect(
         shouldOfferUpdate(
           remoteVersion: release,
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
-        isTrue,
+        isFalse,
       );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('releaseVersionOf', () {
+    test('drops the tag prefix and nothing else', () {
+      expect(releaseVersionOf('v1.0.0.14'), '1.0.0.14');
+      expect(releaseVersionOf('1.0.0.14'), '1.0.0.14');
+      // A version that carries a `v` of its own keeps it.
+      expect(releaseVersionOf('v1.0.0-dev'), '1.0.0-dev');
     });
   });
 

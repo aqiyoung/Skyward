@@ -91,7 +91,7 @@ class Request {
     final remoteVersion = release['tag_name'] as String;
     final version = globalState.packageInfo.displayVersion;
     final hasUpdate = shouldOfferUpdate(
-      remoteVersion: remoteVersion.replaceAll('v', ''),
+      remoteVersion: releaseVersionOf(remoteVersion),
       remoteBuildNumber: releaseBuildNumber(release['body']),
       installedVersion: version,
     );
