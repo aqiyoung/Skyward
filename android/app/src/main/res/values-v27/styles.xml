@@ -5,8 +5,13 @@
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@drawable/ic_launcher_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_launcher_foreground</item>
+        <!-- The parent is the black theme in both light and dark modes, so
+             without this the startup window is black even for a light phone.
+             The plate covers it; on the system-splash versions below the
+             attributes carry the same colours the v31 themes name. -->
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/splash_icon</item>
         <item name="postSplashScreenTheme">@style/NormalTheme</item>
     </style>
 </resources>

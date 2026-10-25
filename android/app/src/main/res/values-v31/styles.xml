@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- From Android 12 the system draws the splash itself, so the window theme
-         only names the plate behind the picture and the picture itself. The
-         plate is the artwork's own light field, which lets the tile's edge
-         disappear into the splash instead of reading as a square. -->
+    <!-- From Android 12 the system draws the splash itself: it crops the icon to
+         a circle of 192dp inside a 288dp canvas, so the artwork keeps its marked
+         edge inside that window. `splash_icon` is drawn with its disc at 64% of
+         the canvas for exactly that reason; anything larger reads as a square
+         with its four sides cut flat. The plate is the colour the window uses
+         afterwards, so the splash and the first frame meet without a flash. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
     </style>
