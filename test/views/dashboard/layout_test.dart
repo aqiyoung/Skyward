@@ -330,6 +330,13 @@ void main() {
           platform: platform,
           textScale: textScale,
         );
+        // A card settles over two frames: the first lays the text out at the
+        // size the system reports, the second at the size the measurements
+        // that first frame produced. This test is about where the lines end
+        // up, so the first frame's report is dropped and the check runs on the
+        // one the reader sees.
+        tester.takeException();
+        await tester.pump();
         // Both checks are kept and reported together: a clipped line and the
         // overflow that caused it are the same bug seen twice, and stopping at
         // the first one leaves the other sizes unexamined.
