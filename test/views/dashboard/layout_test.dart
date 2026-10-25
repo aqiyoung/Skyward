@@ -338,15 +338,28 @@ void main() {
           failures.add('$size x$textScale: clipped ${cut.join(' | ')}');
         }
         final error = tester.takeException();
-        if (error is FlutterError) {
-          // The message alone is the pixel count; the parts after it name the
-          // widget that could not fit.
-          failures.add(
-            '$size x$textScale:\n'
-            '${error.diagnostics.take(6).map((node) => node.toString()).join('\n')}',
-          );
-        } else if (error != null) {
+        if (error != null) {
           failures.add('$size x$textScale: $error');
+          // Only on failure, and only once: walking the tree costs a frame's
+          // worth of work, and the widgets that built the row are what the
+          // pixel count leaves out.
+          for (final flex in tester.allRenderObjects.whereType<RenderFlex>()) {
+            if (flex.direction != Axis.horizontal) {
+              continue;
+            }
+            var total = 0.0;
+            flex.visitChildren((child) {
+              if (child is RenderBox) {
+                total += child.size.width;
+              }
+            });
+            final over = total - flex.size.width;
+            if (over > 0.5) {
+              failures.add(
+                '  ${flex.debugCreator} +${over.toStringAsFixed(1)}',
+              );
+            }
+          }
         }
       }
     }
