@@ -36,6 +36,16 @@ class _RunRequest {
 class SetupAction extends _$SetupAction {
   CoreController get _core => ref.read(coreHandlerProvider);
 
+  /// The language the interface is in, handed to profile scripts that follow it.
+  /// A null setting means "follow the system", which is how the app itself reads
+  /// it, so fall back to the platform locale rather than to a hardcoded one.
+  String get _scriptLocale {
+    final locale =
+        getLocaleForString(ref.read(appSettingProvider).locale) ??
+        PlatformDispatcher.instance.locale;
+    return locale.toLanguageTag();
+  }
+
   Timer? _runtimeTimer;
   final _setupScheduler = SerialTaskScheduler();
   final _listenerScheduler = SerialTaskScheduler();
@@ -481,7 +491,11 @@ class SetupAction extends _$SetupAction {
     final proxyGroups = isCustom ? setupState.proxyGroups : <ProxyGroup>[];
     final rules = isCustom ? setupState.rules : <Rule>[];
     if (hasScript) {
-      rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+      rawConfig = await handleEvaluate(
+        scriptContent!,
+        rawConfig,
+        locale: _scriptLocale,
+      );
     }
     final directory = await appPath.profilesPath;
     final injected = await _resolveInjectedProviders(

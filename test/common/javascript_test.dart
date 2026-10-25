@@ -69,4 +69,17 @@ void main() {
       throwsA(isA<MessageException>()),
     );
   });
+
+  test('puts the interface language in front of the script', () {
+    final script = withLocale('function main(config) {}', 'en_US');
+
+    expect(script, startsWith('globalThis.__skywardLocale = "en_US";\n'));
+    // The profile still comes last, so a script may read the locale itself.
+    expect(script, endsWith('function main(config) {}'));
+  });
+
+  test('leaves the script alone when no language is set', () {
+    expect(withLocale('main', null), 'main');
+    expect(withLocale('main', ''), 'main');
+  });
 }
