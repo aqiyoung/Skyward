@@ -46,6 +46,11 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
   late final OutboundIpProbe _probe;
   List<TrackerInfo> _connections = const [];
 
+  /// The one connection worth drawing, picked when the list arrived rather than
+  /// when it is drawn: every rebuild -- a settings toggle, a probe answering --
+  /// otherwise walked the whole list again for the same answer.
+  TrackerInfo? _liveConnection;
+
   /// Where the traffic leaves home by, asked of a provider that names a
   /// province. Held for as long as the address does not change.
   IpLocation? _location;
@@ -99,6 +104,7 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
           mounted) {
         setState(() {
           _connections = const [];
+          _liveConnection = null;
           _location = null;
           _target = null;
         });
@@ -111,7 +117,10 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
       if (!isCurrent() || !mounted) {
         return;
       }
-      setState(() => _connections = next);
+      setState(() {
+        _connections = next;
+        _liveConnection = _liveOf(next);
+      });
     } catch (error) {
       commonPrint.log(
         'routing board error: $error',
@@ -227,11 +236,13 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
   /// used to point at something the phone was not doing. Resolvers and the
   /// reachability pings every platform runs are skipped: they are short,
   /// frequent, and never the answer.
-  TrackerInfo? _live() {
+  TrackerInfo? _live() => _liveConnection;
+
+  static TrackerInfo? _liveOf(List<TrackerInfo> connections) {
     TrackerInfo? fastest;
     var bestSpeed = 0;
     TrackerInfo? newest;
-    for (final item in _connections) {
+    for (final item in connections) {
       if (_isNoise(item)) {
         continue;
       }
