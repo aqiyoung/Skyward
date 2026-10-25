@@ -605,7 +605,10 @@ class _MemoryBar extends StatelessWidget {
                       duration: duration,
                       curve: Easing.standard,
                       builder: (_, percent, child) => Expanded(
-                        flex: (percent * 100).round(),
+                        // A share that rounds to nothing still took up space:
+                        // a segment left at flex 0 is laid out with no width at
+                        // all and drops out of the bar entirely.
+                        flex: max(1, (percent * 100).round()),
                         child: child!,
                       ),
                       child: ColoredBox(color: segment.color),

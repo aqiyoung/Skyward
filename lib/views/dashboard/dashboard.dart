@@ -52,10 +52,18 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final scale = math.max(1.0, MediaQuery.textScalerOf(context).scale(1));
     final size = Size(viewSize.width - sideWidth, viewSize.height) / scale;
     final editable = !DashboardDensity.of(size).isDesktop;
-    if (!editable) {
-      _editing = false;
+    final editing = _editing && editable;
+    if (_editing && !editable) {
+      // Turning to the fixed grid ends rearranging for good -- it is not a mode
+      // the window keeps for the reader to come back to once it narrows again.
+      // The flag is cleared after this frame rather than during it, so every
+      // value this frame acts on is one it read at the top.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _editing) {
+          _setEditing(false);
+        }
+      });
     }
-    final editing = _editing;
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
