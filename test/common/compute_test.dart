@@ -76,6 +76,48 @@ void main() {
       expect(state.testUrl, 'http://test-b.com');
     });
 
+    test('stops at the group that closes a loop of selections', () {
+      // Two groups that pick each other resolve to nothing. Following the loop
+      // until the stack gives out would crash the thread that draws the list,
+      // so the walk stops where the loop closes and reports a group.
+      final groups = [
+        const Group(
+          name: 'group-a',
+          type: GroupType.Selector,
+          all: [Proxy(name: 'group-b', type: 'ss')],
+        ),
+        const Group(
+          name: 'group-b',
+          type: GroupType.Selector,
+          all: [Proxy(name: 'group-a', type: 'ss')],
+        ),
+      ];
+      final state = computeRealSelectedProxyState(
+        'group-a',
+        groups: groups,
+        selectedMap: {'group-a': 'group-b', 'group-b': 'group-a'},
+      );
+      expect(state.group, isTrue);
+      expect(state.proxyName, anyOf('group-a', 'group-b'));
+    });
+
+    test('stops at a group that selects itself', () {
+      final groups = [
+        const Group(
+          name: 'self',
+          type: GroupType.Selector,
+          all: [Proxy(name: 'self', type: 'ss')],
+        ),
+      ];
+      final state = computeRealSelectedProxyState(
+        'self',
+        groups: groups,
+        selectedMap: {'self': 'self'},
+      );
+      expect(state.group, isTrue);
+      expect(state.proxyName, 'self');
+    });
+
     test('stops at group when selectedMap has no entry', () {
       final groups = [
         const Group(

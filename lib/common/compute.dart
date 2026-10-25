@@ -111,20 +111,44 @@ SelectedProxyState getRealSelectedProxyState(
   required List<Group> groups,
   required Map<String, String> selectedMap,
 }) {
+  return _resolveSelectedProxy(
+    state,
+    groups: groups,
+    selectedMap: selectedMap,
+    visited: <String>{},
+  );
+}
+
+/// Walks from a group to whatever its selection finally names.
+///
+/// [visited] is what ends the walk. A subscription can be written so that two
+/// groups pick each other, or so that a group lists itself and picks it; none
+/// of those resolve, and following them until the stack runs out would turn a
+/// bad config into a crash on the thread that draws the screen. Stopping at the
+/// name that closes the loop leaves the reader on a group, which is where the
+/// selection actually went.
+SelectedProxyState _resolveSelectedProxy(
+  SelectedProxyState state, {
+  required List<Group> groups,
+  required Map<String, String> selectedMap,
+  required Set<String> visited,
+}) {
   if (state.proxyName.isEmpty) return state;
   final group = groups.getGroup(state.proxyName);
   final newState = state.copyWith(group: true);
   if (group == null) return newState;
+  if (!visited.add(newState.proxyName)) return newState;
   final currentSelectedName = group.getCurrentSelectedName(
     selectedMap[newState.proxyName] ?? '',
   );
   if (currentSelectedName.isEmpty) {
     return newState;
   }
-  return getRealSelectedProxyState(
+  return _resolveSelectedProxy(
     newState.copyWith(proxyName: currentSelectedName, testUrl: group.testUrl),
     groups: groups,
     selectedMap: selectedMap,
+    visited: visited,
   );
 }
 
