@@ -161,6 +161,95 @@ void main() {
     });
   });
 
+  group('shouldOfferUpdate', () {
+    const release = '1.0.0.14';
+    const releaseBuild = 2090029703;
+
+    test('a release is offered to the preview it postdates', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isTrue,
+      );
+    });
+
+    test('a release is withheld from a preview that already outranks it', () {
+      // Android refuses a downgrade, so offering this one would be a promise
+      // the install cannot keep.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.2090029704',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a release compares by version on a build that is not a preview', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.0.0.14',
+        ),
+        isTrue,
+      );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: releaseBuild,
+          installedVersion: release,
+        ),
+        isFalse,
+      );
+    });
+
+    test('falls back to the version when the notes carry no number', () {
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.0.15',
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.14',
+        ),
+        isTrue,
+      );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: release,
+          remoteBuildNumber: null,
+          installedVersion: '1.0.0.2090029702',
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('releaseBuildNumber', () {
+    test('reads the comment the release writes', () {
+      expect(
+        releaseBuildNumber('notes\n<!-- skyward:build-number:2090029703 -->\n'),
+        2090029703,
+      );
+    });
+
+    test('reads the number older releases state in prose', () {
+      expect(
+        releaseBuildNumber('- 构建号：`2090029703`（APK 的 versionCode）'),
+        2090029703,
+      );
+    });
+
+    test('null when the notes say nothing', () {
+      expect(releaseBuildNumber('no number here'), isNull);
+      expect(releaseBuildNumber(null), isNull);
+      expect(releaseBuildNumber(42), isNull);
+    });
+  });
+
   group('getViewMode', () {
     test('mobile for small width', () {
       expect(getViewMode(400).name, 'mobile');

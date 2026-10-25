@@ -78,6 +78,53 @@ bool _isPreviewBuild(List<String> parts) {
   return revision != null && revision >= _revisionCeiling;
 }
 
+/// Where the release notes carry the build number, as a comment: the prose in
+/// the notes says the same thing in words, and words are not something the app
+/// should be parsing.
+const releaseBuildNumberMarker = 'skyward:build-number:';
+
+/// The build number a release was cut with. Every channel draws from that one
+/// counter -- a preview and the release that follows it are neighbours in it --
+/// so two numbers read from it are directly comparable. Releases published
+/// before the comment existed still state the number in their notes.
+int? releaseBuildNumber(Object? body) {
+  if (body is! String) return null;
+  final marked = RegExp(
+    '<!--\\s*$releaseBuildNumberMarker(\\d+)\\s*-->',
+  ).firstMatch(body)?.group(1);
+  final noted = RegExp(r'构建号：`(\d+)`').firstMatch(body)?.group(1);
+  final value = marked ?? noted;
+  return value == null ? null : int.tryParse(value);
+}
+
+/// Whether [remoteVersion] should be offered to someone running
+/// [installedVersion].
+///
+/// A preview carries its build number in the fourth slot (`1.0.0.2090029702`)
+/// where a release carries a revision, and both draw from the same build
+/// counter -- so those two numbers are comparable, and the release replaces the
+/// preview exactly while it is the larger one. Comparing version names instead
+/// offers a preview a release its own build already outranks, and Android
+/// refuses a downgrade: the app would promise an update it cannot install.
+/// Every other build keeps the version comparison, where that slot counts
+/// releases.
+bool shouldOfferUpdate({
+  required String remoteVersion,
+  required int? remoteBuildNumber,
+  required String installedVersion,
+}) {
+  final parts = installedVersion.split('+')[0].split('.');
+  final installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
+  if (remoteBuildNumber != null &&
+      installedBuildNumber != null &&
+      _isPreviewBuild(parts)) {
+    // Nothing else to weigh: the counter is monotone across days and channels,
+    // so a larger number is both newer and installable over this build.
+    return remoteBuildNumber > installedBuildNumber;
+  }
+  return compareVersions(remoteVersion, installedVersion) > 0;
+}
+
 const releaseNotesBeginMarker = '<!-- flclash:changelog:begin -->';
 const releaseNotesEndMarker = '<!-- flclash:changelog:end -->';
 
