@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -35,6 +36,11 @@ class StorageView extends StatefulWidget {
 class _StorageViewState extends State<StorageView> {
   List<_StorageArea>? _areas;
   String? _locale;
+
+  /// Set while the caches are being emptied. A second tap would delete the
+  /// directory the first one has already recreated, so the row steps out of the
+  /// way until this one is done.
+  var _clearing = false;
 
   @override
   void didChangeDependencies() {
@@ -95,12 +101,26 @@ class _StorageViewState extends State<StorageView> {
     if (confirmed != true) {
       return;
     }
-    for (final area in areas) {
-      final directory = Directory(area.path);
-      if (await directory.exists()) {
-        await directory.delete(recursive: true);
-      }
-      await directory.create(recursive: true);
+    await globalState.safeRun<void>(
+      () async {
+        for (final area in areas) {
+          final directory = Directory(area.path);
+          if (await directory.exists()) {
+            await directory.delete(recursive: true);
+          }
+          await directory.create(recursive: true);
+        }
+      },
+      title: appLocalizations.clearCache,
+      onStart: () {
+        if (mounted) setState(() => _clearing = true);
+      },
+      onEnd: () {
+        if (mounted) setState(() => _clearing = false);
+      },
+    );
+    if (!mounted) {
+      return;
     }
     await _measure();
   }
@@ -134,7 +154,7 @@ class _StorageViewState extends State<StorageView> {
               ListItem(
                 title: Text(appLocalizations.clearCache),
                 leading: const GlyphIcon(AppGlyphs.broom),
-                onTap: areas == null ? null : _clearCaches,
+                onTap: areas == null || _clearing ? null : _clearCaches,
               ),
             ],
           ),
