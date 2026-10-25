@@ -137,6 +137,20 @@ void main() {
       expect(compareVersions('1.0.0', '1.0.0.1'), 0);
     });
 
+    test('a preview build comes before the releases of its line', () {
+      // A preview carries the day's build number, which outranks every revision
+      // by orders of magnitude. Read literally it would be the newer of the
+      // two forever, and the user of a preview would never be told a release
+      // exists -- which is exactly how a preview stops receiving updates.
+      expect(compareVersions('1.0.0.14', '1.0.0.2090029702'), greaterThan(0));
+      expect(compareVersions('1.0.0.2090029702', '1.0.0.14'), lessThan(0));
+    });
+
+    test('a preview still compares on the components above the slot', () {
+      expect(compareVersions('1.0.1.1', '1.0.0.2090029702'), greaterThan(0));
+      expect(compareVersions('1.0.0.1', '1.0.1.2090029702'), lessThan(0));
+    });
+
     test('handles build number', () {
       expect(compareVersions('1.0.0+1', '1.0.0+2'), lessThan(0));
       expect(compareVersions('1.0.0+2', '1.0.0+1'), greaterThan(0));

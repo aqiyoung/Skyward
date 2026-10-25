@@ -35,6 +35,16 @@ int compareVersions(String version1, String version2) {
   if (patch1 != patch2) {
     return patch1.compareTo(patch2);
   }
+  // A preview build stamps the day's build number into the fourth slot
+  // (`1.0.0.2090029702`) where a release puts its revision (`1.0.0.14`). Read
+  // as numbers the preview always wins, so a preview build never learns that a
+  // release exists -- and the release is where its user belongs. A preview is
+  // a snapshot of the line it was cut from, so it is the earlier side.
+  final preview1 = _isPreviewBuild(v1);
+  final preview2 = _isPreviewBuild(v2);
+  if (preview1 != preview2) {
+    return preview1 ? -1 : 1;
+  }
   // This fork's releases carry a fourth component -- the revision we iterate
   // on top of upstream's version -- and their tags are exactly that version.
   // Upstream builds have no fourth component, and neither do this fork's
@@ -54,6 +64,18 @@ int compareVersions(String version1, String version2) {
       ? int.parse(version2.split('+')[1])
       : 0;
   return build1.compareTo(build2);
+}
+
+/// Every revision this fork will ever cut is a small count -- one per release.
+/// A build number shares the slot only in preview builds, and those start in
+/// the billions (a day's prefix times a hundred), so nothing on the release
+/// line can reach this.
+const _revisionCeiling = 1000000;
+
+bool _isPreviewBuild(List<String> parts) {
+  if (parts.length <= 3) return false;
+  final revision = int.tryParse(parts[3]);
+  return revision != null && revision >= _revisionCeiling;
 }
 
 const releaseNotesBeginMarker = '<!-- flclash:changelog:begin -->';
