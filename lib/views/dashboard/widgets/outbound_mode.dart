@@ -21,68 +21,99 @@ void _changeMode(WidgetRef ref, Mode mode) {
   ref.read(setupActionProvider.notifier).changeMode(mode);
 }
 
-/// The three modes as one connected group, for the card that holds them.
+/// The three modes in one container, for the card that holds them: a
+/// single tone block, with the selected segment as a tone2 pill inside
+/// it, not three separate pills with card showing between them.
 class OutboundModeSelector extends ConsumerWidget {
   const OutboundModeSelector({super.key});
-
-  static const _outer = 26.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(
       patchClashConfigProvider.select((state) => state.mode),
     );
-    final tone = DashboardColors.of(context).tone;
+    final colors = DashboardColors.of(context);
+    final colorScheme = context.colorScheme;
     final style = AppTextStyle.footnote
         .of(context)
         .copyWith(fontWeight: DashboardWeight.value);
-    return DashboardConnectedGroup(
-      children: [
-        for (final (index, item) in Mode.values.indexed)
-          Expanded(
-            child: DashboardConnectedButton(
-              selected: item == mode,
-              first: index == 0,
-              last: index == Mode.values.length - 1,
-              outer: _outer,
-              inner: 12,
-              background: tone,
-              semanticLabel: item.label,
-              onTap: () => _changeMode(ref, item),
-              builder: (foreground) => SizedBox(
-                height: 46,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 6,
-                  children: [
-                    // Clash-style selection mark: a blue check before the
-                    // label, with the label itself in blue bold.
-                    if (item == mode)
-                      GlyphIcon(
-                        AppGlyphs.check,
-                        size: 16,
-                        color: foreground,
-                      ),
-                    GlyphIcon(_glyphOf(item), size: 17, color: foreground),
-                    Flexible(
-                      child: Text(
-                        item.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: style.copyWith(
-                          color: foreground,
-                          fontWeight: item == mode
-                              ? DashboardWeight.title
-                              : DashboardWeight.value,
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: ShapeDecoration(
+        color: colors.tone,
+        shape: AppShape.all(26),
+      ),
+      child: Row(
+        children: [
+          for (final item in Mode.values)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: item == mode,
+                inMutuallyExclusiveGroup: true,
+                label: item.label,
+                excludeSemantics: true,
+                child: Container(
+                  decoration: item == mode
+                      ? ShapeDecoration(
+                          color: colors.tone2,
+                          shape: AppShape.all(22),
+                        )
+                      : null,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      customBorder: AppShape.all(22),
+                      splashFactory: NoSplash.splashFactory,
+                      highlightColor: Colors.transparent,
+                      onTap: () => _changeMode(ref, item),
+                      child: SizedBox(
+                        height: 46,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 6,
+                          children: [
+                            // Reference layout selection mark: a blue
+                            // check before the label, with the label
+                            // itself in blue bold, and no second glyph.
+                            if (item == mode)
+                              GlyphIcon(
+                                AppGlyphs.check,
+                                size: 16,
+                                color: colorScheme.brightness ==
+                                        Brightness.light
+                                    ? colorScheme.primary
+                                    : colorScheme.onPrimaryContainer,
+                              ),
+                            Flexible(
+                              child: Text(
+                                item.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: style.copyWith(
+                                  color: item == mode
+                                      ? (colorScheme.brightness ==
+                                              Brightness.light
+                                          ? colorScheme.primary
+                                          : colorScheme
+                                              .onPrimaryContainer)
+                                      : colorScheme.onSurfaceVariant,
+                                  fontWeight: item == mode
+                                      ? DashboardWeight.title
+                                      : DashboardWeight.value,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

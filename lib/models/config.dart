@@ -127,16 +127,17 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 /// name on mobile), then the route board, which Lee wants kept on the home
 /// screen, then the mode control, then the profiles card, which on mobile
 /// also carries the proxy-groups summary and the connection counts. The
-/// separate proxy-groups and network-overview cards are dropped from the
-/// phone default because their information now lives in the profiles card;
-/// both stay addable from the editor, and the full proxies list stays on
-/// the bottom navigation's proxies tab. Desktop keeps the shared list.
+/// The phone default keeps the proxy-groups card as a card of its own,
+/// as in the reference layout, with its large count and icon stack; the
+/// connection counts stay in the profiles card, and the network-overview
+/// card stays addable from the editor. Desktop keeps the shared list.
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
         DashboardWidget.routingBoard,
         DashboardWidget.networkControl,
         DashboardWidget.profiles,
+        DashboardWidget.proxyGroups,
       ]
     : defaultDashboardWidgets;
 
@@ -188,6 +189,17 @@ const _sharedDefaults = {
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+};
+
+/// The merged phone default from PR #9 (status, route, control, profile,
+/// with the proxy-groups summary folded into the profiles card): a saved
+/// list matching it was likewise never edited, so it takes the new
+/// default, gaining the proxy-groups card back as a card of its own.
+const _mergedPhoneDefaults = {
+  DashboardWidget.currentOutbound,
+  DashboardWidget.routingBoard,
+  DashboardWidget.networkControl,
+  DashboardWidget.profiles,
 };
 
 /// The clash-style phone default from the PR #5 trial (status, profile,
@@ -257,6 +269,7 @@ List<DashboardWidget> dashboardWidgetsFromJson(
         setEquals(kept, _currentPhoneDefaults) ||
         setEquals(kept, _slimPhoneDefaults) ||
         setEquals(kept, _sharedDefaults) ||
+        setEquals(kept, _mergedPhoneDefaults) ||
         setEquals(kept, _clashPhoneDefaults)) {
       return platformDefaultDashboardWidgets;
     }
