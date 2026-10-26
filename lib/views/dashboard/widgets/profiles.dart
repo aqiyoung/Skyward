@@ -263,10 +263,12 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       final counts? => profileStatsOf(counts, providers),
       null => null,
     };
+    // Clash-style summary figures: the counts lead the card in bold, with
+    // their labels in small gray under them.
     final figure = DashboardText.figure(
       context,
       widget.figure,
-    ).copyWith(letterSpacing: 0);
+    ).copyWith(letterSpacing: 0, fontWeight: DashboardWeight.title);
     final label = DashboardText.label(context);
     Widget item(int? value, String name) => Column(
       mainAxisSize: MainAxisSize.min,

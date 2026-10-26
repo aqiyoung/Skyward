@@ -121,11 +121,18 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
 /// default keeps the shared list because it must be const.
+///
+/// Clash-style home order: status first (it holds the start button, which
+/// has nowhere else to go), then the profile with its counts, then the mode
+/// control, then the proxy-groups summary. The route-board map card is not
+/// in the default home: clash keeps rules and routes behind a tap, not as a
+/// full map on the home screen.
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
-        DashboardWidget.networkControl,
         DashboardWidget.profiles,
+        DashboardWidget.networkControl,
+        DashboardWidget.proxyGroups,
       ]
     : defaultDashboardWidgets;
 
@@ -155,6 +162,15 @@ const _currentPhoneDefaults = {
   DashboardWidget.networkControl,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+};
+
+/// The slimmed phone default from the earlier clash trial (status, control,
+/// profile): a saved list matching it was likewise never edited, so it takes
+/// the clash-order default too, gaining the proxy-groups summary.
+const _slimPhoneDefaults = {
+  DashboardWidget.currentOutbound,
+  DashboardWidget.networkControl,
+  DashboardWidget.profiles,
 };
 
 const _legacyDefaultDashboardWidgets = {
@@ -210,7 +226,8 @@ List<DashboardWidget> dashboardWidgetsFromJson(
         .toSet();
     if (setEquals(kept, _previousPhoneDefaults) ||
         setEquals(kept, _previousDesktopDefaults) ||
-        setEquals(kept, _currentPhoneDefaults)) {
+        setEquals(kept, _currentPhoneDefaults) ||
+        setEquals(kept, _slimPhoneDefaults)) {
       return platformDefaultDashboardWidgets;
     }
     return kept.toList();
