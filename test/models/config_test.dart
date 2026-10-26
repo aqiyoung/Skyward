@@ -187,13 +187,40 @@ void main() {
       expect(restored.dashboardWidgets, defaultDashboardWidgets);
     });
 
-    test('the five-card phone default becomes the slimmed default', () {
+    test('the five-card phone default becomes the merged default', () {
       final restored = AppSettingProps.fromJson({
         'dashboardWidgets': [
           'currentOutbound',
           'routingBoard',
           'networkControl',
           'profiles',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
+    test('the shared six-card default becomes the merged phone default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'networkControl',
+          'networkOverview',
+          'routingBoard',
+          'profiles',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
+    test('the clash-style phone default without the route board becomes '
+        'the merged default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'profiles',
+          'networkControl',
           'proxyGroups',
         ],
       });
