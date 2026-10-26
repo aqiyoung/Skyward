@@ -123,13 +123,15 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 /// default keeps the shared list because it must be const.
 ///
 /// Clash-style home order: status first (it holds the start button, which
-/// has nowhere else to go), then the profile with its counts, then the mode
-/// control, then the proxy-groups summary. The route-board map card is not
-/// in the default home: clash keeps rules and routes behind a tap, not as a
-/// full map on the home screen.
+/// has nowhere else to go), then the route board, which Lee wants kept on
+/// the home screen, then the profile with its counts, then the mode
+/// control, then the proxy-groups summary. The route board itself keeps the
+/// clash styling (white card, no mobile header icon, lighter shadow); only
+/// its place on the home screen is retained, not removed to a detail page.
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
+        DashboardWidget.routingBoard,
         DashboardWidget.profiles,
         DashboardWidget.networkControl,
         DashboardWidget.proxyGroups,
