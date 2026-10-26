@@ -187,6 +187,19 @@ void main() {
       expect(restored.dashboardWidgets, defaultDashboardWidgets);
     });
 
+    test('the five-card phone default becomes the slimmed default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'routingBoard',
+          'networkControl',
+          'profiles',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
     test('an old dashboard emptied of cards keeps only the current '
         'outbound', () {
       for (final saved in [
