@@ -1,0 +1,109 @@
+name: core watch
+
+# Upstream ships a core release every few weeks and nothing here notices: the
+# submodule pin moves only when a person moves it, so the app can sit on an old
+# core for months without anyone asking. This job reads the version string the
+# beta channel would build with, compares it with mihomo's newest release, and
+# says so on Telegram.
+#
+# A reminder, not a bump. Moving the pin and `core_version` together is a
+# decision, and a job that pushed the core on its own would put upstream code on
+# a phone that no beta has run. The steps it points at are in
+# `.agents/core-sync.md` on `beta`.
+#
+# What was announced is recorded as a lightweight tag `core-watch-<release>`, so
+# a release still unpicked does not repeat itself every morning and a message
+# that failed to send leaves no trace. Delete that tag to be told again.
+
+on:
+  schedule:
+    # 01:00 UTC, 09:00 here.
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare the channel's core with upstream
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # `beta` is the channel that ships next; `main` only moves when a
+          # promotion carries beta's tree over, so it always lags.
+          our=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build_config.yaml?ref=beta" \
+            -H 'Accept: application/vnd.github.raw' \
+            | sed -n 's/^core_version: *\([^[:space:]]*\).*/\1/p' | head -1)
+          if [ -z "$our" ]; then
+            echo "::error::no core_version in beta's build_config.yaml"
+            exit 1
+          fi
+          beta_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/beta" --jq .sha)
+          read -r latest published <<<"$(
+            gh api repos/MetaCubeX/mihomo/releases/latest --jq '[.tag_name, .published_at] | @tsv'
+          )"
+          echo "beta builds ${our}; upstream is at ${latest} (${published})"
+          {
+            echo "our=$our"
+            echo "latest=$latest"
+            echo "published=$published"
+            echo "sha=$beta_sha"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$our" = "$latest" ]; then
+            echo "announce=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/core-watch-${latest}" >/dev/null 2>&1; then
+            echo "${latest} was announced already"
+            echo "announce=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "announce=true" >> "$GITHUB_OUTPUT"
+
+      - name: Announce on Telegram
+        if: steps.check.outputs.announce == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OUR: ${{ steps.check.outputs.our }}
+          UPSTREAM: ${{ steps.check.outputs.latest }}
+          PUBLISHED: ${{ steps.check.outputs.published }}
+          SHA: ${{ steps.check.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Failing here rather than skipping keeps the reminder: without the
+          # secrets nothing is announced and no tag is recorded, so the next run
+          # tries again instead of losing the release.
+          if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID is not set; nothing was announced"
+            exit 1
+          fi
+          {
+            echo "📦 上游内核发了 \`${UPSTREAM}\`，beta 现在编的还是 \`${OUR}\`"
+            echo
+            echo "发布：https://github.com/MetaCubeX/mihomo/releases/tag/${UPSTREAM}"
+            echo "时间：${PUBLISHED}"
+            echo
+            echo "升法（镜像快进，不用重放补丁）："
+            echo "1. \`skyward-core\` 里 \`git merge --ff-only upstream/FlClash\` 后推 \`FlClash\`"
+            echo "2. 本体里 \`git submodule update --remote core/Clash.Meta\`"
+            echo "3. \`build_config.yaml\` 的 \`core_version\` 改成 \`${UPSTREAM}\`，推 \`beta\` 出预览"
+            echo
+            echo "细节：https://github.com/${GITHUB_REPOSITORY}/blob/beta/.agents/core-sync.md"
+            echo
+            echo "（只提醒一次；删掉 tag \`core-watch-${UPSTREAM}\` 可以再提醒一遍）"
+          } > /tmp/msg.txt
+          cat /tmp/msg.txt
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@/tmp/msg.txt"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f "ref=refs/tags/core-watch-${UPSTREAM}" \
+            -f "sha=${SHA}" > /dev/null
+          echo "recorded core-watch-${UPSTREAM} on ${SHA}"

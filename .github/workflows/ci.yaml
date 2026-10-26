@@ -1,0 +1,482 @@
+name: sync upstream and release
+
+# Three channels, each one a promotion of the previous by hand:
+#
+#   preview  every push to `beta` rebuilds a phone build (preview.yaml: Android
+#            arm64 only, no tests) -- the fast loop while a change is settling.
+#   beta     a preview that settled: this workflow tests and builds every
+#            platform off `beta` and publishes a prerelease.
+#   stable   a beta that held: `promote` moves beta's tree into `main`, and the
+#            stable channel tests and builds that.
+#
+# `beta` is the only branch that follows upstream: upstream's `dev` plus our own
+# commits rebased on top. That sync is manual (`sync` input, off by default):
+# a rebase conflict needs a person, and an upstream rewrite must never start a
+# release by itself. `main` is never synced from upstream -- it only moves on
+# promotion, so the stable channel ships code that already ran as beta.
+#
+# The `ci` branch holds the automation, and a promotion refreshes the copies on
+# `main` from it -- a manual run is dispatched from `ci`, so these files take
+# effect without waiting for a promotion. preview.yaml is among them but also
+# has to sit in the branch trees: a push-triggered workflow only runs from the
+# branch that received the push, so `beta` carries the same file.
+#
+# Rebasing is what keeps our patches alive across every upstream sync, and
+# upstream rewrites `dev` (force-pushes) often enough that a merge is not an
+# option. A sync that cannot be applied cleanly stops loudly and tells Telegram
+# instead of quietly shipping upstream alone.
+#
+# Flow: [rebase beta<-upstream/dev] -> preview build -> (later) beta release ->
+# (later, promote) main = beta's tree -> stable release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Which channel to sync and build
+        type: choice
+        options:
+          - preview
+          - beta
+          - stable
+          - all
+        default: preview
+      sync:
+        description: Rebase beta onto upstream/dev first (manual sync only)
+        type: boolean
+        default: false
+      promote:
+        description: Promote beta into main (the stable channel) and build it -- needs channel=stable or all
+        type: boolean
+        default: false
+      force_build:
+        description: Build even when nothing moved
+        type: boolean
+        default: false
+      publish:
+        description: Create the release and announce it on Telegram
+        type: boolean
+        default: true
+
+concurrency:
+  group: sync-and-release
+  cancel-in-progress: false
+
+# The sync force-pushes our branches and the release creates tags, so the token
+# needs write access to contents.
+permissions:
+  contents: write
+
+env:
+  UPSTREAM_REPO: chen08209/FlClash
+
+jobs:
+  sync:
+    name: Sync upstream
+    runs-on: ubuntu-latest
+    outputs:
+      build_preview: ${{ steps.plan.outputs.build_preview }}
+      build_stable: ${{ steps.plan.outputs.build_stable }}
+      build_beta: ${{ steps.plan.outputs.build_beta }}
+      version_stable: ${{ steps.rebase.outputs.version_stable }}
+      version_beta: ${{ steps.rebase.outputs.version_beta }}
+      build_number_stable: ${{ steps.rebase.outputs.build_number_stable }}
+      build_number_beta: ${{ steps.rebase.outputs.build_number_beta }}
+    steps:
+      - name: Sync upstream into our branches
+        id: rebase
+        env:
+          # GITHUB_TOKEN is refused when a push touches .github/workflows, which
+          # an upstream sync regularly does, so the push needs a PAT carrying the
+          # `workflow` scope.
+          TOKEN: ${{ secrets.MIRROR_TOKEN || github.token }}
+          CHANNEL: ${{ inputs.channel || 'preview' }}
+          SYNC: ${{ inputs.sync || 'false' }}
+          PROMOTE: ${{ inputs.promote || 'false' }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          auth="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --quiet --filter=blob:none "$auth" work
+          cd work
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          case "$CHANNEL" in
+            all) channels="preview stable beta" ;;
+            preview) channels="preview" ;;
+            stable) channels="stable" ;;
+            beta) channels="beta" ;;
+            *) echo "::error::unknown channel '$CHANNEL' (expected all, preview, beta or stable; the stable channel builds branch main)"; exit 1 ;;
+          esac
+
+          # A channel is not a branch: the stable channel (what the repository
+          # shows by default) is our `main`, the beta channel is `beta`, and the
+          # preview channel builds the same `beta` branch with fewer platforms.
+          # The step outputs and the jobs that read them stay keyed by channel,
+          # so only the git work below uses $br.
+          branch_of() { [ "$1" = stable ] && echo main || echo beta; }
+
+          # main is never synced from upstream -- only promoted into -- so unlike
+          # beta it has no "nothing to sync yet" case.
+          if git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null; then
+            echo "exists_stable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main does not exist yet, nothing to promote into"
+            echo "exists_stable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # beta is the only branch that follows upstream, and only when asked:
+          # a rebase that no longer applies needs a person to sort out, so it is
+          # never on a timer. The branch is checked out either way, because the
+          # promotion and the version numbering read it.
+          if ! git rev-parse --verify --quiet refs/remotes/origin/beta >/dev/null; then
+            echo "::notice::beta does not exist yet, nothing to sync"
+            echo "exists_beta=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists_beta=true" >> "$GITHUB_OUTPUT"
+            git checkout --quiet -B beta refs/remotes/origin/beta
+
+            if [ "$SYNC" != true ]; then
+              echo "beta: sync not requested, building the branch as it stands"
+            else
+              # Only the branch we follow: a bare fetch pulls every feature
+              # branch upstream happens to have open.
+              git fetch --quiet --filter=blob:none upstream dev
+              upstream_tip=$(git rev-parse upstream/dev)
+              base=$(git merge-base refs/heads/beta upstream/dev)
+              echo "beta: upstream/dev tip=$upstream_tip, our base=$base"
+
+              if [ "$upstream_tip" = "$base" ]; then
+                echo "beta: upstream has not moved"
+              else
+                # Our commits are exactly what sits after the old merge base, so
+                # replaying that range on the new upstream tip carries our
+                # patches over and leaves the branch a straight line on top of
+                # upstream.
+                if git rebase --onto upstream/dev "$base" beta; then
+                  git push --quiet --force-with-lease origin beta
+                  echo "synced_beta=true" >> "$GITHUB_OUTPUT"
+                  echo "beta: rebased onto $upstream_tip and pushed"
+                else
+                  git rebase --abort
+                  echo "conflict_beta=true" >> "$GITHUB_OUTPUT"
+                  echo "::error::beta: our commits no longer apply to upstream/dev ($upstream_tip)"
+                fi
+              fi
+            fi
+          fi
+
+          # Promotion: the stable channel ships what beta has already run, so it
+          # takes beta's tree wholesale.
+          #
+          # A content merge -- even with `-X theirs` -- is not an option:
+          # upstream's main and dev have diverged (each carries commits the other
+          # never got, upstream cherry-picks between them), so their common
+          # ancestor is far behind and merging would union both lines. The stable
+          # channel would then ship code beta never ran. Instead the index is
+          # reset onto beta's tree, the working tree follows it, and anything
+          # beta does not have is dropped. The workflow copies are then taken
+          # from ci, their source of truth.
+          #
+          # The commit still names beta as a second parent. Upstream force-pushes
+          # dev, so beta is rebased onto a tip main has never seen and the two
+          # branches share no ancestor; GitHub then reads every push to beta as
+          # an unmerged branch and offers a pull request carrying the whole tree
+          # against main. `-s ours` records the parents and leaves the tree
+          # alone -- the read-tree below is what ships.
+          if [ "$PROMOTE" = true ]; then
+            case " $channels " in
+              *" stable "*) ;;
+              *) echo "::notice::promote needs the stable channel; use channel=all or channel=stable"; PROMOTE=false ;;
+            esac
+          fi
+          if [ "$PROMOTE" = true ]; then
+            main_before=$(git rev-parse refs/remotes/origin/main)
+            beta_tip=$(git rev-parse refs/heads/beta)
+            git checkout --quiet -B main "$main_before"
+            if git merge-base --is-ancestor "$beta_tip" HEAD; then
+              echo "main already carries beta; nothing to promote"
+            else
+              # Files beta leaves behind would block the merge, and beta's tree
+              # is what the promotion puts in place anyway.
+              git clean --quiet -fd
+              git merge --quiet --no-ff --allow-unrelated-histories -s ours \
+                -m "promote: beta $(git rev-parse --short "$beta_tip") into main" \
+                "$beta_tip"
+              git read-tree -u --reset "$beta_tip"
+              git checkout --quiet refs/remotes/origin/ci -- \
+                .github/workflows/ci.yaml \
+                .github/workflows/build-channel.yaml \
+                .github/workflows/preview.yaml \
+                .github/workflows/publish-release.yaml \
+                .github/workflows/core-watch.yaml
+              git add -A
+              git commit --quiet --amend --no-edit
+              # The stable channel has to build exactly what beta ran, so the
+              # workflow copies are the only thing allowed to differ -- checked
+              # rather than trusted.
+              unexpected=$(git diff --name-only beta \
+                | grep -vE '^\.github/workflows/[A-Za-z0-9_.-]+$' || true)
+              if [ -n "$unexpected" ]; then
+                echo "::error::main does not match beta after promotion:"
+                printf '%s\n' "$unexpected"
+                exit 1
+              fi
+              git push --quiet origin main
+              echo "synced_stable=true" >> "$GITHUB_OUTPUT"
+              echo "stable: promoted beta $(git rev-parse --short "$beta_tip") into main"
+            fi
+          fi
+
+          # Two numbers per release.
+          #
+          # The one users see is upstream's three components plus a fourth of our
+          # own, counting the releases of the line it belongs to: a new version
+          # line starts at .0, and a promoted beta takes a fresh number so that
+          # beta users are offered the stable build as well. The app carries it
+          # as APP_VERSION (see the build workflow), and the release tag is
+          # exactly it -- so the update check, which compares the latest tag
+          # against that version, compares like with like.
+          #
+          # The versionCode -- what Android uses to decide whether one build may
+          # install over another -- is a day number written as <20900294><01>:
+          # 2,090,000,000 plus a hundred per calendar day since 2026-01-01, plus
+          # the sequence that day. The floor sits above the 2,090,00x,xxx
+          # numbers the early test packages were published with, which is what
+          # made a release arriving on a phone that still ran one a downgrade;
+          # the ceiling is 2,100,000,000, past which Flutter refuses to build,
+          # and a hundred codes a day keeps the series inside it for another 270
+          # years. Every channel draws from the one counter, stable first: the
+          # same day gives stable ...01, then beta ...02, then a preview ...03.
+          #
+          # The sequence is one past the highest spent *that day*: not the
+          # number of tags, because counting assumes the stamps are contiguous
+          # and any tag that ever went missing would hand the same number out
+          # twice; and not per version, because that restarts at 01 the moment
+          # upstream ships a new version, and on a day that already had a
+          # release it would produce a lower versionCode than the one already on
+          # the phone, which Android refuses to install over.
+          #
+          # The tags carry only the version, so the build number is read back
+          # from the release titles and notes, which is where it is written;
+          # releases come back newest first, so the ones spent today are on the
+          # first page. A preview writes down the code it built against rather
+          # than the ABI-shifted one its arm64 APK carries, so one reading
+          # serves every channel. The revision is counted from the tags in the
+          # clone instead of the tags API, which pages at 100 names and upstream
+          # alone already has more tags than that.
+          now=$(date -u +%s)
+          origin=$(date -u -d 2026-01-01 +%s)
+          day_prefix=$(( 20900000 + (now - origin) / 86400 ))
+          titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
+          highest_stamp=$(printf '%s\n' "$titles" \
+            | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
+          # 10#: past the eighth build of a day the stamp carries a leading zero,
+          # and bash would read a bare 09 as an invalid octal number.
+          stamp=$(( 10#${highest_stamp:-0} + 1 ))
+          taken=""
+          for ch in $channels; do
+            # The preview channel publishes under a `preview-*` tag, so it takes
+            # no version from the line; its job carries the code itself.
+            [ "$ch" = preview ] && continue
+            br=$(branch_of "$ch")
+            git rev-parse --verify --quiet "refs/heads/$br" >/dev/null || continue
+            base_version=$(git show "$br:pubspec.yaml" | sed -n 's/^version: *\([^+]*\).*/\1/p' | tr -d '\r')
+            # The fourth component counts the releases of this line, so a new
+            # line starts at .0 instead of inheriting the last line's count.
+            # Past the highest tag of the line, so a tag that went missing never
+            # hands the same number out twice.
+            highest_revision=$(git tag --list "v${base_version}.*" \
+              | sed -n "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)$/\1/p" \
+              | sort -n | tail -1)
+            if [[ -n "$highest_revision" ]]; then
+              revision=$(( 10#${highest_revision} + 1 ))
+            else
+              revision=0
+            fi
+            while [[ " $taken " == *" ${base_version}.${revision} "* ]]; do
+              revision=$(( revision + 1 ))
+            done
+            taken="$taken ${base_version}.${revision}"
+            code=$(( day_prefix * 100 + stamp ))
+            echo "version_$ch=${base_version}.${revision}" >> "$GITHUB_OUTPUT"
+            echo "build_number_$ch=${code}" >> "$GITHUB_OUTPUT"
+            echo "$ch ($br): next version ${base_version}.${revision}, build number ${code}"
+            stamp=$(( stamp + 1 ))
+          done
+
+      - name: Tell Telegram when a sync could not be applied
+        if: always() && steps.rebase.outputs.conflict_beta == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] || exit 0
+          {
+            echo "⚠️ Skyward 同步中止：上游更新与我们的改动冲突"
+            echo
+            echo "冲突分支：beta（← 上游 dev）"
+            echo "没有构建、没有发布，等人工处理。"
+            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > /tmp/msg.txt
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@/tmp/msg.txt" \
+            || echo "::warning::Telegram 推送失败"
+
+      - name: Fail when a rebase conflicted
+        if: steps.rebase.outputs.conflict_beta == 'true'
+        run: |
+          echo "::error::resolve the conflict by hand, then re-run the sync"
+          exit 1
+
+      - name: Plan
+        id: plan
+        env:
+          CHANNEL: ${{ inputs.channel || 'preview' }}
+          FORCE: ${{ inputs.force_build || 'false' }}
+          SYNCED_STABLE: ${{ steps.rebase.outputs.synced_stable }}
+          SYNCED_BETA: ${{ steps.rebase.outputs.synced_beta }}
+          CONFLICT_BETA: ${{ steps.rebase.outputs.conflict_beta }}
+          EXISTS_STABLE: ${{ steps.rebase.outputs.exists_stable }}
+          EXISTS_BETA: ${{ steps.rebase.outputs.exists_beta }}
+        run: |
+          set -euo pipefail
+          case "$CHANNEL" in
+            all) want_preview=true; want_stable=true; want_beta=true ;;
+            preview) want_preview=true; want_stable=false; want_beta=false ;;
+            stable) want_preview=false; want_stable=true; want_beta=false ;;
+            beta) want_preview=false; want_stable=false; want_beta=true ;;
+            *) echo "::error::unknown channel '$CHANNEL' (expected all, preview, beta or stable; the stable channel builds branch main)"; exit 1 ;;
+          esac
+
+          # A channel only gets built if it exists: `force_build` means "build
+          # even when nothing moved", not "build the ones we have not created
+          # yet". What "nothing moved" means depends on the channel -- a
+          # promotion for stable, an upstream sync for beta -- but a preview is
+          # built from whatever `beta` holds right now, so asking for one is
+          # enough.
+          decided() { # $1 = wanted, $2 = synced, $3 = exists
+            [ "$1" = true ] && [ "$3" = true ] &&
+              { [ "$2" = true ] || [ "$FORCE" = true ]; } && echo true || echo false
+          }
+          requested() { # $1 = wanted, $2 = exists
+            { [ "$1" = true ] && [ "$2" = true ]; } && echo true || echo false
+          }
+
+          echo "build_preview=$(requested "$want_preview" "$EXISTS_BETA")" >> "$GITHUB_OUTPUT"
+          echo "build_stable=$(decided "$want_stable" "$SYNCED_STABLE" "$EXISTS_STABLE")" >> "$GITHUB_OUTPUT"
+          echo "build_beta=$(decided "$want_beta" "$SYNCED_BETA" "$EXISTS_BETA")" >> "$GITHUB_OUTPUT"
+          echo "plan: preview=$want_preview exists=$EXISTS_BETA"
+          echo "plan: stable=$want_stable exists=$EXISTS_STABLE synced=$SYNCED_STABLE"
+          echo "plan: beta=$want_beta exists=$EXISTS_BETA synced=$SYNCED_BETA conflict=$CONFLICT_BETA force=$FORCE"
+
+  # The preview channel builds and publishes itself, in the same workflow that
+  # every push to beta runs; here it is called explicitly so a run can sync
+  # upstream and put the result on a phone in one dispatch.
+  preview:
+    name: Preview
+    needs: sync
+    if: needs.sync.outputs.build_preview == 'true'
+    uses: ./.github/workflows/preview.yaml
+    with:
+      ref: beta
+    secrets: inherit
+
+  test-stable:
+    name: Test stable
+    needs: sync
+    if: needs.sync.outputs.build_stable == 'true'
+    uses: ./.github/workflows/build-channel.yaml
+    with:
+      channel: stable
+      branch: main
+      env: stable
+      version: ${{ needs.sync.outputs.version_stable }}
+      build_number: ${{ needs.sync.outputs.build_number_stable }}
+      stage: test
+    secrets: inherit
+
+  build-stable:
+    name: Build stable
+    needs: [sync, test-stable]
+    if: needs.sync.outputs.build_stable == 'true'
+    uses: ./.github/workflows/build-channel.yaml
+    with:
+      channel: stable
+      branch: main
+      env: stable
+      version: ${{ needs.sync.outputs.version_stable }}
+      build_number: ${{ needs.sync.outputs.build_number_stable }}
+      stage: build
+    secrets: inherit
+
+  test-beta:
+    name: Test beta
+    needs: sync
+    if: needs.sync.outputs.build_beta == 'true'
+    uses: ./.github/workflows/build-channel.yaml
+    with:
+      channel: beta
+      branch: beta
+      env: pre
+      version: ${{ needs.sync.outputs.version_beta }}
+      build_number: ${{ needs.sync.outputs.build_number_beta }}
+      stage: test
+    secrets: inherit
+
+  build-beta:
+    name: Build beta
+    needs: [sync, test-beta]
+    if: needs.sync.outputs.build_beta == 'true'
+    uses: ./.github/workflows/build-channel.yaml
+    with:
+      channel: beta
+      branch: beta
+      env: pre
+      version: ${{ needs.sync.outputs.version_beta }}
+      build_number: ${{ needs.sync.outputs.build_number_beta }}
+      stage: build
+    secrets: inherit
+
+  # A release needs its own channel's tests to have passed. A single failed
+  # platform only costs that platform: fail-fast is off in the build matrix and
+  # publishing whatever arrived is the point, so only `cancelled` blocks it.
+  release-stable:
+    name: Release stable
+    needs: [sync, test-stable, build-stable]
+    if: >-
+      inputs.publish &&
+      needs.sync.outputs.build_stable == 'true' &&
+      needs.test-stable.result == 'success' &&
+      needs.build-stable.result != 'cancelled'
+    uses: ./.github/workflows/publish-release.yaml
+    with:
+      channel: stable
+      branch: main
+      version: ${{ needs.sync.outputs.version_stable }}
+      build_number: ${{ needs.sync.outputs.build_number_stable }}
+      prerelease: false
+    secrets: inherit
+
+  release-beta:
+    name: Release beta
+    needs: [sync, test-beta, build-beta]
+    if: >-
+      inputs.publish &&
+      needs.sync.outputs.build_beta == 'true' &&
+      needs.test-beta.result == 'success' &&
+      needs.build-beta.result != 'cancelled'
+    uses: ./.github/workflows/publish-release.yaml
+    with:
+      channel: beta
+      branch: beta
+      version: ${{ needs.sync.outputs.version_beta }}
+      build_number: ${{ needs.sync.outputs.build_number_beta }}
+      prerelease: true
+    secrets: inherit

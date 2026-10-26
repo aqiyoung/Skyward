@@ -1,0 +1,247 @@
+name: release
+
+# Called by ci.yaml once per channel that built. Publishes whatever the build
+# matrix produced, so one failing platform does not block the release.
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: Release channel
+        required: true
+        type: string
+      branch:
+        description: Our branch the build came from
+        required: true
+        type: string
+      version:
+        description: Version this release carries; the tag is exactly it
+        required: true
+        type: string
+      build_number:
+        description: Build number after the '+', carried in the release title
+        required: true
+        type: string
+      prerelease:
+        description: Publish as a prerelease instead of the repository's latest
+        required: true
+        type: boolean
+
+jobs:
+  release:
+    name: ${{ inputs.channel }}
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Checkout our source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      # What changed since this channel last published. The compare API reads
+      # the range off the tags GitHub already holds, which survives the rebases
+      # that make a local `git log previous..HEAD` range meaningless.
+      - name: Collect the changelog
+        id: changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ inputs.channel }}
+          TAG: v${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          case "$CHANNEL" in
+            stable) pick='[.[] | select(.prerelease == false)]' ;;
+            *) pick='[.[] | select(.prerelease == true and (.tag_name | startswith("v")))]' ;;
+          esac
+          previous=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq "${pick} | .[].tag_name" 2>/dev/null | grep -vx "$TAG" | head -1 || true)
+          commit="$(git rev-parse HEAD)"
+
+          entries=""
+          if [ -n "$previous" ]; then
+            echo "changelog: $previous...$commit"
+            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+              --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
+              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | head -40 || true)
+          else
+            echo "::notice::no earlier release of this channel; the changelog starts here"
+          fi
+
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          {
+            echo "entries<<CHANGELOG_END"
+            printf '%s\n' "$entries"
+            echo "CHANGELOG_END"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifact-${{ inputs.channel }}-*
+          merge-multiple: true
+          path: dist
+
+      - name: Prepare metadata
+        id: meta
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BRANCH: ${{ inputs.branch }}
+          VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::no artifacts were produced for $CHANNEL; nothing to release"
+            exit 1
+          fi
+
+          # The tag is the version itself, for both channels: the app's update
+          # check compares the latest release's tag against the version the app
+          # reports (APP_VERSION, see the build workflow).
+          # The build number -- which is the versionCode, not part of the version
+          # we show -- goes in the notes, where the next run reads it back from.
+          tag="v${VERSION}"
+          commit="$(git rev-parse --short HEAD)"
+          # `+` needs escaping the moment the URL travels through anything that
+          # reads it as a space, which is every link in the Telegram message.
+          tag_url="${tag//+/%2B}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "tag_url=$tag_url" >> "$GITHUB_OUTPUT"
+
+          (cd dist && sha256sum ./* > SHA256SUMS)
+
+          if [ "$CHANNEL" = stable ]; then
+            label="正式版"
+            origin="上游 dev 的代码（在 beta 渠道验证过之后晋升进来的）"
+          else
+            label="beta"
+            origin="上游 dev 的最新代码"
+          fi
+
+          {
+            echo "本仓库自编译的 Skyward（基于上游 FlClash）：\`${BRANCH}\` 分支 = ${origin} + 我们自己的改动。"
+            echo
+            echo "- 渠道：\`${label}\`"
+            echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是我们自己的迭代号）"
+            echo "- 构建号：\`${BUILD_NUMBER}\`（APK 的 versionCode）"
+            echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
+            echo "- 构建时间：$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            if [ -n "$PREVIOUS" ]; then
+              echo
+              echo "**自 \`${PREVIOUS}\` 以来的改动**"
+              echo
+              printf '%s\n' "$CHANGELOG"
+            fi
+            echo
+            echo "签名用的是本仓库自己的证书，与上游官方构建不同，所以：**装过其它版本（官方版或本仓库更早的构建）必须先卸载一次**，之后就能直接覆盖升级。"
+            echo
+            echo "| 文件 | 下载 |"
+            echo "| --- | --- |"
+            for f in dist/*; do
+              name="$(basename "$f")"
+              [ "$name" = SHA256SUMS ] && continue
+              echo "| \`${name}\` | [download](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${name}) |"
+            done
+          } > release-notes.md
+
+          echo "tag=$tag commit=$commit"
+          ls -la dist
+          cat release-notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          BRANCH: ${{ inputs.branch }}
+          VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          set -euo pipefail
+          if [ "$CHANNEL" = stable ]; then
+            title="Skyward ${VERSION}（正式版）"
+          else
+            title="Skyward ${VERSION}（beta）"
+          fi
+          # A tag is a version that has already been published, so this only
+          # happens when a run is retried: replacing the release keeps the
+          # download URLs -- and therefore every link already announced --
+          # working.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "replacing the existing release $TAG"
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+          fi
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$BRANCH" \
+            --title "$title" \
+            --notes-file release-notes.md \
+            ${{ inputs.prerelease && '--prerelease' || '--latest' }}
+
+      # Same shape as the other release bots in this account
+      # (aqiyoung/datbox-android, aqiyoung/iptv-app-check): a plain sendMessage
+      # carrying download links. The installers are far over the 50 MB cap the
+      # cloud Bot API puts on uploads, and a link uploads nothing at all, so no
+      # self-hosted Bot API server is needed.
+      - name: Announce on Telegram
+        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          TAG_URL: ${{ steps.meta.outputs.tag_url }}
+          VERSION: ${{ inputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          if [ "$CHANNEL" = stable ]; then
+            label="正式版"
+          else
+            label="beta"
+          fi
+
+          # gh-proxy.com in front of github.com: the assets live on GitHub,
+          # which is unreachable for a large part of the audience.
+          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_URL}/"
+
+          {
+            echo "📦 Skyward ${VERSION}（${label}）构建成功"
+            echo
+            # Telegram cuts a message at 4096 characters, so the changelog is
+            # capped here and the release page carries the rest.
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo "自 \`${PREVIOUS}\` 以来："
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=15'
+              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 15 ] && echo "…（其余见 Release 页）"
+              echo
+            fi
+            for f in dist/*; do
+              name="$(basename "$f")"
+              [ "$name" = SHA256SUMS ] && continue
+              echo "• ${name}"
+              echo "  ${prefix}${name}"
+            done
+            echo
+            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG_URL}"
+            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "（本项目是自编译版，签名与上游官方不同：从其它版本切换过来要先卸载一次）"
+          } > /tmp/msg.txt
+
+          cat /tmp/msg.txt
+
+          # -f: a rejected post (bad token, chat the bot cannot write to) fails
+          # visibly instead of reporting success.
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@/tmp/msg.txt" \
+            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
