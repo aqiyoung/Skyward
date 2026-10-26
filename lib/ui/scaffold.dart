@@ -83,10 +83,11 @@ class CommonScaffold extends StatefulWidget {
   final bool canSort;
 
   /// Steps the bar's actions aside with the title while the page scrolls
-  /// up, and back in while it scrolls down. Off by default: a page opts in
-  /// only when its actions are safe to step aside. Sorting and
-  /// confirmation actions stay put even when this is set, so the way out
-  /// of sort mode and the page's answer are never chased down a scroll.
+  /// up, and back in while it scrolls down. On by default, so every page
+  /// behaves like the dashboard; a page opts out only when its actions
+  /// must stay in reach. Sorting and confirmation actions stay put even
+  /// when this is set, so the way out of sort mode and the page's answer
+  /// are never chased down a scroll.
   final bool hideActionsOnScroll;
 
   const CommonScaffold({
@@ -110,7 +111,7 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
-    this.hideActionsOnScroll = false,
+    this.hideActionsOnScroll = true,
   });
 
   @override

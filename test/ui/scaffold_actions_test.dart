@@ -14,7 +14,7 @@ const _mobile = Size(400, 900);
 Future<void> _pumpPage(
   WidgetTester tester,
   Widget body, {
-  bool hideActionsOnScroll = false,
+  bool hideActionsOnScroll = true,
   IconButtonData? confirmationAction,
 }) async {
   tester.view.physicalSize = _mobile;
@@ -43,8 +43,9 @@ Future<void> _pumpPage(
 }
 
 /// The nearest fade around the action belongs to the bar's own step-aside.
-/// Without the opt-in, or with a confirmation action, that fade is absent
-/// and the nearest one is the sheet cover, which stays fully opaque.
+/// When the action is opted out, or a confirmation action is present, that
+/// fade is absent and the nearest one is the sheet cover, which stays
+/// fully opaque.
 double _actionOpacity(WidgetTester tester) {
   final button = find.widgetWithGlyph(IconButton, AppGlyphs.edit);
   final fade = find.ancestor(
@@ -60,10 +61,10 @@ Widget _rows() => ListView.builder(
 );
 
 void main() {
-  testWidgets('an opted-in action steps aside as the page scrolls up', (
+  testWidgets('an action steps aside by default as the page scrolls up', (
     tester,
   ) async {
-    await _pumpPage(tester, _rows(), hideActionsOnScroll: true);
+    await _pumpPage(tester, _rows());
     expect(_actionOpacity(tester), 1.0);
 
     await tester.drag(find.byType(ListView), const Offset(0, -200));
@@ -75,8 +76,8 @@ void main() {
     expect(_actionOpacity(tester), 1.0);
   });
 
-  testWidgets('an action stays put without the opt-in', (tester) async {
-    await _pumpPage(tester, _rows());
+  testWidgets('an opted-out action stays put', (tester) async {
+    await _pumpPage(tester, _rows(), hideActionsOnScroll: false);
     expect(_actionOpacity(tester), 1.0);
 
     await tester.drag(find.byType(ListView), const Offset(0, -200));
@@ -90,7 +91,6 @@ void main() {
     await _pumpPage(
       tester,
       _rows(),
-      hideActionsOnScroll: true,
       confirmationAction: IconButtonData(
         glyph: AppGlyphs.check,
         tooltip: 'Done',
