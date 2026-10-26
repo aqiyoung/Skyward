@@ -141,8 +141,11 @@ class DashboardCardHeader extends StatelessWidget {
         spacing: 8,
         children: [
           // Clash-style mobile cards carry no leading icon: the title alone
-          // leads the card. Desktop keeps its glyph.
-          if (!mobile && glyph case final glyph?)
+          // leads the card. Desktop keeps its glyph. The mobile check must
+          // be a pattern guard, not an && before the pattern: `!mobile &&
+          // glyph case ...` does not parse as a pattern match and fails the
+          // build with a Glyph?/bool type error.
+          if (glyph case final glyph? when !mobile)
             GlyphIcon(glyph, size: glyphSize, color: iconColor),
           Expanded(
             child: end.isEmpty
