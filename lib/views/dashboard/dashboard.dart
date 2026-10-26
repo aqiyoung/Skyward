@@ -68,6 +68,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
       backgroundColor: DashboardColors.of(context).page,
+      // The edit button steps aside with the title while the dashboard
+      // scrolls up. Editing holds a confirmation action, which the
+      // scaffold keeps in reach, so this only ever hides the edit button.
+      hideActionsOnScroll: true,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
