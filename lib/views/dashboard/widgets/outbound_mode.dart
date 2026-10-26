@@ -55,13 +55,26 @@ class OutboundModeSelector extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   spacing: 6,
                   children: [
+                    // Clash-style selection mark: a blue check before the
+                    // label, with the label itself in blue bold.
+                    if (item == mode)
+                      GlyphIcon(
+                        AppGlyphs.check,
+                        size: 16,
+                        color: foreground,
+                      ),
                     GlyphIcon(_glyphOf(item), size: 17, color: foreground),
                     Flexible(
                       child: Text(
                         item.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: style.copyWith(color: foreground),
+                        style: style.copyWith(
+                          color: foreground,
+                          fontWeight: item == mode
+                              ? DashboardWeight.title
+                              : DashboardWeight.value,
+                        ),
                       ),
                     ),
                   ],
@@ -135,6 +148,12 @@ class OutboundModeBar extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           spacing: 6,
                           children: [
+                            if (item == mode)
+                              GlyphIcon(
+                                AppGlyphs.check,
+                                size: 16,
+                                color: foreground,
+                              ),
                             GlyphIcon(
                               _glyphOf(item),
                               size: 18,
