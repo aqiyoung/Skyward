@@ -265,15 +265,16 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       ],
     );
     return LayoutBuilder(
-      // The minimum width lets spaceBetween spread the row inside FittedBox.
+      // Reference layout: the three counts sit together on the left,
+      // not spread across the card's full width.
       builder: (context, constraints) => FittedBox(
         fit: BoxFit.scaleDown,
         alignment: AlignmentDirectional.centerStart,
         child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            spacing: 16,
+            mainAxisAlignment: MainAxisAlignment.start,
+            spacing: 40,
             children: [
               item(stats?.groups, appLocalizations.proxyGroup),
               item(stats?.proxies, appLocalizations.proxies),
