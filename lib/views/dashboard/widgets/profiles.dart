@@ -206,55 +206,19 @@ class ProfilesCard extends ConsumerWidget {
             ),
           if (profile != null) ...[
             if (mobile) const SizedBox(height: 14) else const Spacer(),
-            if (usage != null)
-              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6)
-            else
+            if (usage != null) ...[
+              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6),
+              const SizedBox(height: 14),
               _ConfigStats(figure: figure),
-            // Merged resource card: on mobile the profiles card also
-            // carries the proxy-groups summary and the connection counts,
-            // so the separate proxy-groups and network-overview cards are
-            // not needed on the default home. Both are information only
-            // here: the card itself opens the profile detail on mobile,
-            // and the full proxies list stays on the bottom navigation's
-            // proxies tab while the counts open their own lists.
-            if (mobile) _ProxyGroupsStrip(),
+            ] else
+              _ConfigStats(figure: figure),
+            // The connection counts stay in the profiles card; the
+            // proxy-groups card is a card of its own again, as in the
+            // reference layout, so its summary is not duplicated here.
             if (mobile) const ConnectionStatsBar(divider: true),
           ],
         ],
       ),
-    );
-  }
-}
-
-class _ProxyGroupsStrip extends ConsumerWidget {
-  const _ProxyGroupsStrip();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final groups = ref.watch(visibleGroupsStateProvider).value;
-    if (groups == null || groups.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final label = DashboardText.label(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 12),
-        Container(height: 0.5, color: DashboardColors.of(context).tone2),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Text(context.appLocalizations.proxyGroup, style: label),
-            const Spacer(),
-            Text(
-              '${groups.length} ${context.appLocalizations.proxyGroup}',
-              maxLines: 1,
-              style: label,
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

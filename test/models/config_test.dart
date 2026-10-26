@@ -200,6 +200,18 @@ void main() {
       expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
     });
 
+    test('the PR #9 merged phone default gains the proxy-groups card', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'routingBoard',
+          'networkControl',
+          'profiles',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
     test('the shared six-card default becomes the merged phone default', () {
       final restored = AppSettingProps.fromJson({
         'dashboardWidgets': [
