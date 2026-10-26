@@ -1,12 +1,13 @@
 import 'package:skyward/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'connection_stats.dart';
 import 'service_status.dart';
 
-/// The services and the three feeds in one card: the grid says whether the
-/// outside world is reachable, the counts underneath say how much is going
-/// through, and both open their own list when tapped.
+/// The services in one card: the grid says whether the outside world is
+/// reachable, and tapping a service opens its list. The connection,
+/// request and DNS counts used to sit underneath as links; they are
+/// not on the dashboard any more, and those lists stay in the tools
+/// pages, as with the rest of the dashboard subtraction.
 class NetworkOverviewCard extends StatelessWidget {
   const NetworkOverviewCard({super.key});
 
@@ -14,7 +15,6 @@ class NetworkOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ServiceStatusCard(
       title: context.appLocalizations.networkOverview,
-      footer: const ConnectionStatsBar(divider: true),
     );
   }
 }
