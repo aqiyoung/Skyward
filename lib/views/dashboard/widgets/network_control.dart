@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
@@ -110,6 +112,15 @@ class _StatusTile extends StatelessWidget {
   }
 }
 
+/// The VPN block on the dashboard shows the VPN that is actually in
+/// effect, not the saved preference alone: running, not suspended, not
+/// in safe mode, and the preference on. Tapping it is the same action
+/// as the status card's start/stop, so the dashboard reads as one
+/// switch: stopped, it starts with the system VPN on; running with
+/// the VPN in effect, it stops; running with the VPN preference off
+/// (local-proxy-only mode, set in settings), it turns the preference
+/// on and restarts so the VPN takes effect. The preference itself
+/// stays in settings, where the local-proxy-only mode still lives.
 class _VpnStatusTile extends ConsumerWidget {
   const _VpnStatusTile();
 
@@ -117,12 +128,33 @@ class _VpnStatusTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final enabled = ref.watch(vpnSettingProvider.select((state) => state.enable));
+    final running = ref.watch(isStartProvider);
+    final suspended = ref.watch(suspendProvider);
+    final safeMode = ref.watch(safeModeProvider);
+    final effective = running && !suspended && !safeMode && enabled;
+    Future<void> turnOn() async {
+      if (!enabled) {
+        ref
+            .read(vpnSettingProvider.notifier)
+            .update((state) => state.copyWith(enable: true));
+      }
+      if (running) {
+        await ref.read(setupActionProvider.notifier).restartVpn();
+      } else {
+        ref.read(commonActionProvider.notifier).toggleRunning();
+      }
+    }
+
     return _StatusTile(
       title: 'VPN',
-      subtitle: enabled ? appLocalizations.enabled : appLocalizations.disabled,
-      onTap: () => ref
-          .read(vpnSettingProvider.notifier)
-          .update((state) => state.copyWith(enable: !enabled)),
+      subtitle: effective ? appLocalizations.enabled : appLocalizations.disabled,
+      onTap: () {
+        if (effective) {
+          ref.read(commonActionProvider.notifier).toggleRunning();
+        } else {
+          unawaited(turnOn());
+        }
+      },
     );
   }
 }
