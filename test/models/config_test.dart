@@ -187,6 +187,58 @@ void main() {
       expect(restored.dashboardWidgets, defaultDashboardWidgets);
     });
 
+    test('the five-card phone default becomes the merged default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'routingBoard',
+          'networkControl',
+          'profiles',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
+    test('the PR #9 merged phone default gains the proxy-groups card', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'routingBoard',
+          'networkControl',
+          'profiles',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
+    test('the shared six-card default becomes the merged phone default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'networkControl',
+          'networkOverview',
+          'routingBoard',
+          'profiles',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
+    test('the clash-style phone default without the route board becomes '
+        'the merged default', () {
+      final restored = AppSettingProps.fromJson({
+        'dashboardWidgets': [
+          'currentOutbound',
+          'profiles',
+          'networkControl',
+          'proxyGroups',
+        ],
+      });
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
     test('an old dashboard emptied of cards keeps only the current '
         'outbound', () {
       for (final saved in [

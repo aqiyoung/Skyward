@@ -17,21 +17,6 @@ import 'package:material_ui/material_ui.dart';
 import 'card.dart';
 import 'profile_detail.dart';
 
-typedef _Usage = ({int used, int total, double share});
-
-_Usage? _usageOf(Profile? profile) {
-  final info = profile?.subscriptionInfo;
-  if (info == null || info.total <= 0) {
-    return null;
-  }
-  final used = info.upload + info.download;
-  return (
-    used: used,
-    total: info.total,
-    share: (used / info.total).clamp(0.0, 1.0).toDouble(),
-  );
-}
-
 DateTime? _expiryOf(Profile? profile) {
   final expire = profile?.subscriptionInfo?.expire ?? 0;
   return expire > 0 ? DateTime.fromMillisecondsSinceEpoch(expire * 1000) : null;
@@ -54,10 +39,6 @@ void _openProfile(BuildContext context, Profile? profile) {
   }
 }
 
-const _nearlyUsedShare = 0.9;
-
-String _percentOf(double share) => '${(share * 100).round()}%';
-
 String _sourceOf(BuildContext context, ProfileType type) => switch (type) {
   ProfileType.url => context.appLocalizations.remote,
   ProfileType.file => context.appLocalizations.local,
@@ -79,7 +60,6 @@ class ProfilesCard extends ConsumerWidget {
     final switchable = ref.watch(
       profilesProvider.select((profiles) => profiles.length > 1),
     );
-    final usage = _usageOf(profile);
     final expiry = _expiryOf(profile);
     final updatedAt = profile?.lastUpdateDate;
     final label = DashboardText.label(context);
@@ -120,7 +100,7 @@ class ProfilesCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: name
                 .of(context)
-                .copyWith(fontWeight: DashboardWeight.value),
+                .copyWith(fontWeight: DashboardWeight.title),
           ),
         ),
         if (profile != null && switchable)
@@ -205,10 +185,11 @@ class ProfilesCard extends ConsumerWidget {
             ),
           if (profile != null) ...[
             if (mobile) const SizedBox(height: 14) else const Spacer(),
-            if (usage != null)
-              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6)
-            else
-              _ConfigStats(figure: figure),
+            // Reference layout: the card is just the counts. Usage,
+            // subscription and providers live in the detail sheet the
+            // card opens, and the connection, request and DNS counts
+            // live in the tools pages, not on the dashboard.
+            _ConfigStats(figure: figure),
           ],
         ],
       ),
@@ -263,10 +244,12 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       final counts? => profileStatsOf(counts, providers),
       null => null,
     };
+    // Clash-style summary figures: the counts lead the card in bold, with
+    // their labels in small gray under them.
     final figure = DashboardText.figure(
       context,
       widget.figure,
-    ).copyWith(letterSpacing: 0);
+    ).copyWith(letterSpacing: 0, fontWeight: DashboardWeight.title);
     final label = DashboardText.label(context);
     Widget item(int? value, String name) => Column(
       mainAxisSize: MainAxisSize.min,
@@ -282,15 +265,16 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       ],
     );
     return LayoutBuilder(
-      // The minimum width lets spaceBetween spread the row inside FittedBox.
+      // Reference layout: the three counts sit together on the left,
+      // not spread across the card's full width.
       builder: (context, constraints) => FittedBox(
         fit: BoxFit.scaleDown,
         alignment: AlignmentDirectional.centerStart,
         child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            spacing: 16,
+            mainAxisAlignment: MainAxisAlignment.start,
+            spacing: 40,
             children: [
               item(stats?.groups, appLocalizations.proxyGroup),
               item(stats?.proxies, appLocalizations.proxies),
@@ -301,142 +285,4 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       ),
     );
   }
-}
-
-class _UsageMeter extends StatelessWidget {
-  const _UsageMeter({
-    required this.usage,
-    required this.figure,
-    required this.gap,
-  });
-
-  final _Usage usage;
-  final AppTextStyle figure;
-  final double gap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final percent = DashboardText.figure(
-              context,
-              figure,
-            ).copyWith(letterSpacing: 0);
-            final unit = DashboardText.unit(context, AppTextStyle.footnote);
-            final used = ' ${context.appLocalizations.usedShort}';
-            final traffic =
-                '${dashboardTraffic(usage.used)} / ${dashboardTraffic(usage.total)}';
-            final trafficStyle = AppTextStyle.footnote
-                .of(context)
-                .toTabular
-                .copyWith(color: context.colorScheme.onSurfaceVariant);
-            final showUnit =
-                _widthOf(_percentOf(usage.share), percent) +
-                    _widthOf(used, unit) +
-                    _rowGap +
-                    _widthOf(traffic, trafficStyle) <=
-                constraints.maxWidth;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              spacing: _rowGap,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: _percentOf(usage.share), style: percent),
-                      if (showUnit) TextSpan(text: used, style: unit),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    traffic,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: trafficStyle,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        SizedBox(height: gap),
-        SizedBox(
-          height: 12,
-          child: CustomPaint(
-            painter: _ProgressPainter(
-              value: usage.share,
-              active: usage.share >= _nearlyUsedShare
-                  ? DashboardColors.of(context).warn
-                  : context.colorScheme.primary,
-              track: DashboardColors.of(context).tone2,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// A line up to [value], a gap, then a flat track ending in a stop dot.
-class _ProgressPainter extends CustomPainter {
-  const _ProgressPainter({
-    required this.value,
-    required this.active,
-    required this.track,
-  });
-
-  static const _stroke = 4.0;
-  static const _gap = 6.0;
-  static const _stop = 4.0;
-
-  final double value;
-  final Color active;
-  final Color track;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final mid = size.height / 2;
-    const start = _stroke / 2;
-    final end = size.width - _stroke / 2;
-    final split = start + (end - start) * value;
-    final paint = Paint()
-      ..strokeWidth = _stroke
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    if (value > 0) {
-      canvas.drawLine(
-        Offset(start, mid),
-        Offset(split, mid),
-        paint..color = active,
-      );
-    }
-    final trackStart = value > 0 ? split + _gap + _stroke : start;
-    if (trackStart < end - _stop) {
-      canvas.drawLine(
-        Offset(trackStart, mid),
-        Offset(end - _stop - _gap, mid),
-        paint..color = track,
-      );
-    }
-    if (value < 1) {
-      canvas.drawCircle(
-        Offset(end - _stop / 2, mid),
-        _stop / 2,
-        Paint()..color = active,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ProgressPainter oldDelegate) =>
-      oldDelegate.value != value ||
-      oldDelegate.active != active ||
-      oldDelegate.track != track;
 }

@@ -28,10 +28,6 @@ bool isBuiltinOutbound(String name) => _builtinOutbounds.contains(name);
 
 const ipMask = '*****';
 
-const _decorationGrowth = 0.12;
-
-const _decorationTurn = 2 * math.pi / 12;
-
 /// The address the proxied traffic leaves by, next to the start button.
 class CurrentOutboundCard extends ConsumerStatefulWidget {
   const CurrentOutboundCard({super.key});
@@ -100,8 +96,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
     final loading = shown == null ? !failed : qualityLoading;
     final metrics = _OutboundMetrics.of(density);
     final appLocalizations = context.appLocalizations;
-    final colorScheme = context.colorScheme;
-    final colors = DashboardColors.of(context);
     final (chipLabel, chipTone) = suspended
         ? (appLocalizations.suspended, DashboardChipTone.warn)
         : isStart
@@ -114,6 +108,8 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
         DashboardChip(label: chipLabel, tone: chipTone, dot: isStart),
       ],
     );
+    // The profiles card answers which profile is active, so the status
+    // card does not repeat its name here.
     final exitRow = _ExitRow(
       info: shown,
       stale: stale,
@@ -194,95 +190,25 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
               ),
             ],
           );
+    // Clash-style status card: no decorative shape behind the button and no
+    // faint traffic chart as a backdrop. The card is flat white, the address
+    // and the rates lead, and the traffic chart lives on its own card.
     return DashboardCard(
       padding: EdgeInsets.zero,
       semanticLabel: appLocalizations.status,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipPath(
-              clipper: ShapeBorderClipper(
-                shape: AppShape.all(dashboardCardRadius(density)),
-                textDirection: Directionality.of(context),
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  PositionedDirectional(
-                    end: metrics.decorationEnd,
-                    top: metrics.decorationTop,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween(end: isStart ? 1 : 0),
-                      duration: context.motionDuration(_morphDuration),
-                      curve: Curves.easeOutBack,
-                      builder: (_, progress, _) => Transform.rotate(
-                        angle: _decorationTurn * progress,
-                        child: Transform.scale(
-                          scale: 1 + _decorationGrowth * progress,
-                          child: ShapeBadge(
-                            shape: MaterialShapes.cookie12Sided,
-                            color: Color.lerp(
-                              colors.tone,
-                              Color.alphaBlend(
-                                colorScheme.primary.withValues(alpha: 0.1),
-                                colors.card,
-                              ),
-                              progress.clamp(0, 1),
-                            )!,
-                            size: metrics.decorationSize,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // The speed card's charts become this card's backdrop: the
-                  // numbers moved into the header, the shape of the traffic
-                  // stays behind everything the card shows.
-                  if (!density.isDesktop)
-                    const Positioned.fill(child: _SpeedWaveform()),
-                ],
-              ),
-            ),
-          ),
-          Padding(padding: metrics.padding, child: content),
-        ],
-      ),
-    );
-  }
-}
-
-/// The two charts, faint, behind everything the card shows. Watching the
-/// traffic here keeps that repaint out of the card itself.
-class _SpeedWaveform extends ConsumerWidget {
-  const _SpeedWaveform();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final traffics = ref.watch(trafficsProvider);
-    return IgnorePointer(
-      child: RepaintBoundary(
-        child: Opacity(
-          opacity: 0.16,
-          child: Stack(
-            children: [
-              for (final direction in TrafficDirection.values)
-                Positioned.fill(
-                  child: SpeedChart(direction: direction, traffics: traffics),
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: Padding(padding: metrics.padding, child: content),
     );
   }
 }
 
 /// The two rates at the header's end, level with the status: the phone has no
-/// room for a row of their own, and each keeps what it has carried.
+/// room for a row of their own, and each keeps what it has carried. Clash
+/// reads traffic as large figures, so these rates are one size up from the
+/// old caption figures, with totals still in small gray.
 class _HeaderRates extends ConsumerWidget {
   const _HeaderRates();
 
-  static const _maxWidth = 124.0;
+  static const _maxWidth = 150.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -342,7 +268,7 @@ class _HeaderRate extends StatelessWidget {
           children: [
             GlyphIcon(
               direction.glyph,
-              size: 12,
+              size: 14,
               color: direction.glyphColorOf(context),
             ),
             Text(
@@ -350,7 +276,7 @@ class _HeaderRate extends StatelessWidget {
               maxLines: 1,
               style: DashboardText.figure(
                 context,
-                AppTextStyle.caption1,
+                AppTextStyle.subheadline,
                 color: context.colorScheme.onSurface,
               ),
             ),
@@ -379,9 +305,6 @@ class _OutboundMetrics {
     required this.ip,
     required this.buttonSize,
     required this.buttonSlot,
-    required this.decorationSize,
-    required this.decorationEnd,
-    required this.decorationTop,
   });
 
   factory _OutboundMetrics.of(DashboardDensity density) => switch (density) {
@@ -392,11 +315,8 @@ class _OutboundMetrics {
       cellGap: 28,
       badgeSize: 48,
       ip: AppTextStyle.largeTitle,
-      buttonSize: 104,
-      buttonSlot: 120,
-      decorationSize: 290,
-      decorationEnd: -64,
-      decorationTop: -87,
+      buttonSize: 88,
+      buttonSlot: 104,
     ),
     DashboardDensity.compact => _OutboundMetrics(
       padding: dashboardCardPadding(density),
@@ -405,11 +325,8 @@ class _OutboundMetrics {
       cellGap: 22,
       badgeSize: 40,
       ip: AppTextStyle.title1,
-      buttonSize: 84,
-      buttonSlot: 100,
-      decorationSize: 250,
-      decorationEnd: -64,
-      decorationTop: -75,
+      buttonSize: 72,
+      buttonSlot: 84,
     ),
     DashboardDensity.mobile => const _OutboundMetrics(
       padding: EdgeInsetsDirectional.fromSTEB(20, 18, 16, 18),
@@ -418,11 +335,8 @@ class _OutboundMetrics {
       cellGap: 24,
       badgeSize: 48,
       ip: AppTextStyle.title2,
-      buttonSize: 88,
-      buttonSlot: 88,
-      decorationSize: 240,
-      decorationEnd: -60,
-      decorationTop: -66,
+      buttonSize: 64,
+      buttonSlot: 64,
     ),
   };
 
@@ -434,9 +348,6 @@ class _OutboundMetrics {
   final AppTextStyle ip;
   final double buttonSize;
   final double buttonSlot;
-  final double decorationSize;
-  final double decorationEnd;
-  final double decorationTop;
 }
 
 class _ExitRow extends StatelessWidget {
@@ -945,17 +856,21 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     final size = widget.size;
     final enabled = widget.enabled;
     final up = widget.running || widget.suspended;
-    // A stopped button wears a soft primary, so a filled one only ever means
-    // the tunnel is up.
+    // Clash reserves green for running, so in light mode a running button
+    // is green with white ink, not the app's blue primary. A stopped button
+    // wears a soft primary, so a filled one only ever means the tunnel is
+    // up. Dark mode keeps the primary fill, where green on dark would not
+    // carry the same contrast.
+    final isLight = colorScheme.brightness == Brightness.light;
     final fill = !enabled
         ? DashboardColors.of(context).tone2
         : up
-        ? colorScheme.primary
+        ? (isLight ? colorScheme.success : colorScheme.primary)
         : colorScheme.primaryContainer;
     final ink = !enabled
         ? colorScheme.onSurfaceVariant
         : up
-        ? colorScheme.onPrimary
+        ? (isLight ? Colors.white : colorScheme.onPrimary)
         : colorScheme.onPrimaryContainer;
     final tooltip = widget.suspended
         ? appLocalizations.suspended
@@ -994,9 +909,10 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                       progress: progress,
                       color: glass ? null : color,
                       shadow: enabled
-                          ? colorScheme.primary.withValues(
-                              alpha: up ? 0.3 : 0.16,
-                            )
+                          ? (isLight && up
+                                  ? colorScheme.success
+                                  : colorScheme.primary)
+                              .withValues(alpha: up ? 0.3 : 0.16)
                           : Colors.transparent,
                       ring: _focused
                           ? focusRingSide(colorScheme, standsOff: true)

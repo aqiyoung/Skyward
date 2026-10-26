@@ -22,12 +22,25 @@ class DashboardColors {
 
   factory DashboardColors.of(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final card = SurfaceLevel.card.colorOf(colorScheme);
+    // Clash-style light mode: a very light gray page, pure white cards and
+    // light gray blocks, so the page reads as one quiet surface with the
+    // cards on it rather than a stack of tinted surfaces. Dark mode keeps
+    // the app's existing surface levels untouched.
+    final isLight = colorScheme.brightness == Brightness.light;
+    final card = isLight
+        ? const Color(0xFFFFFFFF)
+        : SurfaceLevel.card.colorOf(colorScheme);
     return DashboardColors._(
-      page: SurfaceLevel.page.colorOf(colorScheme),
+      page: isLight
+          ? const Color(0xFFF2F2F7)
+          : SurfaceLevel.page.colorOf(colorScheme),
       card: card,
-      tone: SurfaceLevel.block.colorOf(colorScheme),
-      tone2: SurfaceLevel.inset.colorOf(colorScheme),
+      tone: isLight
+          ? const Color(0xFFF2F2F7)
+          : SurfaceLevel.block.colorOf(colorScheme),
+      tone2: isLight
+          ? const Color(0xFFE5E5EA)
+          : SurfaceLevel.inset.colorOf(colorScheme),
       track: colorScheme.surfaceContainerHighest,
       thumb: colorScheme.outline,
       series2: Color.alphaBlend(
@@ -85,11 +98,7 @@ abstract final class DashboardShadows {
   static double _blur(double cssBlur) =>
       cssBlur <= 1 ? 0 : (cssBlur / 2 - 0.5) / 0.57735;
 
-  static final _e1Light = [
-    _shadow(0x0D, 0.5, 1),
-    _shadow(0x0A, 2, 6),
-    _shadow(0x17, 12, 32, -6),
-  ];
+  static final _e1Light = [_shadow(0x0F, 1, 6)];
 
   static final _e1Dark = [_shadow(0x80, 1, 2), _shadow(0x8C, 10, 28, -6)];
 

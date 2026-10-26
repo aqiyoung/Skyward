@@ -82,6 +82,14 @@ class CommonScaffold extends StatefulWidget {
   /// Puts the toggle of the sort mode in the bar.
   final bool canSort;
 
+  /// Steps the bar's actions aside with the title while the page scrolls
+  /// up, and back in while it scrolls down. On by default, so every page
+  /// behaves like the dashboard; a page opts out only when its actions
+  /// must stay in reach. Sorting and confirmation actions stay put even
+  /// when this is set, so the way out of sort mode and the page's answer
+  /// are never chased down a scroll.
+  final bool hideActionsOnScroll;
+
   const CommonScaffold({
     super.key,
     required this.body,
@@ -103,6 +111,7 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
+    this.hideActionsOnScroll = true,
   });
 
   @override
@@ -780,6 +789,13 @@ class CommonScaffoldState extends State<CommonScaffold>
                       child: child,
                     )
                   : child;
+              // Sorting and confirmation actions stay in reach: the first
+              // exits sort mode, the second answers the page, and neither
+              // is a control the reader can afford to chase down a scroll.
+              final actionsAside =
+                  widget.hideActionsOnScroll &&
+                  !_sorting &&
+                  widget.confirmationAction == null;
               final appBar = AppBar(
                 clipBehavior: Clip.none,
                 automaticallyImplyLeading: false,
@@ -810,7 +826,11 @@ class CommonScaffoldState extends State<CommonScaffold>
                     ))
                       FadeTransition(
                         opacity: uncovered,
-                        child: underSearch(action, fades: !_searchFillsBar),
+                        child: _ActionsAside(
+                          aside: _titleAside,
+                          enabled: actionsAside,
+                          child: underSearch(action, fades: !_searchFillsBar),
+                        ),
                       ),
                 ],
               );
@@ -1768,6 +1788,52 @@ class _TitleAside extends StatelessWidget {
             duration: _titleAsideDuration,
             opacity: hidden ? 0 : 1,
             child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Steps a bar action aside on the same signal as the title, and back in
+/// when the page turns around. Unlike the title, an action that is not
+/// there must also stay out of focus and semantics, or a hidden button
+/// could still be reached by keyboard or a screen reader.
+class _ActionsAside extends StatelessWidget {
+  final ValueListenable<bool> aside;
+  final bool enabled;
+  final Widget child;
+
+  const _ActionsAside({
+    required this.aside,
+    required this.enabled,
+    required this.child,
+  });
+
+  static const _offset = Offset(0, -0.6);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) {
+      return child;
+    }
+    return ValueListenableBuilder(
+      valueListenable: aside,
+      builder: (context, hidden, _) => ExcludeFocus(
+        excluding: hidden,
+        child: ExcludeSemantics(
+          excluding: hidden,
+          child: IgnorePointer(
+            ignoring: hidden,
+            child: AnimatedSlide(
+              duration: _titleAsideDuration,
+              offset: hidden ? _offset : Offset.zero,
+              child: AnimatedOpacity(
+                duration: _titleAsideDuration,
+                opacity: hidden ? 0 : 1,
+                child: child,
+              ),
+            ),
           ),
         ),
       ),

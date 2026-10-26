@@ -140,7 +140,12 @@ class DashboardCardHeader extends StatelessWidget {
       child: Row(
         spacing: 8,
         children: [
-          if (glyph case final glyph?)
+          // Clash-style mobile cards carry no leading icon: the title alone
+          // leads the card. Desktop keeps its glyph. The mobile check must
+          // be a pattern guard, not an && before the pattern: `!mobile &&
+          // glyph case ...` does not parse as a pattern match and fails the
+          // build with a Glyph?/bool type error.
+          if (glyph case final glyph? when !mobile)
             GlyphIcon(glyph, size: glyphSize, color: iconColor),
           Expanded(
             child: end.isEmpty
@@ -344,9 +349,12 @@ class _RenderRaisedRow extends RenderFlex {
   }
 }
 
-/// M3 Expressive connected buttons: the ends round off the group, the inner
-/// corners stay tight, and the selected one turns into a full pill. Each one
-/// swells under a press.
+/// Connected buttons: the ends round off the group, the inner corners stay
+/// tight, and the selected one turns into a full pill. Each one swells under
+/// a press. Clash-style selection is a light gray fill with blue text, not a
+/// solid blue fill: blue is reserved for the selection itself, so the button
+/// reads as chosen without painting the whole row blue. Dark mode keeps a
+/// container fill, which a gray fill cannot carry there.
 class DashboardConnectedButton extends StatelessWidget {
   const DashboardConnectedButton({
     super.key,
@@ -397,13 +405,18 @@ class DashboardConnectedButton extends StatelessWidget {
                 right: Radius.circular(rtl ? start : end),
               ),
             );
+            final isLight =
+                colorScheme.brightness == Brightness.light;
+            final selectedBackground = isLight
+                ? const Color(0xFFE5E5EA)
+                : colorScheme.primaryContainer;
             return FocusRing(
               shape: shape,
               standsOff: selected,
               child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: ShapeDecoration(
-                  color: Color.lerp(background, colorScheme.primary, amount),
+                  color: Color.lerp(background, selectedBackground, amount),
                   shape: shape,
                 ),
                 child: Material(
@@ -420,7 +433,11 @@ class DashboardConnectedButton extends StatelessWidget {
             );
           },
           child: builder(
-            selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+            selected
+                ? (colorScheme.brightness == Brightness.light
+                      ? colorScheme.primary
+                      : colorScheme.onPrimaryContainer)
+                : colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -450,7 +467,12 @@ class DashboardChip extends StatelessWidget {
     final colors = DashboardColors.of(context);
     final (background, foreground) = switch (tone) {
       DashboardChipTone.idle => (colors.tone, colorScheme.onSurfaceVariant),
-      DashboardChipTone.ok => (colors.okContainer, colors.onOkContainer),
+      // Clash reserves bright green for running: in light mode the ok chip
+      // is a vivid green capsule with white text, not a pale tint. Dark mode
+      // keeps the container pair, where a vivid fill would not read.
+      DashboardChipTone.ok => colorScheme.brightness == Brightness.light
+          ? (colors.ok, Colors.white)
+          : (colors.okContainer, colors.onOkContainer),
       DashboardChipTone.warn => (colors.warnContainer, colors.onWarnContainer),
     };
     return Container(
