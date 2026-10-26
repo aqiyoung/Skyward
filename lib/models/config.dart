@@ -124,10 +124,8 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
-        DashboardWidget.routingBoard,
         DashboardWidget.networkControl,
         DashboardWidget.profiles,
-        DashboardWidget.proxyGroups,
       ]
     : defaultDashboardWidgets;
 
