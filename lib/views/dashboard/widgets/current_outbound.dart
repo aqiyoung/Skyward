@@ -108,11 +108,8 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
         DashboardChip(label: chipLabel, tone: chipTone, dot: isStart),
       ],
     );
-    // Merged top card: the profile name lives on the status card on mobile,
-    // so the status card also answers which profile is active without a
-    // second card header. Switching still happens from the profiles card
-    // and from the bottom navigation's profiles tab.
-    final profile = ref.watch(currentProfileProvider);
+    // The profiles card answers which profile is active, so the status
+    // card does not repeat its name here.
     final exitRow = _ExitRow(
       info: shown,
       stale: stale,
@@ -173,16 +170,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
                   const _HeaderRates(),
                 ],
               ),
-              if (profile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    profile.realLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.cardTitle(context),
-                  ),
-                ),
               SizedBox(height: metrics.ipTop),
               Row(
                 spacing: metrics.gap,
