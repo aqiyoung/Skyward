@@ -122,19 +122,21 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 /// A phone starts without the diagnostic cards, which stay addable. The field
 /// default keeps the shared list because it must be const.
 ///
-/// Clash-style home order: status first (it holds the start button, which
-/// has nowhere else to go), then the route board, which Lee wants kept on
-/// the home screen, then the profile with its counts, then the mode
-/// control, then the proxy-groups summary. The route board itself keeps the
-/// clash styling (white card, no mobile header icon, lighter shadow); only
-/// its place on the home screen is retained, not removed to a detail page.
+/// Merged home, four cards on a phone: status first (it holds the start
+/// button, which has nowhere else to go, and now also carries the profile
+/// name on mobile), then the route board, which Lee wants kept on the home
+/// screen, then the mode control, then the profiles card, which on mobile
+/// also carries the proxy-groups summary and the connection counts. The
+/// separate proxy-groups and network-overview cards are dropped from the
+/// phone default because their information now lives in the profiles card;
+/// both stay addable from the editor, and the full proxies list stays on
+/// the bottom navigation's proxies tab. Desktop keeps the shared list.
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
         DashboardWidget.routingBoard,
-        DashboardWidget.profiles,
         DashboardWidget.networkControl,
-        DashboardWidget.proxyGroups,
+        DashboardWidget.profiles,
       ]
     : defaultDashboardWidgets;
 
@@ -173,6 +175,30 @@ const _slimPhoneDefaults = {
   DashboardWidget.currentOutbound,
   DashboardWidget.networkControl,
   DashboardWidget.profiles,
+};
+
+/// The shared six-card default (status, control, overview, route, profile,
+/// proxy groups): a phone list matching it was likewise never edited, so it
+/// takes the merged phone default, folding overview and proxy groups into
+/// the profiles card.
+const _sharedDefaults = {
+  DashboardWidget.currentOutbound,
+  DashboardWidget.networkControl,
+  DashboardWidget.networkOverview,
+  DashboardWidget.routingBoard,
+  DashboardWidget.profiles,
+  DashboardWidget.proxyGroups,
+};
+
+/// The clash-style phone default from the PR #5 trial (status, profile,
+/// control, proxy groups, without the route board): a saved list matching it
+/// was likewise never edited, so it takes the merged default too, gaining
+/// the route board back.
+const _clashPhoneDefaults = {
+  DashboardWidget.currentOutbound,
+  DashboardWidget.profiles,
+  DashboardWidget.networkControl,
+  DashboardWidget.proxyGroups,
 };
 
 const _legacyDefaultDashboardWidgets = {
@@ -229,7 +255,9 @@ List<DashboardWidget> dashboardWidgetsFromJson(
     if (setEquals(kept, _previousPhoneDefaults) ||
         setEquals(kept, _previousDesktopDefaults) ||
         setEquals(kept, _currentPhoneDefaults) ||
-        setEquals(kept, _slimPhoneDefaults)) {
+        setEquals(kept, _slimPhoneDefaults) ||
+        setEquals(kept, _sharedDefaults) ||
+        setEquals(kept, _clashPhoneDefaults)) {
       return platformDefaultDashboardWidgets;
     }
     return kept.toList();
