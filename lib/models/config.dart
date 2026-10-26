@@ -122,15 +122,14 @@ const List<DashboardWidget> defaultDashboardWidgets = [
 /// A phone starts without the diagnostic cards, which stay addable. The field
 /// default keeps the shared list because it must be const.
 ///
-/// Merged home, four cards on a phone: status first (it holds the start
-/// button, which has nowhere else to go, and now also carries the profile
-/// name on mobile), then the route board, which Lee wants kept on the home
-/// screen, then the mode control, then the profiles card, which on mobile
-/// also carries the proxy-groups summary and the connection counts. The
-/// The phone default keeps the proxy-groups card as a card of its own,
-/// as in the reference layout, with its large count and icon stack; the
-/// connection counts stay in the profiles card, and the network-overview
-/// card stays addable from the editor. Desktop keeps the shared list.
+/// The phone default is five cards, each with only its common information:
+/// status, the route board Lee wants kept on the home screen, the mode
+/// control, the profiles card (just the counts, as in the reference
+/// layout), and the proxy-groups card with its large count and icon
+/// stack. The network-overview card (service latencies and connection
+/// counts) and the memory card stay addable from the editor, and the
+/// connection, request and DNS lists stay in the tools pages. Desktop
+/// keeps the shared list.
 final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,

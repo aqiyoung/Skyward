@@ -15,23 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
-import 'connection_stats.dart';
 import 'profile_detail.dart';
-
-typedef _Usage = ({int used, int total, double share});
-
-_Usage? _usageOf(Profile? profile) {
-  final info = profile?.subscriptionInfo;
-  if (info == null || info.total <= 0) {
-    return null;
-  }
-  final used = info.upload + info.download;
-  return (
-    used: used,
-    total: info.total,
-    share: (used / info.total).clamp(0.0, 1.0).toDouble(),
-  );
-}
 
 DateTime? _expiryOf(Profile? profile) {
   final expire = profile?.subscriptionInfo?.expire ?? 0;
@@ -55,10 +39,6 @@ void _openProfile(BuildContext context, Profile? profile) {
   }
 }
 
-const _nearlyUsedShare = 0.9;
-
-String _percentOf(double share) => '${(share * 100).round()}%';
-
 String _sourceOf(BuildContext context, ProfileType type) => switch (type) {
   ProfileType.url => context.appLocalizations.remote,
   ProfileType.file => context.appLocalizations.local,
@@ -80,7 +60,6 @@ class ProfilesCard extends ConsumerWidget {
     final switchable = ref.watch(
       profilesProvider.select((profiles) => profiles.length > 1),
     );
-    final usage = _usageOf(profile);
     final expiry = _expiryOf(profile);
     final updatedAt = profile?.lastUpdateDate;
     final label = DashboardText.label(context);
@@ -206,16 +185,11 @@ class ProfilesCard extends ConsumerWidget {
             ),
           if (profile != null) ...[
             if (mobile) const SizedBox(height: 14) else const Spacer(),
-            if (usage != null) ...[
-              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6),
-              const SizedBox(height: 14),
-              _ConfigStats(figure: figure),
-            ] else
-              _ConfigStats(figure: figure),
-            // The connection counts stay in the profiles card; the
-            // proxy-groups card is a card of its own again, as in the
-            // reference layout, so its summary is not duplicated here.
-            if (mobile) const ConnectionStatsBar(divider: true),
+            // Reference layout: the card is just the counts. Usage,
+            // subscription and providers live in the detail sheet the
+            // card opens, and the connection, request and DNS counts
+            // live in the tools pages, not on the dashboard.
+            _ConfigStats(figure: figure),
           ],
         ],
       ),
@@ -310,142 +284,4 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       ),
     );
   }
-}
-
-class _UsageMeter extends StatelessWidget {
-  const _UsageMeter({
-    required this.usage,
-    required this.figure,
-    required this.gap,
-  });
-
-  final _Usage usage;
-  final AppTextStyle figure;
-  final double gap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final percent = DashboardText.figure(
-              context,
-              figure,
-            ).copyWith(letterSpacing: 0);
-            final unit = DashboardText.unit(context, AppTextStyle.footnote);
-            final used = ' ${context.appLocalizations.usedShort}';
-            final traffic =
-                '${dashboardTraffic(usage.used)} / ${dashboardTraffic(usage.total)}';
-            final trafficStyle = AppTextStyle.footnote
-                .of(context)
-                .toTabular
-                .copyWith(color: context.colorScheme.onSurfaceVariant);
-            final showUnit =
-                _widthOf(_percentOf(usage.share), percent) +
-                    _widthOf(used, unit) +
-                    _rowGap +
-                    _widthOf(traffic, trafficStyle) <=
-                constraints.maxWidth;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              spacing: _rowGap,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: _percentOf(usage.share), style: percent),
-                      if (showUnit) TextSpan(text: used, style: unit),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    traffic,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: trafficStyle,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        SizedBox(height: gap),
-        SizedBox(
-          height: 12,
-          child: CustomPaint(
-            painter: _ProgressPainter(
-              value: usage.share,
-              active: usage.share >= _nearlyUsedShare
-                  ? DashboardColors.of(context).warn
-                  : context.colorScheme.primary,
-              track: DashboardColors.of(context).tone2,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// A line up to [value], a gap, then a flat track ending in a stop dot.
-class _ProgressPainter extends CustomPainter {
-  const _ProgressPainter({
-    required this.value,
-    required this.active,
-    required this.track,
-  });
-
-  static const _stroke = 4.0;
-  static const _gap = 6.0;
-  static const _stop = 4.0;
-
-  final double value;
-  final Color active;
-  final Color track;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final mid = size.height / 2;
-    const start = _stroke / 2;
-    final end = size.width - _stroke / 2;
-    final split = start + (end - start) * value;
-    final paint = Paint()
-      ..strokeWidth = _stroke
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    if (value > 0) {
-      canvas.drawLine(
-        Offset(start, mid),
-        Offset(split, mid),
-        paint..color = active,
-      );
-    }
-    final trackStart = value > 0 ? split + _gap + _stroke : start;
-    if (trackStart < end - _stop) {
-      canvas.drawLine(
-        Offset(trackStart, mid),
-        Offset(end - _stop - _gap, mid),
-        paint..color = track,
-      );
-    }
-    if (value < 1) {
-      canvas.drawCircle(
-        Offset(end - _stop / 2, mid),
-        _stop / 2,
-        Paint()..color = active,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ProgressPainter oldDelegate) =>
-      oldDelegate.value != value ||
-      oldDelegate.active != active ||
-      oldDelegate.track != track;
 }
