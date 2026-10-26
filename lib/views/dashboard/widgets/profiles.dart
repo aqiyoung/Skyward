@@ -209,9 +209,49 @@ class ProfilesCard extends ConsumerWidget {
               _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6)
             else
               _ConfigStats(figure: figure),
+            // Merged proxy-groups summary: the separate proxy-groups card
+            // is dropped from the mobile default home, so its groups count
+            // lives here instead. It is information only, not a second tap
+            // target, because the card itself already opens the profile
+            // detail on mobile and the full proxies list stays on the
+            // bottom navigation's proxies tab.
+            if (mobile) _ProxyGroupsStrip(),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _ProxyGroupsStrip extends ConsumerWidget {
+  const _ProxyGroupsStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groups = ref.watch(visibleGroupsStateProvider).value;
+    if (groups == null || groups.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final label = DashboardText.label(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
+        Container(height: 0.5, color: DashboardColors.of(context).tone2),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Text(context.appLocalizations.proxyGroup, style: label),
+            const Spacer(),
+            Text(
+              '${groups.length} ${context.appLocalizations.proxyGroup}',
+              maxLines: 1,
+              style: label,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
