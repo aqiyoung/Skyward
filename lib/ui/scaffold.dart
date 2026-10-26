@@ -1759,7 +1759,7 @@ class _TitleAside extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: aside,
       // A title that is not there must not answer taps either.
-      builder: (context, hidden, child) => IgnorePointer(
+      builder: (context, hidden, _) => IgnorePointer(
         ignoring: hidden,
         child: AnimatedSlide(
           duration: _titleAsideDuration,
@@ -1771,7 +1771,6 @@ class _TitleAside extends StatelessWidget {
           ),
         ),
       ),
-      child: child,
     );
   }
 }
