@@ -69,9 +69,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     return CommonScaffold(
       backgroundColor: DashboardColors.of(context).page,
       // The edit button steps aside with the title while the dashboard
-      // scrolls up. Editing holds a confirmation action, which the
-      // scaffold keeps in reach, so this only ever hides the edit button.
-      hideActionsOnScroll: true,
+      // scrolls up; this is now the scaffold default on every page.
+      // Editing holds a confirmation action, which the scaffold keeps in
+      // reach, so this only ever hides the edit button.
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
