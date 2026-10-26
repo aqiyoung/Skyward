@@ -42,6 +42,10 @@ typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 typedef AppBarSearchStateBuilder =
     AppBarSearchState? Function(AppBarSearchState? state);
 
+/// How long the page title takes to step aside as the page scrolls up, and to
+/// come back as it scrolls down.
+const _titleAsideDuration = Duration(milliseconds: 200);
+
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
@@ -121,6 +125,11 @@ class CommonScaffoldState extends State<CommonScaffold>
   );
   final _searchOrigin = ValueNotifier<Rect?>(null);
   final _searchCovered = ValueNotifier(false);
+
+  /// Set while the page is being scrolled up: the title steps aside there so
+  /// the first row keeps the room it is heading into, and comes back as soon as
+  /// the page scrolls down or reaches its top.
+  final _titleAside = ValueNotifier(false);
   final _searchButtonKey = GlobalKey();
   final _barKey = GlobalKey();
   var _searchFillsBar = true;
@@ -244,6 +253,29 @@ class CommonScaffoldState extends State<CommonScaffold>
     return true;
   }
 
+  /// The bar follows the page, so only a vertical scroll counts: the tabs page
+  /// horizontally between pages, and a list a card holds scrolls inside it
+  /// without moving anything the title was covering.
+  bool _handleScrolling(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical ||
+        notification is! ScrollUpdateNotification) {
+      return false;
+    }
+    final delta = notification.scrollDelta;
+    if (delta == null || delta == 0) {
+      return false;
+    }
+    final metrics = notification.metrics;
+    // At the top there is nothing left to uncover, so the title stays where it
+    // starts even if the page is dragged on.
+    final aside = delta > 0 && metrics.pixels > metrics.minScrollExtent;
+    if (_titleAside.value != aside) {
+      _titleAside.value = aside;
+    }
+    // Other listeners still get to see the scroll.
+    return false;
+  }
+
   @override
   void didUpdateWidget(CommonScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -316,6 +348,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     _searchMotion.dispose();
     _searchOrigin.dispose();
     _searchCovered.dispose();
+    _titleAside.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
     super.dispose();
@@ -521,7 +554,8 @@ class CommonScaffoldState extends State<CommonScaffold>
   }
 
   Widget _buildTitle({required bool compact}) {
-    return widget.titleWidget ??
+    final title =
+        widget.titleWidget ??
         (widget.titleMenuItems.isEmpty
             ? Text(widget.title!)
             : CommonPopupBox(
@@ -534,6 +568,7 @@ class CommonScaffoldState extends State<CommonScaffold>
                 popupBuilder: (_) =>
                     CommonPopupMenu(items: widget.titleMenuItems),
               ));
+    return _TitleAside(aside: _titleAside, child: title);
   }
 
   List<Widget> _buildActions(
@@ -820,7 +855,13 @@ class CommonScaffoldState extends State<CommonScaffold>
     // The page's bar floats over its body, which leaves the bar's height at
     // its top through MediaQuery padding, as extendBodyBehindAppBar does.
     final barFloats = !isCompact;
-    final sortableBody = SortModeScope(sorting: _sorting, child: widget.body);
+    final sortableBody = SortModeScope(
+      sorting: _sorting,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrolling,
+        child: widget.body,
+      ),
+    );
     final body = SafeArea(
       top: !barFloats,
       bottom: false,
@@ -1698,5 +1739,39 @@ class BaseScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(body: body, title: title);
+  }
+}
+
+/// Steps its child out of the bar while [aside] is set, and back in when the
+/// page turns around. It moves and fades rather than leaving the tree, so the
+/// bar keeps its height and whoever was looking at the title finds it in the
+/// same place on the way back.
+class _TitleAside extends StatelessWidget {
+  final ValueListenable<bool> aside;
+  final Widget child;
+
+  const _TitleAside({required this.aside, required this.child});
+
+  static const _offset = Offset(0, -0.6);
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: aside,
+      // A title that is not there must not answer taps either.
+      builder: (context, hidden, child) => IgnorePointer(
+        ignoring: hidden,
+        child: AnimatedSlide(
+          duration: _titleAsideDuration,
+          offset: hidden ? _offset : Offset.zero,
+          child: AnimatedOpacity(
+            duration: _titleAsideDuration,
+            opacity: hidden ? 0 : 1,
+            child: child,
+          ),
+        ),
+      ),
+      child: child,
+    );
   }
 }
