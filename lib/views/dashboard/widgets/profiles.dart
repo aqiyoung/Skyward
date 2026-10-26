@@ -120,7 +120,7 @@ class ProfilesCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: name
                 .of(context)
-                .copyWith(fontWeight: DashboardWeight.value),
+                .copyWith(fontWeight: DashboardWeight.title),
           ),
         ),
         if (profile != null && switchable)

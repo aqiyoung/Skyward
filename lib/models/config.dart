@@ -147,6 +147,16 @@ const _previousDesktopDefaults = {
   DashboardWidget.proxyGroups,
 };
 
+/// The phone default the route board shipped with: a saved list matching it
+/// was likewise never edited, so it takes the slimmed default too.
+const _currentPhoneDefaults = {
+  DashboardWidget.currentOutbound,
+  DashboardWidget.routingBoard,
+  DashboardWidget.networkControl,
+  DashboardWidget.profiles,
+  DashboardWidget.proxyGroups,
+};
+
 const _legacyDefaultDashboardWidgets = {
   'networkSpeed',
   'systemProxyButton',
@@ -199,7 +209,8 @@ List<DashboardWidget> dashboardWidgetsFromJson(
         .nonNulls
         .toSet();
     if (setEquals(kept, _previousPhoneDefaults) ||
-        setEquals(kept, _previousDesktopDefaults)) {
+        setEquals(kept, _previousDesktopDefaults) ||
+        setEquals(kept, _currentPhoneDefaults)) {
       return platformDefaultDashboardWidgets;
     }
     return kept.toList();

@@ -85,11 +85,7 @@ abstract final class DashboardShadows {
   static double _blur(double cssBlur) =>
       cssBlur <= 1 ? 0 : (cssBlur / 2 - 0.5) / 0.57735;
 
-  static final _e1Light = [
-    _shadow(0x0D, 0.5, 1),
-    _shadow(0x0A, 2, 6),
-    _shadow(0x17, 12, 32, -6),
-  ];
+  static final _e1Light = [_shadow(0x14, 2, 8)];
 
   static final _e1Dark = [_shadow(0x80, 1, 2), _shadow(0x8C, 10, 28, -6)];
 
