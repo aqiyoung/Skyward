@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
+import 'connection_stats.dart';
 import 'profile_detail.dart';
 
 typedef _Usage = ({int used, int total, double share});
@@ -120,7 +121,7 @@ class ProfilesCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: name
                 .of(context)
-                .copyWith(fontWeight: DashboardWeight.value),
+                .copyWith(fontWeight: DashboardWeight.title),
           ),
         ),
         if (profile != null && switchable)
@@ -205,10 +206,16 @@ class ProfilesCard extends ConsumerWidget {
             ),
           if (profile != null) ...[
             if (mobile) const SizedBox(height: 14) else const Spacer(),
-            if (usage != null)
-              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6)
-            else
+            if (usage != null) ...[
+              _UsageMeter(usage: usage, figure: figure, gap: mobile ? 8 : 6),
+              const SizedBox(height: 14),
               _ConfigStats(figure: figure),
+            ] else
+              _ConfigStats(figure: figure),
+            // The connection counts stay in the profiles card; the
+            // proxy-groups card is a card of its own again, as in the
+            // reference layout, so its summary is not duplicated here.
+            if (mobile) const ConnectionStatsBar(divider: true),
           ],
         ],
       ),
@@ -263,10 +270,12 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
       final counts? => profileStatsOf(counts, providers),
       null => null,
     };
+    // Clash-style summary figures: the counts lead the card in bold, with
+    // their labels in small gray under them.
     final figure = DashboardText.figure(
       context,
       widget.figure,
-    ).copyWith(letterSpacing: 0);
+    ).copyWith(letterSpacing: 0, fontWeight: DashboardWeight.title);
     final label = DashboardText.label(context);
     Widget item(int? value, String name) => Column(
       mainAxisSize: MainAxisSize.min,
