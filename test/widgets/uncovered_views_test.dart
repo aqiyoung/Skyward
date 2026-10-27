@@ -299,9 +299,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(adapter.requests, 1);
 
+    // The check reads the releases list, not `/releases/latest`: it has to see
+    // the preview and beta releases too, so a single release object is no
+    // longer the shape it parses.
     adapter.response.complete(
       ResponseBody.fromString(
-        jsonEncode({'tag_name': 'v0.0.0'}),
+        jsonEncode([
+          {'tag_name': 'v0.0.0', 'name': 'Skyward 0.0.0'},
+        ]),
         200,
         headers: {
           Headers.contentTypeHeader: [Headers.jsonContentType],

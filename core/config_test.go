@@ -248,7 +248,7 @@ func TestUpdateConfigDecodesTheTunSettingsTheHostSends(t *testing.T) {
 	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
 	currentConfig.General.Tun.MTU = 1400
 	var params UpdateParams
-	payload := `{"tun":{"enable":true,"device":"FlClash","stack":"gvisor","auto-route":true,"mtu":9000}}`
+	payload := `{"tun":{"enable":true,"device":"Skyward","stack":"gvisor","auto-route":true,"mtu":9000}}`
 	if err := json.Unmarshal([]byte(payload), &params); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -257,7 +257,7 @@ func TestUpdateConfigDecodesTheTunSettingsTheHostSends(t *testing.T) {
 		t.Fatalf("updateConfig error: %v", err)
 	}
 	tun := currentConfig.General.Tun
-	if !tun.Enable || !tun.AutoRoute || tun.Device != "FlClash" || tun.Stack != constant.TunGvisor {
+	if !tun.Enable || !tun.AutoRoute || tun.Device != "Skyward" || tun.Stack != constant.TunGvisor {
 		t.Errorf("Enable = %v, AutoRoute = %v, Device = %q, Stack = %v", tun.Enable, tun.AutoRoute, tun.Device, tun.Stack)
 	}
 	if tun.MTU != 1400 {

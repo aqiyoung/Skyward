@@ -25,7 +25,10 @@ var
   i: Integer;
   ResultCode: Integer;
 begin
-  Processes := ['Skyward.exe', 'FlClashCore.exe', 'FlClashHelperService.exe'];
+  // The FlClash names are the pre-rename ones: an upgrade has to stop those
+  // processes too, or what an earlier version left in {app} stays locked.
+  Processes := ['Skyward.exe', 'SkywardCore.exe', 'SkywardHelperService.exe',
+    'FlClashCore.exe', 'FlClashHelperService.exe'];
 
   for i := 0 to GetArrayLength(Processes)-1 do
   begin
@@ -36,12 +39,22 @@ end;
 procedure UnregisterHelperService;
 var
   HelperPath: String;
+  HelperPaths: TArrayOfString;
+  i: Integer;
   ResultCode: Integer;
 begin
-  HelperPath := ExpandConstant('{app}\\FlClashHelperService.exe');
-  if FileExists(HelperPath) then
+  // Unregistered by path: the pre-rename Helper is a separate executable and a
+  // separate SCM entry, and leaving it behind keeps a Core running that the new
+  // app never talks to.
+  HelperPaths := [ExpandConstant('{app}\\SkywardHelperService.exe'),
+    ExpandConstant('{app}\\FlClashHelperService.exe')];
+  for i := 0 to GetArrayLength(HelperPaths)-1 do
   begin
-    Exec(HelperPath, 'uninstall', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    HelperPath := HelperPaths[i];
+    if FileExists(HelperPath) then
+    begin
+      Exec(HelperPath, 'uninstall', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    end;
   end;
 end;
 
@@ -86,10 +99,20 @@ begin
   end;
 end;
 
+// The Core and the Helper were named FlClash* before the rename. An upgrade
+// leaves those next to the new binaries, and a Helper left on disk is one the
+// old SCM entry could still reach.
+procedure RemoveLegacyBinaries;
+begin
+  DeleteFile(ExpandConstant('{app}\\FlClashCore.exe'));
+  DeleteFile(ExpandConstant('{app}\\FlClashHelperService.exe'));
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   UnregisterHelperService;
   KillProcesses;
+  RemoveLegacyBinaries;
   Result := '';
 end;
 

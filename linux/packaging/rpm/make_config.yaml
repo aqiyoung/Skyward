@@ -26,6 +26,10 @@ postinstall_scripts:
 # its teardown belongs here; the binary is already gone when %postun runs.
 postuninstall_scripts:
   - '[ "$1" = 0 ] || exit 0'
+  - 'systemctl disable --now skyward-helper.service >/dev/null 2>&1 || true'
+  - 'rm -f /etc/systemd/system/skyward-helper.service'
+  # The pre-rename unit, from a version installed before the Helper got its
+  # own name; nothing removes it once the old binary is gone.
   - 'systemctl disable --now flclash-helper.service >/dev/null 2>&1 || true'
   - 'rm -f /etc/systemd/system/flclash-helper.service'
   - 'systemctl daemon-reload >/dev/null 2>&1 || true'

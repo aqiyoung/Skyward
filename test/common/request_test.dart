@@ -6,7 +6,9 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:skyward/common/constant.dart';
 import 'package:skyward/common/request.dart';
+import 'package:skyward/state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class _StalledHttpClient extends Fake implements HttpClient {
   @override
@@ -67,6 +69,54 @@ void main() {
         ),
       ),
     );
+  });
+
+  group('checkForUpdate', () {
+    Request requestAnswering(Map<String, ResponseBody Function()> byHost) {
+      return Request()..dio.httpClientAdapter = _HostAdapter(byHost);
+    }
+
+    setUpAll(() {
+      globalState.packageInfo = PackageInfo(
+        appName: 'Skyward',
+        packageName: 'com.threely.skyward',
+        version: '1.0.0.23',
+        buildNumber: '2090029901',
+      );
+    });
+
+    test('reads the newest beta from the releases list, not only stable', () async {
+      final request = requestAnswering({
+        'api.github.com': () => ResponseBody.fromString(
+          '[{"tag_name":"preview-2090029901","name":"Skyward 1.0.0.2090029901（预览版）","body":"- 构建号：`2090029901`","draft":false},'
+          '{"tag_name":"v1.0.0.24","name":"Skyward 1.0.0.24（beta）","body":"- 构建号：`2090029902`","draft":false},'
+          '{"tag_name":"v1.0.0.23","name":"Skyward 1.0.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ),
+      });
+
+      // The test host is a desktop, where a preview has no package, so it
+      // is skipped and the newer beta is the answer.
+      final update = await request.checkForUpdate();
+      expect(update?['tag_name'], 'v1.0.0.24');
+    });
+
+    test('answers null when the installed build is already the newest', () async {
+      final request = requestAnswering({
+        'api.github.com': () => ResponseBody.fromString(
+          '[{"tag_name":"v1.0.0.23","name":"Skyward 1.0.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ),
+      });
+
+      expect(await request.checkForUpdate(), isNull);
+    });
   });
 
   group('latestRelease', () {
