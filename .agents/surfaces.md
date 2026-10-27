@@ -118,6 +118,11 @@ Color marks the one item that differs, never the structure around it.
   menu's `danger` item still takes `error`.
 - **Data series** on one chart: the first is primary, the second primary at 45% over the card
   (`DashboardColors.series2`), so they differ by lightness under any seed. Tertiary is not a series color.
+- **A meter** fills a track one level below the surface it sits on, never the surface itself: the profile card's used
+  share is a 4 dp capsule on `SurfaceLevel.inset`, inset from the card's corners, because a bar on the card's own bottom
+  edge was cut into a wedge by the 24 dp radius and read as a stray underline. An expiry date is a label rather than a
+  state and stays neutral until it has passed, when it takes `error`; a primary pill beside the selection badge spent
+  the selection color on a date.
 - **Text**: titles and values `onSurface`, labels and secondary lines `onSurfaceVariant`. `outline` is not a text
   color, and a value is never tinted primary.
 - **Marks** that only identify, a country badge, a group or service icon, a source avatar, sit on a neutral well with

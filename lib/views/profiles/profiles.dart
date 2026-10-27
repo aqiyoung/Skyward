@@ -25,31 +25,37 @@ typedef _Usage = ({int used, int total, double share});
 /// Past this share the usage meter turns to `error`.
 const _usageWarnShare = 0.9;
 
+/// The meter's room at the card's foot: a 4 dp capsule 8 dp above the bottom
+/// edge, and 4 dp clear of the info row above it.
+const _usageBarRoom = 16.0;
+const _usageBarHeight = 4.0;
+const _usageBarBottom = 8.0;
+const _usageBarInset = 16.0;
+
 String _percentOf(double share) => '${(share * 100).round()}%';
 
-/// The used share rides a meter along the card's bottom edge. Washing the card
-/// itself tinted its whole tone, so the fill read as the card's own colour and
-/// competed with the selection badge and with the warning tint on the label.
+/// The used share rides a meter inside the card's own inset.
+///
+/// Pinned to the card's bottom edge, its ends were cut by the 24 dp corner into
+/// wedges, and a 3 dp line over a track four tones off the card read as a stray
+/// underline rather than a meter; washing the whole card was worse still, since
+/// the fill then read as the card's own colour and competed with the selection
+/// badge. A 4 dp capsule inset from the corners, on a track one level below the
+/// card, reads as a meter and nothing else.
 class _UsageBar extends StatelessWidget {
   const _UsageBar({required this.share});
 
   final double share;
 
-  static const _height = 3.0;
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    return SizedBox(
-      height: _height,
-      child: LinearProgressIndicator(
-        minHeight: _height,
-        value: share.clamp(0.0, 1.0),
-        color: share >= _usageWarnShare
-            ? colorScheme.error
-            : colorScheme.primary,
-        backgroundColor: context.raisedSurfaceLevel.colorOf(colorScheme),
-      ),
+    return LinearProgressIndicator(
+      minHeight: _usageBarHeight,
+      borderRadius: BorderRadius.circular(_usageBarHeight / 2),
+      value: share.clamp(0.0, 1.0),
+      color: share >= _usageWarnShare ? colorScheme.error : colorScheme.primary,
+      backgroundColor: SurfaceLevel.inset.colorOf(colorScheme),
     );
   }
 }
@@ -59,7 +65,8 @@ double get _profileItemHeight {
   return measure.textHeight(AppTextStyle.headline) +
       _infoGap +
       measure.textHeight(AppTextStyle.footnote) +
-      2 * listRowVerticalPadding;
+      2 * listRowVerticalPadding +
+      _usageBarRoom;
 }
 
 class ProfilesView extends ConsumerStatefulWidget {
@@ -560,7 +567,15 @@ class ProfileItem extends ConsumerWidget {
                     _GroupsCountChip(profileId: profile.id)
                   else
                     _buildTrailing(context, isUpdating: isUpdating),
-                  if (isSelected) const SelectionBadge(size: 24),
+                  // The badge holds its place whether or not this is the chosen
+                  // card: letting it widen only the selected row pushed that
+                  // row's time and total left, so the column jumped as the
+                  // selection moved.
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: isSelected ? const SelectionBadge(size: 24) : null,
+                  ),
                 ],
               ),
               title: _ProfileCardTitle(
@@ -572,9 +587,9 @@ class ProfileItem extends ConsumerWidget {
             ),
             if (usage != null)
               PositionedDirectional(
-                start: 0,
-                end: 0,
-                bottom: 0,
+                start: _usageBarInset,
+                end: _usageBarInset,
+                bottom: _usageBarBottom,
                 child: _UsageBar(share: usage.share),
               ),
           ],

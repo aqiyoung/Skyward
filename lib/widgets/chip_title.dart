@@ -17,12 +17,17 @@ class ExpireChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final color = expire.isBeforeNow ? colorScheme.error : colorScheme.primary;
+    // A date still ahead says nothing a colour could add, and a primary pill
+    // next to the selection badge spent the app's selection colour on a label.
+    // Only an expiry that has passed is state, and it takes `error`.
+    final expired = expire.isBeforeNow;
     return Tooltip(
       message: context.appLocalizations.expireTime,
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          color: color.opacity15,
+          color: expired
+              ? colorScheme.error.opacity15
+              : context.raisedSurfaceLevel.colorOf(colorScheme),
           shape: AppShape.full,
         ),
         child: Padding(
@@ -30,9 +35,9 @@ class ExpireChip extends StatelessWidget {
           child: Text(
             expire.show,
             maxLines: 1,
-            style: AppTextStyle.caption1
-                .of(context, emphasized: true)
-                .copyWith(color: color),
+            style: AppTextStyle.caption1.of(context, emphasized: true).copyWith(
+              color: expired ? colorScheme.error : colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),
