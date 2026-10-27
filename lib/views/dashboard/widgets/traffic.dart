@@ -76,10 +76,20 @@ class _Figure extends StatelessWidget {
 /// The zero line is the chart's bottom: a card lets the chart bleed past its
 /// edge so idle traffic, or none sampled yet, leaves no line.
 class SpeedChart extends StatelessWidget {
-  const SpeedChart({super.key, required this.direction, required this.traffics});
+  const SpeedChart({
+    super.key,
+    required this.direction,
+    required this.traffics,
+    this.color,
+  });
 
   final TrafficDirection direction;
   final FixedList<Traffic> traffics;
+
+  /// Overrides the direction's own color. The desktop speed cards keep
+  /// the default, one direction per card, so they never need it; the
+  /// status card's backdrop stacks both directions, so it does.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +101,7 @@ class SpeedChart extends StatelessWidget {
       capacity: traffics.maxLength,
       minScale: _minSpeedScale,
       baselineRatio: 1,
-      color: direction.colorOf(context),
+      color: color ?? direction.colorOf(context),
     );
   }
 }

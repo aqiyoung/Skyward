@@ -221,8 +221,14 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
 /// The two charts, faint, behind everything the card shows. Watching the
 /// traffic here keeps that repaint out of the card itself. Both directions
 /// share the same SpeedChart the desktop speed cards use, so the newest
-/// sample lands at the right edge and the wave travels left as time passes,
-/// exactly as it did before: this restores that backdrop, not a new strip.
+/// sample lands at the right edge and the wave travels left as time passes.
+/// The two directions do not share a color here: upload used to be the
+/// download color diluted to 45% over the card, so under the backdrop's
+/// opacity both lines collapsed into the same pale orange and could not
+/// be told apart. Download keeps the theme primary, upload takes the
+/// theme tertiary, a different hue family, and the backdrop opacity is
+/// raised from 0.16 to 0.32 so the hues survive on a white card without
+/// overpowering the numbers above them.
 class _SpeedWaveform extends ConsumerWidget {
   const _SpeedWaveform();
 
@@ -232,12 +238,18 @@ class _SpeedWaveform extends ConsumerWidget {
     return IgnorePointer(
       child: RepaintBoundary(
         child: Opacity(
-          opacity: 0.16,
+          opacity: 0.32,
           child: Stack(
             children: [
               for (final direction in TrafficDirection.values)
                 Positioned.fill(
-                  child: SpeedChart(direction: direction, traffics: traffics),
+                  child: SpeedChart(
+                    direction: direction,
+                    traffics: traffics,
+                    color: direction == TrafficDirection.upload
+                        ? context.colorScheme.tertiary
+                        : null,
+                  ),
                 ),
             ],
           ),
