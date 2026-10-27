@@ -75,11 +75,22 @@ extension FileExt on File {
 }
 
 extension FileSystemEntityExt on FileSystemEntity {
+  /// A name that is gone when the delete returns is deleted, whoever removed it.
+  ///
+  /// A download and a delete take the same path: the provider arrives after the
+  /// set was removed, gets written, and the cache-clean runs over a name a
+  /// rename already took away. Asking `exists()` first answers before the other
+  /// side wins, so the delete threw `PathNotFoundException` out of a cleanup
+  /// that had already done its job. Anything still there is a real failure.
   Future<void> safeDelete({bool recursive = false}) async {
     if (!await exists()) {
       return;
     }
-    await delete(recursive: recursive);
+    try {
+      await delete(recursive: recursive);
+    } on FileSystemException {
+      if (await exists()) rethrow;
+    }
   }
 }
 
