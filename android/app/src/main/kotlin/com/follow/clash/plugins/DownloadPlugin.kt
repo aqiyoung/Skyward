@@ -21,6 +21,11 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     private var downloadReceiver: BroadcastReceiver? = null
 
+    /// The download the complete receiver already opened an installer (or
+    /// the unknown-sources settings) for, so a Dart-side backup call for
+    /// the same download does not open a second installer window.
+    private var installerOpenedForDownloadId: Long? = null
+
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
         methodChannel = MethodChannel(binding.binaryMessenger, CHANNEL)
@@ -48,6 +53,41 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     }
                 }
             }
+            "status" -> {
+                val downloadId = call.argument<Number>("downloadId")?.toLong()
+                if (downloadId == null) {
+                    result.error("bad_arguments", "downloadId is required", null)
+                } else {
+                    try {
+                        result.success(downloadStatus(downloadId))
+                    } catch (error: Exception) {
+                        result.error("status_failed", error.message, null)
+                    }
+                }
+            }
+            "cancel" -> {
+                val downloadId = call.argument<Number>("downloadId")?.toLong()
+                if (downloadId == null) {
+                    result.error("bad_arguments", "downloadId is required", null)
+                } else {
+                    unregisterDownloadReceiver()
+                    val manager =
+                        context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    result.success(manager.remove(downloadId) > 0)
+                }
+            }
+            "install" -> {
+                val downloadId = call.argument<Number>("downloadId")?.toLong()
+                if (downloadId == null) {
+                    result.error("bad_arguments", "downloadId is required", null)
+                } else if (installerOpenedForDownloadId == downloadId) {
+                    // The complete receiver already opened the installer (or
+                    // the unknown-sources settings) for this download.
+                    result.success(false)
+                } else {
+                    result.success(handleDownloadComplete(downloadId))
+                }
+            }
             else -> result.notImplemented()
         }
     }
@@ -72,6 +112,51 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         val downloadId = manager.enqueue(request)
         registerDownloadReceiver(downloadId)
         return downloadId
+    }
+
+    /// The state Dart polls to drive its in-app progress dialog. A missing
+    /// row means the download is gone (cancelled or removed), which Dart
+    /// reports as failed rather than polling forever.
+    private fun downloadStatus(downloadId: Long): Map<String, Any> {
+        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val cursor = manager.query(DownloadManager.Query().setFilterById(downloadId))
+            ?: return mapOf(
+                "status" to "failed",
+                "downloadedBytes" to 0,
+                "totalBytes" to -1,
+            )
+        cursor.use {
+            if (!it.moveToFirst()) {
+                return mapOf(
+                    "status" to "failed",
+                    "downloadedBytes" to 0,
+                    "totalBytes" to -1,
+                )
+            }
+            val status = when (
+                it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            ) {
+                DownloadManager.STATUS_RUNNING -> "running"
+                DownloadManager.STATUS_SUCCESSFUL -> "successful"
+                DownloadManager.STATUS_FAILED -> "failed"
+                DownloadManager.STATUS_PAUSED -> "paused"
+                DownloadManager.STATUS_PENDING -> "pending"
+                else -> "unknown"
+            }
+            val downloaded = it.getLong(
+                it.getColumnIndexOrThrow(
+                    DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR,
+                ),
+            )
+            val total = it.getLong(
+                it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES),
+            )
+            return mapOf(
+                "status" to status,
+                "downloadedBytes" to downloaded,
+                "totalBytes" to total,
+            )
+        }
     }
 
     private fun registerDownloadReceiver(downloadId: Long) {
@@ -114,19 +199,19 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     /// itself is always the last step; if the app is gone by the time the
     /// download finishes, the download manager's own notification still
     /// opens the same installer when tapped.
-    private fun handleDownloadComplete(downloadId: Long) {
+    private fun handleDownloadComplete(downloadId: Long): Boolean {
         val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val cursor = manager.query(DownloadManager.Query().setFilterById(downloadId))
-            ?: return
+            ?: return false
         cursor.use {
             if (!it.moveToFirst()) {
-                return
+                return false
             }
             val status = it.getInt(
                 it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS),
             )
             if (status != DownloadManager.STATUS_SUCCESSFUL) {
-                return
+                return false
             }
         }
         try {
@@ -140,17 +225,21 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
                 context.startActivity(settings)
-                return
+                installerOpenedForDownloadId = downloadId
+                return true
             }
-            val uri = manager.getUriForDownloadedFile(downloadId) ?: return
+            val uri = manager.getUriForDownloadedFile(downloadId) ?: return false
             val install = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
             }
             context.startActivity(install)
+            installerOpenedForDownloadId = downloadId
+            return true
         } catch (_: Exception) {
             // The download manager's notification remains the fallback.
+            return false
         }
     }
 
