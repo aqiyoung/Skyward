@@ -138,9 +138,9 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
       ),
     );
     // The phone has one status card, so the rates sit in its header, level
-    // with the status, and the upload/download waveforms sit at its foot.
-    // A desktop card is a fixed tile that keeps the speed cards beside it,
-    // so it does not repeat them here.
+    // with the status, and the waveforms fill the card behind them. A
+    // desktop card is a fixed tile that keeps the speed cards beside it,
+    // so it does not repeat the backdrop here.
     final content = density.isDesktop
         ? Row(
             spacing: metrics.gap,
@@ -189,93 +189,60 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
                   startToggle,
                 ],
               ),
-              const SizedBox(height: 16),
-              _TrafficWaveforms(),
             ],
           );
-    // Clash-style status card: no decorative shape behind the button and no
-    // faint traffic chart as a backdrop. The card is flat white, the address
-    // and the rates lead, and the waveforms below are the restored
-    // upload/download charts, not a backdrop: the desktop keeps them on
-    // their own speed cards instead.
+    // Clash-style status card: no decorative shape behind the button. The
+    // card is flat white, the address and the rates lead, and the
+    // upload/download waveforms fill the card behind everything, as they
+    // did before they were removed: faint, so the numbers stay readable,
+    // and the desktop keeps its own speed cards instead of this backdrop.
     return DashboardCard(
       padding: EdgeInsets.zero,
       semanticLabel: appLocalizations.status,
-      child: Padding(padding: metrics.padding, child: content),
+      child: Stack(
+        children: [
+          if (!density.isDesktop)
+            Positioned.fill(
+              child: ClipPath(
+                clipper: ShapeBorderClipper(
+                  shape: AppShape.all(dashboardCardRadius(density)),
+                  textDirection: Directionality.of(context),
+                ),
+                child: const _SpeedWaveform(),
+              ),
+            ),
+          Padding(padding: metrics.padding, child: content),
+        ],
+      ),
     );
   }
 }
 
-/// The restored upload/download waveforms at the foot of the mobile status
-/// card. The phone has no speed cards of its own, so without this strip
-/// there is no waveform anywhere on mobile: only the header's numbers.
-/// Each side reuses the desktop speed card's chart and samples, with its
-/// own direction label, so no new chart code or localization key is
-/// needed. The strip is kept short on purpose: the card stays a status
-/// card, and the rates above it still carry the figures.
-class _TrafficWaveforms extends ConsumerWidget {
-  const _TrafficWaveforms();
+/// The two charts, faint, behind everything the card shows. Watching the
+/// traffic here keeps that repaint out of the card itself. Both directions
+/// share the same SpeedChart the desktop speed cards use, so the newest
+/// sample lands at the right edge and the wave travels left as time passes,
+/// exactly as it did before: this restores that backdrop, not a new strip.
+class _SpeedWaveform extends ConsumerWidget {
+  const _SpeedWaveform();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final traffics = ref.watch(trafficsProvider);
-    return Row(
-      spacing: 12,
-      children: [
-        Expanded(
-          child: _Waveform(
-            direction: TrafficDirection.upload,
-            traffics: traffics,
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: Opacity(
+          opacity: 0.16,
+          child: Stack(
+            children: [
+              for (final direction in TrafficDirection.values)
+                Positioned.fill(
+                  child: SpeedChart(direction: direction, traffics: traffics),
+                ),
+            ],
           ),
         ),
-        Expanded(
-          child: _Waveform(
-            direction: TrafficDirection.download,
-            traffics: traffics,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Waveform extends StatelessWidget {
-  const _Waveform({required this.direction, required this.traffics});
-
-  final TrafficDirection direction;
-
-  final FixedList<Traffic> traffics;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 4,
-          children: [
-            GlyphIcon(
-              direction.glyph,
-              size: 14,
-              color: direction.glyphColorOf(context),
-            ),
-            Text(
-              direction.labelOf(context),
-              maxLines: 1,
-              style: DashboardText.label(context),
-            ),
-          ],
-        ),
-        SizedBox(
-          height: 36,
-          child: RepaintBoundary(
-            child: SpeedChart(direction: direction, traffics: traffics),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
