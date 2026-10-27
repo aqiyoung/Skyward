@@ -295,7 +295,7 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   unconditional.
 - Recovery is graded: the first failed launch only skips `initStatus`, and `currentProfileId` is cleared only from
   `crashRecoveryClearThreshold` consecutive failures on. Do not let a single interrupted launch write to the config.
-- Desktop process ownership belongs to `DesktopCoreLifecycle`; do not start/kill `FlClashCore` from providers, widgets,
+- Desktop process ownership belongs to `DesktopCoreLifecycle`; do not start/kill `SkywardCore` from providers, widgets,
   managers, or ad hoc exit callbacks. Acquire and release it through a `CoreProcessLease`.
 - `CoreController.close()` and platform `close()` implementations are terminal and idempotent. Application shutdown must
   stay centralized in `SystemAction`/`SystemExitCoordinator`.

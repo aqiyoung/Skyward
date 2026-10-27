@@ -110,8 +110,8 @@ endforeach(bundled_library)
 # Produced by the setup build hook during flutter_assemble.
 set(CORE_ARTIFACTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libclash/linux")
 install(PROGRAMS
-  "${CORE_ARTIFACTS_DIR}/FlClashCore"
-  "${CORE_ARTIFACTS_DIR}/FlClashHelperService"
+  "${CORE_ARTIFACTS_DIR}/SkywardCore"
+  "${CORE_ARTIFACTS_DIR}/SkywardHelperService"
   DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 install(FILES "${CORE_ARTIFACTS_DIR}/manifest.json"

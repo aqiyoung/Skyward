@@ -1484,11 +1484,11 @@ Platform projects copy the artifacts out of `libclash/`; application code must n
 
 - Android: nothing. The hook returns without building, because it runs once per architecture while gomobile packs
   every ABI and one set of Java classes into a single AAR.
-- macOS: a standalone `FlClashCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
+- macOS: a standalone `SkywardCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
   flutter_tools otherwise builds a universal binary and every artifact ships one slice; the hook skips a non-host slice
   for the same reason. The `Stage Core` phase copies the Core after the hook may have rewritten it and fails when it is
   missing or lacks a slice for `ARCHS`, so a skipped hook cannot stage a stale Core silently.
-- Linux and Windows: `FlClashCore`, the Rust `FlClashHelperService`, and a `manifest.json` holding `coreSha256`; the
+- Linux and Windows: `SkywardCore`, the Rust `SkywardHelperService`, and a `manifest.json` holding `coreSha256`; the
   Core builds first because the Helper embeds its hash. The CMake `install` rules copy them, and the Windows bundle
   places `manifest.json` beside the executable. A Helper running from a Debug build keeps its exe open and the install
   fails behind an opaque `MSB3073`, so `windows/CMakeLists.txt` stops it from an `install(CODE)` step for the `Debug`
@@ -1517,7 +1517,7 @@ Windows helper integrity/version check:
 - Flutter reads the Core SHA256 from the bundled `manifest.json` and sends it with `/ping`. Debug, Profile, and Release
   builds use the same Helper protocol and may use TUN through the same flow.
 - `/ping` is loopback-only and requires no request token. The Helper compares the requested SHA256 with its embedded value
-  and checks that the fixed `FlClashCore.exe` beside it exists; `/start` performs the actual Core SHA256 verification before
+  and checks that the fixed `SkywardCore.exe` beside it exists; `/start` performs the actual Core SHA256 verification before
   every launch. The response includes the running Helper path and protocol header; Dart checks both against the current
   installation. The launcher selects the Helper only when `/ping` reports ready; any other readiness (missing manifest,
   unavailable Helper, or a Helper built for a different Core) falls back to the direct Core without requesting elevation.
@@ -1532,7 +1532,7 @@ Windows helper integrity/version check:
   launch path did not already have. `manifestMissing` is the one readiness that is surfaced to the user, because it
   means the installation itself is incomplete.
 - Flutter creates a 128-bit lowercase-hex session ID and uses it as the random named-pipe suffix. `/start` receives only
-  that address and session ID, validates the fixed `FlClashCore_<session>` namespace, starts the fixed Core beside the
+  that address and session ID, validates the fixed `SkywardCore_<session>` namespace, starts the fixed Core beside the
   Helper, and returns the same session ID plus the spawned PID. Flutter verifies both the session and named-pipe peer PID.
 - `/stop` requires the same session ID. A missing process returns `notRunning`; a different owner returns
   `sessionMismatch` without terminating that process. Session IDs are ownership tokens for lifecycle safety, not a claim
@@ -1816,11 +1816,11 @@ after calculating the SHA256 of the Core produced for the active Flutter configu
 
 The helper owns its Windows Service Control Manager lifecycle through two elevated commands:
 
-- `FlClashHelperService.exe install --owner-pid <pid>` reads the account of that process (the app, which Dart names with
+- `SkywardHelperService.exe install --owner-pid <pid>` reads the account of that process (the app, which Dart names with
   its own PID because the elevated installer may be another administrator), stops and removes any stale registration,
   creates the auto-start service for the current executable path with `--owner-sid <SID>` as its launch argument,
   starts it, and waits for the running state. A service started without an owner exits instead of serving anyone.
-- `FlClashHelperService.exe uninstall` stops the service, waits for shutdown, removes its registration, and is also used
+- `SkywardHelperService.exe uninstall` stops the service, waits for shutdown, removes its registration, and is also used
   by the Windows package uninstaller.
 
 The Dart layer only launches the helper's `install` command through `ShellExecuteW`; it does not compose `sc.exe`,
@@ -1832,8 +1832,8 @@ Elevation goes through `pkexec` so polkit raises the system prompt. When pkexec 
 polkit agent runs (common under tiling window managers), it falls back to `sudo`: cached credentials first, then a
 password the app asks for and hands to `sudo -S` on stdin. A 126 means the user dismissed the polkit dialog and is final.
 
-- `FlClashHelperService install`, run through `LinuxElevation` (`lib/common/linux_elevation.dart`), writes
-  `/etc/systemd/system/flclash-helper.service` for the current executable path and enables and restarts it. It reads
+- `SkywardHelperService install`, run through `LinuxElevation` (`lib/common/linux_elevation.dart`), writes
+  `/etc/systemd/system/skyward-helper.service` for the current executable path and enables and restarts it. It reads
   `PKEXEC_UID`/`SUDO_UID` to learn who asked, and refuses to install without one — there would be no account to grant
   the socket to. It also refuses a Helper whose binary or directory is not root-owned and non-writable (a unit runs it
   as root at every boot, so an unpacked bundle would be a standing escalation), and refuses to replace a unit already
@@ -1842,13 +1842,13 @@ password the app asks for and hands to `sudo -S` on stdin. A 126 means the user 
   `dpkg-deb`, `rpmbuild` and `appimagetool` run: they record modes verbatim, and Ubuntu's per-user default umask
   of 002 would otherwise ship `/opt/FlClash` as 0775, which the installer rejects as group-writable.
 - The rpm spec sets `debug_package` and `__os_install_post` to nil for the same reason: rpmbuild's find-debuginfo and
-  brp-strip rewrite `FlClashCore`, and a Core whose SHA256 no longer matches the Helper's embedded value is refused at
+  brp-strip rewrite `SkywardCore`, and a Core whose SHA256 no longer matches the Helper's embedded value is refused at
   `/start`, which silently degrades every launch to the direct Core.
-- `FlClashHelperService uninstall` disables the unit, removes it and reloads systemd.
+- `SkywardHelperService uninstall` disables the unit, removes it and reloads systemd.
 - The unit carries `Group=` (the owner's primary GID), `RuntimeDirectory=flclash`, the owner's UID/GID in
-  `FLCLASH_HELPER_OWNER_UID`/`_GID`, a double-quoted `ExecStart=` with `%` escaped, and `Restart=on-failure` under a
+  `SKYWARD_HELPER_OWNER_UID`/`_GID`, a double-quoted `ExecStart=` with `%` escaped, and `Restart=on-failure` under a
   start limit so a broken unit ends up failed instead of restarting forever. The helper serves
-  `/run/flclash/helper.sock` at mode `0660`, additionally drops any connection whose `SO_PEERCRED` UID is not the
+  `/run/skyward/helper.sock` at mode `0660`, additionally drops any connection whose `SO_PEERCRED` UID is not the
   owner's, logs and retries an `accept` failure instead of letting hyper end the server, and handles SIGTERM so
   `systemctl stop` still runs its own Core teardown.
 - `/start` additionally requires the Core address to be a socket owned by the owner UID before spawning, since the
@@ -1873,7 +1873,7 @@ validates it against the SHA256 embedded only in the Helper, and keeps that hand
 it never hashes the Core. Protocol version 6 (8 on Windows, where the owner check and the browser-origin check arrived
 and an older Helper must be reinstalled) uses 32-character lowercase-hex session ownership:
 
-- `GET /ping?coreSha256=...` returns the current Helper executable path with `x-flclash-helper-protocol` when the
+- `GET /ping?coreSha256=...` returns the current Helper executable path with `x-skyward-helper-protocol` when the
   requested SHA matches.
 - `POST /start` rejects unknown JSON fields and validates `{address, sessionId}` and, on Linux, the socket owner, which
   leaves a running Core alone. It then releases any previously managed Core before verifying the Core — so every
@@ -1885,10 +1885,10 @@ and an older Helper must be reinstalled) uses 32-character lowercase-hex session
 `/start` and `/stop` take at most 4096 bytes and need a `Content-Length` (HTTP 413 and 411 otherwise); `HelperClient`
 always sends one. All endpoints reject `Origin` headers and non-local `Host` values, preventing browser requests and DNS
 rebinding through an owner-account browser, which would otherwise pass the Windows account check. The accepted
-authorities are `127.0.0.1`, `localhost` and the Linux Unix-socket placeholder `FlClashHelperService`. The Helper grants
+authorities are `127.0.0.1`, `localhost` and the Linux Unix-socket placeholder `SkywardHelperService`. The Helper grants
 no CORS access.
 
-Endpoints bind only to `127.0.0.1` on Windows and to `/run/flclash/helper.sock` on Linux, and do not use
+Endpoints bind only to `127.0.0.1` on Windows and to `/run/skyward/helper.sock` on Linux, and do not use
 request-token authentication. The Windows port is picked by the system, because Hyper-V and WinNAT reserve ranges that
 can cover any fixed one, and published as the `Port` DWORD of a volatile `Runtime` key under the service's own registry
 key, which only administrators can write; `HelperClient` reads it per request and falls back to 47890, where a Helper
@@ -1898,7 +1898,7 @@ connection through the TCP table to the process holding its client end and drops
 owner SID the service was registered with. The Windows Core runs as SYSTEM and dials whatever pipe `/start` names, so
 without that check any local account would host a SYSTEM Core. What no per-connection check closes is a process that
 runs as the owner itself, on either platform. Lifecycle safety also comes from the fixed executable/hash, the strict
-address namespace (`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
+address namespace (`\\.\pipe\SkywardCore_<32 hex>` on Windows, `/tmp/SkywardSocket_<digits>.sock` on Linux), the session-scoped stop
 contract, Dart-side peer-PID verification on Windows and, on Unix, the Core socket that `plugins/rust_api` sets to
 mode `0600` so only the owning user (and the root-effective Core) can connect. When the Helper service itself shuts
 down, it unconditionally stops the Core process it owns; under systemd the unit's control group does the same.

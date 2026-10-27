@@ -18,6 +18,10 @@ dependencies:
 # its teardown belongs here; the binary is already gone when postrm runs.
 postuninstall_scripts:
   - 'case "${1:-}" in remove|purge) ;; *) exit 0 ;; esac'
+  - 'systemctl disable --now skyward-helper.service >/dev/null 2>&1 || true'
+  - 'rm -f /etc/systemd/system/skyward-helper.service'
+  # The pre-rename unit, from a version installed before the Helper got its
+  # own name; nothing removes it once the old binary is gone.
   - 'systemctl disable --now flclash-helper.service >/dev/null 2>&1 || true'
   - 'rm -f /etc/systemd/system/flclash-helper.service'
   - 'systemctl daemon-reload >/dev/null 2>&1 || true'

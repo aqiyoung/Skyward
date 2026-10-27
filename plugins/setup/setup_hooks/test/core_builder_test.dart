@@ -177,7 +177,7 @@ void main() {
             return BuildReport(
               inputs: [goFile],
               outputs: [
-                p.join(coreDir, 'FlClashCore'),
+                p.join(coreDir, 'SkywardCore'),
                 p.join(coreDir, 'manifest.json'),
               ],
               rebuilt: true,

@@ -19,12 +19,12 @@ use tokio::signal::unix::{signal, SignalKind};
 use tokio::time::Sleep;
 use tokio_stream::Stream;
 
-const SERVICE_NAME: &str = "flclash-helper";
-const UNIT_PATH: &str = "/etc/systemd/system/flclash-helper.service";
-const RUNTIME_DIR_NAME: &str = "flclash";
-const SOCKET_PATH: &str = "/run/flclash/helper.sock";
-const OWNER_UID_ENV: &str = "FLCLASH_HELPER_OWNER_UID";
-const OWNER_GID_ENV: &str = "FLCLASH_HELPER_OWNER_GID";
+const SERVICE_NAME: &str = "skyward-helper";
+const UNIT_PATH: &str = "/etc/systemd/system/skyward-helper.service";
+const RUNTIME_DIR_NAME: &str = "skyward";
+const SOCKET_PATH: &str = "/run/skyward/helper.sock";
+const OWNER_UID_ENV: &str = "SKYWARD_HELPER_OWNER_UID";
+const OWNER_GID_ENV: &str = "SKYWARD_HELPER_OWNER_GID";
 const SOCKET_MODE: u32 = 0o660;
 const ACCEPT_RETRY_DELAY: Duration = Duration::from_secs(1);
 
@@ -152,7 +152,7 @@ fn quoted_unit_argument(path: &Path) -> String {
 fn unit_contents(executable: &Path, owner: Owner) -> String {
     format!(
         "[Unit]\n\
-         Description=Skyward Helper starts the FlClash Core with the privileges TUN mode needs.\n\
+         Description=Skyward Helper starts the Skyward Core with the privileges TUN mode needs.\n\
          After=network-online.target nftables.service iptables.service\n\
          StartLimitIntervalSec=60\n\
          StartLimitBurst=5\n\
@@ -211,10 +211,23 @@ fn ensure_unit_is_free_for(owner: Owner) -> Result<()> {
     match installed_owner_uid(&existing) {
         Some(uid) if uid != owner.uid => bail!(
             "the Helper is already installed for UID {uid}; \
-             run `FlClashHelperService uninstall` as that user first"
+             run `SkywardHelperService uninstall` as that user first"
         ),
         _ => Ok(()),
     }
+}
+
+/// A Helper installed before the rename still owns the old unit, and it would
+/// keep starting a Core the app no longer talks to; installing takes it out.
+/// An AppImage upgrade never runs the package scripts, so this cannot live
+/// only in the deb and rpm teardown.
+fn retire_legacy_service() {
+    let legacy_unit = "/etc/systemd/system/flclash-helper.service";
+    if !Path::new(legacy_unit).exists() {
+        return;
+    }
+    silence_systemctl(&["disable", "--now", "flclash-helper"]);
+    let _ = fs::remove_file(legacy_unit);
 }
 
 fn install_service() -> Result<()> {
@@ -222,6 +235,7 @@ fn install_service() -> Result<()> {
     ensure_root_owned(&executable)?;
     let owner = invoking_owner()?;
     ensure_unit_is_free_for(owner)?;
+    retire_legacy_service();
 
     fs::write(UNIT_PATH, unit_contents(&executable, owner))
         .with_context(|| format!("write {UNIT_PATH}"))?;
@@ -382,17 +396,17 @@ mod tests {
     #[test]
     fn unit_names_the_owner_and_the_helper_it_starts() {
         let unit = unit_contents(
-            Path::new("/opt/FlClash/FlClashHelperService"),
+            Path::new("/opt/FlClash/SkywardHelperService"),
             Owner {
                 uid: 1000,
                 gid: 1001,
             },
         );
 
-        assert!(unit.contains("ExecStart=\"/opt/FlClash/FlClashHelperService\"\n"));
+        assert!(unit.contains("ExecStart=\"/opt/FlClash/SkywardHelperService\"\n"));
         assert!(unit.contains("Group=1001\n"));
-        assert!(unit.contains("Environment=FLCLASH_HELPER_OWNER_UID=1000\n"));
-        assert!(unit.contains("Environment=FLCLASH_HELPER_OWNER_GID=1001\n"));
+        assert!(unit.contains("Environment=SKYWARD_HELPER_OWNER_UID=1000\n"));
+        assert!(unit.contains("Environment=SKYWARD_HELPER_OWNER_GID=1001\n"));
         assert!(unit.contains("RuntimeDirectory=flclash\n"));
         assert!(unit.contains("Restart=on-failure\n"));
         assert!(unit.contains("StartLimitBurst=5\n"));
@@ -409,7 +423,7 @@ mod tests {
     #[test]
     fn reads_the_owner_back_out_of_an_installed_unit() {
         let unit = unit_contents(
-            Path::new("/opt/FlClash/FlClashHelperService"),
+            Path::new("/opt/FlClash/SkywardHelperService"),
             Owner {
                 uid: 1000,
                 gid: 1001,
