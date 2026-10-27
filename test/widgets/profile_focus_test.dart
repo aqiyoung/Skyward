@@ -178,22 +178,18 @@ void main() {
     );
   });
 
-  testWidgets('a subscription card fills with its used share', (tester) async {
+  testWidgets('a subscription card meters its used share', (tester) async {
     await pumpProfiles(tester, profiles: [urlProfile('url')]);
 
-    expect(
-      find.descendant(
-        of: find.byType(ProfileItem),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is FractionallySizedBox && widget.widthFactor == 0.75,
-        ),
-      ),
-      findsOneWidget,
+    final meter = find.descendant(
+      of: find.byType(ProfileItem),
+      matching: find.byType(LinearProgressIndicator),
     );
+    expect(meter, findsOneWidget);
+    expect(tester.widget<LinearProgressIndicator>(meter).value, 0.75);
   });
 
-  testWidgets('a subscription without a total leaves the card unfilled', (
+  testWidgets('a subscription without a total leaves the card unmetered', (
     tester,
   ) async {
     final l = currentAppLocalizations;
@@ -214,10 +210,7 @@ void main() {
     expect(
       find.descendant(
         of: card,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is FractionallySizedBox && widget.widthFactor != null,
-        ),
+        matching: find.byType(LinearProgressIndicator),
       ),
       findsNothing,
     );
