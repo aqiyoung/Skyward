@@ -259,11 +259,10 @@ void main() {
           'intranetIp',
         ],
       });
-      expect(restored.dashboardWidgets, [
-        DashboardWidget.currentOutbound,
-        DashboardWidget.networkControl,
-        DashboardWidget.profiles,
-      ]);
+      // Folding leaves the slim three-card set, which is itself a
+      // known default set, so it takes the platform default like the
+      // other default sets above.
+      expect(restored.dashboardWidgets, platformDefaultDashboardWidgets);
     });
 
     test('a changed old dashboard keeps its cards behind the current '

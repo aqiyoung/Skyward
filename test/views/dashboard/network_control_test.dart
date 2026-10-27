@@ -55,7 +55,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('a phone gets the VPN and LAN switches under the modes', (
+  testWidgets('a phone gets the VPN and LAN status blocks under the modes', (
     tester,
   ) async {
     await pump(tester, SupportPlatform.Android);
@@ -65,7 +65,9 @@ void main() {
     expect(find.text('VPN'), findsOneWidget);
     expect(find.text('System proxy'), findsNothing);
     expect(find.text('Allow LAN'), findsOneWidget);
-    expect(find.byType(DashboardSwitch), findsNWidgets(2));
+    // Reference layout: switch-less status blocks, not switches.
+    expect(find.byType(DashboardSwitch), findsNothing);
+    expect(find.text('Disabled'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 
@@ -83,23 +85,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the LAN row carries the address the network dials', (
+  testWidgets('tapping the LAN block toggles it without an address', (
     tester,
   ) async {
     await pump(tester, SupportPlatform.Android);
     container.read(localIpProvider.notifier).update((_) => '192.168.1.23');
     await tester.pump();
 
-    expect(find.text('Disabled'), findsOneWidget);
+    expect(find.text('Disabled'), findsNWidgets(2));
 
     await tester.tap(find.text('Allow LAN'));
     await tester.pump();
 
     expect(container.read(patchClashConfigProvider).allowLan, isTrue);
-    // The row is the only place the address appears here, so it prints the
-    // whole of it and offers to copy it.
-    expect(find.text('192.168.1.23:7890'), findsOneWidget);
-    expect(find.byTooltip('Copy'), findsOneWidget);
+    expect(find.text('Enabled'), findsOneWidget);
+    // Reference layout: the phone LAN block is a status block only, so
+    // it shows no address and offers no copy button.
+    expect(find.text('192.168.1.23:7890'), findsNothing);
+    expect(find.byTooltip('Copy'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

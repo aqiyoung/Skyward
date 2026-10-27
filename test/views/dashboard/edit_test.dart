@@ -320,6 +320,12 @@ void main() {
     final position = positionOf(tester);
     position.jumpTo(position.maxScrollExtent / 2);
     await tester.pump();
+    // Scrolling down steps the scaffold's actions aside, so the edit
+    // button is out of reach until the page is scrolled back up a
+    // little; re-read the offset after that, so the test still checks
+    // that entering and leaving edit mode keeps the scroll position.
+    position.jumpTo(position.pixels - 1);
+    await tester.pump();
     final offset = position.pixels;
     final memory = tester.state(find.byType(MemoryInfo, skipOffstage: false));
 

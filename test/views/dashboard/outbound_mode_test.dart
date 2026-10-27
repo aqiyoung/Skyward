@@ -4,6 +4,7 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/dashboard/layout.dart';
+import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/views/dashboard/widgets/outbound_mode.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,50 +60,71 @@ void main() {
       .ancestor(of: find.text(mode.label), matching: find.byType(InkWell))
       .first;
 
-  ShapeDecoration decorationOf(WidgetTester tester, Mode mode) {
+  ShapeDecoration? decorationOf(WidgetTester tester, Mode mode) {
     final container = find
         .ancestor(of: buttonOf(mode), matching: find.byType(Container))
         .first;
-    return tester.widget<Container>(container).decoration! as ShapeDecoration;
+    return tester.widget<Container>(container).decoration as ShapeDecoration?;
   }
 
-  double startRadiusOf(WidgetTester tester, Mode mode) {
-    final shape = decorationOf(tester, mode).shape as RoundedSuperellipseBorder;
-    return (shape.borderRadius as BorderRadius).topLeft.x;
-  }
+  testWidgets(
+    'the selector shows every mode, the selected one with a check and '
+    'no mode glyphs',
+    (tester) async {
+      await pump(tester, const OutboundModeSelector());
 
-  testWidgets('the selector shows every mode with its own glyph', (tester) async {
-    await pump(tester, const OutboundModeSelector());
-
-    for (final (mode, glyph) in [
-      (Mode.rule, AppGlyphs.rules),
-      (Mode.global, AppGlyphs.proxies),
-      (Mode.direct, AppGlyphs.target),
-    ]) {
+      for (final mode in Mode.values) {
+        expect(find.text(mode.label), findsOneWidget);
+      }
+      // Reference layout: a blue check before the selected label, and
+      // no second glyph for any mode.
       expect(
-        find.descendant(of: buttonOf(mode), matching: find.byGlyph(glyph)),
+        find.descendant(
+          of: buttonOf(Mode.rule),
+          matching: find.byGlyph(AppGlyphs.check),
+        ),
         findsOneWidget,
       );
-    }
-  });
+      for (final glyph in [
+        AppGlyphs.rules,
+        AppGlyphs.proxies,
+        AppGlyphs.target,
+      ]) {
+        expect(find.byGlyph(glyph), findsNothing);
+      }
+    },
+  );
 
   testWidgets('tapping a mode selects it and turns it into the pill', (
     tester,
   ) async {
     await pump(tester, const OutboundModeSelector());
-    final colorScheme = Theme.of(
+    final tone2 = DashboardColors.of(
       tester.element(find.byType(OutboundModeSelector)),
-    ).colorScheme;
-    expect(decorationOf(tester, Mode.rule).color, colorScheme.primary);
-    final innerRadius = startRadiusOf(tester, Mode.direct);
+    ).tone2;
+    expect(decorationOf(tester, Mode.rule)?.color, tone2);
+    expect(decorationOf(tester, Mode.direct), isNull);
 
     await tester.tap(buttonOf(Mode.direct));
     await tester.pumpAndSettle();
 
     expect(container.read(patchClashConfigProvider).mode, Mode.direct);
-    expect(decorationOf(tester, Mode.direct).color, colorScheme.primary);
-    expect(decorationOf(tester, Mode.rule).color, isNot(colorScheme.primary));
-    expect(startRadiusOf(tester, Mode.direct), greaterThan(innerRadius));
+    expect(decorationOf(tester, Mode.direct)?.color, tone2);
+    expect(decorationOf(tester, Mode.rule), isNull);
+    expect(
+      find.descendant(
+        of: buttonOf(Mode.direct),
+        matching: find.byGlyph(AppGlyphs.check),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: buttonOf(Mode.rule),
+        matching: find.byGlyph(AppGlyphs.check),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('the modes keep their fills with glass on', (tester) async {
@@ -110,21 +132,16 @@ void main() {
       tester,
       const LiquidGlassScope(enabled: true, child: OutboundModeSelector()),
     );
-    final colorScheme = Theme.of(
+    final tone2 = DashboardColors.of(
       tester.element(find.byType(OutboundModeSelector)),
-    ).colorScheme;
+    ).tone2;
 
     expect(find.byType(LiquidGlass), findsNothing);
-    expect(decorationOf(tester, Mode.rule).color, colorScheme.primary);
+    expect(decorationOf(tester, Mode.rule)?.color, tone2);
   });
 
-  testWidgets('a pressed mode swells alone, over its neighbours', (
-    tester,
-  ) async {
+  testWidgets('a pressed mode stays flat, without a swell', (tester) async {
     await pump(tester, const OutboundModeSelector());
-    final colorScheme = Theme.of(
-      tester.element(find.byType(OutboundModeSelector)),
-    ).colorScheme;
     double swellOf(Mode mode) {
       final box = tester.renderObject<RenderBox>(buttonOf(mode));
       return ElasticPress.paintBoundsOf(box).width / box.size.width;
@@ -136,26 +153,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(swellOf(Mode.rule), greaterThan(1));
-    expect(swellOf(Mode.global), moreOrLessEquals(1));
-    expect(swellOf(Mode.direct), moreOrLessEquals(1));
-    final row = find
-        .ancestor(
-          of: buttonOf(Mode.rule),
-          matching: find.byWidgetPredicate((widget) => widget is Flex),
-        )
-        .first;
-    expect(
-      tester.renderObject(row),
-      paints
-        ..rsuperellipse()
-        ..rsuperellipse()
-        ..rsuperellipse(color: colorScheme.primary),
-    );
+    // The one-container selector uses a plain InkWell, not ElasticPress.
+    for (final mode in Mode.values) {
+      expect(swellOf(mode), moreOrLessEquals(1));
+    }
 
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(swellOf(Mode.rule), moreOrLessEquals(1));
+    expect(container.read(patchClashConfigProvider).mode, Mode.rule);
   });
 
   testWidgets('the desktop bar fills its height and switches the mode', (
