@@ -138,8 +138,9 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
       ),
     );
     // The phone has one status card, so the rates sit in its header, level
-    // with the status, and the floor belongs to the charts alone. A desktop
-    // card is a fixed tile that keeps the speed cards beside it.
+    // with the status, and the waveforms fill the card behind them. A
+    // desktop card is a fixed tile that keeps the speed cards beside it,
+    // so it does not repeat the backdrop here.
     final content = density.isDesktop
         ? Row(
             spacing: metrics.gap,
@@ -190,13 +191,70 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
               ),
             ],
           );
-    // Clash-style status card: no decorative shape behind the button and no
-    // faint traffic chart as a backdrop. The card is flat white, the address
-    // and the rates lead, and the traffic chart lives on its own card.
+    // Clash-style status card: no decorative shape behind the button. The
+    // card is flat white, the address and the rates lead, and the
+    // upload/download waveforms fill the card behind everything, as they
+    // did before they were removed: faint, so the numbers stay readable,
+    // and the desktop keeps its own speed cards instead of this backdrop.
     return DashboardCard(
       padding: EdgeInsets.zero,
       semanticLabel: appLocalizations.status,
-      child: Padding(padding: metrics.padding, child: content),
+      child: Stack(
+        children: [
+          if (!density.isDesktop)
+            Positioned.fill(
+              child: ClipPath(
+                clipper: ShapeBorderClipper(
+                  shape: AppShape.all(dashboardCardRadius(density)),
+                  textDirection: Directionality.of(context),
+                ),
+                child: const _SpeedWaveform(),
+              ),
+            ),
+          Padding(padding: metrics.padding, child: content),
+        ],
+      ),
+    );
+  }
+}
+
+/// The two charts, faint, behind everything the card shows. Watching the
+/// traffic here keeps that repaint out of the card itself. Both directions
+/// share the same SpeedChart the desktop speed cards use, so the newest
+/// sample lands at the right edge and the wave travels left as time passes.
+/// The two directions do not share a color here: upload used to be the
+/// download color diluted to 45% over the card, so under the backdrop's
+/// opacity both lines collapsed into the same pale orange and could not
+/// be told apart. Download keeps the theme primary, upload takes the
+/// theme tertiary, a different hue family, and the backdrop opacity is
+/// raised from 0.16 to 0.32 so the hues survive on a white card without
+/// overpowering the numbers above them.
+class _SpeedWaveform extends ConsumerWidget {
+  const _SpeedWaveform();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final traffics = ref.watch(trafficsProvider);
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: Opacity(
+          opacity: 0.32,
+          child: Stack(
+            children: [
+              for (final direction in TrafficDirection.values)
+                Positioned.fill(
+                  child: SpeedChart(
+                    direction: direction,
+                    traffics: traffics,
+                    color: direction == TrafficDirection.upload
+                        ? context.colorScheme.tertiary
+                        : null,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
