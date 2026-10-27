@@ -645,6 +645,24 @@ abstract class Config with _$Config {
 
 const _legacyOverrideDnsKey = 'overrideDns';
 
+/// The keys the app-wide DNS override could name while `overrideDns` was what
+/// turned it on, pinned here rather than read from
+/// [DnsOverrideKey.normalProfileKeys], which has grown since: a config written
+/// against the old switch keeps exactly the keys it could have meant then, and
+/// does not start applying new ones on upgrade.
+const _legacyOverridableDnsKeys = {
+  DnsOverrideKey.listen,
+  DnsOverrideKey.ipv6,
+  DnsOverrideKey.enhancedMode,
+  DnsOverrideKey.fakeIpFilter,
+  DnsOverrideKey.fakeIpFilterMode,
+  DnsOverrideKey.defaultNameserver,
+  DnsOverrideKey.nameserver,
+  DnsOverrideKey.fallback,
+  DnsOverrideKey.proxyServerNameserver,
+  DnsOverrideKey.directNameserver,
+};
+
 /// An off `overrideDns` left a profile's own DNS section alone.
 Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
   if (!json.containsKey(_legacyOverrideDnsKey)) {
@@ -652,7 +670,7 @@ Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
   }
   final keys = json[_legacyOverrideDnsKey] == true
       ? config.patchClashConfig.dnsOverrideKeys.intersection(
-          DnsOverrideKey.normalProfileKeys,
+          _legacyOverridableDnsKeys,
         )
       : <DnsOverrideKey>{};
   return config.copyWith.patchClashConfig(dnsOverrideKeys: keys);
