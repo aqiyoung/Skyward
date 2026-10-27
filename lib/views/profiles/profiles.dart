@@ -22,17 +22,36 @@ const _infoGap = 4.0;
 /// A subscription's used quota, its total, and the share between them.
 typedef _Usage = ({int used, int total, double share});
 
-/// Past this share the usage bar warns, the same threshold the dashboard's
-/// profile card uses.
+/// Past this share the usage meter turns to `error`.
 const _usageWarnShare = 0.9;
 
 String _percentOf(double share) => '${(share * 100).round()}%';
 
-/// The tint the card itself fills with, up to the used share.
-Color _usageFillColor(BuildContext context, double share) {
-  final colorScheme = context.colorScheme;
-  return (share >= _usageWarnShare ? colorScheme.error : colorScheme.primary)
-      .opacity15;
+/// The used share rides a meter along the card's bottom edge. Washing the card
+/// itself tinted its whole tone, so the fill read as the card's own colour and
+/// competed with the selection badge and with the warning tint on the label.
+class _UsageBar extends StatelessWidget {
+  const _UsageBar({required this.share});
+
+  final double share;
+
+  static const _height = 3.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return SizedBox(
+      height: _height,
+      child: LinearProgressIndicator(
+        minHeight: _height,
+        value: share.clamp(0.0, 1.0),
+        color: share >= _usageWarnShare
+            ? colorScheme.error
+            : colorScheme.primary,
+        backgroundColor: context.raisedSurfaceLevel.colorOf(colorScheme),
+      ),
+    );
+  }
 }
 
 double get _profileItemHeight {
@@ -529,16 +548,6 @@ class ProfileItem extends ConsumerWidget {
         },
         child: Stack(
           children: [
-            if (usage != null)
-              Positioned.fill(
-                child: FractionallySizedBox(
-                  alignment: AlignmentDirectional.centerStart,
-                  widthFactor: usage.share,
-                  child: ColoredBox(
-                    color: _usageFillColor(context, usage.share),
-                  ),
-                ),
-              ),
             ListItem(
               key: Key(profile.id.toString()),
               minTileHeight: _profileItemHeight,
@@ -561,6 +570,13 @@ class ProfileItem extends ConsumerWidget {
                 usage: usage,
               ),
             ),
+            if (usage != null)
+              PositionedDirectional(
+                start: 0,
+                end: 0,
+                bottom: 0,
+                child: _UsageBar(share: usage.share),
+              ),
           ],
         ),
       ),
@@ -645,8 +661,8 @@ class _GroupsCountChip extends ConsumerWidget {
       message: context.appLocalizations.proxyGroupsCount(count, count.compact),
       child: TonalChip(
         label: count.compact,
-        color: colorScheme.primary.opacity15,
-        foregroundColor: colorScheme.primary,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
+        foregroundColor: colorScheme.onSurfaceVariant,
       ),
     );
   }

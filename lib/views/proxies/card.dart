@@ -142,7 +142,7 @@ class ProxyCard extends ConsumerWidget {
         .of(context)
         .copyWith(
           overflow: TextOverflow.ellipsis,
-          color: context.colorScheme.onSurface.opacity80,
+          color: context.colorScheme.onSurfaceVariant,
         );
     final details = isLoose
         ? Column(

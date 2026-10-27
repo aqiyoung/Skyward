@@ -669,7 +669,7 @@ class ListHeader extends ConsumerWidget {
         padding: const EdgeInsets.all(_headerButtonInset),
         child: SurfaceScope(
           // CommonCard fills one level above its scope.
-          level: SurfaceLevel.values[level.index - 1],
+          level: level.previous,
           child: card,
         ),
       ),
@@ -748,7 +748,7 @@ class _GroupIcon extends ConsumerWidget {
             return IconTheme.merge(
               data: IconThemeData(
                 size: constraints.maxHeight,
-                color: context.colorScheme.primary,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               child: CommonTargetIcon(
                 src: GroupIconSource.of(name: group.name, icon: group.icon),
