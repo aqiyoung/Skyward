@@ -1,14 +1,16 @@
 name: diag tests
 
-# Temporary: the job log for a failed test run is too large to read from here,
-# so this re-runs the same suite with the JSON reporter and prints only the
-# failures. Dispatched by hand, deleted once the failure is understood.
+# Temporary: the job log for a failed run is too large to read from here, so
+# this runs the one suspect test twice -- on the rename commit and on the beta
+# head before it -- and prints both results. Deleted once understood.
 
 on:
   workflow_dispatch:
 
 env:
   FLUTTER_VERSION: '3.47.6'
+  TEST_FILE: test/widgets/uncovered_views_test.dart
+  TEST_NAME: about view shows progress while checking for updates
 
 jobs:
   diag:
@@ -21,6 +23,7 @@ jobs:
         with:
           ref: beta
           submodules: recursive
+          fetch-depth: 0
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -34,44 +37,19 @@ jobs:
           flutter --version
           flutter pub get
 
-      - name: Run the tests, report failures only
+      - name: Rename commit, one test
         run: |
           set +e
-          flutter test --reporter json > /tmp/raw.json 2>/tmp/raw.err
-          code=$?
-          echo "flutter test exit=$code"
-          python3 - /tmp/raw.json <<'PY'
-          import json
-          import sys
+          flutter test "$TEST_FILE" --plain-name "$TEST_NAME" --reporter expanded > /tmp/new.txt 2>&1
+          echo "exit=$?"
+          tail -60 /tmp/new.txt
 
-          names = {}
-          failures = []
-          for line in open(sys.argv[1], errors='replace'):
-              line = line.strip()
-              if not line.startswith('{'):
-                  continue
-              try:
-                  event = json.loads(line)
-              except ValueError:
-                  continue
-              kind = event.get('type')
-              if kind == 'testStart':
-                  names[event['test']['id']] = event['test']['name']
-              elif kind == 'error':
-                  failures.append((names.get(event.get('testID')), event.get('error'), event.get('stackTrace')))
-              elif kind == 'testDone' and event.get('result') != 'success' and not event.get('hidden'):
-                  failures.append((names.get(event.get('testID')), 'result=' + str(event.get('result')), ''))
-
-          print('failure entries: %d' % len(failures))
-          seen = set()
-          for name, error, stack in failures:
-              if name in seen:
-                  continue
-              seen.add(name)
-              print('=== %s' % name)
-              print((error or '')[:1500])
-              if stack:
-                  print((stack or '')[:700])
-          PY
-          echo '--- stderr tail ---'
-          tail -20 /tmp/raw.err
+      - name: Beta before the rename, one test
+        run: |
+          set +e
+          git worktree add /tmp/old ead7f4ed72b707f14778eb8b352a643a0084e04c
+          cd /tmp/old
+          flutter pub get > /dev/null 2>&1
+          flutter test "$TEST_FILE" --plain-name "$TEST_NAME" --reporter expanded > /tmp/old.txt 2>&1
+          echo "exit=$?"
+          tail -60 /tmp/old.txt
