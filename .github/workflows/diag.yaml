@@ -1,0 +1,77 @@
+name: diag tests
+
+# Temporary: the job log for a failed test run is too large to read from here,
+# so this re-runs the same suite with the JSON reporter and prints only the
+# failures. Dispatched by hand, deleted once the failure is understood.
+
+on:
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+
+jobs:
+  diag:
+    name: Diag
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: beta
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: |
+          flutter --version
+          flutter pub get
+
+      - name: Run the tests, report failures only
+        run: |
+          set +e
+          flutter test --reporter json > /tmp/raw.json 2>/tmp/raw.err
+          code=$?
+          echo "flutter test exit=$code"
+          python3 - /tmp/raw.json <<'PY'
+          import json
+          import sys
+
+          names = {}
+          failures = []
+          for line in open(sys.argv[1], errors='replace'):
+              line = line.strip()
+              if not line.startswith('{'):
+                  continue
+              try:
+                  event = json.loads(line)
+              except ValueError:
+                  continue
+              kind = event.get('type')
+              if kind == 'testStart':
+                  names[event['test']['id']] = event['test']['name']
+              elif kind == 'error':
+                  failures.append((names.get(event.get('testID')), event.get('error'), event.get('stackTrace')))
+              elif kind == 'testDone' and event.get('result') != 'success' and not event.get('hidden'):
+                  failures.append((names.get(event.get('testID')), 'result=' + str(event.get('result')), ''))
+
+          print('failure entries: %d' % len(failures))
+          seen = set()
+          for name, error, stack in failures:
+              if name in seen:
+                  continue
+              seen.add(name)
+              print('=== %s' % name)
+              print((error or '')[:1500])
+              if stack:
+                  print((stack or '')[:700])
+          PY
+          echo '--- stderr tail ---'
+          tail -20 /tmp/raw.err
