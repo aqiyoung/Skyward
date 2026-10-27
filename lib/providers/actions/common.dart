@@ -293,6 +293,13 @@ class CommonAction extends _$CommonAction {
       if (context == null) {
         return;
       }
+      // Two buttons only, in this order: Cancel, then Update. The old
+      // confirm text said "go to download", which no longer describes
+      // what happens: Android downloads in-app through the system
+      // download manager, and the desktop opens the release page. The
+      // old auto-check cancel slot said "no longer remind", so tapping
+      // it silently turned auto-check off; that toggle now lives only
+      // in Settings, and Cancel here means just this once, not again.
       final res = await dialogs.showMessage(
         title: currentAppLocalizations.discoverNewVersion,
         message: _releaseSpan(
@@ -300,15 +307,10 @@ class CommonAction extends _$CommonAction {
           data['tag_name'] as String,
           data['body'] as String?,
         ),
-        confirmText: currentAppLocalizations.goDownload,
-        cancelText: isUser ? null : currentAppLocalizations.noLongerRemind,
+        confirmText: currentAppLocalizations.update,
       );
       if (res == true) {
         unawaited(_downloadRelease(data));
-      } else if (!isUser && res == false) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(autoCheckUpdate: false));
       }
     } else if (isUser) {
       unawaited(
