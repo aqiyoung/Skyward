@@ -147,8 +147,10 @@ class CommonAction extends _$CommonAction {
   }
 
   /// The package that fits the device goes to the system download manager,
-  /// which keeps it in the Downloads folder and shows its own progress. The
-  /// desktop has no such manager, so the release page opens there.
+  /// which keeps it in the Downloads folder and shows its own progress, and
+  /// opens the system installer once the download completes -- the browser
+  /// is never involved on Android. The desktop has no such manager, so the
+  /// release page opens there.
   Future<void> _downloadRelease(Map<String, dynamic> release) async {
     final downloader = systemDownloader;
     final abi = downloader == null ? null : await downloader.supportedAbi();
@@ -171,7 +173,22 @@ class CommonAction extends _$CommonAction {
       );
       return;
     }
-    await downloader.download(url: asset.url, fileName: asset.name);
+    try {
+      await downloader.download(url: asset.url, fileName: asset.name);
+      // The download itself is only announced here: its progress lives in
+      // the system notification, and the installer opens on completion.
+      // Reusing the existing download label keeps this free of a new
+      // localization key.
+      dialogs.showNotifier(
+        '${currentAppLocalizations.download}: ${asset.name}',
+      );
+    } catch (error) {
+      commonPrint.log(
+        'download release failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      dialogs.showNotifier(error.toString(), level: MessageLevel.error);
+    }
   }
 
   ({String url, String name})? _apkAssetOf(
