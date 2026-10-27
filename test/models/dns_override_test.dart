@@ -160,6 +160,57 @@ void main() {
     });
   });
 
+  group('Dns.overDns', () {
+    test('keeps the app DNS whole when the profile names nothing', () {
+      const base = Dns(ipv6: true, nameserver: ['9.9.9.9']);
+      final merged = base.overDns(
+        const Dns(ipv6: false, nameserver: ['1.1.1.1']),
+        const {},
+      );
+
+      expect(merged, base);
+    });
+
+    test('takes the keys the profile names and keeps every other', () {
+      const base = Dns(
+        ipv6: false,
+        fakeIpRange: '198.18.0.1/16',
+        nameserver: ['9.9.9.9'],
+      );
+      final merged = base.overDns(
+        const Dns(fakeIpRange: '198.19.0.1/16', nameserver: ['1.1.1.1']),
+        {DnsOverrideKey.fakeIpRange},
+      );
+
+      expect(merged.fakeIpRange, '198.19.0.1/16');
+      expect(merged.nameserver, ['9.9.9.9']);
+      expect(merged.ipv6, isFalse);
+    });
+
+    test('replaces a policy table whole rather than merging it', () {
+      const base = Dns(nameserverPolicy: {'a.com': '9.9.9.9'});
+      final merged = base.overDns(
+        const Dns(nameserverPolicy: {'b.com': '1.1.1.1, 8.8.8.8'}),
+        {DnsOverrideKey.nameserverPolicy},
+      );
+
+      expect(merged.nameserverPolicy, {'b.com': '1.1.1.1, 8.8.8.8'});
+    });
+
+    test('merges the fallback filter keys the profile leaves out', () {
+      const base = Dns(
+        fallbackFilter: FallbackFilter(geosite: ['gfw'], geoip: false),
+      );
+      final merged = base.overDns(
+        const Dns(fallbackFilter: FallbackFilter(geoip: true)),
+        {DnsOverrideKey.fallbackFilterGeoip},
+      );
+
+      expect(merged.fallbackFilter.geoip, isTrue);
+      expect(merged.fallbackFilter.geosite, ['gfw']);
+    });
+  });
+
   group('PatchClashConfig.dnsOverrideKeys', () {
     test('round-trips as key paths', () {
       const config = PatchClashConfig(

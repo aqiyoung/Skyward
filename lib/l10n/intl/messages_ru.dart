@@ -752,8 +752,14 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Перехват DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage(
+      "Переопределение DNS",
+    ),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Добавленные здесь параметры заменяют DNS всех профилей из URL и файлов; остальные остаются такими, как в профиле. DNS пользовательского профиля задаётся в его содержимом.",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "У этого профиля есть собственные политики DNS; записи здесь заменяют их целиком, поэтому правила, которых здесь нет, перестают действовать.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS-запросы"),
     "dockScale": MessageLookupByLibrary.simpleMessage("Размер нижней панели"),
@@ -1409,6 +1415,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileAutoUpdateIntervalNullValidationDesc":
         MessageLookupByLibrary.simpleMessage("Введите интервал автообновления"),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Действует только для этого профиля и имеет приоритет над переопределениями DNS в настройках сети.",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "Профиль изменён. Отключить автообновление?",

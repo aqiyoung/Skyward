@@ -292,6 +292,7 @@ void main() {
 
     await openProfileMenu(tester, 'url');
     expect(find.text(l.extend), findsOneWidget);
+    expect(find.text(l.dnsOverride), findsOneWidget);
     expect(find.text(l.runtimeConfig), findsNothing);
     expect(find.text(l.rename), findsNothing);
 

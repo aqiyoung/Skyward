@@ -109,6 +109,9 @@ Color marks the one item that differs, never the structure around it.
   (`CommonCard.fillsSelection`): solid `primary` with `onPrimary`, as the dashboard outbound mode does. Only one
   segment per group.
 - **Error** on a row or card: `errorContainer` with `onErrorContainer`, no border.
+- **Note**: a line that explains what an edit costs, without anything failing, takes the surface one level below the page
+  (`ErrorBanner`'s shape, `NoteBanner`'s colors) with the text in `onSurface` and only the glyph in `onSurfaceVariant`.
+  Wearing `errorContainer` for a note spends the failure color on information.
 - **Status** values (delay, availability, success, warning): the color goes on text, a glyph, or a small chip, never
   on a whole card. `success` and `warning` come from fixed green and orange palettes that ignore the seed, like
   Material's `error`; harmonizing pulled orange toward red under rose seeds until warning and error matched. Text takes

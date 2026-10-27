@@ -1339,6 +1339,22 @@ extension DnsOverrideExt on Dns {
   String overrideYaml(Set<DnsOverrideKey> keys) =>
       yaml.encode(overrideJson(keys));
 
+  /// This DNS with the keys [own] picks laid over it, which is how a profile's
+  /// own entries sit above the app's: a key [own] names takes its value from
+  /// [own], and every other key keeps the value this one holds. A policy table
+  /// is one value and is replaced whole; `fallback-filter` is a section of
+  /// independent keys, so the ones [own] leaves out survive.
+  Dns overDns(Dns own, Set<DnsOverrideKey> keys) {
+    if (keys.isEmpty) {
+      return this;
+    }
+    final merged = mergeDnsOverride(_json, own.overrideJson(keys));
+    for (final key in DnsOverrideKey.policyKeys) {
+      merged[key.path] = _joinPolicyServers(merged[key.path]);
+    }
+    return Dns.fromJson(merged);
+  }
+
   ({Dns dns, Set<DnsOverrideKey> keys}) applyOverrideYaml(String content) {
     final json = _json;
     final keys = _applyOverrideYaml(
@@ -1350,7 +1366,7 @@ extension DnsOverrideExt on Dns {
     if (keys == null) {
       return (dns: this, keys: const {});
     }
-    for (final policy in _policyKeys) {
+    for (final policy in DnsOverrideKey.policyKeys) {
       json[policy.path] = _joinPolicyServers(json[policy.path]);
     }
     return (dns: Dns.fromJson(json), keys: keys);
@@ -1458,11 +1474,6 @@ Set<K>? _applyOverrideYaml<K extends OverrideKey>(
   json.addAll(nested);
   return keys;
 }
-
-const _policyKeys = [
-  DnsOverrideKey.nameserverPolicy,
-  DnsOverrideKey.proxyServerNameserverPolicy,
-];
 
 Map<String, Object> _splitPolicyServers(Map<String, String> policy) => {
   for (final entry in policy.entries)

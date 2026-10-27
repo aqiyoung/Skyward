@@ -388,7 +388,7 @@ class _Overview extends ConsumerWidget {
         appLocalizations.providers,
         CustomProvidersView(profileId),
       ),
-      (AppGlyphs.dns, 'DNS', DnsView.profile(profileId)),
+      (AppGlyphs.dns, 'DNS', DnsView.custom(profileId)),
       (
         AppGlyphs.sliders,
         appLocalizations.more,

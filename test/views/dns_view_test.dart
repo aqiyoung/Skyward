@@ -52,7 +52,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: profile ? DnsView.profile(_profileId) : const DnsView(),
+          child: profile ? DnsView.custom(_profileId) : const DnsView(),
         ),
       ),
     );
@@ -155,17 +155,17 @@ void main() {
     expect(inSheet('IPv6'), findsNothing);
   });
 
-  testWidgets('the app-wide page offers only the normal profile keys', (
-    tester,
-  ) async {
+  testWidgets('the app-wide page offers the whole DNS section', (tester) async {
     await pumpView(tester);
 
+    expect(
+      DnsOverrideKey.normalProfileKeys,
+      containsAll(DnsOverrideKey.values),
+    );
     await openAddSheet(tester);
 
-    expect(find.text('Direct Nameserver'), findsOneWidget);
-    expect(find.text(currentAppLocalizations.respectRules), findsNothing);
-    expect(find.text('Nameserver Policy'), findsNothing);
-    expect(find.text(currentAppLocalizations.fallbackFilter), findsNothing);
+    expect(inSheet(currentAppLocalizations.listenRoutingMark), findsOneWidget);
+    expect(inSheet(currentAppLocalizations.useHosts), findsOneWidget);
   });
 
   testWidgets('the app-wide page offers no quick edit', (tester) async {

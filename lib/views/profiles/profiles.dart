@@ -6,6 +6,7 @@ import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/profiles/custom/custom.dart';
 import 'package:skyward/views/profiles/extend/extend.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -433,6 +434,19 @@ class ProfileItem extends ConsumerWidget {
     BaseNavigator.push(context, ExtendView(profileId: id));
   }
 
+  /// The profile's DNS entries sit over the app's, so what the page writes only
+  /// reaches the core once the profile is built again on the way back.
+  Future<void> _handlePushDnsOverridePage(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    await BaseNavigator.push(context, DnsView.profile(profile.id));
+    if (!context.mounted) {
+      return;
+    }
+    ref.read(setupActionProvider.notifier).autoApplyProfile();
+  }
+
   void _handlePushCustomProfilePage(BuildContext context, int id) {
     BaseNavigator.push(context, CustomProfileView(profileId: id));
   }
@@ -470,7 +484,7 @@ class ProfileItem extends ConsumerWidget {
             _handlePreview(context);
           },
         ),
-      ] else
+      ] else ...[
         CommonPopupMenuItem(
           glyph: AppGlyphs.puzzle,
           label: appLocalizations.extend,
@@ -478,6 +492,14 @@ class ProfileItem extends ConsumerWidget {
             _handlePushGenProfilePage(context, profile.id);
           },
         ),
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.dns,
+          label: appLocalizations.dnsOverride,
+          onPressed: () {
+            unawaited(_handlePushDnsOverridePage(context, ref));
+          },
+        ),
+      ],
       if (isUrl)
         CommonPopupMenuItem(
           glyph: AppGlyphs.sync,

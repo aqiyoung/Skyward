@@ -730,8 +730,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS override"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile\'s own setting. Custom profiles set their DNS in their content.",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "This profile lists DNS policies of its own; the entries here replace them whole, so every rule they carried that is not set here stops applying.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS queries"),
     "dockScale": MessageLookupByLibrary.simpleMessage("Dock size"),
@@ -1351,6 +1355,9 @@ class MessageLookup extends MessageLookupByLibrary {
           "Please enter the auto-update interval",
         ),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Applies to this profile only and takes precedence over the DNS override entries in the network settings.",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "The profile has been modified. Turn off auto update?",

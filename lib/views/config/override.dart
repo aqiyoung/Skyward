@@ -372,6 +372,11 @@ abstract class OverrideSpec<K extends OverrideKey, M> {
 
   OverrideField<M> fieldOf(K key);
 
+  /// A line the page draws above its entries, for something the profile
+  /// already carries that they replace. Neither a failure nor a warning, so it
+  /// is not an entry of [OverrideTarget.issues].
+  Widget? buildNote(BuildContext context, WidgetRef ref) => null;
+
   /// Also resets the values of [keys], so a profile with no keys is untouched.
   OverrideState<K, M> withoutKeys(OverrideState<K, M> state, Set<K> keys) {
     var model = state.model;
@@ -589,6 +594,7 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
       children: [
         if (spec.target.issues case final issues?)
           CustomIssuesBanner(issues: ref.watch(issues)),
+        if (spec.buildNote(context, ref) case final note?) note,
         AnimatedEntries(
           children: [
             for (final (title, keys) in spec.sectionsOf(

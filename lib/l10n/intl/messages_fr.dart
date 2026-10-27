@@ -772,8 +772,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Détournement DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Mode DNS"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("Substitution DNS"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Les entrées ajoutées ici remplacent le DNS de tous les profils URL et fichier ; tout ce qui n’est pas ajouté garde le réglage du profil. Les profils personnalisés définissent leur DNS dans leur contenu.",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "Ce profil a ses propres politiques DNS ; les entrées ci-dessous les remplacent entièrement, donc les règles qui n’y figurent pas cessent de s’appliquer.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("Requêtes DNS"),
     "dockScale": MessageLookupByLibrary.simpleMessage(
@@ -1455,6 +1459,9 @@ class MessageLookup extends MessageLookupByLibrary {
           "Veuillez saisir l’intervalle de mise à jour automatique",
         ),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "S’applique uniquement à ce profil et prime sur les entrées de substitution DNS des réglages réseau.",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "Le profil a été modifié. Désactiver la mise à jour automatique ?",

@@ -129,17 +129,47 @@ class ErrorBanner extends StatelessWidget {
   }
 }
 
+/// A line about something that is neither broken nor at risk: a value the
+/// profile already carries that the entries below replace. Left in the page's
+/// own surfaces, since colour belongs to what fails or what is selected.
+class NoteBanner extends StatelessWidget {
+  final String? message;
+
+  const NoteBanner({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final message = this.message;
+    return AnimatedSize(
+      duration: commonDuration,
+      alignment: Alignment.topCenter,
+      child: message == null
+          ? const SizedBox(width: double.infinity)
+          : _Banner(
+              glyph: AppGlyphs.info,
+              message: message,
+              color: context.raisedSurfaceLevel.colorOf(colorScheme),
+              foregroundColor: colorScheme.onSurface,
+              glyphColor: colorScheme.onSurfaceVariant,
+            ),
+    );
+  }
+}
+
 class _Banner extends StatelessWidget {
   final Glyph glyph;
   final String message;
   final Color color;
   final Color foregroundColor;
+  final Color? glyphColor;
 
   const _Banner({
     required this.glyph,
     required this.message,
     required this.color,
     required this.foregroundColor,
+    this.glyphColor,
   });
 
   @override
@@ -153,7 +183,11 @@ class _Banner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
         children: [
-          GlyphIcon(glyph, size: 20.ap(context), color: foregroundColor),
+          GlyphIcon(
+            glyph,
+            size: 20.ap(context),
+            color: glyphColor ?? foregroundColor,
+          ),
           Expanded(
             child: Text(
               message,

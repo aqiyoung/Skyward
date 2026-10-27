@@ -609,8 +609,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS 하이재킹"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 모드"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS 덮어쓰기"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "여기에 추가한 항목은 모든 URL 및 파일 프로필의 DNS를 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지합니다. 사용자 지정 프로필은 내용에서 DNS를 설정합니다.",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "이 프로필에는 자체 DNS 정책이 있습니다. 여기 항목이 이를 통째로 대체하므로 여기에 없는 규칙은 더 이상 적용되지 않습니다.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS 쿼리"),
     "dockScale": MessageLookupByLibrary.simpleMessage("하단 바 크기"),
@@ -1133,6 +1137,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileAutoUpdateIntervalNullValidationDesc":
         MessageLookupByLibrary.simpleMessage("자동 업데이트 간격을 입력하세요"),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "이 프로필에만 적용되며 네트워크 설정의 DNS 덮어쓰기 항목보다 우선합니다.",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "프로필이 수정되었습니다. 자동 업데이트를 끄시겠습니까?",

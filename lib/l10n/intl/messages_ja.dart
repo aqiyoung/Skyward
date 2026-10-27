@@ -620,8 +620,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS の上書き"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "ここで追加した項目は、すべての URL・ファイルプロファイルの DNS を上書きします。追加していない項目はプロファイル自身の設定のままです。カスタムプロファイルの DNS はその内容で設定します。",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "このプロファイルは独自の DNS ポリシーを持っています。ここの項目はそれを丸ごと置き換えるため、ここにないルールは適用されなくなります。",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNSクエリ"),
     "dockScale": MessageLookupByLibrary.simpleMessage("ボトムバーのサイズ"),
@@ -1152,6 +1156,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileAutoUpdateIntervalNullValidationDesc":
         MessageLookupByLibrary.simpleMessage("自動更新間隔を入力してください"),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "このプロファイルにのみ適用され、ネットワーク設定の DNS 上書き項目より優先されます。",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "プロファイルが変更されています。自動更新を無効にしますか？",
