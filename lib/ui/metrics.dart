@@ -18,10 +18,11 @@ EdgeInsets listHeaderPaddingOf(BuildContext context) =>
     const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8) *
     1.mAp(context);
 
-/// A list row clears the 28 dp icon well its leading mark sits in with room
-/// above and below, as Clash for Apple Platforms' 29 dp well sets a row at 62.7
-/// with its subtitle; 56 left the well almost touching the separators.
-const listRowMinHeight = 60.0;
+/// A list row clears the 28 dp icon well its leading mark sits in, 14 dp above
+/// and below. Clash for Apple Platforms sets its own rows at 62.7 dp around a
+/// 29 dp well, but 60 pushed a conditional row below the fold on a phone-height
+/// sheet, and the well reads the same with the two extra points given back.
+const listRowMinHeight = 56.0;
 const listRowVerticalPadding = 10.0;
 const pageToolbarHeight = 72.0;
 const sheetToolbarHeight = 48.0;
