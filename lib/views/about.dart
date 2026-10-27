@@ -109,12 +109,6 @@ class AboutView extends ConsumerWidget {
                 label: 'github.com/aqiyoung/skyward-core',
               ),
               _buildLinkItem(
-                glyph: AppGlyphs.code,
-                title: 'FlClash',
-                url: 'https://github.com/chen08209/FlClash',
-                label: 'github.com/chen08209/FlClash',
-              ),
-              _buildLinkItem(
                 glyph: AppGlyphs.gavel,
                 title: appLocalizations.disclaimerLicenseTitle,
                 url: 'https://github.com/$repository/blob/main/LICENSE',
@@ -125,6 +119,15 @@ class AboutView extends ConsumerWidget {
           generateSection(
             title: appLocalizations.otherContributors,
             items: [
+              // Upstream FlClash lives here, not in More: More already has
+              // this project's own Project entry, so a second project
+              // there reads as a competing project link.
+              _buildLinkItem(
+                glyph: AppGlyphs.code,
+                title: 'FlClash',
+                url: 'https://github.com/chen08209/FlClash',
+                label: 'github.com/chen08209/FlClash',
+              ),
               for (final contributor in _contributors)
                 ListItem(
                   leading: CircleAvatar(
