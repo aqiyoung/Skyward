@@ -154,8 +154,20 @@ class CommonAction extends _$CommonAction {
     final abi = downloader == null ? null : await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
     if (downloader == null || asset == null) {
+      // The offered release may be a beta or a preview, which the
+      // /releases/latest page never points at -- open this release's own
+      // page, falling back to the tag page, so the download offered is the
+      // one that was actually found.
+      final page = release['html_url'];
+      final tag = release['tag_name'];
       await launchUrl(
-        Uri.parse('https://github.com/$repository/releases/latest'),
+        Uri.parse(
+          page is String
+              ? page
+              : tag is String
+                  ? 'https://github.com/$repository/releases/tag/$tag'
+                  : 'https://github.com/$repository/releases/latest',
+        ),
       );
       return;
     }

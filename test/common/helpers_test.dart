@@ -250,6 +250,124 @@ void main() {
       // A version that carries a `v` of its own keeps it.
       expect(releaseVersionOf('v1.0.0-dev'), '1.0.0-dev');
     });
+
+    test('rebuilds a preview version from its tag and name', () {
+      expect(
+        releaseVersionOf(
+          'preview-2090029901',
+          'Skyward 1.0.0.2090029901（预览版）',
+        ),
+        '1.0.0.2090029901',
+      );
+      expect(releaseVersionOf('preview-2090029901'), '1.0.0.2090029901');
+    });
+  });
+
+  group('newestOfferableRelease', () {
+    Map<String, dynamic> release(
+      String tag,
+      String name,
+      String body, {
+      bool draft = false,
+    }) => {
+      'tag_name': tag,
+      'name': name,
+      'body': body,
+      'draft': draft,
+    };
+
+    final stable23 = release(
+      'v1.0.0.23',
+      'Skyward 1.0.0.23（正式版）',
+      '- 构建号：`2090029901`',
+    );
+    final beta24 = release(
+      'v1.0.0.24',
+      'Skyward 1.0.0.24（beta）',
+      '- 构建号：`2090029902`',
+    );
+    final preview9901 = release(
+      'preview-2090029901',
+      'Skyward 1.0.0.2090029901（预览版）',
+      '- 构建号：`2090029901`',
+    );
+
+    test('a stable install is offered the newer beta over its own preview', () {
+      expect(
+        newestOfferableRelease(
+          [preview9901, beta24, stable23],
+          installedVersion: '1.0.0.23',
+        ),
+        beta24,
+      );
+    });
+
+    test('a stable install is offered a newer preview', () {
+      final preview9905 = release(
+        'preview-2090029905',
+        'Skyward 1.0.0.2090029905（预览版）',
+        '- 构建号：`2090029905`',
+      );
+      expect(
+        newestOfferableRelease(
+          [preview9905, stable23],
+          installedVersion: '1.0.0.23',
+        ),
+        preview9905,
+      );
+    });
+
+    test('a preview install is offered the newer beta', () {
+      expect(
+        newestOfferableRelease(
+          [preview9901, beta24, stable23],
+          installedVersion: '1.0.0.2090029813',
+        ),
+        beta24,
+      );
+    });
+
+    test('nothing is offered once the newest build is installed', () {
+      expect(
+        newestOfferableRelease(
+          [preview9901, beta24, stable23],
+          installedVersion: '1.0.0.24',
+        ),
+        isNull,
+      );
+    });
+
+    test('a draft is never offered, however new its number', () {
+      final draftPreview = release(
+        'preview-2090029999',
+        'Skyward 1.0.0.2090029999（预览版）',
+        '- 构建号：`2090029999`',
+        draft: true,
+      );
+      expect(
+        newestOfferableRelease(
+          [draftPreview, stable23],
+          installedVersion: '1.0.0.23',
+        ),
+        isNull,
+      );
+    });
+
+    test('without numbers only a version-newer release counts', () {
+      final nextStable = release('v1.0.0.24', 'Skyward 1.0.0.24', 'notes');
+      final previewNoNumber = release(
+        'preview-2090029905',
+        'Skyward 1.0.0.2090029905（预览版）',
+        'notes',
+      );
+      expect(
+        newestOfferableRelease(
+          [previewNoNumber, nextStable],
+          installedVersion: '1.0.0.23',
+        ),
+        nextStable,
+      );
+    });
   });
 
   group('releaseBuildNumber', () {

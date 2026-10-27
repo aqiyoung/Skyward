@@ -86,12 +86,44 @@ class Request {
   }
 
   /// Null when this build is current; throws when GitHub cannot be asked.
+  ///
+  /// The check looks at the whole releases list, not just the latest
+  /// release, so a newer beta or preview is found just as a newer stable
+  /// is -- the latest-release endpoint only ever answers with a stable.
+  /// A preview is Android-only, so it is skipped on desktop, where it has
+  /// no package to install. When the list cannot be read (the API quota is
+  /// spent, for example), this falls back to the latest stable alone.
   Future<Map<String, dynamic>?> checkForUpdate() async {
+    try {
+      final response = await dio.get<List<dynamic>>(
+        'https://api.github.com/repos/$repository/releases?per_page=30',
+        options: Options(responseType: ResponseType.json),
+      );
+      var candidates =
+          (response.data ?? []).whereType<Map<String, dynamic>>().toList();
+      if (system.isDesktop) {
+        candidates = candidates
+            .where((release) {
+              final tag = release['tag_name'];
+              return tag is! String || !tag.startsWith('preview-');
+            })
+            .toList();
+      }
+      return newestOfferableRelease(
+        candidates,
+        installedVersion: globalState.packageInfo.displayVersion,
+      );
+    } on DioException catch (error) {
+      commonPrint.log(
+        'releases list failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
     final release = await latestRelease();
     final remoteVersion = release['tag_name'] as String;
     final version = globalState.packageInfo.displayVersion;
     final hasUpdate = shouldOfferUpdate(
-      remoteVersion: releaseVersionOf(remoteVersion),
+      remoteVersion: releaseVersionOf(remoteVersion, release['name'] as String?),
       remoteBuildNumber: releaseBuildNumber(release['body']),
       installedVersion: version,
     );
