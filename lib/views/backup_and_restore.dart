@@ -163,7 +163,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
             items: [
               if (dav == null)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.account),
+                  leading: const IconWell(AppGlyphs.account),
                   title: Text(appLocalizations.noInfo),
                   subtitle: Text(appLocalizations.pleaseBindWebDAV),
                   trailing: TonalButton(
@@ -175,7 +175,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
                 )
               else ...[
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.account),
+                  leading: const IconWell(AppGlyphs.account),
                   title: TooltipText(
                     text: Text(
                       dav.user,

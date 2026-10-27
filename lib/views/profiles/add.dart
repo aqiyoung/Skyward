@@ -181,38 +181,38 @@ class AddProfileView extends ConsumerWidget {
       ),
       children: [
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.qrCode),
+          leading: const IconWell(AppGlyphs.qrCode),
           title: Text(appLocalizations.qrcode),
           subtitle: Text(appLocalizations.qrcodeDesc),
           onTap: () => _toScan(context, ref),
         ),
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.importFile),
+          leading: const IconWell(AppGlyphs.importFile),
           title: Text(appLocalizations.file),
           subtitle: Text(appLocalizations.fileDesc),
           onTap: () => _handleAddProfileFormFile(ref),
         ),
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.cloudDownload),
+          leading: const IconWell(AppGlyphs.cloudDownload),
           title: Text(appLocalizations.link),
           subtitle: Text(appLocalizations.linkDesc),
           onTap: () => _toAdd(ref),
         ),
         if (system.isTV)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.devices),
+            leading: const IconWell(AppGlyphs.devices),
             title: Text(appLocalizations.sendFromPhone),
             subtitle: Text(appLocalizations.sendFromPhoneDesc),
             onTap: () => _toSendFromPhone(ref),
           ),
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.paste),
+          leading: const IconWell(AppGlyphs.paste),
           title: Text(appLocalizations.paste),
           subtitle: Text(appLocalizations.pasteDesc),
           onTap: () => _toPaste(ref),
         ),
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.customize),
+          leading: const IconWell(AppGlyphs.customize),
           title: Text(appLocalizations.customProfile),
           subtitle: Text(appLocalizations.customProfileDesc),
           onTap: () => _toAddCustom(context, ref),

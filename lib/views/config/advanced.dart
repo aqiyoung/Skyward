@@ -17,7 +17,7 @@ class AdvancedConfigView extends StatelessWidget {
     final items = [
       ListItem.open(
         title: Text(appLocalizations.network),
-        leading: const GlyphIcon(AppGlyphs.key),
+        leading: const IconWell(AppGlyphs.key),
         widget: BaseScaffold(
           title: appLocalizations.network,
           body: const NetworkListView(),
@@ -25,17 +25,17 @@ class AdvancedConfigView extends StatelessWidget {
       ),
       ListItem.open(
         title: const Text('DNS'),
-        leading: const GlyphIcon(AppGlyphs.dns),
+        leading: const IconWell(AppGlyphs.dns),
         widget: const DnsView(),
       ),
       ListItem.open(
         title: Text(appLocalizations.addedRules),
-        leading: const GlyphIcon(AppGlyphs.rules),
+        leading: const IconWell(AppGlyphs.rules),
         widget: const AddedRulesView(),
       ),
       ListItem.open(
         title: Text(appLocalizations.script),
-        leading: const GlyphIcon(AppGlyphs.code),
+        leading: const IconWell(AppGlyphs.code),
         widget: const ScriptsView(),
       ),
     ];

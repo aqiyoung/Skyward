@@ -34,7 +34,12 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: _LinkBadge(glyph: glyph),
+      leading: IconWell(
+        glyph,
+        side: 40,
+        glyphSize: 20,
+        shape: AppShape.md,
+      ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: const GlyphIcon(AppGlyphs.openExternal),
@@ -195,33 +200,6 @@ class _Pill extends StatelessWidget {
           style: AppTextStyle.caption1
               .of(context, emphasized: true)
               .copyWith(color: foregroundColor),
-        ),
-      ),
-    );
-  }
-}
-
-class _LinkBadge extends StatelessWidget {
-  final Glyph glyph;
-
-  const _LinkBadge({required this.glyph});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        shape: AppShape.md,
-      ),
-      child: SizedBox.square(
-        dimension: 40,
-        child: Center(
-          child: GlyphIcon(
-            glyph,
-            size: 20,
-            color: colorScheme.onSurfaceVariant,
-          ),
         ),
       ),
     );

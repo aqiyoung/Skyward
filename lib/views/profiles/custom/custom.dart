@@ -50,7 +50,7 @@ Widget _sectionRow(
   Widget view,
 ) {
   return ListItem(
-    leading: GlyphIcon(glyph),
+    leading: IconWell(glyph),
     title: Text(title),
     trailing: Row(
       mainAxisSize: MainAxisSize.min,

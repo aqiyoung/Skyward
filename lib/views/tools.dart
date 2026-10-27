@@ -33,7 +33,7 @@ class ToolsView extends ConsumerStatefulWidget {
 class _ToolViewState extends ConsumerState<ToolsView> {
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
     return ListItem.open(
-      leading: GlyphIcon(navigationItem.glyph),
+      leading: IconWell(navigationItem.glyph),
       title: Text(navigationItem.label.label),
       widget: navigationItem.builder(context),
       forceFull: navigationItem.modes.contains(NavigationItemMode.moreFull),
@@ -137,7 +137,7 @@ class _LocaleItem extends ConsumerWidget {
     );
     final currentLocale = getLocaleForString(locale);
     return ListItem<Locale?>.options(
-      leading: const GlyphIcon(AppGlyphs.language),
+      leading: const IconWell(AppGlyphs.language),
       title: Text(context.appLocalizations.language),
       options: [null, ...AppLocalizations.delegate.supportedLocales],
       onChanged: (Locale? locale) {
@@ -157,7 +157,7 @@ class _ThemeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.paintbrush),
+      leading: const IconWell(AppGlyphs.paintbrush),
       title: Text(context.appLocalizations.theme),
       widget: const ThemeView(),
     );
@@ -170,7 +170,7 @@ class _StorageItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.dataUsage),
+      leading: const IconWell(AppGlyphs.dataUsage),
       title: Text(context.appLocalizations.storage),
       widget: const StorageView(),
     );
@@ -183,7 +183,7 @@ class _DiagnosticsItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.status),
+      leading: const IconWell(AppGlyphs.status),
       title: Text(context.appLocalizations.diagnostics),
       widget: const DiagnosticsView(),
     );
@@ -196,7 +196,7 @@ class _BackupItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.cloudSync),
+      leading: const IconWell(AppGlyphs.cloudSync),
       title: Text(context.appLocalizations.backupAndRestore),
       widget: const BackupAndRestore(),
     );
@@ -209,7 +209,7 @@ class _SettingsSearchItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.search),
+      leading: const IconWell(AppGlyphs.search),
       title: Text(context.appLocalizations.search),
       widget: const SettingsSearchView(),
     );
@@ -222,7 +222,7 @@ class _HotkeyItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.keyboard),
+      leading: const IconWell(AppGlyphs.keyboard),
       title: Text(context.appLocalizations.hotkeyManagement),
       widget: const HotKeyView(),
     );
@@ -235,7 +235,7 @@ class _AccessItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.appsList),
+      leading: const IconWell(AppGlyphs.appsList),
       title: Text(context.appLocalizations.accessControl),
       widget: const AccessView(),
     );
@@ -248,7 +248,7 @@ class _GeneralItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.settings),
+      leading: const IconWell(AppGlyphs.settings),
       title: Text(context.appLocalizations.general),
       widget: const GeneralView(),
     );
@@ -261,7 +261,7 @@ class _AdvancedConfigItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.wrench),
+      leading: const IconWell(AppGlyphs.wrench),
       title: Text(context.appLocalizations.advancedConfig),
       widget: const AdvancedConfigView(),
     );
@@ -274,7 +274,7 @@ class _CustomResourcesItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.customize),
+      leading: const IconWell(AppGlyphs.customize),
       title: Text(context.appLocalizations.customProfileResources),
       widget: const CustomResourcesView(),
     );
@@ -287,7 +287,7 @@ class _DisclaimerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.gavel),
+      leading: const IconWell(AppGlyphs.gavel),
       title: Text(context.appLocalizations.disclaimer),
       widget: const DisclaimerView(),
     );
@@ -300,7 +300,7 @@ class _InfoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.info),
+      leading: const IconWell(AppGlyphs.info),
       title: Text(context.appLocalizations.about),
       widget: const AboutView(),
     );
@@ -313,7 +313,7 @@ class _DeveloperItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.cpu),
+      leading: const IconWell(AppGlyphs.cpu),
       title: Text(context.appLocalizations.developerMode),
       widget: const DeveloperView(),
     );

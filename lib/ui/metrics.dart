@@ -18,7 +18,10 @@ EdgeInsets listHeaderPaddingOf(BuildContext context) =>
     const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8) *
     1.mAp(context);
 
-const listRowMinHeight = 56.0;
+/// A list row clears the 28 dp icon well its leading mark sits in with room
+/// above and below, as Clash for Apple Platforms' 29 dp well sets a row at 62.7
+/// with its subtitle; 56 left the well almost touching the separators.
+const listRowMinHeight = 60.0;
 const listRowVerticalPadding = 10.0;
 const pageToolbarHeight = 72.0;
 const sheetToolbarHeight = 48.0;

@@ -115,7 +115,7 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
             items: [
               ListItem(
                 title: Text(appLocalizations.copy),
-                leading: const GlyphIcon(AppGlyphs.copy),
+                leading: const IconWell(AppGlyphs.copy),
                 onTap: _databaseSize == null ? null : () => _copy(rows),
               ),
             ],

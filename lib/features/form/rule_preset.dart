@@ -106,7 +106,7 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
           return ItemPositionProvider(
             position: ItemPosition.get(index, presets.length),
             child: DecorationListItem(
-              leading: GlyphIcon(preset.glyph),
+              leading: IconWell(preset.glyph),
               title: Text(preset.label(appLocalizations)),
               subtitle: _PresetSubtitle(preset),
               isSelected: isSelected,
