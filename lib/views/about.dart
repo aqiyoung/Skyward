@@ -10,8 +10,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
+class Contributor {
+  final String name;
+
+  const Contributor({required this.name});
+}
+
 class AboutView extends ConsumerWidget {
   const AboutView({super.key});
+
+  // Restored from the upstream About page: the two icon designers whose
+  // section was dropped when the app shipped as Skyward. Their avatar
+  // assets went with it, so the row shows an initial instead of an
+  // AssetImage that no longer exists.
+  static const _contributors = [
+    Contributor(name: 'June2'),
+    Contributor(name: 'Arue'),
+  ];
 
   Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
     if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
@@ -94,11 +109,30 @@ class AboutView extends ConsumerWidget {
                 label: 'github.com/aqiyoung/skyward-core',
               ),
               _buildLinkItem(
+                glyph: AppGlyphs.code,
+                title: 'FlClash',
+                url: 'https://github.com/chen08209/FlClash',
+                label: 'github.com/chen08209/FlClash',
+              ),
+              _buildLinkItem(
                 glyph: AppGlyphs.gavel,
                 title: appLocalizations.disclaimerLicenseTitle,
                 url: 'https://github.com/$repository/blob/main/LICENSE',
                 label: 'GPL-3.0',
               ),
+            ],
+          ),
+          generateSection(
+            title: appLocalizations.otherContributors,
+            items: [
+              for (final contributor in _contributors)
+                ListItem(
+                  leading: CircleAvatar(
+                    child: Text(contributor.name[0]),
+                  ),
+                  title: Text(contributor.name),
+                  subtitle: Text(appLocalizations.appIconDesign),
+                ),
             ],
           ),
         ],
