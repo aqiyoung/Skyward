@@ -88,6 +88,12 @@ class AboutView extends ConsumerWidget {
                 url: 'https://github.com/aqiyoung/skyward-core/tree/FlClash',
                 label: 'github.com/aqiyoung/skyward-core',
               ),
+              _buildLinkItem(
+                glyph: AppGlyphs.gavel,
+                title: appLocalizations.disclaimerLicenseTitle,
+                url: 'https://github.com/$repository/blob/main/LICENSE',
+                label: 'GPL-3.0',
+              ),
             ],
           ),
         ],
@@ -138,22 +144,10 @@ class _AboutHero extends StatelessWidget {
             style: AppTextStyle.title2.of(context, emphasized: true),
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _Pill(
-                label: 'v${globalState.packageInfo.displayVersion}',
-                color: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-              ),
-              _Pill(
-                label: 'GPL-3.0',
-                color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                foregroundColor: colorScheme.onSurfaceVariant,
-              ),
-            ],
+          _Pill(
+            label: 'v${globalState.packageInfo.displayVersion}',
+            color: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
           ),
           const SizedBox(height: 16),
           ConstrainedBox(
