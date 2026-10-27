@@ -153,9 +153,7 @@ void main() {
     expect(find.byTooltip('Switch profile'), findsNothing);
   });
 
-  testWidgets('shows the current profile, its usage and when it ends', (
-    tester,
-  ) async {
+  testWidgets('shows the current profile and when it ends', (tester) async {
     final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
     setUpProfiles([
       _profile(
@@ -173,8 +171,9 @@ void main() {
 
     expect(label('P1'), findsOneWidget);
     expect(label('P2'), findsNothing);
-    expect(find.textContaining('42%', findRichText: true), findsOneWidget);
-    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    // Usage lives in the detail sheet now, not on the card.
+    expect(find.textContaining('42%', findRichText: true), findsNothing);
+    expect(find.text('42 GB / 100 GB'), findsNothing);
     expect(find.textContaining('30 days left'), findsOneWidget);
   });
 
@@ -198,8 +197,9 @@ void main() {
 
     expect(label('P1'), findsOneWidget);
     expect(find.text('30 days left'), findsOneWidget);
-    expect(find.textContaining('42%', findRichText: true), findsOneWidget);
-    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    // Usage lives in the detail sheet now, not on the card.
+    expect(find.textContaining('42%', findRichText: true), findsNothing);
+    expect(find.text('42 GB / 100 GB'), findsNothing);
     expect(find.byTooltip('Update'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -346,7 +346,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a narrow card drops words before it cuts the time or traffic', (
+  testWidgets('a narrow card drops words before it cuts the time', (
     tester,
   ) async {
     final expiry = DateTime.now().add(const Duration(days: 30, hours: 1));
@@ -372,7 +372,6 @@ void main() {
       width: 600,
     );
     expect(find.textContaining('Updated'), findsOneWidget);
-    expect(find.textContaining('used', findRichText: true), findsOneWidget);
 
     await pumpCard(
       tester,
@@ -385,8 +384,9 @@ void main() {
     );
     expect(find.textContaining('Updated'), findsNothing);
     expect(find.textContaining('minutes ago'), findsOneWidget);
+    // Usage lives in the detail sheet now, not on the card.
     expect(find.textContaining('used', findRichText: true), findsNothing);
-    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    expect(find.text('42 GB / 100 GB'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -421,7 +421,8 @@ void main() {
     expect(daysLeft.center.dy, moreOrLessEquals(name.center.dy, epsilon: 1));
     expect(find.byTooltip('Switch profile'), findsOneWidget);
     expect(find.textContaining('minutes ago'), findsNothing);
-    expect(find.text('42 GB / 100 GB'), findsOneWidget);
+    // Usage lives in the detail sheet now, not on the card.
+    expect(find.text('42 GB / 100 GB'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

@@ -264,24 +264,25 @@ class _ConfigStatsState extends ConsumerState<_ConfigStats>
         Text(name, maxLines: 1, style: label),
       ],
     );
-    return LayoutBuilder(
-      // Reference layout: the three counts sit together on the left,
-      // not spread across the card's full width.
-      builder: (context, constraints) => FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: AlignmentDirectional.centerStart,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            spacing: 40,
-            children: [
-              item(stats?.groups, appLocalizations.proxyGroup),
-              item(stats?.proxies, appLocalizations.proxies),
-              item(stats?.rules, appLocalizations.rules),
-            ],
-          ),
-        ),
+    // Reference layout: the three counts sit together on the left,
+    // not spread across the card's full width. The row itself must
+    // be the FittedBox child, with no width constraint in between:
+    // constraining it to the card width first lets its columns
+    // overflow the row before the box can scale it down.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: AlignmentDirectional.centerStart,
+      child: Row(
+        // Min size, so the box sees the row's real width and can
+        // scale it down; a max-size row would overflow before that.
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        spacing: 40,
+        children: [
+          item(stats?.groups, appLocalizations.proxyGroup),
+          item(stats?.proxies, appLocalizations.proxies),
+          item(stats?.rules, appLocalizations.rules),
+        ],
       ),
     );
   }

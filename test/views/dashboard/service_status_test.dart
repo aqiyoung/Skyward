@@ -153,7 +153,7 @@ void main() {
     expect(DashboardWidget.networkOverview.card, isA<NetworkOverviewCard>());
   });
 
-  testWidgets('the overview card keeps the counts under the grid', (
+  testWidgets('the overview card ends at the grid, without the counts', (
     tester,
   ) async {
     answer((_) async => []);
@@ -169,12 +169,14 @@ void main() {
       find.text(currentAppLocalizations.networkOverview),
       findsOneWidget,
     );
+    // The connection, request and DNS counts live in the tools pages
+    // now, not under the grid on the dashboard.
     expect(
       find.descendant(
         of: find.byType(ServiceStatusCard),
         matching: find.byType(ConnectionStatsBar),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(
