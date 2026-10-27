@@ -146,12 +146,18 @@ class CommonAction extends _$CommonAction {
     ];
   }
 
+  /// The download id of an update that is already running in the
+  /// background, if any: a second tap while one runs must not start a
+  /// duplicate download, and there is no dialog to tell the user apart.
+  int? _ongoingUpdateDownloadId;
+
   /// The package that fits the device goes to the system download manager,
   /// which keeps it in the Downloads folder, while the app itself polls
-  /// that manager and shows the progress in a persistent dialog, and
-  /// opens the system installer once the download completes -- the browser
-  /// is never involved on Android. The desktop has no such manager, so the
-  /// release page opens there.
+  /// that manager in the background and opens the system installer once
+  /// the download completes -- the browser is never involved on Android.
+  /// Nothing modal is shown while it downloads, so the app stays usable
+  /// throughout. The desktop has no such manager, so the release page
+  /// opens there.
   Future<void> _downloadRelease(Map<String, dynamic> release) async {
     final downloader = systemDownloader;
     final abi = downloader == null ? null : await downloader.supportedAbi();
@@ -174,6 +180,12 @@ class CommonAction extends _$CommonAction {
       );
       return;
     }
+    if (_ongoingUpdateDownloadId != null) {
+      // A background download is already running: starting another one
+      // would download the same file twice, and with no dialog there is
+      // no place to ask which one to keep.
+      return;
+    }
     try {
       final downloadId = await downloader.download(
         url: asset.url,
@@ -182,132 +194,48 @@ class CommonAction extends _$CommonAction {
       if (downloadId == null) {
         throw StateError('download did not start');
       }
-      // The download's progress lives here, in the app, not in a banner
-      // that flashes away or in the system notification: the dialog below
-      // stays open until the download finishes, fails, or is cancelled,
-      // and only then does the system installer open.
-      await _showAndroidDownloadProgress(downloader, downloadId, asset.name);
+      _ongoingUpdateDownloadId = downloadId;
+      // No dialog, no banner while it downloads: the download runs in
+      // the background through the system download manager, the app
+      // stays fully usable, and only the installer opens at the end.
+      // The manager's own notification is the progress view, and it
+      // remains the fallback if the app is gone when the download ends.
+      await _waitForAndroidDownload(downloader, downloadId, asset.name);
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
         logLevel: LogLevel.warning,
       );
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
+    } finally {
+      _ongoingUpdateDownloadId = null;
     }
   }
 
-  /// Polls the system download manager every half second and drives a
-  /// persistent in-app progress dialog. The dialog is not dismissible by
-  /// tapping outside it, so a download cannot silently disappear behind a
-  /// flashing banner: it ends only in a finished download, a failure, or
-  /// an explicit cancel, which also cancels the manager's download.
-  /// Reusing the existing download and cancel labels keeps this free of a
-  /// new localization key; the numbers in the dialog need no translation.
-  Future<void> _showAndroidDownloadProgress(
+  /// Polls the system download manager every half second in the
+  /// background, with no dialog and no banner while it runs, so the user
+  /// can keep using the app throughout the download. The only things
+  /// that ever surface are the system installer's own window on success
+  /// (opened by the download-complete receiver, with the install call
+  /// below as backup) and a non-modal error banner on failure, which
+  /// does not block the app either. Cancelling happens from the system
+  /// download notification, since there is no dialog left to cancel from:
+  /// a download that disappears from the manager is reported as failed.
+  Future<void> _waitForAndroidDownload(
     SystemDownloader downloader,
     int downloadId,
     String fileName,
   ) async {
-    final progress = ValueNotifier<DownloadStatus>(
-      const DownloadStatus(state: 'pending', downloadedBytes: 0, totalBytes: -1),
-    );
-    var finished = false;
     var failed = false;
-    var cancelled = false;
-    var dialogOpen = false;
-    var dialogDone = false;
-    BuildContext? dialogContext;
-    final dialogFuture = dialogs.showCommonDialog<void>(
-      dismissible: false,
-      child: Builder(
-        builder: (context) {
-          dialogContext = context;
-          // Set here, not after the wait loop: if the user cancels while
-          // the loop is still waiting, the dialog's own close handler
-          // clears this, and the loop must not set it back and then pop
-          // whatever page is underneath.
-          dialogOpen = true;
-          final appLocalizations = context.appLocalizations;
-          return CommonDialog(
-            title: appLocalizations.download,
-            actions: [
-              TextButton(
-                onPressed: () {
-                  cancelled = true;
-                  Navigator.of(context).pop();
-                },
-                child: Text(appLocalizations.cancel),
-              ),
-            ],
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              children: [
-                Text(fileName, textAlign: TextAlign.center),
-                ValueListenableBuilder<DownloadStatus>(
-                  valueListenable: progress,
-                  builder: (context, status, _) {
-                    final total = status.totalBytes;
-                    final downloaded = status.downloadedBytes;
-                    final percent = status.progress;
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: 8,
-                      children: [
-                        LinearProgressIndicator(value: percent),
-                        Text(
-                          total > 0
-                              ? '${_formatMegabytes(downloaded)} / '
-                                  '${_formatMegabytes(total)}'
-                                  '${percent == null ? '' : ' • ${(percent * 100).toStringAsFixed(0)}%'}'
-                              : _formatMegabytes(downloaded),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-    unawaited(
-      dialogFuture.then((_) {
-        dialogOpen = false;
-        dialogDone = true;
-        if (!finished) {
-          // The dialog closed some other way: stop polling with it.
-          cancelled = true;
-        }
-      }),
-    );
-    // The dialog future resolves only after the route is pushed, so wait
-    // for the builder to capture its context before polling can pop it.
-    while (dialogContext == null && !cancelled && !dialogDone) {
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
     try {
-      while (!cancelled) {
+      while (true) {
         await Future.delayed(const Duration(milliseconds: 500));
-        if (cancelled) {
-          break;
-        }
         final status = await downloader.status(downloadId);
-        if (status == null) {
+        if (status == null || status.isFailed) {
           failed = true;
-          finished = true;
           break;
         }
-        progress.value = status;
         if (status.isSuccessful) {
-          finished = true;
-          break;
-        }
-        if (status.isFailed) {
-          failed = true;
-          finished = true;
           break;
         }
       }
@@ -317,18 +245,6 @@ class CommonAction extends _$CommonAction {
         logLevel: LogLevel.warning,
       );
       failed = true;
-      finished = true;
-    }
-    if (cancelled) {
-      await downloader.cancel(downloadId);
-    }
-    if (dialogOpen && dialogContext != null) {
-      Navigator.of(dialogContext!).pop();
-    }
-    await dialogFuture;
-    progress.dispose();
-    if (cancelled) {
-      return;
     }
     if (failed) {
       dialogs.showNotifier(
@@ -341,10 +257,6 @@ class CommonAction extends _$CommonAction {
     // moment the download finishes; this is only the backup for when it
     // did not, and the native side makes it a no-op when it already did.
     await downloader.install(downloadId);
-  }
-
-  String _formatMegabytes(int bytes) {
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   ({String url, String name})? _apkAssetOf(
