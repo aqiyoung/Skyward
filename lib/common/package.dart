@@ -112,9 +112,21 @@ bool shouldOfferUpdate({
   required String remoteVersion,
   required int? remoteBuildNumber,
   required String installedVersion,
+  int? installedBuildNumber,
 }) {
   final parts = installedVersion.split('+')[0].split('.');
-  final installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
+  // A release build does not carry its build number in its version -- the
+  // fourth slot is its revision -- so a caller that found this build's own
+  // release (its notes carry the number) may pass it in. When both sides sit
+  // on the shared counter, the counter decides across every channel: a
+  // stable, beta or preview build is newer exactly when its number is
+  // larger, whatever its version name says.
+  installedBuildNumber ??= _isPreviewBuild(parts)
+      ? (parts.length > 3 ? int.tryParse(parts[3]) : null)
+      : null;
+  if (installedBuildNumber != null && remoteBuildNumber != null) {
+    return remoteBuildNumber > installedBuildNumber;
+  }
   if (_isPreviewBuild(parts)) {
     // A release that does not state its number cannot be placed on the
     // counter, and the version names are not comparable across the two
@@ -122,20 +134,109 @@ bool shouldOfferUpdate({
     // every answer taken from the release page redirect, which carries the tag
     // and nothing else: the fallback the API drops to once its quota is spent.
     // Saying nothing is the only honest answer there. Guessing by name would
-    // promise a preview the update it cannot install.
-    if (remoteBuildNumber == null || installedBuildNumber == null) return false;
-    // Otherwise nothing else to weigh: the counter is monotone across days and
-    // channels, so a larger number is both newer and installable over this
-    // build.
-    return remoteBuildNumber > installedBuildNumber;
+    // promise a preview the update it cannot install. (Both numbers present
+    // is already handled above.)
+    return false;
   }
   return compareVersions(remoteVersion, installedVersion) > 0;
 }
 
+/// The newest release in [releases] that should be offered to someone running
+/// [installedVersion], across every channel: stable, beta and preview.
+///
+/// The releases list is what makes this possible at all. A single latest
+/// release can only ever be the latest stable, and a stable build's version
+/// does not carry its build number -- so the installed build's number is
+/// read from its own release in the same list, whose notes carry it. A
+/// preview's number is its version's fourth slot. With both numbers on the
+/// shared counter, the largest number wins, whatever channel it belongs to;
+/// without numbers, only a non-preview release compared by version counts,
+/// because a preview cannot be placed on the counter that way. Drafts are
+/// never offered. Returns the original release map, or null.
+Map<String, dynamic>? newestOfferableRelease(
+  List<dynamic> releases, {
+  required String installedVersion,
+}) {
+  final parsed = <Map<String, dynamic>>[];
+  for (final release in releases) {
+    if (release is! Map<String, dynamic>) continue;
+    if (release['draft'] == true) continue;
+    final tag = release['tag_name'];
+    if (tag is! String) continue;
+    parsed.add(release);
+  }
+  int? installedBuildNumber;
+  final parts = installedVersion.split('+')[0].split('.');
+  if (_isPreviewBuild(parts)) {
+    installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
+  } else {
+    for (final release in parsed) {
+      final tag = release['tag_name'] as String;
+      if (releaseVersionOf(tag, release['name'] as String?) !=
+          installedVersion) {
+        continue;
+      }
+      installedBuildNumber = releaseBuildNumber(release['body']);
+      if (installedBuildNumber != null) break;
+    }
+  }
+  Map<String, dynamic>? best;
+  String? bestVersion;
+  int? bestBuildNumber;
+  for (final release in parsed) {
+    final tag = release['tag_name'] as String;
+    final remoteVersion = releaseVersionOf(tag, release['name'] as String?);
+    final remoteParts = remoteVersion.split('+')[0].split('.');
+    final remoteBuildNumber =
+        releaseBuildNumber(release['body']) ??
+        (_isPreviewBuild(remoteParts)
+            ? (remoteParts.length > 3 ? int.tryParse(remoteParts[3]) : null)
+            : null);
+    if (!shouldOfferUpdate(
+      remoteVersion: remoteVersion,
+      remoteBuildNumber: remoteBuildNumber,
+      installedVersion: installedVersion,
+      installedBuildNumber: installedBuildNumber,
+    )) {
+      continue;
+    }
+    if (best == null) {
+      best = release;
+      bestVersion = remoteVersion;
+      bestBuildNumber = remoteBuildNumber;
+    } else if (remoteBuildNumber != null &&
+        bestBuildNumber != null &&
+        remoteBuildNumber != bestBuildNumber) {
+      if (remoteBuildNumber > bestBuildNumber) {
+        best = release;
+        bestVersion = remoteVersion;
+        bestBuildNumber = remoteBuildNumber;
+      }
+    } else if (compareVersions(remoteVersion, bestVersion!) > 0) {
+      best = release;
+      bestVersion = remoteVersion;
+      bestBuildNumber = remoteBuildNumber;
+    }
+  }
+  return best;
+}
+
 /// A release tag names its version behind a `v`. Only that first character is
 /// the prefix -- anything else in the tag is part of the version it carries.
-String releaseVersionOf(String tag) =>
-    tag.startsWith('v') ? tag.substring(1) : tag;
+/// A preview tag names no version at all, only its build number, so its
+/// version is rebuilt from the release name when one is given (the name
+/// carries the full version), falling back to the current upstream base.
+String releaseVersionOf(String tag, [String? name]) {
+  if (tag.startsWith('v')) return tag.substring(1);
+  final preview = RegExp(r'^preview-(\d+)$').firstMatch(tag);
+  if (preview != null) {
+    final named = name == null
+        ? null
+        : RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0);
+    return named ?? '1.0.0.${preview.group(1)}';
+  }
+  return tag;
+}
 
 const releaseNotesBeginMarker = '<!-- flclash:changelog:begin -->';
 const releaseNotesEndMarker = '<!-- flclash:changelog:end -->';
