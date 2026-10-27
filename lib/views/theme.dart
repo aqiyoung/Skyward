@@ -772,7 +772,7 @@ class _DockLabelItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
     return ListItem.toggle(
-      leading: const GlyphIcon(AppGlyphs.motion),
+      leading: const IconWell(AppGlyphs.motion),
       horizontalTitleGap: 12,
       title: Text(
         appLocalizations.hideLabelOnScroll,

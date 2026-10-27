@@ -109,6 +109,9 @@ Color marks the one item that differs, never the structure around it.
   (`CommonCard.fillsSelection`): solid `primary` with `onPrimary`, as the dashboard outbound mode does. Only one
   segment per group.
 - **Error** on a row or card: `errorContainer` with `onErrorContainer`, no border.
+- **Note**: a line that explains what an edit costs, without anything failing, takes the surface one level below the page
+  (`ErrorBanner`'s shape, `NoteBanner`'s colors) with the text in `onSurface` and only the glyph in `onSurfaceVariant`.
+  Wearing `errorContainer` for a note spends the failure color on information.
 - **Status** values (delay, availability, success, warning): the color goes on text, a glyph, or a small chip, never
   on a whole card. `success` and `warning` come from fixed green and orange palettes that ignore the seed, like
   Material's `error`; harmonizing pulled orange toward red under rose seeds until warning and error matched. Text takes
@@ -118,10 +121,18 @@ Color marks the one item that differs, never the structure around it.
   menu's `danger` item still takes `error`.
 - **Data series** on one chart: the first is primary, the second primary at 45% over the card
   (`DashboardColors.series2`), so they differ by lightness under any seed. Tertiary is not a series color.
+- **A meter** fills a track one level below the surface it sits on, never the surface itself: the profile card's used
+  share is a 4 dp capsule on `SurfaceLevel.inset`, inset from the card's corners, because a bar on the card's own bottom
+  edge was cut into a wedge by the 24 dp radius and read as a stray underline. An expiry date is a label rather than a
+  state and stays neutral until it has passed, when it takes `error`; a primary pill beside the selection badge spent
+  the selection color on a date.
 - **Text**: titles and values `onSurface`, labels and secondary lines `onSurfaceVariant`. `outline` is not a text
   color, and a value is never tinted primary.
 - **Marks** that only identify, a country badge, a group or service icon, a source avatar, sit on a neutral well with
-  `onSurfaceVariant`.
+  `onSurfaceVariant`. A list row's leading mark takes `IconWell`: a 28 dp square at radius 8 in the surface one level
+  below the row, so a column of rows lines up on one rhythm instead of floating glyphs of their own weight. The square
+  is Clash for Apple Platforms' (`29 dp`, radius 9); its tint per page is not, because that spends color on identity.
+  The about page's 40 dp link wells are the same widget one size up.
 - `primaryContainer`, `secondaryContainer`, and `tertiaryContainer` are neither surface nor selection fills. Keep
   them out of cards, rows, marks, and navigation indicators. The code editor's completion popup is the one exception:
   it fills the highlighted suggestion with `primaryContainer` (`lib/features/editor/completion_popup.dart`).
@@ -189,6 +200,7 @@ twice as much on the dark page as on the light one and carried the seed's tint.
 - `lib/ui/surface.dart`: `SurfaceLevel`, `SurfaceScope`, `context.surfaceLevel`, `context.raisedSurfaceLevel`,
   `ColorScheme.chromeSurface`, and `ThemeData.withAppSurfaces`, applied next to `withAppShapes` wherever the app
   builds its theme.
+- `lib/ui/icons/icon_well.dart`: `IconWell`, the neutral well an identity mark sits in.
 - `lib/ui/color.dart`: `seededColorScheme`, the status palettes, and `delayColor`.
 - `lib/views/dashboard/style.dart`: `DashboardColors` maps `page`, `card`, `tone`, and `tone2` onto the levels and
   adds the dashboard's switch, series, and status colors.

@@ -34,7 +34,12 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: _LinkBadge(glyph: glyph),
+      leading: IconWell(
+        glyph,
+        side: 40,
+        glyphSize: 20,
+        shape: AppShape.md,
+      ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: const GlyphIcon(AppGlyphs.openExternal),
@@ -88,6 +93,12 @@ class AboutView extends ConsumerWidget {
                 url: 'https://github.com/aqiyoung/skyward-core/tree/FlClash',
                 label: 'github.com/aqiyoung/skyward-core',
               ),
+              _buildLinkItem(
+                glyph: AppGlyphs.gavel,
+                title: appLocalizations.disclaimerLicenseTitle,
+                url: 'https://github.com/$repository/blob/main/LICENSE',
+                label: 'GPL-3.0',
+              ),
             ],
           ),
         ],
@@ -138,22 +149,10 @@ class _AboutHero extends StatelessWidget {
             style: AppTextStyle.title2.of(context, emphasized: true),
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _Pill(
-                label: 'v${globalState.packageInfo.displayVersion}',
-                color: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-              ),
-              _Pill(
-                label: 'GPL-3.0',
-                color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                foregroundColor: colorScheme.onSurfaceVariant,
-              ),
-            ],
+          _Pill(
+            label: 'v${globalState.packageInfo.displayVersion}',
+            color: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
           ),
           const SizedBox(height: 16),
           ConstrainedBox(
@@ -201,33 +200,6 @@ class _Pill extends StatelessWidget {
           style: AppTextStyle.caption1
               .of(context, emphasized: true)
               .copyWith(color: foregroundColor),
-        ),
-      ),
-    );
-  }
-}
-
-class _LinkBadge extends StatelessWidget {
-  final Glyph glyph;
-
-  const _LinkBadge({required this.glyph});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        shape: AppShape.md,
-      ),
-      child: SizedBox.square(
-        dimension: 40,
-        child: Center(
-          child: GlyphIcon(
-            glyph,
-            size: 20,
-            color: colorScheme.onSurfaceVariant,
-          ),
         ),
       ),
     );

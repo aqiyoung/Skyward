@@ -18,6 +18,15 @@ enum SurfaceLevel {
     block || inset => inset,
   };
 
+  /// One level up, the surface a widget at this level sits on. `page` has
+  /// nowhere further to go and answers itself, as [next] does at `inset`.
+  SurfaceLevel get previous => switch (this) {
+    page => page,
+    card => page,
+    block => card,
+    inset => block,
+  };
+
   Color colorOf(ColorScheme colorScheme) {
     final dark = colorScheme.brightness == Brightness.dark;
     return switch (this) {

@@ -2166,11 +2166,31 @@ class AppLocalizations {
     );
   }
 
+  /// `DNS override`
+  String get dnsOverride {
+    return Intl.message(
+      'DNS override',
+      name: 'dnsOverride',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile's own setting. Custom profiles set their DNS in their content.`
   String get dnsOverrideDesc {
     return Intl.message(
       'Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile\'s own setting. Custom profiles set their DNS in their content.',
       name: 'dnsOverrideDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This profile lists DNS policies of its own; the entries here replace them whole, so every rule they carried that is not set here stops applying.`
+  String get dnsPolicyReplaced {
+    return Intl.message(
+      'This profile lists DNS policies of its own; the entries here replace them whole, so every rule they carried that is not set here stops applying.',
+      name: 'dnsPolicyReplaced',
       desc: '',
       args: [],
     );
@@ -7879,6 +7899,16 @@ class AppLocalizations {
       name: 'profileExpiresIn',
       desc: '',
       args: [date, days],
+    );
+  }
+
+  /// `Applies to this profile only and takes precedence over the DNS override entries in the network settings.`
+  String get profileDnsSettingsDesc {
+    return Intl.message(
+      'Applies to this profile only and takes precedence over the DNS override entries in the network settings.',
+      name: 'profileDnsSettingsDesc',
+      desc: '',
+      args: [],
     );
   }
 

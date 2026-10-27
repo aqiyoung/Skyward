@@ -6,6 +6,7 @@ import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/profiles/custom/custom.dart';
 import 'package:skyward/views/profiles/extend/extend.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -22,17 +23,42 @@ const _infoGap = 4.0;
 /// A subscription's used quota, its total, and the share between them.
 typedef _Usage = ({int used, int total, double share});
 
-/// Past this share the usage bar warns, the same threshold the dashboard's
-/// profile card uses.
+/// Past this share the usage meter turns to `error`.
 const _usageWarnShare = 0.9;
+
+/// The meter's room at the card's foot: a 4 dp capsule 8 dp above the bottom
+/// edge, and 4 dp clear of the info row above it.
+const _usageBarRoom = 16.0;
+const _usageBarHeight = 4.0;
+const _usageBarBottom = 8.0;
+const _usageBarInset = 16.0;
 
 String _percentOf(double share) => '${(share * 100).round()}%';
 
-/// The tint the card itself fills with, up to the used share.
-Color _usageFillColor(BuildContext context, double share) {
-  final colorScheme = context.colorScheme;
-  return (share >= _usageWarnShare ? colorScheme.error : colorScheme.primary)
-      .opacity15;
+/// The used share rides a meter inside the card's own inset.
+///
+/// Pinned to the card's bottom edge, its ends were cut by the 24 dp corner into
+/// wedges, and a 3 dp line over a track four tones off the card read as a stray
+/// underline rather than a meter; washing the whole card was worse still, since
+/// the fill then read as the card's own colour and competed with the selection
+/// badge. A 4 dp capsule inset from the corners, on a track one level below the
+/// card, reads as a meter and nothing else.
+class _UsageBar extends StatelessWidget {
+  const _UsageBar({required this.share});
+
+  final double share;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return LinearProgressIndicator(
+      minHeight: _usageBarHeight,
+      borderRadius: BorderRadius.circular(_usageBarHeight / 2),
+      value: share.clamp(0.0, 1.0),
+      color: share >= _usageWarnShare ? colorScheme.error : colorScheme.primary,
+      backgroundColor: SurfaceLevel.inset.colorOf(colorScheme),
+    );
+  }
 }
 
 double get _profileItemHeight {
@@ -40,7 +66,8 @@ double get _profileItemHeight {
   return measure.textHeight(AppTextStyle.headline) +
       _infoGap +
       measure.textHeight(AppTextStyle.footnote) +
-      2 * listRowVerticalPadding;
+      2 * listRowVerticalPadding +
+      _usageBarRoom;
 }
 
 class ProfilesView extends ConsumerStatefulWidget {
@@ -407,6 +434,19 @@ class ProfileItem extends ConsumerWidget {
     BaseNavigator.push(context, ExtendView(profileId: id));
   }
 
+  /// The profile's DNS entries sit over the app's, so what the page writes only
+  /// reaches the core once the profile is built again on the way back.
+  Future<void> _handlePushDnsOverridePage(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    await BaseNavigator.push(context, DnsView.profile(profile.id));
+    if (!context.mounted) {
+      return;
+    }
+    ref.read(setupActionProvider.notifier).autoApplyProfile();
+  }
+
   void _handlePushCustomProfilePage(BuildContext context, int id) {
     BaseNavigator.push(context, CustomProfileView(profileId: id));
   }
@@ -444,7 +484,7 @@ class ProfileItem extends ConsumerWidget {
             _handlePreview(context);
           },
         ),
-      ] else
+      ] else ...[
         CommonPopupMenuItem(
           glyph: AppGlyphs.puzzle,
           label: appLocalizations.extend,
@@ -452,6 +492,14 @@ class ProfileItem extends ConsumerWidget {
             _handlePushGenProfilePage(context, profile.id);
           },
         ),
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.dns,
+          label: appLocalizations.dnsOverride,
+          onPressed: () {
+            unawaited(_handlePushDnsOverridePage(context, ref));
+          },
+        ),
+      ],
       if (isUrl)
         CommonPopupMenuItem(
           glyph: AppGlyphs.sync,
@@ -529,16 +577,6 @@ class ProfileItem extends ConsumerWidget {
         },
         child: Stack(
           children: [
-            if (usage != null)
-              Positioned.fill(
-                child: FractionallySizedBox(
-                  alignment: AlignmentDirectional.centerStart,
-                  widthFactor: usage.share,
-                  child: ColoredBox(
-                    color: _usageFillColor(context, usage.share),
-                  ),
-                ),
-              ),
             ListItem(
               key: Key(profile.id.toString()),
               minTileHeight: _profileItemHeight,
@@ -551,7 +589,15 @@ class ProfileItem extends ConsumerWidget {
                     _GroupsCountChip(profileId: profile.id)
                   else
                     _buildTrailing(context, isUpdating: isUpdating),
-                  if (isSelected) const SelectionBadge(size: 24),
+                  // The badge holds its place whether or not this is the chosen
+                  // card: letting it widen only the selected row pushed that
+                  // row's time and total left, so the column jumped as the
+                  // selection moved.
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: isSelected ? const SelectionBadge(size: 24) : null,
+                  ),
                 ],
               ),
               title: _ProfileCardTitle(
@@ -561,6 +607,13 @@ class ProfileItem extends ConsumerWidget {
                 usage: usage,
               ),
             ),
+            if (usage != null)
+              PositionedDirectional(
+                start: _usageBarInset,
+                end: _usageBarInset,
+                bottom: _usageBarBottom,
+                child: _UsageBar(share: usage.share),
+              ),
           ],
         ),
       ),
@@ -645,8 +698,8 @@ class _GroupsCountChip extends ConsumerWidget {
       message: context.appLocalizations.proxyGroupsCount(count, count.compact),
       child: TonalChip(
         label: count.compact,
-        color: colorScheme.primary.opacity15,
-        foregroundColor: colorScheme.primary,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
+        foregroundColor: colorScheme.onSurfaceVariant,
       ),
     );
   }

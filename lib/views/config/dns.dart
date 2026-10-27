@@ -4,6 +4,7 @@ import 'package:skyward/features/form/form.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/pages/editor.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:skyward/providers/state.dart';
 import 'package:skyward/views/config/override.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -118,6 +119,8 @@ ProfileOverrides _setProfileDns(ProfileOverrides overrides, _DnsState state) =>
 
 String _patchDnsDescription(AppLocalizations l) => l.dnsOverrideDesc;
 
+String _profileDnsDescription(AppLocalizations l) => l.profileDnsSettingsDesc;
+
 class DnsView extends OverrideView<DnsOverrideKey, Dns> {
   /// The keys written over the DNS of every subscription and file profile.
   const DnsView({super.key})
@@ -132,7 +135,9 @@ class DnsView extends OverrideView<DnsOverrideKey, Dns> {
         ),
       );
 
-  DnsView.profile(int profileId, {super.key})
+  /// A custom profile brings no DNS section of its own, so its entries are all
+  /// there is.
+  DnsView.custom(int profileId, {super.key})
     : super(
         spec: _ProfileDnsOverrideSpec(
           ProfileOverrideTarget(
@@ -143,6 +148,21 @@ class DnsView extends OverrideView<DnsOverrideKey, Dns> {
               profileId,
             ).select((state) => state.dns),
           ),
+        ),
+      );
+
+  /// A profile that carries its own DNS: the app's entries apply first and
+  /// this profile's own go over them, key by key.
+  DnsView.profile(int profileId, {super.key})
+    : super(
+        spec: _CombinedDnsOverrideSpec(
+          ProfileOverrideTarget(
+            profileId,
+            get: _profileDns,
+            set: _setProfileDns,
+            description: _profileDnsDescription,
+          ),
+          profileId: profileId,
         ),
       );
 }
@@ -343,6 +363,72 @@ class _ProfileDnsOverrideSpec extends _DnsOverrideSpec
 
   @override
   EditorSchema get schema => EditorSchema.dns;
+}
+
+/// The page for a profile that keeps a DNS section of its own: a table key
+/// replaces the profile's whole table, which is worth saying out loud.
+class _CombinedDnsOverrideSpec extends _ProfileDnsOverrideSpec {
+  const _CombinedDnsOverrideSpec(super.target, {required this.profileId});
+
+  final int profileId;
+
+  @override
+  Widget? buildNote(BuildContext context, WidgetRef ref) =>
+      _OwnPolicyNote(profileId: profileId, target: target);
+}
+
+/// Draws nothing until a table key is listed and the profile carries a table
+/// of its own, which is the only case where an override costs something the
+/// profile came with.
+class _OwnPolicyNote extends ConsumerStatefulWidget {
+  const _OwnPolicyNote({required this.profileId, required this.target});
+
+  final int profileId;
+  final OverrideTarget<DnsOverrideKey, Dns> target;
+
+  @override
+  ConsumerState<_OwnPolicyNote> createState() => _OwnPolicyNoteState();
+}
+
+class _OwnPolicyNoteState extends ConsumerState<_OwnPolicyNote> {
+  Future<Map<String, dynamic>>? _config;
+
+  /// The profile as it is saved, which is what the core builds from before
+  /// any override goes on.
+  Future<Map<String, dynamic>> get _ownConfig =>
+      _config ??= ref.read(coreHandlerProvider).getConfig(widget.profileId);
+
+  @override
+  Widget build(BuildContext context) {
+    final listed = ref.watch(
+      widget.target.select(
+        (state) => state.keys.intersection(DnsOverrideKey.policyKeys),
+      ),
+    );
+    if (listed.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _ownConfig,
+      builder: (context, snapshot) {
+        final dns = snapshot.data?['dns'];
+        final replaced =
+            dns is Map && listed.any((key) => _carries(dns, key) != null);
+        return NoteBanner(
+          message: replaced ? context.appLocalizations.dnsPolicyReplaced : null,
+        );
+      },
+    );
+  }
+}
+
+/// The profile's own value at [key], or null when it sets none.
+Object? _carries(Map dns, DnsOverrideKey key) {
+  final parent = key.parent;
+  final value = parent == null
+      ? dns[key.path]
+      : (dns[parent] as Map?)?[key.field];
+  return value is Map && value.isEmpty ? null : value;
 }
 
 class _PolicyField extends ValueOverrideField<Dns, Map<String, String>> {

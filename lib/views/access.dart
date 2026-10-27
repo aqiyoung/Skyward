@@ -532,8 +532,8 @@ class _AccessStatus extends StatelessWidget {
           if (enabled)
             TonalChip(
               label: appLocalizations.accessControlSelectedCount(selectedCount),
-              color: colorScheme.primary.opacity15,
-              foregroundColor: colorScheme.primary,
+              color: context.raisedSurfaceLevel.colorOf(colorScheme),
+              foregroundColor: colorScheme.onSurfaceVariant,
             )
           else
             TonalButton(

@@ -32,6 +32,11 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+    <!-- An update downloaded in-app is still installed by the system
+         installer, never silently: this lets the app open that installer
+         (or the unknown-sources settings when it has not been granted yet)
+         once the download completes. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".SkywardApplication"

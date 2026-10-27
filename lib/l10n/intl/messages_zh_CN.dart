@@ -565,8 +565,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS劫持"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS模式"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS 覆写"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "添加的项会覆写所有 URL 和文件配置的 DNS，未添加的项沿用配置自身的设置。自定义配置的 DNS 在其内容中设置。",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "此配置自带 DNS 策略，这里的项会整体替换它，其中未在此列出的规则也随之失效。",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS查询"),
     "dockScale": MessageLookupByLibrary.simpleMessage("底栏大小"),
@@ -1049,6 +1053,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileAutoUpdateIntervalNullValidationDesc":
         MessageLookupByLibrary.simpleMessage("请输入自动更新间隔时间"),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "仅作用于当前配置，并优先于网络设置中的 DNS 覆写项。",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "配置文件已经修改，是否关闭自动更新？",

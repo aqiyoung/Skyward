@@ -26,7 +26,9 @@ class ClashProvidersAction extends _$ClashProvidersAction {
     if (before != null &&
         (latest == null || latest.fileName != before.fileName)) {
       if (latest?.fileName != compiled.fileName) {
-        unawaited(_clearCache(compiled));
+        // Awaited, not fired off: the download wrote the file it compiled, so
+        // a set deleted mid-download is only gone once this lands.
+        await _clearCache(compiled);
       }
       return latest ?? compiled;
     }

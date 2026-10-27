@@ -257,7 +257,7 @@ class _LogBody extends StatelessWidget {
             text: route.proxy,
             style: AppTextStyle.footnote
                 .of(context, emphasized: true)
-                .copyWith(color: context.colorScheme.primary),
+                .copyWith(color: context.colorScheme.onSurface),
           ),
           TextSpan(text: '\n$_sourceText', style: styles.secondary),
         ],

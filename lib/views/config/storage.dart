@@ -153,7 +153,7 @@ class _StorageViewState extends State<StorageView> {
             items: [
               ListItem(
                 title: Text(appLocalizations.clearCache),
-                leading: const GlyphIcon(AppGlyphs.broom),
+                leading: const IconWell(AppGlyphs.broom),
                 onTap: areas == null || _clearing ? null : _clearCaches,
               ),
             ],

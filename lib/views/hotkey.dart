@@ -174,7 +174,7 @@ class _HotKeyItem extends ConsumerWidget {
     final key = hotKeyAction.key;
     return DecorationListItem(
       contentPadding: EdgeInsets.only(left: 16, right: key == null ? 16 : 6),
-      leading: GlyphIcon(_glyphOf(action)),
+      leading: IconWell(_glyphOf(action)),
       title: Text(action.label, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: failure == null
           ? null

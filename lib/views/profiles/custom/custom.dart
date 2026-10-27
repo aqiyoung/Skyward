@@ -50,7 +50,7 @@ Widget _sectionRow(
   Widget view,
 ) {
   return ListItem(
-    leading: GlyphIcon(glyph),
+    leading: IconWell(glyph),
     title: Text(title),
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
@@ -388,7 +388,7 @@ class _Overview extends ConsumerWidget {
         appLocalizations.providers,
         CustomProvidersView(profileId),
       ),
-      (AppGlyphs.dns, 'DNS', DnsView.profile(profileId)),
+      (AppGlyphs.dns, 'DNS', DnsView.custom(profileId)),
       (
         AppGlyphs.sliders,
         appLocalizations.more,

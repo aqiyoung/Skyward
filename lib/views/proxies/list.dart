@@ -636,7 +636,7 @@ class ListHeader extends ConsumerWidget {
             _GroupActions(
               isExpand: isExpand,
               isDelayTesting: isDelayTesting,
-              groupType: group.type.name,
+              groupType: group.type,
               onScrollToSelected: () {
                 onScrollToSelected(groupName);
               },
@@ -669,7 +669,7 @@ class ListHeader extends ConsumerWidget {
         padding: const EdgeInsets.all(_headerButtonInset),
         child: SurfaceScope(
           // CommonCard fills one level above its scope.
-          level: SurfaceLevel.values[level.index - 1],
+          level: level.previous,
           child: card,
         ),
       ),
@@ -748,7 +748,7 @@ class _GroupIcon extends ConsumerWidget {
             return IconTheme.merge(
               data: IconThemeData(
                 size: constraints.maxHeight,
-                color: context.colorScheme.primary,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               child: CommonTargetIcon(
                 src: GroupIconSource.of(name: group.name, icon: group.icon),
@@ -823,7 +823,7 @@ class _GroupActions extends StatelessWidget {
 
   final bool isExpand;
   final bool isDelayTesting;
-  final String groupType;
+  final GroupType groupType;
   final VoidCallback onScrollToSelected;
   final VoidCallback onDelayTest;
   final VoidCallback onToggle;
@@ -853,9 +853,13 @@ class _GroupActions extends StatelessWidget {
                 ),
               ],
             )
-          else
+          // Selector is the default group and the expand arrow already
+          // says a choice can be made, so its name is noise on every row;
+          // a computed group keeps its name, because it is the reason the
+          // row cannot be picked from directly.
+          else if (groupType != GroupType.Selector)
             Text(
-              groupType,
+              groupType.name,
               style: AppTextStyle.caption1
                   .of(context, emphasized: true)
                   .toLight,

@@ -310,8 +310,15 @@ enum DnsOverrideKey with OverrideKey {
 
   static const fallbackFilterSection = 'fallback-filter';
 
-  /// What a subscription or file profile may override: nothing that names its
-  /// groups or rule sets, which change with every update.
+  /// What a subscription or file profile may override. The whole section is
+  /// listed because an override is merged in key by key: a key the profile does
+  /// not carry costs nothing, and one it does carry is replaced whole, which
+  /// [nameserverPolicy] and its two proxy-server siblings are the only keys
+  /// worth a note about — they hold a table, not a value.
+  ///
+  /// The order is the order the page offers them in, grouped by section below.
+  /// The first ten are where they have always been, so a key a reader knows the
+  /// place of does not move.
   static const normalProfileKeys = {
     listen,
     ipv6,
@@ -323,7 +330,32 @@ enum DnsOverrideKey with OverrideKey {
     fallback,
     proxyServerNameserver,
     directNameserver,
+    enable,
+    listenRoutingMark,
+    useHosts,
+    useSystemHosts,
+    ipv6Timeout,
+    respectRules,
+    preferH3,
+    cacheAlgorithm,
+    cacheMaxSize,
+    fakeIpRange,
+    fakeIpRange6,
+    fakeIpTtl,
+    nameserverPolicy,
+    fallbackLazyQuery,
+    proxyServerNameserverPolicy,
+    directNameserverFollowPolicy,
+    fallbackFilterGeoip,
+    fallbackFilterGeoipCode,
+    fallbackFilterGeosite,
+    fallbackFilterIpcidr,
+    fallbackFilterDomain,
   };
+
+  /// The keys that hold a table: an override replaces the profile's whole
+  /// table, not the entries it names.
+  static const policyKeys = {nameserverPolicy, proxyServerNameserverPolicy};
 }
 
 @JsonEnum(valueField: 'path')

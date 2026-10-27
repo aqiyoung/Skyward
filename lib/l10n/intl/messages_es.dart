@@ -773,8 +773,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Secuestro de DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Modo DNS"),
+    "dnsOverride": MessageLookupByLibrary.simpleMessage("Sobrescritura de DNS"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Las entradas añadidas aquí sustituyen el DNS de todos los perfiles de URL y de archivo; lo que no añadas conserva el ajuste del propio perfil. Los perfiles personalizados definen su DNS en su contenido.",
+    ),
+    "dnsPolicyReplaced": MessageLookupByLibrary.simpleMessage(
+      "Este perfil tiene sus propias políticas de DNS; las entradas de aquí las reemplazan por completo, así que las reglas que no estén aquí dejan de aplicarse.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("Consultas DNS"),
     "dockScale": MessageLookupByLibrary.simpleMessage(
@@ -1454,6 +1458,9 @@ class MessageLookup extends MessageLookupByLibrary {
           "Introduce el intervalo de actualización automática",
         ),
     "profileDaysLeft": m62,
+    "profileDnsSettingsDesc": MessageLookupByLibrary.simpleMessage(
+      "Se aplica solo a este perfil y tiene prioridad sobre las entradas de sobrescritura de DNS de los ajustes de red.",
+    ),
     "profileExpiresIn": m63,
     "profileHasUpdate": MessageLookupByLibrary.simpleMessage(
       "El perfil se ha modificado. ¿Desactivar la actualización automática?",

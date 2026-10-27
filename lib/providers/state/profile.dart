@@ -50,25 +50,23 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
   final profileType = profile?.type ?? ProfileType.file;
   final extendType = profile?.extendType ?? ExtendType.standard;
-  final overrides = profileType == ProfileType.custom
-      ? ref.watch(
-          patchClashConfigProvider.select(
-            (state) => (profile?.overrides ?? const ProfileOverrides())
-                .overAppTun(state.tunOverride, state.tunOverrideKeys),
-          ),
-        )
-      : ref.watch(
-          patchClashConfigProvider.select(
-            (state) => ProfileOverrides(
-              dns: state.dns,
-              dnsOverrideKeys: state.dnsOverrideKeys.intersection(
-                DnsOverrideKey.normalProfileKeys,
-              ),
-              tun: state.tunOverride,
-              tunOverrideKeys: state.tunOverrideKeys,
-            ),
-          ),
-        );
+  final own = profile?.overrides ?? const ProfileOverrides();
+  final overrides = ref.watch(
+    patchClashConfigProvider.select((state) {
+      // The app's TUN entries sit below a profile's own, and a custom profile
+      // has nothing under them: it brings no tun section of its own.
+      final tun = own.overAppTun(state.tunOverride, state.tunOverrideKeys);
+      if (profileType == ProfileType.custom) {
+        return tun;
+      }
+      // Every other profile keeps the DNS its subscription carries, so the
+      // app's entries go first and this profile's own over them.
+      return tun.copyWith(
+        dns: state.dns.overDns(own.dns, own.dnsOverrideKeys),
+        dnsOverrideKeys: {...state.dnsOverrideKeys, ...own.dnsOverrideKeys},
+      );
+    }),
+  );
   final allProfileProviders = ref.watch(profileProvidersProvider);
   List<ProxyGroup> proxyGroups = [];
   List<Rule> rules = [];
