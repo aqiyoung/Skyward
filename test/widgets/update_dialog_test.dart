@@ -125,7 +125,7 @@ void main() {
     await shown;
   });
 
-  testWidgets('stops reminding when an automatic check is dismissed', (
+  testWidgets('a dismissed automatic check leaves the reminder alone', (
     tester,
   ) async {
     final container = await pumpApp(tester);
@@ -137,7 +137,11 @@ void main() {
     await tapCancel(tester);
     await shown;
 
-    expect(container.read(appSettingProvider).autoCheckUpdate, isFalse);
+    // Cancel here means "not this once". The dialog used to carry a second
+    // button that turned the automatic check off, so closing it could end the
+    // reminders for good; that switch lives only in Settings now, and closing
+    // a dialog is not a decision about it.
+    expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
   });
 
   testWidgets('a manual check keeps the setting and reports a failure', (

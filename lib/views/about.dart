@@ -101,8 +101,12 @@ class AboutView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
+    // A check takes a round trip, and the row gives no sign of it on its own:
+    // the bar under the title is the only thing that says the tap landed.
+    final isCheckingUpdate = ref.watch(loadingProvider(LoadingTag.checkUpdate));
     return CommonScaffold(
       title: appLocalizations.about,
+      isLoading: isCheckingUpdate,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
