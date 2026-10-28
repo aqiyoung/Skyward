@@ -206,7 +206,9 @@ class AboutView extends ConsumerWidget {
 }
 
 /// One contributor: the portrait, then the name it belongs to, so the two on
-/// the row cannot be paired up wrongly.
+/// the row cannot be paired up wrongly. The portrait is the size of the logo
+/// above it and the name starts where that row's title does, so the column
+/// holds down the section instead of stepping in and out.
 class _ContributorChip extends StatelessWidget {
   final Contributor contributor;
 
@@ -216,10 +218,11 @@ class _ContributorChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      spacing: 10,
+      // The list puts this much between a row's leading and its title.
+      spacing: 16,
       children: [
         CircleAvatar(
-          radius: 20,
+          radius: 18,
           foregroundImage: AssetImage(contributor.avatar),
           // Under the portrait while it loads, and left in its place if the
           // asset cannot be read.
