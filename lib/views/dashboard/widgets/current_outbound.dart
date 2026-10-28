@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:skyward/common/common.dart';
 import 'package:skyward/common/service_probe.dart';
 import 'package:skyward/enum/enum.dart';
@@ -833,7 +831,12 @@ class _RunTimeValue extends ConsumerWidget {
 const _morphDuration = Duration(milliseconds: 450);
 const _stateDuration = Duration(milliseconds: 150);
 
-final _startMorph = Morph(MaterialShapes.circle, MaterialShapes.cookie9Sided);
+/// A circle in both states. It grew into the cookie-9 of a running tunnel
+/// once, the way the M3 Expressive loader morphs between shapes, but at the
+/// 88 dp this card gives it the nine lobes read as a button whose outline came
+/// out wrong rather than as motion. What changes with the tunnel here is the
+/// glyph: play when stopped, pause while running.
+final _startMorph = Morph(MaterialShapes.circle, MaterialShapes.circle);
 
 Path _morphPath(double progress) => _startMorph.toPath(
   progress: progress,
@@ -841,10 +844,12 @@ Path _morphPath(double progress) => _startMorph.toPath(
   rotationPivotY: 0.5,
 );
 
-double _morphTurn(double progress) => progress * 2 * math.pi / 9;
+/// No turn. An outline that holds its shape has nothing to turn with, and a
+/// turning tinted glass would slide its highlight around the button on every
+/// start and stop.
+double _morphTurn(double progress) => 0;
 
-/// A circle with a play glyph while stopped that grows the cookie-9 of a
-/// running tunnel, the way the M3 Expressive loader morphs between shapes.
+/// A circle with a play glyph while stopped and a pause glyph while running.
 class _StartToggle extends ConsumerStatefulWidget {
   const _StartToggle({
     required this.size,
