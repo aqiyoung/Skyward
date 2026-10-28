@@ -270,11 +270,22 @@ jobs:
             fi
           done
           # The zip carries the app under a directory of its own; a package
-          # missing the executable is not something to hand over.
-          if ! unzip -l "${zips[0]}" | grep -qi 'Skyward.exe'; then
-            echo "::error::$(basename "${zips[0]}") carries no Skyward.exe"
-            exit 1
-          fi
+          # missing the executable is not something to hand over. Read it with
+          # python: the bash on these runners is Git for Windows, which ships
+          # no unzip -- `unzip -l` there fails rather than listing, and a
+          # failing listing reads exactly like a missing executable.
+          python - "${zips[0]}" <<'PY'
+          import sys, zipfile
+
+          archive = zipfile.ZipFile(sys.argv[1])
+          names = archive.namelist()
+          print(f"{sys.argv[1]} carries {len(names)} entries")
+          for name in names[:40]:
+              print(f"  {name}")
+          leaf = {n.replace("\\", "/").rsplit("/", 1)[-1].lower() for n in names}
+          if "skyward.exe" not in leaf:
+              sys.exit(f"::error::{sys.argv[1]} carries no Skyward.exe")
+          PY
           ls -l "${zips[0]}" "${setups[0]}"
 
       - name: Upload the preview
