@@ -81,55 +81,20 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  Widget _buildContributorTile(
-    BuildContext context,
-    Contributor contributor,
-    String subtitle,
-  ) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 24,
-          foregroundImage: AssetImage(contributor.avatar),
-          child: Text(contributor.name[0]),
-        ),
-        const SizedBox(height: 8),
-        Text(contributor.name, style: context.listTitleStyle),
-        Text(
-          subtitle,
-          style: context.listSubtitleStyle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIconDesignersRow(BuildContext context, String subtitle) {
-    return CommonCard(
-      shape: AppShape.of(
-        AppRadius.vertical(top: AppCorner.none, bottom: AppCorner.xl),
+  /// One icon designer, read the way every other entry on this page reads:
+  /// a 40 dp mark on the left, a name, a line under it. The portrait sits
+  /// where an icon would.
+  Widget _buildContributorItem(Contributor contributor, String subtitle) {
+    return ListItem(
+      leading: CircleAvatar(
+        radius: 20,
+        foregroundImage: AssetImage(contributor.avatar),
+        // Under the portrait while it loads, and left in its place if the
+        // asset cannot be read.
+        child: Text(contributor.name[0]),
       ),
-      padding: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildContributorTile(context, _contributors[0], subtitle),
-            ),
-            Container(
-              width: 1,
-              height: 56,
-              color: context.colorScheme.outlineVariant,
-            ),
-            Expanded(
-              child: _buildContributorTile(context, _contributors[1], subtitle),
-            ),
-          ],
-        ),
-      ),
+      title: Text(contributor.name),
+      subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 
@@ -160,12 +125,17 @@ class AboutView extends ConsumerWidget {
           // check update was a full-width hero button. Both now live in
           // this one row: the current version is the subtitle, tapping
           // the row checks for an update.
+          //
+          // No section header: it would carry the row's own words a line
+          // above them, and this row is the one thing the page is for.
           generateSection(
-            title: appLocalizations.checkUpdate,
             items: [
               ListItem(
+                // One arc with one arrowhead rather than `sync`'s two: at
+                // 20 dp the second arrow and its head turn the ring into a
+                // tangle.
                 leading: IconWell(
-                  AppGlyphs.sync,
+                  AppGlyphs.refresh,
                   side: 40,
                   glyphSize: 20,
                   shape: AppShape.md,
@@ -217,7 +187,11 @@ class AboutView extends ConsumerWidget {
                 url: 'https://github.com/chen08209/FlClash',
                 label: 'github.com/chen08209/FlClash',
               ),
-              _buildIconDesignersRow(context, appLocalizations.appIconDesign),
+              for (final contributor in _contributors)
+                _buildContributorItem(
+                  contributor,
+                  appLocalizations.appIconDesign,
+                ),
             ],
           ),
         ],
