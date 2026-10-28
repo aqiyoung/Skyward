@@ -288,7 +288,11 @@ void main() {
     );
   });
 
-  testWidgets('about view shows progress while checking for updates', (
+  // The About version-update row no longer uses the old check-update
+  // entry or the scaffold loading bar: its title is "Version update",
+  // and the check result is shown on the row itself, so this test
+  // follows the row instead of the old dialog and progress bar.
+  testWidgets('about view shows the update result on its row', (
     tester,
   ) async {
     final container = _containerFor(tester);
@@ -305,12 +309,15 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Version update'), findsOneWidget);
+    expect(find.text('Up to date'), findsNothing);
 
-    await tester.tap(find.text('Check for updates'));
+    await tester.tap(find.text('Version update'));
     await tester.pump();
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Checking…'), findsOneWidget);
 
-    await tester.tap(find.text('Check for updates'));
+    await tester.tap(find.text('Version update'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(adapter.requests, 1);
 
@@ -333,7 +340,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('The app is already up to date'), findsOneWidget);
+    expect(find.text('Up to date'), findsOneWidget);
     expect(tester.takeException(), null);
   });
 
