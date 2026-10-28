@@ -65,8 +65,11 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
+      // A full-bleed square carries more weight than a circle of the same box:
+      // at 40 dp beside the portraits below it read a size larger than they
+      // are, so it takes the side a square of their area would.
       leading: SizedBox.square(
-        dimension: 40,
+        dimension: 36,
         child: ClipPath(
           clipper: ShapeBorderClipper(shape: AppShape.md),
           child: Image.asset(asset, fit: BoxFit.cover),
@@ -81,19 +84,28 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  /// One icon designer, read the way every other entry on this page reads:
-  /// a 40 dp mark on the left, a name, a line under it. The portrait sits
-  /// where an icon would.
-  Widget _buildContributorItem(Contributor contributor, String subtitle) {
+  /// The two icon designers on one row: their portraits together where an
+  /// icon would sit, their names beside them, the role they share under both.
+  /// A row each said that role twice.
+  Widget _buildContributors(String subtitle) {
     return ListItem(
-      leading: CircleAvatar(
-        radius: 20,
-        foregroundImage: AssetImage(contributor.avatar),
-        // Under the portrait while it loads, and left in its place if the
-        // asset cannot be read.
-        child: Text(contributor.name[0]),
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
+        children: [
+          for (final contributor in _contributors)
+            CircleAvatar(
+              radius: 20,
+              foregroundImage: AssetImage(contributor.avatar),
+              // Under the portrait while it loads, and left in its place if
+              // the asset cannot be read.
+              child: Text(contributor.name[0]),
+            ),
+        ],
       ),
-      title: Text(contributor.name),
+      title: Text(
+        _contributors.map((contributor) => contributor.name).join(' · '),
+      ),
       subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
@@ -191,11 +203,7 @@ class AboutView extends ConsumerWidget {
                 url: 'https://github.com/chen08209/FlClash',
                 label: 'github.com/chen08209/FlClash',
               ),
-              for (final contributor in _contributors)
-                _buildContributorItem(
-                  contributor,
-                  appLocalizations.appIconDesign,
-                ),
+              _buildContributors(appLocalizations.appIconDesign),
             ],
           ),
         ],
