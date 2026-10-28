@@ -11,21 +11,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
 class Contributor {
+  final String avatar;
   final String name;
 
-  const Contributor({required this.name});
+  const Contributor({required this.avatar, required this.name});
 }
 
 class AboutView extends ConsumerWidget {
   const AboutView({super.key});
 
-  // Restored from the upstream About page: the two icon designers whose
-  // section was dropped when the app shipped as Skyward. Their avatar
-  // assets went with it, so the row shows an initial instead of an
-  // AssetImage that no longer exists.
+  // Avatars restored from the upstream FlClash repository, whose About
+  // page carried these two icon designers before the Skyward rename.
   static const _contributors = [
-    Contributor(name: 'June2'),
-    Contributor(name: 'Arue'),
+    Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
+    Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
   ];
 
   Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
@@ -49,11 +48,29 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: IconWell(
-        glyph,
-        side: 40,
-        glyphSize: 20,
-        shape: AppShape.md,
+      leading: IconWell(glyph, side: 40, glyphSize: 20, shape: AppShape.md),
+      title: Text(title),
+      subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: const GlyphIcon(AppGlyphs.openExternal),
+      onTap: () {
+        dialogs.openUrl(url);
+      },
+    );
+  }
+
+  Widget _buildLogoLinkItem({
+    required String asset,
+    required String title,
+    required String url,
+    required String label,
+  }) {
+    return ListItem(
+      leading: SizedBox.square(
+        dimension: 40,
+        child: ClipPath(
+          clipper: ShapeBorderClipper(shape: AppShape.md),
+          child: Image.asset(asset, fit: BoxFit.cover),
+        ),
       ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -61,6 +78,58 @@ class AboutView extends ConsumerWidget {
       onTap: () {
         dialogs.openUrl(url);
       },
+    );
+  }
+
+  Widget _buildContributorTile(
+    BuildContext context,
+    Contributor contributor,
+    String subtitle,
+  ) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          foregroundImage: AssetImage(contributor.avatar),
+          child: Text(contributor.name[0]),
+        ),
+        const SizedBox(height: 8),
+        Text(contributor.name, style: context.listTitleStyle),
+        Text(
+          subtitle,
+          style: context.listSubtitleStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconDesignersRow(BuildContext context, String subtitle) {
+    return CommonCard(
+      shape: AppShape.of(
+        AppRadius.vertical(top: AppCorner.none, bottom: AppCorner.xl),
+      ),
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildContributorTile(context, _contributors[0], subtitle),
+            ),
+            Container(
+              width: 1,
+              height: 56,
+              color: context.colorScheme.outlineVariant,
+            ),
+            Expanded(
+              child: _buildContributorTile(context, _contributors[1], subtitle),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -122,20 +191,13 @@ class AboutView extends ConsumerWidget {
               // Upstream FlClash lives here, not in More: More already has
               // this project's own Project entry, so a second project
               // there reads as a competing project link.
-              _buildLinkItem(
-                glyph: AppGlyphs.code,
+              _buildLogoLinkItem(
+                asset: 'assets/images/avatar/flclash.png',
                 title: 'FlClash',
                 url: 'https://github.com/chen08209/FlClash',
                 label: 'github.com/chen08209/FlClash',
               ),
-              for (final contributor in _contributors)
-                ListItem(
-                  leading: CircleAvatar(
-                    child: Text(contributor.name[0]),
-                  ),
-                  title: Text(contributor.name),
-                  subtitle: Text(appLocalizations.appIconDesign),
-                ),
+              _buildIconDesignersRow(context, appLocalizations.appIconDesign),
             ],
           ),
         ],
