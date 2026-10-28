@@ -70,7 +70,12 @@ enum _DockPhase { expanded, compact, hidden }
 
 class _HomeShellState extends ConsumerState<_HomeShell> {
   final _dockPhase = ValueNotifier(_DockPhase.expanded);
+
+  /// Which way the finger is pulling this drag, and how far it has come that
+  /// way: a drag that turns around starts counting again, so the bar answers
+  /// the way it is being pulled now.
   ScrollDirection _scrollDirection = ScrollDirection.idle;
+  double _scrollSign = 0;
   double _scrollTravel = 0;
 
   /// The bar follows the finger, never a list that restores its position
@@ -85,37 +90,42 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     }
     if (notification is UserScrollNotification) {
       _scrollDirection = notification.direction;
+      _scrollSign = 0;
       _scrollTravel = 0;
       return false;
     }
-    if (notification is! ScrollUpdateNotification) {
-      return false;
-    }
-    final metrics = notification.metrics;
-    // Nothing left to uncover at the top of the list, and nothing left to hide
-    // behind at its foot: either end puts the whole bar back, so a reader who
-    // scrolled to the end can still reach the destinations.
-    if (metrics.extentBefore <= 0 || metrics.extentAfter <= 0) {
-      _setPhase(_DockPhase.expanded);
-      _scrollTravel = 0;
-      return false;
-    }
-    if (notification.dragDetails == null ||
+    if (notification is! ScrollUpdateNotification ||
+        notification.dragDetails == null ||
         _scrollDirection == ScrollDirection.idle) {
       return false;
     }
-    // Dragging back down uncovers what the bar was hiding behind, so it comes
-    // back whole rather than one step at a time.
-    if (_scrollDirection == ScrollDirection.forward) {
-      _setPhase(_DockPhase.expanded);
-      _scrollTravel = 0;
+    final delta = notification.scrollDelta ?? 0;
+    if (delta == 0) {
       return false;
     }
-    _scrollTravel += (notification.scrollDelta ?? 0).abs();
-    if (_scrollTravel >= _scrollTravelToLeave) {
-      _setPhase(_DockPhase.hidden);
+    if (delta.sign != _scrollSign) {
+      _scrollSign = delta.sign;
+      _scrollTravel = 0;
+    }
+    _scrollTravel += delta.abs();
+    if (delta > 0) {
+      // The page moves on under the finger and the bar gets out of its way:
+      // the labels first, then the bar itself. Where the list happens to end
+      // is no reason to bring it back — a flick that reaches the foot in one
+      // go used to call the bar in halfway through a scroll still going up,
+      // which read as the bar flashing.
+      if (_scrollTravel >= _scrollTravelToLeave) {
+        _setPhase(_DockPhase.hidden);
+      } else if (_scrollTravel >= _scrollTravelToCollapse &&
+          _dockPhase.value == _DockPhase.expanded) {
+        // Folding the labels is one step out of a bar that is still there.
+        // From `hidden` it would be a step back in: the next flick of a fast
+        // scroll would show the bar again only to take it away once more.
+        _setPhase(_DockPhase.compact);
+      }
     } else if (_scrollTravel >= _scrollTravelToCollapse) {
-      _setPhase(_DockPhase.compact);
+      // A pull the other way is the only thing that brings the bar back.
+      _setPhase(_DockPhase.expanded);
     }
     return false;
   }
@@ -141,7 +151,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     ref.listen(currentPageLabelProvider, (previous, next) {
       if (previous == next) return;
       _dockPhase.value = _DockPhase.expanded;
-      _scrollDirection = ScrollDirection.idle;
+      _scrollSign = 0;
       _scrollTravel = 0;
     });
     final state = ref.watch(navigationStateProvider);
