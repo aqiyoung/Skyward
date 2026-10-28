@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/metrics.dart';
 import 'package:skyward/views/about.dart';
@@ -47,6 +50,10 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _DisclaimerItem(),
         if (enableDeveloperMode) const _DeveloperItem(),
         const _InfoItem(),
+        // Check update used to live inside About as a hero button; it is
+        // now its own row next to About, so it is reachable without
+        // opening About, and About stays a pure info page.
+        const _CheckUpdateItem(),
       ],
     );
   }
@@ -316,6 +323,35 @@ class _DeveloperItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.cpu),
       title: Text(context.appLocalizations.developerMode),
       widget: const DeveloperView(),
+    );
+  }
+}
+
+class _CheckUpdateItem extends ConsumerWidget {
+  const _CheckUpdateItem();
+
+  Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
+    if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
+    final commonAction = ref.read(commonActionProvider.notifier);
+    final result = await globalState.loadingRun(
+      () async => (release: await request.checkForUpdate()),
+      title: context.appLocalizations.checkUpdate,
+      tag: LoadingTag.checkUpdate,
+    );
+    if (result == null) return;
+    unawaited(
+      commonAction.checkUpdateResultHandle(data: result.release, isUser: true),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListItem(
+      leading: const IconWell(AppGlyphs.sync),
+      title: Text(context.appLocalizations.checkUpdate),
+      onTap: () {
+        _checkUpdate(context, ref);
+      },
     );
   }
 }
