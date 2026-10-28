@@ -84,27 +84,20 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  /// The two icon designers on one row: their portraits together where an
-  /// icon would sit, their names beside them, the role they share under both.
-  /// A row each said that role twice.
+  /// The two icon designers on one line, each portrait carrying its own name.
+  /// Joined into one string the names could be read against either face, and
+  /// neither could be told from the other; the hairline between them says they
+  /// are two people who share the role written under the pair.
   Widget _buildContributors(String subtitle) {
     return ListItem(
-      leading: Row(
+      title: Row(
         mainAxisSize: MainAxisSize.min,
-        spacing: 6,
         children: [
-          for (final contributor in _contributors)
-            CircleAvatar(
-              radius: 20,
-              foregroundImage: AssetImage(contributor.avatar),
-              // Under the portrait while it loads, and left in its place if
-              // the asset cannot be read.
-              child: Text(contributor.name[0]),
-            ),
+          for (var index = 0; index < _contributors.length; index++) ...[
+            if (index > 0) const _ContributorDivider(),
+            _ContributorChip(contributor: _contributors[index]),
+          ],
         ],
-      ),
-      title: Text(
-        _contributors.map((contributor) => contributor.name).join(' · '),
       ),
       subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
@@ -208,6 +201,48 @@ class AboutView extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One contributor: the portrait, then the name it belongs to, so the two on
+/// the row cannot be paired up wrongly.
+class _ContributorChip extends StatelessWidget {
+  final Contributor contributor;
+
+  const _ContributorChip({required this.contributor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        CircleAvatar(
+          radius: 20,
+          foregroundImage: AssetImage(contributor.avatar),
+          // Under the portrait while it loads, and left in its place if the
+          // asset cannot be read.
+          child: Text(contributor.name[0]),
+        ),
+        Text(contributor.name, style: context.listTitleStyle),
+      ],
+    );
+  }
+}
+
+/// A hairline between two contributors, at the weight the list draws its own
+/// row separators with, so it reads as one row rather than two.
+class _ContributorDivider extends StatelessWidget {
+  const _ContributorDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 0.5,
+      height: 20,
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      color: context.colorScheme.outlineVariant,
     );
   }
 }

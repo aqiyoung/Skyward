@@ -271,6 +271,20 @@ void main() {
       }
     }
     expect(tester.takeException(), null);
+
+    // The two icon designers share one row, each name level with its own
+    // portrait and to its right: paired up the other way round the row would
+    // name the wrong face.
+    final june2 = tester.getRect(find.text('June2'));
+    final arue = tester.getRect(find.text('Arue'));
+    expect(june2.top, closeTo(arue.top, 0.5));
+    expect(june2.right, lessThan(arue.left));
+    final portraits = find.byType(CircleAvatar);
+    expect(portraits, findsNWidgets(2));
+    expect(
+      tester.getRect(portraits.at(0)).center.dy,
+      closeTo(june2.center.dy, 0.5),
+    );
   });
 
   testWidgets('about view shows progress while checking for updates', (
