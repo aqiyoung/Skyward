@@ -19,6 +19,9 @@ on:
     paths-ignore:
       - '.github/**'
       - '**/*.md'
+      # The desktop preview's trigger. A build of that one changes no app code,
+      # and rebuilding the phone preview beside it would only add a tag.
+      - '.desktop-preview'
   workflow_dispatch:
     inputs:
       ref:
