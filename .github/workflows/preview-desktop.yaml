@@ -1,0 +1,383 @@
+name: preview-desktop
+
+# The desktop preview channel: one Windows build, no tests, published under a
+# `preview-win-` tag so it can be tried on a desktop without waiting for a
+# channel build of every platform.
+#
+# Manual only. A push to `beta` already rebuilds the Android preview, and
+# packaging a desktop costs half an hour of a runner nobody is waiting on.
+#
+# The tag is not `v*`, so the version counter in ci.yaml -- which reads `v*`
+# tags and release titles -- never counts it, and the Android numbering is
+# untouched. Its number is its own: see the version step for why it cannot
+# reuse the preview channel's.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to build
+        type: string
+        default: beta
+      env:
+        description: Value passed to `dart setup.dart --env`
+        type: choice
+        options:
+          - pre
+          - dev
+          - stable
+        default: pre
+      arch:
+        description: Windows architecture to package
+        type: choice
+        options:
+          - amd64
+          - arm64
+        default: amd64
+
+concurrency:
+  group: preview-desktop-${{ inputs.ref }}-${{ inputs.arch }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+  GO_VERSION: '1.27.1'
+
+jobs:
+  preview:
+    name: Windows ${{ inputs.arch }}
+    # The arm runner is the only one that builds an arm64 Windows binary, and
+    # it needs Rust set up by hand; the x64 one has it in the image.
+    runs-on: ${{ inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    timeout-minutes: 120
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: recursive
+
+      - name: Enable git long paths
+        run: git config --global core.longpaths true
+
+      # A Windows file version is four 16-bit fields, and the installer carries
+      # this number as one of them, so the fourth component has to stay under
+      # 65535. The preview channel's 2,09x,xxx,xxx numbering would overflow it,
+      # which is why a desktop preview counts its own: 100 per day since
+      # 2026-01-01 plus the sequence that day.
+      #
+      # The pubspec takes three components plus the build number, so the
+      # packaging tools name their files after upstream's version; the name
+      # users see is put on afterwards, as in the release build.
+      - name: Choose a preview version
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          base="$(sed -n 's/^version: *\([^+ ]*\).*/\1/p' pubspec.yaml | head -1 | tr -d '\r')"
+          if ! printf '%s' "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::expected a three-component version in pubspec.yaml, got '$base'"
+            exit 1
+          fi
+          now=$(date -u +%s)
+          origin=$(date -u -d 2026-01-01 +%s)
+          prefix=$(( (now - origin) / 86400 * 100 ))
+          tags=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[].tag_name' 2>/dev/null || true)
+          # Only this day's numbers count: yesterday's are below the prefix and
+          # the next run must not walk backwards past it.
+          highest=$(printf '%s\n' "$tags" \
+            | sed -n 's/^preview-win-\([0-9][0-9]*\)$/\1/p' \
+            | awk -v p="$prefix" '$1 >= p' | sort -n | tail -1)
+          build_number=$(( ${highest:-$(( prefix - 1 ))} + 1 ))
+          if [ "$build_number" -ge 65535 ]; then
+            echo "::error::build number ${build_number} no longer fits a Windows file version"
+            exit 1
+          fi
+          version="${base}.${build_number}"
+          awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
+            pubspec.yaml > pubspec.yaml.new
+          mv pubspec.yaml.new pubspec.yaml
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
+          echo "building ${version} from ${base}"
+
+      # What changed since the previous desktop preview, so the release page
+      # says what to look at rather than only which number it is.
+      - name: Collect the changelog
+        id: changelog
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: preview-win-${{ steps.version.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          previous=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '[.[] | select(.tag_name | startswith("preview-win-"))] | .[].tag_name' 2>/dev/null \
+            | grep -vx "$TAG" | head -1 || true)
+          commit="$(git rev-parse HEAD)"
+
+          entries=""
+          if [ -n "$previous" ]; then
+            echo "changelog: $previous...$commit"
+            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+              --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
+              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
+          else
+            echo "::notice::this is the first desktop preview; no changelog range"
+          fi
+
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          {
+            echo "entries<<CHANGELOG_END"
+            printf '%s\n' "$entries"
+            echo "CHANGELOG_END"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Rust (Windows arm64)
+        if: inputs.arch == 'arm64'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
+          .\rustup-init.exe -y --default-toolchain stable
+          Add-Content $env:GITHUB_PATH "$env:USERPROFILE\.cargo\bin"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+
+      - name: Set up Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: preview-desktop-${{ inputs.arch }}
+          workspaces: services/helper
+          cache-directories: .dart_tool/hooks_runner
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: |
+          flutter --version
+          flutter pub get
+
+      # The Core embeds this bundle and FlClashHttpOverrides.trustCoreRoots
+      # hands it to Dart; the submodule only carries a 0-byte placeholder, so a
+      # build without this step ships a Core with no roots. Pinned by hash, so a
+      # new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
+      - name: Fetch CA certificates
+        shell: bash
+        env:
+          CA_BUNDLE: cacert-2026-09-25.pem
+          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
+        run: |
+          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+
+      - name: Build
+        shell: bash
+        env:
+          APP_VERSION_NAME: ${{ steps.version.outputs.version }}
+        run: dart setup.dart windows --env ${{ inputs.env }} -v
+
+      - name: Name the artifacts after our version
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          base="${VERSION%.*}"
+          shopt -s nullglob
+          for file in dist/*; do
+            name="$(basename "$file")"
+            case "$name" in
+              *"-${VERSION}-"*) ;;
+              *"-${base}-"*)
+                mv "$file" "dist/${name/-${base}-/-${VERSION}-}"
+                ;;
+              *)
+                echo "::error::${name} carries neither ${base} nor ${VERSION}; the packaging names changed"
+                exit 1
+                ;;
+            esac
+          done
+          # The packaging names the files after the upstream project; this fork
+          # ships under its own name.
+          for file in dist/*; do
+            name="$(basename "$file")"
+            case "$name" in
+              FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
+            esac
+          done
+          ls -l dist
+
+      # A packaging run that quietly produced only the zip, or only the
+      # installer, still exits zero. Both are what a desktop preview is for.
+      - name: Verify the preview
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          zips=(dist/*-windows-*.zip)
+          setups=(dist/*-windows-*-setup.exe)
+          if [ ${#zips[@]} -ne 1 ]; then
+            echo "::error::expected one zip, found ${#zips[@]}"
+            exit 1
+          fi
+          if [ ${#setups[@]} -ne 1 ]; then
+            echo "::error::expected one installer, found ${#setups[@]}"
+            exit 1
+          fi
+          for file in "${zips[0]}" "${setups[0]}"; do
+            case "$(basename "$file")" in
+              *"-${VERSION}-"*) ;;
+              *)
+                echo "::error::$(basename "$file") does not carry ${VERSION}"
+                exit 1
+                ;;
+            esac
+            if [ ! -s "$file" ]; then
+              echo "::error::$(basename "$file") is empty"
+              exit 1
+            fi
+          done
+          # The zip carries the app under a directory of its own; a package
+          # missing the executable is not something to hand over.
+          if ! unzip -l "${zips[0]}" | grep -qi 'Skyward.exe'; then
+            echo "::error::$(basename "${zips[0]}") carries no Skyward.exe"
+            exit 1
+          fi
+          ls -l "${zips[0]}" "${setups[0]}"
+
+      - name: Upload the preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-desktop-windows-${{ inputs.arch }}
+          path: ./dist
+          if-no-files-found: error
+
+      - name: Publish the preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          REF: ${{ inputs.ref }}
+          ARCH: ${{ inputs.arch }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          tag="preview-win-${BASE_NUMBER}"
+          commit="$(git rev-parse --short HEAD)"
+          (cd dist && sha256sum ./* > SHA256SUMS)
+
+          cat > preview-notes.md <<EOF
+          Skyward ${VERSION} 桌面预览版，只含 Windows ${ARCH}。
+          EOF
+          {
+            echo
+            echo "- 分支：\`${REF}\`"
+            echo "- 版本：\`${VERSION}\`"
+            echo "- 平台：\`Windows ${ARCH}\`"
+            echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
+            echo "- 构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              echo "**自 \`${PREVIOUS}\` 以来**"
+              echo
+              printf '%s\n' "$CHANGELOG"
+            fi
+            echo
+            echo "桌面预览自己计数（100/天），与正式版的构建号不在一条线上：它的数字更小，装上之后正式版的更新检查不会提示升级到同一个版本。验完请卸掉再装正式版。这不是正式发布。"
+          } >> preview-notes.md
+
+          # A retried run reuses its number, so the tag may already exist.
+          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          gh release create "$tag" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Skyward ${VERSION}（Windows 桌面预览版）" \
+            --notes-file preview-notes.md \
+            --prerelease
+
+      # Only the newest few desktop previews are worth keeping; the rest would
+      # fill the release list.
+      - name: Prune old previews
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName,createdAt,isPrerelease \
+            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("preview-win-")))]
+                  | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' \
+          | while read -r tag; do
+              [ -z "$tag" ] && continue
+              echo "deleting $tag"
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+            done
+
+      - name: Announce on Telegram
+        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          REF: ${{ inputs.ref }}
+          ARCH: ${{ inputs.arch }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          # gh-proxy.com in front of github.com: the assets live on GitHub,
+          # which is unreachable for a large part of the audience.
+          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-win-${BASE_NUMBER}/"
+
+          {
+            echo "🧪 Skyward ${VERSION}（Windows 桌面预览版）构建成功"
+            echo
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo "自 \`${PREVIOUS}\` 以来："
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
+              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
+              echo
+            fi
+            for f in dist/*; do
+              name="$(basename "$f")"
+              [ "$name" = SHA256SUMS ] && continue
+              echo "• ${name}"
+              echo "  ${prefix}${name}"
+            done
+            echo
+            echo "分支 \`${REF}\` ｜ Windows ${ARCH}"
+            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/preview-win-${BASE_NUMBER}"
+            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "（桌面预览自己计数，号比正式版小：验完请卸掉再装正式版）"
+          } > "$RUNNER_TEMP/msg.txt"
+
+          cat "$RUNNER_TEMP/msg.txt"
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@$RUNNER_TEMP/msg.txt" \
+            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
