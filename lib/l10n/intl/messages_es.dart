@@ -339,6 +339,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Control de acceso de apps",
     ),
+    "appIconDesign": MessageLookupByLibrary.simpleMessage(
+      "Diseño del icono de la app",
+    ),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "No hay proxies locales",
     ),
@@ -1382,6 +1385,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "optional": MessageLookupByLibrary.simpleMessage("Opcional"),
     "options": MessageLookupByLibrary.simpleMessage("Opciones"),
     "other": MessageLookupByLibrary.simpleMessage("Otros"),
+    "otherContributors": MessageLookupByLibrary.simpleMessage(
+      "Otros colaboradores",
+    ),
     "outbound": MessageLookupByLibrary.simpleMessage("Salida"),
     "outboundExit": MessageLookupByLibrary.simpleMessage("Salida"),
     "outboundIp": MessageLookupByLibrary.simpleMessage("IP de salida"),
@@ -2066,6 +2072,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
     "username": MessageLookupByLibrary.simpleMessage("Usuario"),
     "value": MessageLookupByLibrary.simpleMessage("Valor"),
+    "version": MessageLookupByLibrary.simpleMessage("Versión"),
+    "versionUpdate": MessageLookupByLibrary.simpleMessage("Actualización de versión"),
+    "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Comprobando…"),
+    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Actualizado"),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("Nueva versión disponible"),
+    "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("Error al comprobar"),
     "view": MessageLookupByLibrary.simpleMessage("Ver"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtual"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vivo"),

@@ -642,6 +642,21 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('is a circle rather than an ellipse in its slot', (
+      tester,
+    ) async {
+      // The slot is wider than the button on a desktop card. Handing the
+      // button the slot's tight width drew the circle across it, and the
+      // painter scales each axis of its unit circle on its own, so that came
+      // out as an ellipse -- which the morph to the cookie-9 had hidden until
+      // both ends became a circle.
+      container = containerWith();
+      await pumpCard(tester);
+
+      final rect = tester.getRect(startButton());
+      expect(rect.width, closeTo(rect.height, 0.01));
+    });
+
     testWidgets('is off without a profile', (tester) async {
       container = containerWith(profiles: const []);
       await pumpCard(tester, density: DashboardDensity.mobile);

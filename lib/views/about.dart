@@ -10,21 +10,85 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
-class AboutView extends ConsumerWidget {
+class Contributor {
+  final String avatar;
+  final String name;
+
+  const Contributor({required this.avatar, required this.name});
+}
+
+class AboutView extends ConsumerStatefulWidget {
   const AboutView({super.key});
 
-  Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
-    if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
-    final commonAction = ref.read(commonActionProvider.notifier);
-    final result = await globalState.loadingRun(
-      () async => (release: await request.checkForUpdate()),
-      title: context.appLocalizations.checkUpdate,
-      tag: LoadingTag.checkUpdate,
-    );
-    if (result == null) return;
-    unawaited(
-      commonAction.checkUpdateResultHandle(data: result.release, isUser: true),
-    );
+  @override
+  ConsumerState<AboutView> createState() => _AboutViewState();
+}
+
+enum _UpdateResult { checking, latest, found, failed }
+
+class _AboutViewState extends ConsumerState<AboutView> {
+  // Moved here from AboutView in the PR #31 fix: the contributors row
+  // is built by this state, and a bare _contributors in state code
+  // does not resolve to the widget class's static list — that was
+  // the preview build failure (about.dart:143/147).
+  static const _contributors = [
+    Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
+    Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
+  ];
+
+  _UpdateResult? _updateResult;
+  bool _isCheckingUpdate = false;
+
+  String? _updateResultText() {
+    final appLocalizations = context.appLocalizations;
+    return switch (_updateResult) {
+      _UpdateResult.checking => appLocalizations.versionUpdateChecking,
+      _UpdateResult.latest => appLocalizations.versionUpdateLatest,
+      _UpdateResult.found => appLocalizations.versionUpdateFound,
+      _UpdateResult.failed => appLocalizations.versionUpdateFailed,
+      null => null,
+    };
+  }
+
+  // The check runs directly, not through loadingRun: no loading bar
+  // under the title, no dialog, no banner — the only place its result
+  // appears is the version-update row itself, as its trailing text.
+  Future<void> _checkUpdate() async {
+    if (_isCheckingUpdate) return;
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateResult = _UpdateResult.checking;
+    });
+    final Map<String, dynamic>? release;
+    try {
+      release = await request.checkForUpdate();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.failed;
+      });
+      return;
+    }
+    if (!mounted) return;
+    if (release != null) {
+      // A new release is found: show it on the row and start its
+      // background download at once, still with no dialog.
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.found;
+      });
+      unawaited(
+        ref
+            .read(commonActionProvider.notifier)
+            .checkUpdateResultHandle(data: release, silent: true),
+      );
+    } else {
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.latest;
+      });
+    }
   }
 
   Widget _buildLinkItem({
@@ -34,11 +98,31 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: IconWell(
-        glyph,
-        side: 40,
-        glyphSize: 20,
-        shape: AppShape.md,
+      leading: IconWell(glyph, side: 40, glyphSize: 20, shape: AppShape.md),
+      title: Text(title),
+      subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: const GlyphIcon(AppGlyphs.openExternal),
+      onTap: () {
+        dialogs.openUrl(url);
+      },
+    );
+  }
+
+  Widget _buildLogoLinkItem({
+    required String asset,
+    required String title,
+    required String url,
+    required String label,
+  }) {
+    return ListItem(
+      // Do not clip the logo to a rounded square: the FlClash mark's
+      // top bar reaches into the image's top-right corner, and a 16 dp
+      // corner on a 36 dp box cuts that tip off. The mark already has
+      // its own rounded ends and a transparent background, so it is
+      // shown unclipped.
+      leading: SizedBox.square(
+        dimension: 36,
+        child: Image.asset(asset, fit: BoxFit.contain),
       ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -49,12 +133,33 @@ class AboutView extends ConsumerWidget {
     );
   }
 
+  /// The two icon designers side by side, split down the middle by a hairline.
+  /// Each half is laid out like the rows above it — portrait, name, the role
+  /// under the name — so the pair needs no header of its own to be read, and
+  /// the role is said again for the second person rather than shared.
+  Widget _buildContributors(String role) {
+    return ListItem(
+      title: Row(
+        children: [
+          for (var index = 0; index < _contributors.length; index++) ...[
+            if (index > 0) const _ContributorDivider(),
+            Expanded(
+              child: _ContributorChip(
+                contributor: _contributors[index],
+                role: role,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final isLoading = ref.watch(loadingProvider(LoadingTag.checkUpdate));
+    final updateResultText = _updateResultText();
     return CommonScaffold(
-      isLoading: isLoading,
       title: appLocalizations.about,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
@@ -63,10 +168,6 @@ class AboutView extends ConsumerWidget {
         ),
         children: [
           _AboutHero(
-            isCheckingUpdate: isLoading,
-            onCheckUpdate: () {
-              _checkUpdate(context, ref);
-            },
             onEnterDeveloperMode: () {
               ref
                   .read(appSettingProvider.notifier)
@@ -78,6 +179,37 @@ class AboutView extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 8),
+          // Reference-style top card, no leading icons, no section
+          // header: the version is a plain row with the number on the
+          // right, and version update is a row whose trailing shows the
+          // chevron plus, once checked, the check result itself.
+          generateSection(
+            items: [
+              ListItem(
+                title: Text(appLocalizations.version),
+                trailing: Text(
+                  globalState.packageInfo.displayVersion,
+                  style: context.listSubtitleStyle,
+                ),
+              ),
+              ListItem(
+                title: Text(appLocalizations.versionUpdate),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (updateResultText != null)
+                      Text(
+                        updateResultText,
+                        style: context.listSubtitleStyle,
+                      ),
+                    if (updateResultText != null) const SizedBox(width: 8),
+                    const GlyphIcon(AppGlyphs.chevronForward),
+                  ],
+                ),
+                onTap: _checkUpdate,
+              ),
+            ],
+          ),
           generateSection(
             title: appLocalizations.more,
             items: [
@@ -101,22 +233,100 @@ class AboutView extends ConsumerWidget {
               ),
             ],
           ),
+          generateSection(
+            title: appLocalizations.otherContributors,
+            items: [
+              // Upstream FlClash lives here, not in More: More already has
+              // this project's own Project entry, so a second project
+              // there reads as a competing project link.
+              _buildLogoLinkItem(
+                asset: 'assets/images/avatar/flclash.png',
+                title: 'FlClash',
+                url: 'https://github.com/chen08209/FlClash',
+                label: 'github.com/chen08209/FlClash',
+              ),
+              _buildContributors(appLocalizations.appIconDesign),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
+/// One contributor: the portrait, then the name and the role under it — the
+/// same arrangement a row of the list above has, so the pair does not read as
+/// a different kind of thing.
+class _ContributorChip extends StatelessWidget {
+  final Contributor contributor;
+  final String role;
+
+  const _ContributorChip({required this.contributor, required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      // The list puts this much between a row's leading and its title.
+      spacing: 16,
+      children: [
+        CircleAvatar(
+          radius: 18,
+          foregroundImage: AssetImage(contributor.avatar),
+          // Under the portrait while it loads, and left in its place if the
+          // asset cannot be read.
+          child: Text(contributor.name[0]),
+        ),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                contributor.name,
+                style: context.listTitleStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                role,
+                // A step under the list's own subtitle: half the row's width
+                // is the whole budget here, and the role is the same two words
+                // on both sides.
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A hairline between the two contributors, at the weight the list draws its
+/// own row separators with.
+class _ContributorDivider extends StatelessWidget {
+  const _ContributorDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 0.5,
+      height: 40,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color: context.colorScheme.outlineVariant,
+    );
+  }
+}
+
 class _AboutHero extends StatelessWidget {
-  final bool isCheckingUpdate;
-  final VoidCallback onCheckUpdate;
   final VoidCallback onEnterDeveloperMode;
 
-  const _AboutHero({
-    required this.isCheckingUpdate,
-    required this.onCheckUpdate,
-    required this.onEnterDeveloperMode,
-  });
+  const _AboutHero({required this.onEnterDeveloperMode});
 
   static const _logoSize = 96.0;
 
@@ -148,12 +358,6 @@ class _AboutHero extends StatelessWidget {
             appName,
             style: AppTextStyle.title2.of(context, emphasized: true),
           ),
-          const SizedBox(height: 10),
-          _Pill(
-            label: 'v${globalState.packageInfo.displayVersion}',
-            color: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
-          ),
           const SizedBox(height: 16),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
@@ -165,42 +369,7 @@ class _AboutHero extends StatelessWidget {
                   .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
             ),
           ),
-          const SizedBox(height: 20),
-          TonalButton(
-            size: TonalButtonSize.bar,
-            glyph: AppGlyphs.sync,
-            label: appLocalizations.checkUpdate,
-            onPressed: isCheckingUpdate ? null : onCheckUpdate,
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color foregroundColor;
-
-  const _Pill({
-    required this.label,
-    required this.color,
-    required this.foregroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: ShapeDecoration(color: color, shape: AppShape.full),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Text(
-          label,
-          style: AppTextStyle.caption1
-              .of(context, emphasized: true)
-              .copyWith(color: foregroundColor),
-        ),
       ),
     );
   }

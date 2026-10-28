@@ -328,6 +328,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Контроль доступа приложений",
     ),
+    "appIconDesign": MessageLookupByLibrary.simpleMessage(
+      "Дизайн значка приложения",
+    ),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Нет локальных прокси",
     ),
@@ -1337,6 +1340,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "optional": MessageLookupByLibrary.simpleMessage("Необязательно"),
     "options": MessageLookupByLibrary.simpleMessage("Опции"),
     "other": MessageLookupByLibrary.simpleMessage("Другое"),
+    "otherContributors": MessageLookupByLibrary.simpleMessage(
+      "Другие участники",
+    ),
     "outbound": MessageLookupByLibrary.simpleMessage("Исходящие"),
     "outboundExit": MessageLookupByLibrary.simpleMessage("Выход"),
     "outboundIp": MessageLookupByLibrary.simpleMessage("Исходящий IP"),
@@ -2009,6 +2015,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
     "username": MessageLookupByLibrary.simpleMessage("Имя пользователя"),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
+    "version": MessageLookupByLibrary.simpleMessage("Версия"),
+    "versionUpdate": MessageLookupByLibrary.simpleMessage("Обновление версии"),
+    "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Проверка…"),
+    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Актуально"),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("Доступна новая версия"),
+    "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("Не удалось проверить"),
     "view": MessageLookupByLibrary.simpleMessage("Просмотр"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Виртуальный IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Яркий"),

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:skyward/common/common.dart';
 import 'package:skyward/common/service_probe.dart';
 import 'package:skyward/enum/enum.dart';
@@ -27,6 +25,14 @@ const _builtinOutbounds = {'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'};
 bool isBuiltinOutbound(String name) => _builtinOutbounds.contains(name);
 
 const ipMask = '*****';
+
+/// A desktop status card this wide has room for its details beside the address
+/// rather than under it. Below it the address still holds the width on its own.
+const _detailsAsideMinWidth = 620.0;
+
+/// The details keep a width of their own: a long organization name would
+/// otherwise take the address's room instead of wrapping in its own column.
+const _detailsAsideMaxWidth = 168.0;
 
 /// The address the proxied traffic leaves by, next to the start button.
 class CurrentOutboundCard extends ConsumerStatefulWidget {
@@ -128,13 +134,19 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
       active: isStart && !suspended,
       gap: metrics.cellGap,
     );
-    final startToggle = SizedBox(
-      width: metrics.buttonSlot,
-      child: _StartToggle(
-        size: metrics.buttonSize,
-        enabled: hasProfile,
-        running: isStart,
-        suspended: suspended,
+    final startToggle = SizedBox.square(
+      dimension: metrics.buttonSlot,
+      // The slot is wider than the button, so the button is centred inside it.
+      // Handing the button the slot's tight width instead drew the circle
+      // across it, which is an ellipse: the painter scales the unit circle by
+      // each axis on its own.
+      child: Center(
+        child: _StartToggle(
+          size: metrics.buttonSize,
+          enabled: hasProfile,
+          running: isStart,
+          suspended: suspended,
+        ),
       ),
     );
     // The phone has one status card, so the rates sit in its header, level
@@ -142,23 +154,48 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
     // desktop card is a fixed tile that keeps the speed cards beside it,
     // so it does not repeat the backdrop here.
     final content = density.isDesktop
-        ? Row(
-            spacing: metrics.gap,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    header,
-                    SizedBox(height: metrics.ipTop),
-                    exitRow,
-                    const Spacer(),
-                    cells,
-                  ],
-                ),
-              ),
-              startToggle,
-            ],
+        ? LayoutBuilder(
+            builder: (context, constraints) {
+              // A status card two columns wide leaves a band of nothing
+              // between the address and the start button. The details move
+              // into it and stand as a column of their own, so a wide card is
+              // read across rather than stacked in one corner; a narrow one
+              // keeps them under the address, which is the only room it has.
+              final beside = constraints.maxWidth >= _detailsAsideMinWidth;
+              return Row(
+                spacing: metrics.gap,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        header,
+                        SizedBox(height: metrics.ipTop),
+                        exitRow,
+                        if (!beside) ...[
+                          const Spacer(),
+                          cells,
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (beside)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _detailsAsideMaxWidth,
+                      ),
+                      child: _Cells(
+                        quality: quality,
+                        loading: loading,
+                        active: isStart && !suspended,
+                        gap: metrics.cellGap,
+                        vertical: true,
+                      ),
+                    ),
+                  startToggle,
+                ],
+              );
+            },
           )
         : Column(
             mainAxisSize: MainAxisSize.min,
@@ -728,12 +765,18 @@ class _Cells extends StatelessWidget {
     required this.loading,
     required this.active,
     required this.gap,
+    this.vertical = false,
   });
 
   final IpQuality? quality;
   final bool loading;
   final bool active;
   final double gap;
+
+  /// A column instead of a row, for the room a wide card has beside the
+  /// address. The two sit centred against the start button rather than
+  /// stretched down the card.
+  final bool vertical;
 
   @override
   Widget build(BuildContext context) {
@@ -743,24 +786,30 @@ class _Cells extends StatelessWidget {
       IpQuality(asn: final asn?) => 'AS$asn',
       _ => null,
     };
+    final runTime = _Cell(
+      label: appLocalizations.runTime,
+      value: active ? const _RunTimeValue() : const _Placeholder(),
+    );
+    final ipOrganization = _Cell(
+      label: appLocalizations.ipOrganization,
+      value: organization != null
+          ? _CellText(organization)
+          : loading
+          ? SkeletonText(width: 96, style: _cellStyle(context))
+          : const _Placeholder(),
+    );
+    if (vertical) {
+      return Flex(
+        direction: Axis.vertical,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: gap,
+        children: [runTime, ipOrganization],
+      );
+    }
     return Row(
       spacing: gap,
-      children: [
-        _Cell(
-          label: appLocalizations.runTime,
-          value: active ? const _RunTimeValue() : const _Placeholder(),
-        ),
-        Flexible(
-          child: _Cell(
-            label: appLocalizations.ipOrganization,
-            value: organization != null
-                ? _CellText(organization)
-                : loading
-                ? SkeletonText(width: 96, style: _cellStyle(context))
-                : const _Placeholder(),
-          ),
-        ),
-      ],
+      children: [runTime, Flexible(child: ipOrganization)],
     );
   }
 }
@@ -833,7 +882,12 @@ class _RunTimeValue extends ConsumerWidget {
 const _morphDuration = Duration(milliseconds: 450);
 const _stateDuration = Duration(milliseconds: 150);
 
-final _startMorph = Morph(MaterialShapes.circle, MaterialShapes.cookie9Sided);
+/// A circle in both states. It grew into the cookie-9 of a running tunnel
+/// once, the way the M3 Expressive loader morphs between shapes, but at the
+/// 88 dp this card gives it the nine lobes read as a button whose outline came
+/// out wrong rather than as motion. What changes with the tunnel here is the
+/// glyph: play when stopped, pause while running.
+final _startMorph = Morph(MaterialShapes.circle, MaterialShapes.circle);
 
 Path _morphPath(double progress) => _startMorph.toPath(
   progress: progress,
@@ -841,10 +895,12 @@ Path _morphPath(double progress) => _startMorph.toPath(
   rotationPivotY: 0.5,
 );
 
-double _morphTurn(double progress) => progress * 2 * math.pi / 9;
+/// No turn. An outline that holds its shape has nothing to turn with, and a
+/// turning tinted glass would slide its highlight around the button on every
+/// start and stop.
+double _morphTurn(double progress) => 0;
 
-/// A circle with a play glyph while stopped that grows the cookie-9 of a
-/// running tunnel, the way the M3 Expressive loader morphs between shapes.
+/// A circle with a play glyph while stopped and a pause glyph while running.
 class _StartToggle extends ConsumerStatefulWidget {
   const _StartToggle({
     required this.size,
@@ -1039,13 +1095,17 @@ class _MorphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Both axes take the same length: the path is a circle in a unit square,
+    // and scaling by width and height separately draws one of them as the
+    // other's ellipse the moment the two differ.
+    final side = size.shortestSide;
     final path = _morphPath(progress);
     final color = this.color;
     canvas
       ..save()
       ..translate(size.width / 2, size.height / 2)
       ..rotate(_morphTurn(progress))
-      ..scale(size.width, size.height)
+      ..scale(side, side)
       ..translate(-0.5, -0.5);
     if (shadow.a > 0) {
       canvas.save();
@@ -1058,17 +1118,14 @@ class _MorphPainter extends CustomPainter {
         );
       }
       canvas
-        ..translate(
-          _shadowOffset.dx / size.width,
-          _shadowOffset.dy / size.height,
-        )
+        ..translate(_shadowOffset.dx / side, _shadowOffset.dy / side)
         ..drawPath(
           path,
           Paint()
             ..color = shadow
             ..maskFilter = MaskFilter.blur(
               BlurStyle.normal,
-              _shadowBlur / 2 / size.width,
+              _shadowBlur / 2 / side,
             ),
         )
         ..restore();
@@ -1077,7 +1134,7 @@ class _MorphPainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
     if (ring case final ring?) {
-      strokeUnitShape(canvas, path, size.width, ring);
+      strokeUnitShape(canvas, path, side, ring);
     }
     canvas.restore();
   }
@@ -1097,10 +1154,11 @@ class _MorphClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
+    final side = size.shortestSide;
     final transform =
         Matrix4.translationValues(size.width / 2, size.height / 2, 0)
           ..rotateZ(_morphTurn(progress))
-          ..scaleByDouble(size.width, size.height, 1, 1)
+          ..scaleByDouble(side, side, 1, 1)
           ..translateByDouble(-0.5, -0.5, 0, 1);
     return _morphPath(progress).transform(transform.storage);
   }

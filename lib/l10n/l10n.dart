@@ -355,6 +355,26 @@ class AppLocalizations {
     return Intl.message('Other', name: 'other', desc: '', args: []);
   }
 
+  /// `Other contributors`
+  String get otherContributors {
+    return Intl.message(
+      'Other contributors',
+      name: 'otherContributors',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App icon design`
+  String get appIconDesign {
+    return Intl.message(
+      'App icon design',
+      name: 'appIconDesign',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `About`
   String get about {
     return Intl.message('About', name: 'about', desc: '', args: []);
@@ -563,6 +583,61 @@ class AppLocalizations {
   /// `Update`
   String get update {
     return Intl.message('Update', name: 'update', desc: '', args: []);
+  }
+
+  /// `Version`
+  String get version {
+    return Intl.message('Version', name: 'version', desc: '', args: []);
+  }
+
+  /// `Version update`
+  String get versionUpdate {
+    return Intl.message(
+      'Version update',
+      name: 'versionUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Checking…`
+  String get versionUpdateChecking {
+    return Intl.message(
+      'Checking…',
+      name: 'versionUpdateChecking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Up to date`
+  String get versionUpdateLatest {
+    return Intl.message(
+      'Up to date',
+      name: 'versionUpdateLatest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New version available`
+  String get versionUpdateFound {
+    return Intl.message(
+      'New version available',
+      name: 'versionUpdateFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check failed`
+  String get versionUpdateFailed {
+    return Intl.message(
+      'Check failed',
+      name: 'versionUpdateFailed',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Add`

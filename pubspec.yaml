@@ -99,6 +99,11 @@ flutter:
     - assets/data/
     - assets/fonts/
     - assets/images/
+    # A directory entry covers the files directly in it and nothing below, so
+    # every subdirectory is named here. The About page reads its three
+    # contributors' portraits from this one; without it they fall back to the
+    # first letter of the name.
+    - assets/images/avatar/
     - assets/images/services/
     - assets/images/groups/
     - core/Clash.Meta/component/ca/ca-certificates.crt

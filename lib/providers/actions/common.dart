@@ -287,12 +287,29 @@ class CommonAction extends _$CommonAction {
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
     bool isUser = false,
+    // Silent callers (the About version-update row) get no dialog at
+    // all: a new release starts its background download directly, and
+    // already-latest shows nothing. Startup auto-check is unaffected.
+    bool silent = false,
   }) async {
+    if (silent) {
+      if (data != null) {
+        unawaited(_downloadRelease(data));
+      }
+      return;
+    }
     if (data != null) {
       final context = globalState.navigatorKey.currentContext;
       if (context == null) {
         return;
       }
+      // Two buttons only, in this order: Cancel, then Update. The old
+      // confirm text said "go to download", which no longer describes
+      // what happens: Android downloads in-app through the system
+      // download manager, and the desktop opens the release page. The
+      // old auto-check cancel slot said "no longer remind", so tapping
+      // it silently turned auto-check off; that toggle now lives only
+      // in Settings, and Cancel here means just this once, not again.
       final res = await dialogs.showMessage(
         title: currentAppLocalizations.discoverNewVersion,
         message: _releaseSpan(
@@ -300,15 +317,10 @@ class CommonAction extends _$CommonAction {
           data['tag_name'] as String,
           data['body'] as String?,
         ),
-        confirmText: currentAppLocalizations.goDownload,
-        cancelText: isUser ? null : currentAppLocalizations.noLongerRemind,
+        confirmText: currentAppLocalizations.update,
       );
       if (res == true) {
         unawaited(_downloadRelease(data));
-      } else if (!isUser && res == false) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(autoCheckUpdate: false));
       }
     } else if (isUser) {
       unawaited(
