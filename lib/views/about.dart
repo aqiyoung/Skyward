@@ -20,13 +20,6 @@ class Contributor {
 class AboutView extends ConsumerStatefulWidget {
   const AboutView({super.key});
 
-  // Avatars restored from the upstream FlClash repository, whose About
-  // page carried these two icon designers before the Skyward rename.
-  static const _contributors = [
-    Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
-    Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
-  ];
-
   @override
   ConsumerState<AboutView> createState() => _AboutViewState();
 }
@@ -34,6 +27,15 @@ class AboutView extends ConsumerStatefulWidget {
 enum _UpdateResult { checking, latest, found, failed }
 
 class _AboutViewState extends ConsumerState<AboutView> {
+  // Moved here from AboutView in the PR #31 fix: the contributors row
+  // is built by this state, and a bare _contributors in state code
+  // does not resolve to the widget class's static list — that was
+  // the preview build failure (about.dart:143/147).
+  static const _contributors = [
+    Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
+    Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
+  ];
+
   _UpdateResult? _updateResult;
   bool _isCheckingUpdate = false;
 
