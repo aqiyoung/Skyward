@@ -26,6 +26,14 @@ bool isBuiltinOutbound(String name) => _builtinOutbounds.contains(name);
 
 const ipMask = '*****';
 
+/// A desktop status card this wide has room for its details beside the address
+/// rather than under it. Below it the address still holds the width on its own.
+const _detailsAsideMinWidth = 620.0;
+
+/// The details keep a width of their own: a long organization name would
+/// otherwise take the address's room instead of wrapping in its own column.
+const _detailsAsideMaxWidth = 168.0;
+
 /// The address the proxied traffic leaves by, next to the start button.
 class CurrentOutboundCard extends ConsumerStatefulWidget {
   const CurrentOutboundCard({super.key});
@@ -140,23 +148,48 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
     // desktop card is a fixed tile that keeps the speed cards beside it,
     // so it does not repeat the backdrop here.
     final content = density.isDesktop
-        ? Row(
-            spacing: metrics.gap,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    header,
-                    SizedBox(height: metrics.ipTop),
-                    exitRow,
-                    const Spacer(),
-                    cells,
-                  ],
-                ),
-              ),
-              startToggle,
-            ],
+        ? LayoutBuilder(
+            builder: (context, constraints) {
+              // A status card two columns wide leaves a band of nothing
+              // between the address and the start button. The details move
+              // into it and stand as a column of their own, so a wide card is
+              // read across rather than stacked in one corner; a narrow one
+              // keeps them under the address, which is the only room it has.
+              final beside = constraints.maxWidth >= _detailsAsideMinWidth;
+              return Row(
+                spacing: metrics.gap,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        header,
+                        SizedBox(height: metrics.ipTop),
+                        exitRow,
+                        if (!beside) ...[
+                          const Spacer(),
+                          cells,
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (beside)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _detailsAsideMaxWidth,
+                      ),
+                      child: _Cells(
+                        quality: quality,
+                        loading: loading,
+                        active: isStart && !suspended,
+                        gap: metrics.cellGap,
+                        vertical: true,
+                      ),
+                    ),
+                  startToggle,
+                ],
+              );
+            },
           )
         : Column(
             mainAxisSize: MainAxisSize.min,
@@ -726,12 +759,18 @@ class _Cells extends StatelessWidget {
     required this.loading,
     required this.active,
     required this.gap,
+    this.vertical = false,
   });
 
   final IpQuality? quality;
   final bool loading;
   final bool active;
   final double gap;
+
+  /// A column instead of a row, for the room a wide card has beside the
+  /// address. The two sit centred against the start button rather than
+  /// stretched down the card.
+  final bool vertical;
 
   @override
   Widget build(BuildContext context) {
@@ -741,24 +780,30 @@ class _Cells extends StatelessWidget {
       IpQuality(asn: final asn?) => 'AS$asn',
       _ => null,
     };
+    final runTime = _Cell(
+      label: appLocalizations.runTime,
+      value: active ? const _RunTimeValue() : const _Placeholder(),
+    );
+    final ipOrganization = _Cell(
+      label: appLocalizations.ipOrganization,
+      value: organization != null
+          ? _CellText(organization)
+          : loading
+          ? SkeletonText(width: 96, style: _cellStyle(context))
+          : const _Placeholder(),
+    );
+    if (vertical) {
+      return Flex(
+        direction: Axis.vertical,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: gap,
+        children: [runTime, ipOrganization],
+      );
+    }
     return Row(
       spacing: gap,
-      children: [
-        _Cell(
-          label: appLocalizations.runTime,
-          value: active ? const _RunTimeValue() : const _Placeholder(),
-        ),
-        Flexible(
-          child: _Cell(
-            label: appLocalizations.ipOrganization,
-            value: organization != null
-                ? _CellText(organization)
-                : loading
-                ? SkeletonText(width: 96, style: _cellStyle(context))
-                : const _Placeholder(),
-          ),
-        ),
-      ],
+      children: [runTime, Flexible(child: ipOrganization)],
     );
   }
 }
