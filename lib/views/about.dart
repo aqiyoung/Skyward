@@ -84,22 +84,25 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  /// The two icon designers on one line, each portrait carrying its own name.
-  /// Joined into one string the names could be read against either face, and
-  /// neither could be told from the other; the hairline between them says they
-  /// are two people who share the role written under the pair.
-  Widget _buildContributors(String subtitle) {
+  /// The two icon designers side by side, split down the middle by a hairline.
+  /// Each half is laid out like the rows above it — portrait, name, the role
+  /// under the name — so the pair needs no header of its own to be read, and
+  /// the role is said again for the second person rather than shared.
+  Widget _buildContributors(String role) {
     return ListItem(
       title: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           for (var index = 0; index < _contributors.length; index++) ...[
             if (index > 0) const _ContributorDivider(),
-            _ContributorChip(contributor: _contributors[index]),
+            Expanded(
+              child: _ContributorChip(
+                contributor: _contributors[index],
+                role: role,
+              ),
+            ),
           ],
         ],
       ),
-      subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 
@@ -205,19 +208,18 @@ class AboutView extends ConsumerWidget {
   }
 }
 
-/// One contributor: the portrait, then the name it belongs to, so the two on
-/// the row cannot be paired up wrongly. The portrait is the size of the logo
-/// above it and the name starts where that row's title does, so the column
-/// holds down the section instead of stepping in and out.
+/// One contributor: the portrait, then the name and the role under it — the
+/// same arrangement a row of the list above has, so the pair does not read as
+/// a different kind of thing.
 class _ContributorChip extends StatelessWidget {
   final Contributor contributor;
+  final String role;
 
-  const _ContributorChip({required this.contributor});
+  const _ContributorChip({required this.contributor, required this.role});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       // The list puts this much between a row's leading and its title.
       spacing: 16,
       children: [
@@ -228,14 +230,39 @@ class _ContributorChip extends StatelessWidget {
           // asset cannot be read.
           child: Text(contributor.name[0]),
         ),
-        Text(contributor.name, style: context.listTitleStyle),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                contributor.name,
+                style: context.listTitleStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                role,
+                // A step under the list's own subtitle: half the row's width
+                // is the whole budget here, and the role is the same two words
+                // on both sides.
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-/// A hairline between two contributors, at the weight the list draws its own
-/// row separators with, so it reads as one row rather than two.
+/// A hairline between the two contributors, at the weight the list draws its
+/// own row separators with.
 class _ContributorDivider extends StatelessWidget {
   const _ContributorDivider();
 
@@ -243,8 +270,8 @@ class _ContributorDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 0.5,
-      height: 20,
-      margin: const EdgeInsets.symmetric(horizontal: 14),
+      height: 40,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
       color: context.colorScheme.outlineVariant,
     );
   }

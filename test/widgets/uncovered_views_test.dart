@@ -272,18 +272,19 @@ void main() {
     }
     expect(tester.takeException(), null);
 
-    // The two icon designers share one row, each name level with its own
-    // portrait and to its right: paired up the other way round the row would
-    // name the wrong face.
+    // The two icon designers sit side by side, split by a hairline: each name
+    // belongs to the portrait on its left, and each carries the role under it.
     final june2 = tester.getRect(find.text('June2'));
     final arue = tester.getRect(find.text('Arue'));
     expect(june2.top, closeTo(arue.top, 0.5));
-    expect(june2.right, lessThan(arue.left));
     final portraits = find.byType(CircleAvatar);
     expect(portraits, findsNWidgets(2));
+    expect(tester.getRect(portraits.at(0)).right, lessThan(june2.left));
+    expect(june2.right, lessThan(tester.getRect(portraits.at(1)).left));
+    expect(tester.getRect(portraits.at(1)).right, lessThan(arue.left));
     expect(
-      tester.getRect(portraits.at(0)).center.dy,
-      closeTo(june2.center.dy, 0.5),
+      find.text(AppLocalizations.current.appIconDesign),
+      findsNWidgets(2),
     );
   });
 
