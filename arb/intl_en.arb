@@ -71,6 +71,8 @@
   "edit": "Edit",
   "confirm": "Confirm",
   "update": "Update",
+  "version": "Version",
+  "versionUpdate": "Version update",
   "add": "Add",
   "save": "Save",
   "delete": "Delete",

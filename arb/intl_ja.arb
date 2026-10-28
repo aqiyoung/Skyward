@@ -71,6 +71,8 @@
   "edit": "編集",
   "confirm": "OK",
   "update": "更新",
+  "version": "バージョン",
+  "versionUpdate": "バージョンアップデート",
   "add": "追加",
   "save": "保存",
   "delete": "削除",
