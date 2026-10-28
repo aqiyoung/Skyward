@@ -59,15 +59,21 @@ class _HomeShell extends ConsumerStatefulWidget {
   ConsumerState<_HomeShell> createState() => _HomeShellState();
 }
 
-/// How far the list has to travel under the finger before the labels leave.
+/// How far the list has to travel under the finger before the labels leave,
+/// and how much further before the bar follows them out of the page. Two
+/// steps, so a nudge does not take the whole bar away.
 const double _scrollTravelToCollapse = 12;
+const double _scrollTravelToLeave = 64;
+
+/// The bar has three places to be: whole, icons only, and gone.
+enum _DockPhase { expanded, compact, hidden }
 
 class _HomeShellState extends ConsumerState<_HomeShell> {
-  final _dockCollapsed = ValueNotifier(false);
+  final _dockPhase = ValueNotifier(_DockPhase.expanded);
   ScrollDirection _scrollDirection = ScrollDirection.idle;
   double _scrollTravel = 0;
 
-  /// The labels follow the finger, never a list that restores its position
+  /// The bar follows the finger, never a list that restores its position
   /// on its own, nor a page that is not the active one.
   bool _handleScroll(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical ||
@@ -80,25 +86,49 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     if (notification is UserScrollNotification) {
       _scrollDirection = notification.direction;
       _scrollTravel = 0;
+      return false;
     }
-    if (notification is ScrollUpdateNotification) {
-      if (notification.metrics.extentBefore <= 0) {
-        _dockCollapsed.value = false;
-        _scrollTravel = 0;
-      } else if (notification.dragDetails != null &&
-          _scrollDirection != ScrollDirection.idle) {
-        _scrollTravel += (notification.scrollDelta ?? 0).abs();
-        if (_scrollTravel >= _scrollTravelToCollapse) {
-          _dockCollapsed.value = _scrollDirection == ScrollDirection.reverse;
-        }
-      }
+    if (notification is! ScrollUpdateNotification) {
+      return false;
+    }
+    final metrics = notification.metrics;
+    // Nothing left to uncover at the top of the list, and nothing left to hide
+    // behind at its foot: either end puts the whole bar back, so a reader who
+    // scrolled to the end can still reach the destinations.
+    if (metrics.extentBefore <= 0 || metrics.extentAfter <= 0) {
+      _setPhase(_DockPhase.expanded);
+      _scrollTravel = 0;
+      return false;
+    }
+    if (notification.dragDetails == null ||
+        _scrollDirection == ScrollDirection.idle) {
+      return false;
+    }
+    // Dragging back down uncovers what the bar was hiding behind, so it comes
+    // back whole rather than one step at a time.
+    if (_scrollDirection == ScrollDirection.forward) {
+      _setPhase(_DockPhase.expanded);
+      _scrollTravel = 0;
+      return false;
+    }
+    _scrollTravel += (notification.scrollDelta ?? 0).abs();
+    if (_scrollTravel >= _scrollTravelToLeave) {
+      _setPhase(_DockPhase.hidden);
+    } else if (_scrollTravel >= _scrollTravelToCollapse) {
+      _setPhase(_DockPhase.compact);
     }
     return false;
   }
 
+  void _setPhase(_DockPhase phase) {
+    if (_dockPhase.value != phase) {
+      _dockPhase.value = phase;
+    }
+  }
+
   @override
   void dispose() {
-    _dockCollapsed.dispose();
+    _dockPhase.dispose();
     super.dispose();
   }
 
@@ -110,7 +140,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
   Widget build(BuildContext context) {
     ref.listen(currentPageLabelProvider, (previous, next) {
       if (previous == next) return;
-      _dockCollapsed.value = false;
+      _dockPhase.value = _DockPhase.expanded;
       _scrollDirection = ScrollDirection.idle;
       _scrollTravel = 0;
     });
@@ -126,7 +156,9 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final hideLabelOnScroll = ref.watch(
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
-    final dockCollapses = isMobile && floating && hideLabelOnScroll;
+    // A floating dock follows the page; only the labels answer to the setting.
+    final dockFollows = isMobile && floating;
+    final dockFoldsLabels = dockFollows && hideLabelOnScroll;
     return Material(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
@@ -144,7 +176,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                       child: _BodyPadding(
                         isMobile: isMobile,
                         child: NotificationListener<ScrollNotification>(
-                          onNotification: dockCollapses ? _handleScroll : null,
+                          onNotification: dockFollows ? _handleScroll : null,
                           child: widget.child,
                         ),
                       ),
@@ -155,28 +187,34 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                   start: 0,
                   end: 0,
                   bottom: 0,
-                  child: AnimatedVisibility.bottomNavigation(
-                    visible: isMobile && floating,
-                    child: _NavigationPadding(
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: _dockCollapsed,
-                        builder: (context, collapsed, _) => NavigationDock(
-                          destinations: [
-                            for (final item in navigationItems)
-                              NavigationDockDestination(
-                                glyph: item.glyph,
-                                label: item.label.label,
-                              ),
-                          ],
-                          selectedIndex: state.currentIndex,
-                          onSelected: (index) {
-                            _handleToPage(navigationItems[index].label);
-                          },
-                          scale: dockScale,
-                          showLabel: !(dockCollapses && collapsed),
+                  child: ValueListenableBuilder<_DockPhase>(
+                    valueListenable: _dockPhase,
+                    builder: (context, phase, _) {
+                      final hidden = phase == _DockPhase.hidden;
+                      final compact = phase != _DockPhase.expanded;
+                      return AnimatedVisibility.bottomNavigation(
+                        // The room the inset keeps stays put while the bar
+                        // leaves, so the page under it never moves.
+                        visible: dockFollows && !hidden,
+                        child: _NavigationPadding(
+                          child: NavigationDock(
+                            destinations: [
+                              for (final item in navigationItems)
+                                NavigationDockDestination(
+                                  glyph: item.glyph,
+                                  label: item.label.label,
+                                ),
+                            ],
+                            selectedIndex: state.currentIndex,
+                            onSelected: (index) {
+                              _handleToPage(navigationItems[index].label);
+                            },
+                            scale: dockScale,
+                            showLabel: !(dockFoldsLabels && compact),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -399,6 +437,25 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     _toPage(pageLabel, true);
   }
 
+  /// A drag across settles on a page the selection has not heard about yet:
+  /// the label is what the rest of the app reads, so it takes the page the
+  /// finger chose. Read after the scroll ends, never while it runs — an
+  /// `animateToPage` under a live drag fights the finger.
+  void _settleOnDraggedPage() {
+    if (!mounted || _order != null || !_pageController.hasClients) {
+      return;
+    }
+    final page = _pageController.page?.round();
+    if (page == null || page < 0 || page >= widget.navigationItems.length) {
+      return;
+    }
+    final label = widget.navigationItems[page].label;
+    if (ref.read(currentPageLabelProvider) == label) {
+      return;
+    }
+    ref.read(currentPageLabelProvider.notifier).toPage(label);
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -415,32 +472,44 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         (state) => state.tabAnimation == TabAnimation.fade,
       ),
     );
-    return PageView.builder(
-      controller: _pageController,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: itemCount,
-      findChildIndexCallback: (key) {
-        if (key is! ValueKey<PageLabel>) {
-          return null;
+    // A phone drags from page to page the way it expects to; on a desktop the
+    // pages are the sidebar's, and a mouse drag across one is only a slip.
+    final viewMode = ref.watch(navigationStateProvider).viewMode;
+    final dragsPages = viewMode == ViewMode.mobile;
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: (notification) {
+        if (notification.depth == 0) {
+          _settleOnDraggedPage();
         }
-        final index = widget.navigationItems.indexWhere(
-          (item) => item.label == key.value,
-        );
-        if (index == -1) {
-          return null;
-        }
-        return _order?.indexOf(index) ?? index;
+        return false;
       },
-      itemBuilder: (context, index) {
-        final page = widget.pageBuilder(context, _order?[index] ?? index);
-        return _FadeTabPage(
-          key: page.key,
-          controller: _pageController,
-          position: index,
-          enabled: fade,
-          child: page,
-        );
-      },
+      child: PageView.builder(
+        controller: _pageController,
+        physics: dragsPages ? null : const NeverScrollableScrollPhysics(),
+        itemCount: itemCount,
+        findChildIndexCallback: (key) {
+          if (key is! ValueKey<PageLabel>) {
+            return null;
+          }
+          final index = widget.navigationItems.indexWhere(
+            (item) => item.label == key.value,
+          );
+          if (index == -1) {
+            return null;
+          }
+          return _order?.indexOf(index) ?? index;
+        },
+        itemBuilder: (context, index) {
+          final page = widget.pageBuilder(context, _order?[index] ?? index);
+          return _FadeTabPage(
+            key: page.key,
+            controller: _pageController,
+            position: index,
+            enabled: fade,
+            child: page,
+          );
+        },
+      ),
     );
   }
 }

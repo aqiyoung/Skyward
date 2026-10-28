@@ -1417,6 +1417,108 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('the dock leaves while the page scrolls and comes back', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => ListView.builder(
+                  itemCount: 40,
+                  itemBuilder: (_, index) {
+                    return SizedBox(height: 48, child: Text('row $index'));
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(FloatingNavigationBar), findsOneWidget);
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, -160));
+    await tester.pumpAndSettle();
+    expect(
+      find.byType(FloatingNavigationBar),
+      findsNothing,
+      reason: 'the bar stayed in front of the page it was hiding behind',
+    );
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, 60));
+    await tester.pumpAndSettle();
+    expect(find.byType(FloatingNavigationBar), findsOneWidget);
+  });
+
+  testWidgets('a drag across the page turns to the page beside it', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => const Text('page:dashboard'),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) => const Text('page:profiles'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
+
+    await tester.drag(find.text('page:dashboard'), const Offset(-320, 0));
+    await tester.pumpAndSettle();
+
+    expect(container.read(currentPageLabelProvider), PageLabel.profiles);
+    expect(find.text('page:profiles').hitTestable(), findsOneWidget);
+  });
 }
 
 class _ThemeManagedTestApp extends StatelessWidget {
