@@ -17,7 +17,7 @@ class Contributor {
   const Contributor({required this.avatar, required this.name});
 }
 
-class AboutView extends ConsumerWidget {
+class AboutView extends ConsumerStatefulWidget {
   const AboutView({super.key});
 
   // Avatars restored from the upstream FlClash repository, whose About
@@ -27,21 +27,66 @@ class AboutView extends ConsumerWidget {
     Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
   ];
 
-  Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
-    if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
-    final commonAction = ref.read(commonActionProvider.notifier);
-    final result = await globalState.loadingRun(
-      () async => (release: await request.checkForUpdate()),
-      title: context.appLocalizations.checkUpdate,
-      tag: LoadingTag.checkUpdate,
-      // No modal on failure either: the check itself is silent, and a
-      // failed round trip only leaves a non-modal error banner.
-      silence: true,
-    );
-    if (result == null) return;
-    unawaited(
-      commonAction.checkUpdateResultHandle(data: result.release, silent: true),
-    );
+  @override
+  ConsumerState<AboutView> createState() => _AboutViewState();
+}
+
+enum _UpdateResult { checking, latest, found, failed }
+
+class _AboutViewState extends ConsumerState<AboutView> {
+  _UpdateResult? _updateResult;
+  bool _isCheckingUpdate = false;
+
+  String? _updateResultText() {
+    final appLocalizations = context.appLocalizations;
+    return switch (_updateResult) {
+      _UpdateResult.checking => appLocalizations.versionUpdateChecking,
+      _UpdateResult.latest => appLocalizations.versionUpdateLatest,
+      _UpdateResult.found => appLocalizations.versionUpdateFound,
+      _UpdateResult.failed => appLocalizations.versionUpdateFailed,
+      null => null,
+    };
+  }
+
+  // The check runs directly, not through loadingRun: no loading bar
+  // under the title, no dialog, no banner — the only place its result
+  // appears is the version-update row itself, as its trailing text.
+  Future<void> _checkUpdate() async {
+    if (_isCheckingUpdate) return;
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateResult = _UpdateResult.checking;
+    });
+    final Map<String, dynamic>? release;
+    try {
+      release = await request.checkForUpdate();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.failed;
+      });
+      return;
+    }
+    if (!mounted) return;
+    if (release != null) {
+      // A new release is found: show it on the row and start its
+      // background download at once, still with no dialog.
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.found;
+      });
+      unawaited(
+        ref
+            .read(commonActionProvider.notifier)
+            .checkUpdateResultHandle(data: release, silent: true),
+      );
+    } else {
+      setState(() {
+        _isCheckingUpdate = false;
+        _updateResult = _UpdateResult.latest;
+      });
+    }
   }
 
   Widget _buildLinkItem({
@@ -110,11 +155,9 @@ class AboutView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    // The check is deliberately silent: no loading bar under the title
-    // while it runs, and no dialog when it finishes. A new release just
-    // starts its background download; already-latest shows nothing.
+    final updateResultText = _updateResultText();
     return CommonScaffold(
       title: appLocalizations.about,
       body: ListView(
@@ -137,8 +180,8 @@ class AboutView extends ConsumerWidget {
           const SizedBox(height: 8),
           // Reference-style top card, no leading icons, no section
           // header: the version is a plain row with the number on the
-          // right, and version update is a row with the default chevron
-          // that runs the same manual check.
+          // right, and version update is a row whose trailing shows the
+          // chevron plus, once checked, the check result itself.
           generateSection(
             items: [
               ListItem(
@@ -150,12 +193,19 @@ class AboutView extends ConsumerWidget {
               ),
               ListItem(
                 title: Text(appLocalizations.versionUpdate),
-                // A plain onTap row shows no trailing at all: the
-                // chevron has to be asked for explicitly.
-                trailing: const GlyphIcon(AppGlyphs.chevronForward),
-                onTap: () {
-                  _checkUpdate(context, ref);
-                },
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (updateResultText != null)
+                      Text(
+                        updateResultText,
+                        style: context.listSubtitleStyle,
+                      ),
+                    if (updateResultText != null) const SizedBox(width: 8),
+                    const GlyphIcon(AppGlyphs.chevronForward),
+                  ],
+                ),
+                onTap: _checkUpdate,
               ),
             ],
           ),

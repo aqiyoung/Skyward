@@ -600,6 +600,46 @@ class AppLocalizations {
     );
   }
 
+  /// `Checking…`
+  String get versionUpdateChecking {
+    return Intl.message(
+      'Checking…',
+      name: 'versionUpdateChecking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Up to date`
+  String get versionUpdateLatest {
+    return Intl.message(
+      'Up to date',
+      name: 'versionUpdateLatest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New version available`
+  String get versionUpdateFound {
+    return Intl.message(
+      'New version available',
+      name: 'versionUpdateFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check failed`
+  String get versionUpdateFailed {
+    return Intl.message(
+      'Check failed',
+      name: 'versionUpdateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Add`
   String get add {
     return Intl.message('Add', name: 'add', desc: '', args: []);
