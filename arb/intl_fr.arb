@@ -71,6 +71,8 @@
   "edit": "Modifier",
   "confirm": "Confirmer",
   "update": "Mettre à jour",
+  "version": "Version",
+  "versionUpdate": "Mise à jour de version",
   "add": "Ajouter",
   "save": "Enregistrer",
   "delete": "Supprimer",

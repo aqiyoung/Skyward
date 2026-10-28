@@ -585,6 +585,21 @@ class AppLocalizations {
     return Intl.message('Update', name: 'update', desc: '', args: []);
   }
 
+  /// `Version`
+  String get version {
+    return Intl.message('Version', name: 'version', desc: '', args: []);
+  }
+
+  /// `Version update`
+  String get versionUpdate {
+    return Intl.message(
+      'Version update',
+      name: 'versionUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Add`
   String get add {
     return Intl.message('Add', name: 'add', desc: '', args: []);

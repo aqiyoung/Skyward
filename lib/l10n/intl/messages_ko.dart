@@ -1627,6 +1627,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "userAgent": MessageLookupByLibrary.simpleMessage("User-Agent"),
     "username": MessageLookupByLibrary.simpleMessage("사용자 이름"),
     "value": MessageLookupByLibrary.simpleMessage("값"),
+    "version": MessageLookupByLibrary.simpleMessage("버전"),
+    "versionUpdate": MessageLookupByLibrary.simpleMessage("버전 업데이트"),
     "view": MessageLookupByLibrary.simpleMessage("보기"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("선명"),

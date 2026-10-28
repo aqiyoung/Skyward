@@ -133,31 +133,21 @@ class AboutView extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 8),
-          // The version number used to sit in the hero as a pill and
-          // check update was a full-width hero button. Both now live in
-          // this one row: the current version is the subtitle, tapping
-          // the row checks for an update.
-          //
-          // No section header: it would carry the row's own words a line
-          // above them, and this row is the one thing the page is for.
+          // Reference-style top card, no leading icons, no section
+          // header: the version is a plain row with the number on the
+          // right, and version update is a row with the default chevron
+          // that runs the same manual check.
           generateSection(
             items: [
               ListItem(
-                // One arc with one arrowhead rather than `sync`'s two: at
-                // 20 dp the second arrow and its head turn the ring into a
-                // tangle.
-                leading: IconWell(
-                  AppGlyphs.refresh,
-                  side: 40,
-                  glyphSize: 20,
-                  shape: AppShape.md,
+                title: Text(appLocalizations.version),
+                trailing: Text(
+                  globalState.packageInfo.displayVersion,
+                  style: context.listSubtitleStyle,
                 ),
-                title: Text(appLocalizations.checkUpdate),
-                subtitle: Text(
-                  'v${globalState.packageInfo.displayVersion}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              ),
+              ListItem(
+                title: Text(appLocalizations.versionUpdate),
                 onTap: () {
                   _checkUpdate(context, ref);
                 },
@@ -286,8 +276,6 @@ class _AboutHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final appLocalizations = context.appLocalizations;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Column(
@@ -311,17 +299,6 @@ class _AboutHero extends StatelessWidget {
           Text(
             appName,
             style: AppTextStyle.title2.of(context, emphasized: true),
-          ),
-          const SizedBox(height: 16),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Text(
-              appLocalizations.desc,
-              textAlign: TextAlign.center,
-              style: AppTextStyle.subheadline
-                  .of(context)
-                  .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
-            ),
           ),
         ],
       ),
