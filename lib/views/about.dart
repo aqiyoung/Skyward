@@ -115,15 +115,14 @@ class _AboutViewState extends ConsumerState<AboutView> {
     required String label,
   }) {
     return ListItem(
-      // A full-bleed square carries more weight than a circle of the same box:
-      // at 40 dp beside the portraits below it read a size larger than they
-      // are, so it takes the side a square of their area would.
+      // Do not clip the logo to a rounded square: the FlClash mark's
+      // top bar reaches into the image's top-right corner, and a 16 dp
+      // corner on a 36 dp box cuts that tip off. The mark already has
+      // its own rounded ends and a transparent background, so it is
+      // shown unclipped.
       leading: SizedBox.square(
         dimension: 36,
-        child: ClipPath(
-          clipper: ShapeBorderClipper(shape: AppShape.md),
-          child: Image.asset(asset, fit: BoxFit.cover),
-        ),
+        child: Image.asset(asset, fit: BoxFit.contain),
       ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
