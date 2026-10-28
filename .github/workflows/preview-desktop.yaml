@@ -11,7 +11,19 @@ name: preview-desktop
 # tags and release titles -- never counts it, and the Android numbering is
 # untouched. Its number is its own: see the version step for why it cannot
 # reuse the preview channel's.
+#
+# Started by pushing a change to `.desktop-preview`, not by the dispatch
+# button: GitHub only dispatches a workflow the default branch carries, and
+# this repository promotes `beta` into `main` by fast-forward, so a CI-only
+# commit on main would make every promotion non-fast-forward. The branch that
+# builds is `beta`, so the workflow lives there and its trigger is a file in
+# the tree. `workflow_dispatch` stays for whenever it does reach main.
 on:
+  push:
+    branches:
+      - beta
+    paths:
+      - '.desktop-preview'
   workflow_dispatch:
     inputs:
       ref:
@@ -35,7 +47,7 @@ on:
         default: amd64
 
 concurrency:
-  group: preview-desktop-${{ inputs.ref }}-${{ inputs.arch }}
+  group: preview-desktop-${{ inputs.ref || 'beta' }}-${{ inputs.arch || 'amd64' }}
   cancel-in-progress: true
 
 permissions:
@@ -47,10 +59,10 @@ env:
 
 jobs:
   preview:
-    name: Windows ${{ inputs.arch }}
+    name: Windows ${{ inputs.arch || 'amd64' }}
     # The arm runner is the only one that builds an arm64 Windows binary, and
     # it needs Rust set up by hand; the x64 one has it in the image.
-    runs-on: ${{ inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    runs-on: ${{ (inputs.arch || 'amd64') == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
     timeout-minutes: 120
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -59,7 +71,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || 'beta' }}
           submodules: recursive
 
       - name: Enable git long paths
@@ -142,7 +154,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Rust (Windows arm64)
-        if: inputs.arch == 'arm64'
+        if: (inputs.arch || 'amd64') == 'arm64'
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://win.rustup.rs/aarch64" -OutFile rustup-init.exe
@@ -158,7 +170,7 @@ jobs:
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          key: preview-desktop-${{ inputs.arch }}
+          key: preview-desktop-${{ inputs.arch || 'amd64' }}
           workspaces: services/helper
           cache-directories: .dart_tool/hooks_runner
 
@@ -192,7 +204,7 @@ jobs:
         shell: bash
         env:
           APP_VERSION_NAME: ${{ steps.version.outputs.version }}
-        run: dart setup.dart windows --env ${{ inputs.env }} -v
+        run: dart setup.dart windows --env ${{ inputs.env || 'pre' }} -v
 
       - name: Name the artifacts after our version
         shell: bash
@@ -268,7 +280,7 @@ jobs:
       - name: Upload the preview
         uses: actions/upload-artifact@v4
         with:
-          name: preview-desktop-windows-${{ inputs.arch }}
+          name: preview-desktop-windows-${{ inputs.arch || 'amd64' }}
           path: ./dist
           if-no-files-found: error
 
@@ -278,8 +290,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
-          REF: ${{ inputs.ref }}
-          ARCH: ${{ inputs.arch }}
+          REF: ${{ inputs.ref || 'beta' }}
+          ARCH: ${{ inputs.arch || 'amd64' }}
           PREVIOUS: ${{ steps.changelog.outputs.previous }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
@@ -342,8 +354,8 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
-          REF: ${{ inputs.ref }}
-          ARCH: ${{ inputs.arch }}
+          REF: ${{ inputs.ref || 'beta' }}
+          ARCH: ${{ inputs.arch || 'amd64' }}
           PREVIOUS: ${{ steps.changelog.outputs.previous }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
