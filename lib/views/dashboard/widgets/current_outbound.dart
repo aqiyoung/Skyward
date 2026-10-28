@@ -134,13 +134,19 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
       active: isStart && !suspended,
       gap: metrics.cellGap,
     );
-    final startToggle = SizedBox(
-      width: metrics.buttonSlot,
-      child: _StartToggle(
-        size: metrics.buttonSize,
-        enabled: hasProfile,
-        running: isStart,
-        suspended: suspended,
+    final startToggle = SizedBox.square(
+      dimension: metrics.buttonSlot,
+      // The slot is wider than the button, so the button is centred inside it.
+      // Handing the button the slot's tight width instead drew the circle
+      // across it, which is an ellipse: the painter scales the unit circle by
+      // each axis on its own.
+      child: Center(
+        child: _StartToggle(
+          size: metrics.buttonSize,
+          enabled: hasProfile,
+          running: isStart,
+          suspended: suspended,
+        ),
       ),
     );
     // The phone has one status card, so the rates sit in its header, level
@@ -1089,13 +1095,17 @@ class _MorphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Both axes take the same length: the path is a circle in a unit square,
+    // and scaling by width and height separately draws one of them as the
+    // other's ellipse the moment the two differ.
+    final side = size.shortestSide;
     final path = _morphPath(progress);
     final color = this.color;
     canvas
       ..save()
       ..translate(size.width / 2, size.height / 2)
       ..rotate(_morphTurn(progress))
-      ..scale(size.width, size.height)
+      ..scale(side, side)
       ..translate(-0.5, -0.5);
     if (shadow.a > 0) {
       canvas.save();
@@ -1108,17 +1118,14 @@ class _MorphPainter extends CustomPainter {
         );
       }
       canvas
-        ..translate(
-          _shadowOffset.dx / size.width,
-          _shadowOffset.dy / size.height,
-        )
+        ..translate(_shadowOffset.dx / side, _shadowOffset.dy / side)
         ..drawPath(
           path,
           Paint()
             ..color = shadow
             ..maskFilter = MaskFilter.blur(
               BlurStyle.normal,
-              _shadowBlur / 2 / size.width,
+              _shadowBlur / 2 / side,
             ),
         )
         ..restore();
@@ -1127,7 +1134,7 @@ class _MorphPainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
     if (ring case final ring?) {
-      strokeUnitShape(canvas, path, size.width, ring);
+      strokeUnitShape(canvas, path, side, ring);
     }
     canvas.restore();
   }
@@ -1147,10 +1154,11 @@ class _MorphClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
+    final side = size.shortestSide;
     final transform =
         Matrix4.translationValues(size.width / 2, size.height / 2, 0)
           ..rotateZ(_morphTurn(progress))
-          ..scaleByDouble(size.width, size.height, 1, 1)
+          ..scaleByDouble(side, side, 1, 1)
           ..translateByDouble(-0.5, -0.5, 0, 1);
     return _morphPath(progress).transform(transform.storage);
   }
