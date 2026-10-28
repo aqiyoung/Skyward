@@ -34,10 +34,13 @@ class AboutView extends ConsumerWidget {
       () async => (release: await request.checkForUpdate()),
       title: context.appLocalizations.checkUpdate,
       tag: LoadingTag.checkUpdate,
+      // No modal on failure either: the check itself is silent, and a
+      // failed round trip only leaves a non-modal error banner.
+      silence: true,
     );
     if (result == null) return;
     unawaited(
-      commonAction.checkUpdateResultHandle(data: result.release, isUser: true),
+      commonAction.checkUpdateResultHandle(data: result.release, silent: true),
     );
   }
 
@@ -109,12 +112,11 @@ class AboutView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    // A check takes a round trip, and the row gives no sign of it on its own:
-    // the bar under the title is the only thing that says the tap landed.
-    final isCheckingUpdate = ref.watch(loadingProvider(LoadingTag.checkUpdate));
+    // The check is deliberately silent: no loading bar under the title
+    // while it runs, and no dialog when it finishes. A new release just
+    // starts its background download; already-latest shows nothing.
     return CommonScaffold(
       title: appLocalizations.about,
-      isLoading: isCheckingUpdate,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
@@ -148,6 +150,9 @@ class AboutView extends ConsumerWidget {
               ),
               ListItem(
                 title: Text(appLocalizations.versionUpdate),
+                // A plain onTap row shows no trailing at all: the
+                // chevron has to be asked for explicitly.
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
                 onTap: () {
                   _checkUpdate(context, ref);
                 },

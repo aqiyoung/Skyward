@@ -287,7 +287,17 @@ class CommonAction extends _$CommonAction {
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
     bool isUser = false,
+    // Silent callers (the About version-update row) get no dialog at
+    // all: a new release starts its background download directly, and
+    // already-latest shows nothing. Startup auto-check is unaffected.
+    bool silent = false,
   }) async {
+    if (silent) {
+      if (data != null) {
+        unawaited(_downloadRelease(data));
+      }
+      return;
+    }
     if (data != null) {
       final context = globalState.navigatorKey.currentContext;
       if (context == null) {
