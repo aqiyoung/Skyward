@@ -136,9 +136,7 @@ class AboutView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final isLoading = ref.watch(loadingProvider(LoadingTag.checkUpdate));
     return CommonScaffold(
-      isLoading: isLoading,
       title: appLocalizations.about,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
@@ -147,10 +145,6 @@ class AboutView extends ConsumerWidget {
         ),
         children: [
           _AboutHero(
-            isCheckingUpdate: isLoading,
-            onCheckUpdate: () {
-              _checkUpdate(context, ref);
-            },
             onEnterDeveloperMode: () {
               ref
                   .read(appSettingProvider.notifier)
@@ -162,6 +156,32 @@ class AboutView extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 8),
+          // The version number used to sit in the hero as a pill and
+          // check update was a full-width hero button. Both now live in
+          // this one row: the current version is the subtitle, tapping
+          // the row checks for an update.
+          generateSection(
+            title: appLocalizations.checkUpdate,
+            items: [
+              ListItem(
+                leading: IconWell(
+                  AppGlyphs.sync,
+                  side: 40,
+                  glyphSize: 20,
+                  shape: AppShape.md,
+                ),
+                title: Text(appLocalizations.checkUpdate),
+                subtitle: Text(
+                  'v${globalState.packageInfo.displayVersion}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  _checkUpdate(context, ref);
+                },
+              ),
+            ],
+          ),
           generateSection(
             title: appLocalizations.more,
             items: [
@@ -207,15 +227,9 @@ class AboutView extends ConsumerWidget {
 }
 
 class _AboutHero extends StatelessWidget {
-  final bool isCheckingUpdate;
-  final VoidCallback onCheckUpdate;
   final VoidCallback onEnterDeveloperMode;
 
-  const _AboutHero({
-    required this.isCheckingUpdate,
-    required this.onCheckUpdate,
-    required this.onEnterDeveloperMode,
-  });
+  const _AboutHero({required this.onEnterDeveloperMode});
 
   static const _logoSize = 96.0;
 
@@ -247,12 +261,6 @@ class _AboutHero extends StatelessWidget {
             appName,
             style: AppTextStyle.title2.of(context, emphasized: true),
           ),
-          const SizedBox(height: 10),
-          _Pill(
-            label: 'v${globalState.packageInfo.displayVersion}',
-            color: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
-          ),
           const SizedBox(height: 16),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
@@ -264,42 +272,7 @@ class _AboutHero extends StatelessWidget {
                   .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
             ),
           ),
-          const SizedBox(height: 20),
-          TonalButton(
-            size: TonalButtonSize.bar,
-            glyph: AppGlyphs.sync,
-            label: appLocalizations.checkUpdate,
-            onPressed: isCheckingUpdate ? null : onCheckUpdate,
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color foregroundColor;
-
-  const _Pill({
-    required this.label,
-    required this.color,
-    required this.foregroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: ShapeDecoration(color: color, shape: AppShape.full),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Text(
-          label,
-          style: AppTextStyle.caption1
-              .of(context, emphasized: true)
-              .copyWith(color: foregroundColor),
-        ),
       ),
     );
   }
