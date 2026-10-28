@@ -99,6 +99,7 @@ flutter:
     - assets/data/
     - assets/fonts/
     - assets/images/
+    - assets/images/avatar/
     - assets/images/services/
     - assets/images/groups/
     - core/Clash.Meta/component/ca/ca-certificates.crt

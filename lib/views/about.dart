@@ -58,29 +58,6 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogoLinkItem({
-    required String asset,
-    required String title,
-    required String url,
-    required String label,
-  }) {
-    return ListItem(
-      leading: SizedBox.square(
-        dimension: 40,
-        child: ClipPath(
-          clipper: ShapeBorderClipper(shape: AppShape.md),
-          child: Image.asset(asset, fit: BoxFit.cover),
-        ),
-      ),
-      title: Text(title),
-      subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: const GlyphIcon(AppGlyphs.openExternal),
-      onTap: () {
-        dialogs.openUrl(url);
-      },
-    );
-  }
-
   Widget _buildContributorTile(
     BuildContext context,
     Contributor contributor,
@@ -89,11 +66,11 @@ class AboutView extends ConsumerWidget {
     return Column(
       children: [
         CircleAvatar(
-          radius: 24,
+          radius: 16,
           foregroundImage: AssetImage(contributor.avatar),
           child: Text(contributor.name[0]),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(contributor.name, style: context.listTitleStyle),
         Text(
           subtitle,
@@ -106,22 +83,63 @@ class AboutView extends ConsumerWidget {
     );
   }
 
-  Widget _buildIconDesignersRow(BuildContext context, String subtitle) {
+  Widget _buildFlClashTile(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        dialogs.openUrl('https://github.com/chen08209/FlClash');
+      },
+      child: Column(
+        children: [
+          SizedBox.square(
+            dimension: 32,
+            child: ClipPath(
+              clipper: ShapeBorderClipper(shape: AppShape.md),
+              child: Image.asset(
+                'assets/images/avatar/flclash.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('FlClash', style: context.listTitleStyle),
+              const SizedBox(width: 2),
+              GlyphIcon(
+                AppGlyphs.openExternal,
+                size: 12,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContributorsRow(BuildContext context, String subtitle) {
     return CommonCard(
       shape: AppShape.of(
-        AppRadius.vertical(top: AppCorner.none, bottom: AppCorner.xl),
+        AppRadius.vertical(top: AppCorner.xl, bottom: AppCorner.xl),
       ),
       padding: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
+            Expanded(child: _buildFlClashTile(context)),
+            Container(
+              width: 1,
+              height: 40,
+              color: context.colorScheme.outlineVariant,
+            ),
             Expanded(
               child: _buildContributorTile(context, _contributors[0], subtitle),
             ),
             Container(
               width: 1,
-              height: 56,
+              height: 40,
               color: context.colorScheme.outlineVariant,
             ),
             Expanded(
@@ -191,13 +209,7 @@ class AboutView extends ConsumerWidget {
               // Upstream FlClash lives here, not in More: More already has
               // this project's own Project entry, so a second project
               // there reads as a competing project link.
-              _buildLogoLinkItem(
-                asset: 'assets/images/avatar/flclash.png',
-                title: 'FlClash',
-                url: 'https://github.com/chen08209/FlClash',
-                label: 'github.com/chen08209/FlClash',
-              ),
-              _buildIconDesignersRow(context, appLocalizations.appIconDesign),
+              _buildContributorsRow(context, appLocalizations.appIconDesign),
             ],
           ),
         ],
