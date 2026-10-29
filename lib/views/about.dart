@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
-import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
@@ -193,18 +192,12 @@ class _AboutViewState extends ConsumerState<AboutView> {
           ),
           const SizedBox(height: 8),
           // Reference-style top card, no leading icons, no section
-          // header: the version is a plain row with the number on the
-          // right, and version update is a row whose trailing shows the
-          // chevron plus, once checked, the check result itself.
+          // header: version update is a row whose trailing shows the
+          // chevron plus, once checked, the check result itself. The
+          // build number is not repeated here -- the tools tab shows it
+          // on the row that leads in.
           generateSection(
             items: [
-              ListItem(
-                title: Text(appLocalizations.version),
-                trailing: Text(
-                  globalState.packageInfo.displayVersion,
-                  style: context.listSubtitleStyle,
-                ),
-              ),
               ListItem(
                 title: Text(appLocalizations.versionUpdate),
                 trailing: Row(
@@ -223,8 +216,9 @@ class _AboutViewState extends ConsumerState<AboutView> {
               ),
             ],
           ),
+          // No headings over either card: the rows say what they are, and a
+          // label above two of them only said it twice.
           generateSection(
-            title: appLocalizations.more,
             items: [
               _buildLinkItem(
                 glyph: AppGlyphs.code,
@@ -244,13 +238,24 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 url: 'https://github.com/$repository/blob/main/LICENSE',
                 label: 'GPL-3.0',
               ),
+              // The terms are a page of their own, reached from this row: read
+              // here in full, they were a scroll few ever finished.
+              ListItem.open(
+                leading: IconWell(
+                  AppGlyphs.rules,
+                  side: 40,
+                  glyphSize: 20,
+                  shape: AppShape.md,
+                ),
+                title: Text(appLocalizations.disclaimer),
+                widget: const DisclaimerView(),
+              ),
             ],
           ),
           generateSection(
-            title: appLocalizations.otherContributors,
             items: [
-              // Upstream FlClash lives here, not in More: More already has
-              // this project's own Project entry, so a second project
+              // Upstream FlClash lives here, not on the card above: that
+              // one carries this project's own entry, so a second project
               // there reads as a competing project link.
               _buildLogoLinkItem(
                 asset: 'assets/images/avatar/flclash.png',
@@ -260,14 +265,6 @@ class _AboutViewState extends ConsumerState<AboutView> {
               ),
               _buildContributors(appLocalizations.appIconDesign),
             ],
-          ),
-          // The statement the first launch asks to be accepted, in full. It is
-          // no longer a page of its own; it ends this one, where a reader who
-          // went looking for it will be.
-          ListHeader(title: appLocalizations.disclaimer),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: DisclaimerTerms(),
           ),
         ],
       ),

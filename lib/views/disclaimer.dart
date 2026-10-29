@@ -6,9 +6,10 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The terms in the order they are shown. They live here rather than in either
-/// screen because the about page carries them as well, and one list is what
-/// keeps the two from drifting apart.
+/// The terms in the order they are shown. They live here rather than in the
+/// screen, because the page is opened twice -- once for consent at first
+/// launch, once from the about page -- and one list is what keeps the two runs
+/// from drifting apart.
 List<({String title, String content})> _termList(AppLocalizations l) => [
   (
     title: l.disclaimerSoftwareTitle,
@@ -29,8 +30,7 @@ List<({String title, String content})> _termList(AppLocalizations l) => [
   (title: l.disclaimerAcceptTitle, content: l.disclaimerAcceptContent),
 ];
 
-/// The whole statement, ready to drop into a page that has other things to say
-/// as well.
+/// The whole statement: the intro and every term under it, in order.
 class DisclaimerTerms extends StatelessWidget {
   const DisclaimerTerms({super.key});
 

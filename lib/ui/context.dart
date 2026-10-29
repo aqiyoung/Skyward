@@ -36,10 +36,11 @@ extension BuildContextExtension on BuildContext {
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset + 12);
 
-  /// The same, for a page whose first block is a section label rather than a
-  /// card. The label sits in a box with room for its actions, which trails the
-  /// bar on its own, so the gap the body leaves before a card would be spent
-  /// twice and the label would read as belonging to nothing.
+  /// The same, for a page whose first block brings its own air: a section
+  /// label, or a card the list already sets apart with a section gap. The
+  /// label sits in a box with room for its actions, which trails the bar on
+  /// its own, so the gap the body leaves before a card would be spent twice
+  /// and the label would read as belonging to nothing.
   double get sectionTopPadding =>
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset);
