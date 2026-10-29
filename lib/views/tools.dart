@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
@@ -39,8 +41,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  /// What the tab ends on: one way into the about page, the build it is, and
-  /// the two lines the licence asks a reader to be able to find.
+  /// What the tab ends on: one way into the about page, the build it is — the
+  /// row that also asks whether a newer one exists — and the two lines the
+  /// licence asks a reader to be able to find.
   Widget _getAboutList() {
     final appLocalizations = context.appLocalizations;
     return Column(
@@ -52,15 +55,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
               title: Text('${appLocalizations.about} $appName'),
               widget: const AboutView(),
             ),
-            ListItem(
-              title: Text(appLocalizations.currentVersion),
-              trailing: globalState.hasPackageInfo
-                  ? Text(
-                      globalState.packageInfo.displayVersion,
-                      style: context.listSubtitleStyle,
-                    )
-                  : null,
-            ),
+            const _VersionItem(),
           ],
         ),
         const _CopyrightNotice(),
@@ -128,6 +123,123 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+enum _VersionCheck { checking, latest, found, failed }
+
+/// The build a reader is running, and the way to ask for the next one: the
+/// version sits on the right where a value belongs, and the chevron after it
+/// says the row does something. While a check runs -- or a found package
+/// downloads -- the version is what is no longer the news, so the row carries
+/// the check's own word there instead, and goes back to naming the build once
+/// that word has been read.
+class _VersionItem extends ConsumerStatefulWidget {
+  const _VersionItem();
+
+  @override
+  ConsumerState<_VersionItem> createState() => _VersionItemState();
+}
+
+class _VersionItemState extends ConsumerState<_VersionItem> {
+  /// How long a finished check keeps the right-hand side: long enough to be
+  /// read once, not so long that the version stays hidden behind it.
+  static const _hold = Duration(seconds: 4);
+
+  _VersionCheck? _check;
+  Timer? _holdTimer;
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Puts [check] on the row. A finished check is left there for [_hold] and
+  /// then gives the row back to the version; "checking" stays until it lands.
+  void _show(_VersionCheck check) {
+    _holdTimer?.cancel();
+    if (check != _VersionCheck.checking) {
+      _holdTimer = Timer(_hold, () {
+        if (!mounted) return;
+        setState(() => _check = null);
+      });
+    }
+    setState(() => _check = check);
+  }
+
+  /// The check runs in place, the way it did on the about page it was moved
+  /// from: no dialog, no banner over the page. A release found starts its
+  /// download in the background, and the row says so for as long as it lasts.
+  Future<void> _checkUpdate() async {
+    // One check at a time, and none over the top of a download already
+    // running: the row would go back to naming a release it is fetching.
+    if (_check == _VersionCheck.checking ||
+        ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
+      return;
+    }
+    _show(_VersionCheck.checking);
+    final Map<String, dynamic>? release;
+    try {
+      release = await request.checkForUpdate();
+    } catch (_) {
+      if (!mounted) return;
+      _show(_VersionCheck.failed);
+      return;
+    }
+    if (!mounted) return;
+    if (release == null) {
+      _show(_VersionCheck.latest);
+      return;
+    }
+    _show(_VersionCheck.found);
+    unawaited(
+      ref
+          .read(commonActionProvider.notifier)
+          .checkUpdateResultHandle(data: release, silent: true),
+    );
+  }
+
+  String? _checkText(AppLocalizations appLocalizations) => switch (_check) {
+    _VersionCheck.checking => appLocalizations.versionUpdateChecking,
+    _VersionCheck.latest => appLocalizations.versionUpdateLatest,
+    _VersionCheck.found => appLocalizations.versionUpdateFound,
+    _VersionCheck.failed => appLocalizations.versionUpdateFailed,
+    null => null,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    // A package on its way is not a find to announce: once the release has
+    // been handed to the download, the row says what is happening instead of
+    // naming the version for the minutes that takes.
+    final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
+    final version = globalState.hasPackageInfo
+        ? globalState.packageInfo.displayVersion
+        : null;
+    final text = downloading
+        ? appLocalizations.versionUpdateDownloading
+        : _checkText(appLocalizations) ?? version;
+    return ListItem(
+      title: Text(appLocalizations.currentVersion),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (text != null) ...[
+            Text(
+              text,
+              style: context.listSubtitleStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 8),
+          ],
+          const GlyphIcon(AppGlyphs.chevronForward),
+        ],
+      ),
+      onTap: _checkUpdate,
     );
   }
 }

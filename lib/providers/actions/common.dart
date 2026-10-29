@@ -299,7 +299,7 @@ class CommonAction extends _$CommonAction {
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
     bool isUser = false,
-    // Silent callers (the About version-update row) get no dialog at
+    // Silent callers (the version row on the tools tab) get no dialog at
     // all: a new release starts its background download directly, and
     // already-latest shows nothing. Startup auto-check is unaffected.
     bool silent = false,

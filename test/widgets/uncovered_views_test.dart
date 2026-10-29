@@ -18,6 +18,7 @@ import 'package:skyward/views/config/rules.dart';
 import 'package:skyward/views/config/scripts.dart';
 import 'package:skyward/views/profiles/extend/standard.dart';
 import 'package:skyward/views/proxies/proxies.dart';
+import 'package:skyward/views/tools.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
@@ -240,7 +241,7 @@ void main() {
     expect(find.byType(CommonPopupMenu), findsNothing);
   });
 
-  testWidgets('about view renders version and link sections', (tester) async {
+  testWidgets('about view renders its hero and link sections', (tester) async {
     final container = _containerFor(tester);
 
     await tester.pumpWidget(
@@ -288,11 +289,11 @@ void main() {
     );
   });
 
-  // The About version-update row no longer uses the old check-update
-  // entry or the scaffold loading bar: its title is "Version update",
-  // and the check result is shown on the row itself, so this test
-  // follows the row instead of the old dialog and progress bar.
-  testWidgets('about view shows the update result on its row', (
+  // The update check lives on the row that names the build, not on a page of
+  // its own: the version is the value on the right, the chevron says the row
+  // does something, and the check's own word takes the value's place while it
+  // is the news.
+  testWidgets('the version row checks for an update where it stands', (
     tester,
   ) async {
     final container = _containerFor(tester);
@@ -304,20 +305,34 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: AboutView()),
+        child: const TestApp(child: ToolsView()),
       ),
     );
     await tester.pump();
-    expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('Version update'), findsOneWidget);
-    expect(find.text('Up to date'), findsNothing);
+    // No second entry for it anywhere: the about page was the old one.
+    expect(find.text('Version update'), findsNothing);
 
-    await tester.tap(find.text('Version update'));
+    final row = find.text('Current version');
+    await tester.scrollUntilVisible(
+      row,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      find.descendant(
+        of: find.ancestor(of: row, matching: find.byType(ListItem)),
+        matching: find.byGlyph(AppGlyphs.chevronForward),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(row);
     await tester.pump();
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.text('Checking…'), findsOneWidget);
 
-    await tester.tap(find.text('Version update'));
+    // A second tap while the first is still in flight must not ask twice.
+    await tester.tap(row);
     await tester.pump(const Duration(milliseconds: 100));
     expect(adapter.requests, 1);
 
@@ -337,10 +352,15 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
 
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.text('Up to date'), findsOneWidget);
+
+    // The word is news for a few seconds, not for the rest of the visit: the
+    // row goes back to naming the build.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump();
+    expect(find.text('Up to date'), findsNothing);
     expect(tester.takeException(), null);
   });
 
@@ -355,10 +375,15 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: AboutView()),
+        child: const TestApp(child: ToolsView()),
       ),
     );
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.text('Current version'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Downloading…'), findsNothing);
 
     final loading = container.read(

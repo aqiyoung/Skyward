@@ -25,8 +25,6 @@ class AboutView extends ConsumerStatefulWidget {
   ConsumerState<AboutView> createState() => _AboutViewState();
 }
 
-enum _UpdateResult { checking, latest, found, failed }
-
 class _AboutViewState extends ConsumerState<AboutView> {
   // Moved here from AboutView in the PR #31 fix: the contributors row
   // is built by this state, and a bare _contributors in state code
@@ -36,66 +34,6 @@ class _AboutViewState extends ConsumerState<AboutView> {
     Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
     Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
   ];
-
-  _UpdateResult? _updateResult;
-  bool _isCheckingUpdate = false;
-
-  String? _updateResultText() {
-    final appLocalizations = context.appLocalizations;
-    return switch (_updateResult) {
-      _UpdateResult.checking => appLocalizations.versionUpdateChecking,
-      _UpdateResult.latest => appLocalizations.versionUpdateLatest,
-      _UpdateResult.found => appLocalizations.versionUpdateFound,
-      _UpdateResult.failed => appLocalizations.versionUpdateFailed,
-      null => null,
-    };
-  }
-
-  // The check runs directly, not through loadingRun: no loading bar
-  // under the title, no dialog, no banner — the only place its result
-  // appears is the version-update row itself, as its trailing text.
-  Future<void> _checkUpdate() async {
-    // One check at a time, and none over the top of a download already
-    // running: the row would go back to naming a release it is fetching.
-    if (_isCheckingUpdate ||
-        ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
-      return;
-    }
-    setState(() {
-      _isCheckingUpdate = true;
-      _updateResult = _UpdateResult.checking;
-    });
-    final Map<String, dynamic>? release;
-    try {
-      release = await request.checkForUpdate();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.failed;
-      });
-      return;
-    }
-    if (!mounted) return;
-    if (release != null) {
-      // A new release is found: show it on the row and start its
-      // background download at once, still with no dialog.
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.found;
-      });
-      unawaited(
-        ref
-            .read(commonActionProvider.notifier)
-            .checkUpdateResultHandle(data: release, silent: true),
-      );
-    } else {
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.latest;
-      });
-    }
-  }
 
   Widget _buildLinkItem({
     required Glyph glyph,
@@ -164,13 +102,6 @@ class _AboutViewState extends ConsumerState<AboutView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    // A package on its way is not a find to announce: once the row has handed
-    // the release to the download, it says what is happening instead of
-    // naming the version again for the minutes the download takes.
-    final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
-    final updateResultText = downloading
-        ? appLocalizations.versionUpdateDownloading
-        : _updateResultText();
     return CommonScaffold(
       title: '${appLocalizations.about} $appName',
       body: ListView(
@@ -191,33 +122,11 @@ class _AboutViewState extends ConsumerState<AboutView> {
             },
           ),
           const SizedBox(height: 8),
-          // Reference-style top card, no leading icons, no section
-          // header: version update is a row whose trailing shows the
-          // chevron plus, once checked, the check result itself. The
-          // build number is not repeated here -- the tools tab shows it
-          // on the row that leads in.
-          generateSection(
-            items: [
-              ListItem(
-                title: Text(appLocalizations.versionUpdate),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (updateResultText != null)
-                      Text(
-                        updateResultText,
-                        style: context.listSubtitleStyle,
-                      ),
-                    if (updateResultText != null) const SizedBox(width: 8),
-                    const GlyphIcon(AppGlyphs.chevronForward),
-                  ],
-                ),
-                onTap: _checkUpdate,
-              ),
-            ],
-          ),
-          // No headings over either card: the rows say what they are, and a
-          // label above two of them only said it twice.
+          // No headings over any of the cards: the rows say what they are, and
+          // a label above two of them only said it twice. The update check is
+          // not here either -- it belongs to the row that names the build, on
+          // the tools tab, so this page is only what the build is and what it
+          // stands on.
           generateSection(
             items: [
               _buildLinkItem(
