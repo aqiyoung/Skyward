@@ -76,6 +76,7 @@
   "versionUpdateChecking": "检查中…",
   "versionUpdateLatest": "已是最新",
   "versionUpdateFound": "发现新版本",
+  "versionUpdateDownloading": "下载中…",
   "versionUpdateFailed": "检查失败",
   "add": "添加",
   "save": "保存",

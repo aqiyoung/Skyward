@@ -54,7 +54,12 @@ class _AboutViewState extends ConsumerState<AboutView> {
   // under the title, no dialog, no banner — the only place its result
   // appears is the version-update row itself, as its trailing text.
   Future<void> _checkUpdate() async {
-    if (_isCheckingUpdate) return;
+    // One check at a time, and none over the top of a download already
+    // running: the row would go back to naming a release it is fetching.
+    if (_isCheckingUpdate ||
+        ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
+      return;
+    }
     setState(() {
       _isCheckingUpdate = true;
       _updateResult = _UpdateResult.checking;
@@ -158,7 +163,13 @@ class _AboutViewState extends ConsumerState<AboutView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final updateResultText = _updateResultText();
+    // A package on its way is not a find to announce: once the row has handed
+    // the release to the download, it says what is happening instead of
+    // naming the version again for the minutes the download takes.
+    final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
+    final updateResultText = downloading
+        ? appLocalizations.versionUpdateDownloading
+        : _updateResultText();
     return CommonScaffold(
       title: appLocalizations.about,
       body: ListView(

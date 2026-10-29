@@ -76,6 +76,7 @@
   "versionUpdateChecking": "確認中…",
   "versionUpdateLatest": "最新です",
   "versionUpdateFound": "新しいバージョンがあります",
+  "versionUpdateDownloading": "ダウンロード中…",
   "versionUpdateFailed": "確認に失敗しました",
   "add": "追加",
   "save": "保存",

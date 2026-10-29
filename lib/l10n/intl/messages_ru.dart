@@ -2020,6 +2020,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Проверка…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Актуально"),
     "versionUpdateFound": MessageLookupByLibrary.simpleMessage("Доступна новая версия"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("Загрузка…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("Не удалось проверить"),
     "view": MessageLookupByLibrary.simpleMessage("Просмотр"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Виртуальный IPv4"),

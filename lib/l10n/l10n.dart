@@ -630,6 +630,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Downloading…`
+  String get versionUpdateDownloading {
+    return Intl.message(
+      'Downloading…',
+      name: 'versionUpdateDownloading',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Check failed`
   String get versionUpdateFailed {
     return Intl.message(

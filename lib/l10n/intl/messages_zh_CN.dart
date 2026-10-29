@@ -1506,6 +1506,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("检查中…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("已是最新"),
     "versionUpdateFound": MessageLookupByLibrary.simpleMessage("发现新版本"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("下载中…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("检查失败"),
     "view": MessageLookupByLibrary.simpleMessage("查看"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),

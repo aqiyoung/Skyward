@@ -76,6 +76,7 @@
   "versionUpdateChecking": "확인 중…",
   "versionUpdateLatest": "최신 버전",
   "versionUpdateFound": "새 버전 있음",
+  "versionUpdateDownloading": "다운로드 중…",
   "versionUpdateFailed": "확인 실패",
   "add": "추가",
   "save": "저장",

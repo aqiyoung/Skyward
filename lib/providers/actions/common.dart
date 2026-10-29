@@ -200,6 +200,10 @@ class CommonAction extends _$CommonAction {
       // stays fully usable, and only the installer opens at the end.
       // The manager's own notification is the progress view, and it
       // remains the fallback if the app is gone when the download ends.
+      //
+      // The tag is what the About row reads instead of offering the
+      // release again: a package on its way is not a new find.
+      ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
       await _waitForAndroidDownload(downloader, downloadId, asset.name);
     } catch (error) {
       commonPrint.log(
@@ -209,8 +213,16 @@ class CommonAction extends _$CommonAction {
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
       _ongoingUpdateDownloadId = null;
+      unawaited(
+        ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
+      );
     }
   }
+
+  /// Whether an update package is on its way right now. The row that started
+  /// it can be rebuilt by navigation while the download runs, and a second tap
+  /// there must not set off another check over the top of it.
+  bool get isDownloadingUpdate => _ongoingUpdateDownloadId != null;
 
   /// Polls the system download manager every half second in the
   /// background, with no dialog and no banner while it runs, so the user

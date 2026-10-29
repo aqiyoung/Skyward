@@ -76,6 +76,7 @@
   "versionUpdateChecking": "Vérification…",
   "versionUpdateLatest": "À jour",
   "versionUpdateFound": "Nouvelle version disponible",
+  "versionUpdateDownloading": "Téléchargement…",
   "versionUpdateFailed": "Échec de la vérification",
   "add": "Ajouter",
   "save": "Enregistrer",

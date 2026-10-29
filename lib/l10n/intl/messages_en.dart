@@ -1924,6 +1924,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Checking…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Up to date"),
     "versionUpdateFound": MessageLookupByLibrary.simpleMessage("New version available"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("Downloading…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("Check failed"),
     "view": MessageLookupByLibrary.simpleMessage("View"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Virtual IPv4"),

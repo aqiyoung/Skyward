@@ -344,6 +344,36 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  // The package the row hands over takes minutes to arrive. For all of them
+  // the row says what is happening, rather than naming the version again as
+  // if it had only just been found.
+  testWidgets('the version row says the download, not the find', (
+    tester,
+  ) async {
+    final container = _containerFor(tester);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: AboutView()),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Downloading…'), findsNothing);
+
+    final loading = container.read(
+      loadingProvider(LoadingTag.updateDownload).notifier,
+    );
+    loading.start();
+    await tester.pump();
+    expect(find.text('Downloading…'), findsOneWidget);
+    expect(find.text('New version available'), findsNothing);
+
+    await loading.stop();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Downloading…'), findsNothing);
+  });
+
   testWidgets('scripts view lists scripts and offers the add menu', (
     tester,
   ) async {

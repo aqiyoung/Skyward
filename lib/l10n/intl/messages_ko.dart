@@ -1632,6 +1632,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("확인 중…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("최신 버전"),
     "versionUpdateFound": MessageLookupByLibrary.simpleMessage("새 버전 있음"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("다운로드 중…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("확인 실패"),
     "view": MessageLookupByLibrary.simpleMessage("보기"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),

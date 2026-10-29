@@ -1655,6 +1655,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("確認中…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("最新です"),
     "versionUpdateFound": MessageLookupByLibrary.simpleMessage("新しいバージョンがあります"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("ダウンロード中…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("確認に失敗しました"),
     "view": MessageLookupByLibrary.simpleMessage("表示"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("仮想 IPv4"),

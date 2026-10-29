@@ -76,6 +76,7 @@
   "versionUpdateChecking": "Проверка…",
   "versionUpdateLatest": "Актуально",
   "versionUpdateFound": "Доступна новая версия",
+  "versionUpdateDownloading": "Загрузка…",
   "versionUpdateFailed": "Не удалось проверить",
   "add": "Добавить",
   "save": "Сохранить",
