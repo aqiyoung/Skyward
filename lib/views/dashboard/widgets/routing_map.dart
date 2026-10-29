@@ -168,6 +168,11 @@ const _coastline = [
 const worldMapTopLatitude = 80.0;
 const worldMapBottomLatitude = -56.0;
 
+/// The longitude the sheet's left edge sits on when the chain asks for nothing
+/// else. Both edges share it: the sheet is one strip of the world, cut where
+/// the strip closes.
+const _leftEdgeLongitude = -180.0;
+
 /// Every ring in one path, read once and reused at every size.
 final Path _coastPath = _readCoastline();
 
@@ -261,8 +266,9 @@ class _RouteMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _paintLand(canvas, size);
-    final points = [for (final stop in stops) _project(stop, size)];
+    final left = _leftEdgeOf(stops);
+    _paintLand(canvas, size, left);
+    final points = [for (final stop in stops) _project(stop, size, left)];
     if (points.length > 1) {
       final paint = Paint()
         ..color = line
@@ -274,11 +280,11 @@ class _RouteMapPainter extends CustomPainter {
       for (var i = 0; i < points.length - 1; i++) {
         final from = points[i];
         var to = points[i + 1];
-        // A leg wider than half the sheet is a hop over the seam, not half a
-        // world apart: left where it is, the arc would cross every continent
-        // between the two. Bringing the far end round to the near side puts the
-        // leg where it belongs, and the copies below decide which side of the
-        // seam it shows on.
+        // A chain is only turned when it steps over the seam, so a leg wider
+        // than half the sheet means one wider than a world even after that --
+        // two ends of it, or a hop that really is half a world. The far end
+        // comes round to the near side, and the copies below decide which side
+        // of the cut the leg shows on.
         final dx = to.dx - from.dx;
         if (dx.abs() > size.width / 2) {
           to = Offset(to.dx - dx.sign * size.width, to.dy);
@@ -292,16 +298,19 @@ class _RouteMapPainter extends CustomPainter {
     _paintStops(canvas, points);
   }
 
-  void _paintLand(Canvas canvas, Size size) {
+  void _paintLand(Canvas canvas, Size size, double left) {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     // The sheet is drawn three times, a world apart, so a ring that reaches
     // past the right edge comes back in on the left.
     canvas.scale(size.width, size.height);
+    // The outline is held with the antimeridian at its edges, so turning the
+    // sheet moves its edges under it.
+    final turn = (left + 180) / 360;
     final paint = Paint()..color = land;
-    for (final shift in const [-1.0, 0.0, 1.0]) {
+    for (final copy in const [-1.0, 0.0, 1.0]) {
       canvas.save();
-      canvas.translate(shift, 0);
+      canvas.translate(copy - turn, 0);
       canvas.drawPath(_coastPath, paint);
       canvas.restore();
     }
@@ -353,8 +362,55 @@ class _RouteMapPainter extends CustomPainter {
     }
   }
 
-  Offset _project(RouteStop stop, Size size) {
-    final x = (stop.longitude + 180) / 360;
+  /// The longitude the sheet's left edge sits on for this chain.
+  ///
+  /// A chain whose hops reach past both sides of the cut cannot be drawn in
+  /// one stroke: each hop would leave one edge and come back on the other,
+  /// which reads as a break rather than as the short way round. Such a chain
+  /// gets a sheet of its own -- its hops are laid end to end, each taken the
+  /// short way round, and the cut is put under the middle of that run -- so
+  /// every hop stays inside the frame. A chain that fits where the cut already
+  /// is keeps the map as it is, so the world does not move about between
+  /// routes.
+  static double _leftEdgeOf(List<RouteStop> stops) {
+    if (stops.length < 2) {
+      return _leftEdgeLongitude;
+    }
+    var run = stops.first.longitude;
+    var previous = run;
+    var low = run;
+    var high = run;
+    for (final stop in stops.skip(1)) {
+      // A hop the short way round: a route that doubles back then stays as
+      // wide as its hops and no wider.
+      run += _near(stop.longitude - previous);
+      previous = stop.longitude;
+      low = math.min(low, run);
+      high = math.max(high, run);
+    }
+    if (high - low > 340) {
+      // Too wide for one sheet however it is turned, so the cut stays where it
+      // was rather than trading the usual map for one that cannot hold it.
+      return _leftEdgeLongitude;
+    }
+    for (var world = -3; world <= 3; world++) {
+      final cut = _leftEdgeLongitude + world * 360.0;
+      if (cut > low && cut < high) {
+        return (low + high) / 2 - 180.0;
+      }
+    }
+    return _leftEdgeLongitude;
+  }
+
+  /// [degrees] folded into (-180, 180], the way a difference in longitude
+  /// reads: the way round that is shorter.
+  static double _near(double degrees) {
+    final folded = degrees % 360;
+    return folded > 180 ? folded - 360 : folded;
+  }
+
+  Offset _project(RouteStop stop, Size size, double left) {
+    final x = ((stop.longitude - left) % 360) / 360;
     final y = (worldMapTopLatitude - stop.latitude) /
         (worldMapTopLatitude - worldMapBottomLatitude);
     return Offset(
