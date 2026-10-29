@@ -4,6 +4,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/action.dart';
 import 'package:skyward/providers/app.dart';
+import 'package:skyward/providers/config.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/config_item.dart';
