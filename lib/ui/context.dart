@@ -44,6 +44,13 @@ extension BuildContextExtension on BuildContext {
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset);
 
+  /// The label that opens such a page, for the pages that start on one. What
+  /// the body gave up above it goes here instead, so the label still stands
+  /// clear of the bar rather than of nothing.
+  EdgeInsets get sectionHeaderPadding => isInCompactSheet
+      ? listHeaderPaddingOf(this)
+      : listHeaderPaddingOf(this).copyWith(top: 12.mAp(this));
+
   /// What the end of a body scrolls clear of: the system bar the body runs
   /// under and what floats over its foot. A docked search only counts below
   /// the scaffold that docks it.

@@ -453,12 +453,13 @@ class GeneralView extends ConsumerWidget {
       title: appLocalizations.general,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.sectionTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
           generateSection(
             title: appLocalizations.startupAndBackground,
+            headerPadding: context.sectionHeaderPadding,
             items: _startupItems(appLocalizations),
             footer: [
               if (system.isDesktop) appLocalizations.silentLaunchDesc,

@@ -154,12 +154,13 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore>
       title: appLocalizations.backupAndRestore,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.sectionTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
           generateSection(
             title: appLocalizations.remote,
+            headerPadding: context.sectionHeaderPadding,
             items: [
               if (dav == null)
                 ListItem(
