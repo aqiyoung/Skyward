@@ -6,6 +6,52 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// The terms in the order they are shown. They live here rather than in either
+/// screen because the about page carries them as well, and one list is what
+/// keeps the two from drifting apart.
+List<({String title, String content})> _termList(AppLocalizations l) => [
+  (
+    title: l.disclaimerSoftwareTitle,
+    content:
+        '${l.disclaimerSoftwareContent}\n\n${l.disclaimerNoServiceStatement}',
+  ),
+  (title: l.disclaimerUsageTitle, content: l.disclaimerUsageContent),
+  (
+    title: l.disclaimerResponsibilityTitle,
+    content: l.disclaimerResponsibilityContent,
+  ),
+  (title: l.disclaimerThirdPartyTitle, content: l.disclaimerThirdPartyContent),
+  (title: l.disclaimerWarrantyTitle, content: l.disclaimerWarrantyContent),
+  (title: l.disclaimerLiabilityTitle, content: l.disclaimerLiabilityContent),
+  (title: l.disclaimerPrivacyTitle, content: l.disclaimerPrivacyContent),
+  (title: l.disclaimerLicenseTitle, content: l.disclaimerLicenseContent),
+  (title: l.disclaimerChangesTitle, content: l.disclaimerChangesContent),
+  (title: l.disclaimerAcceptTitle, content: l.disclaimerAcceptContent),
+];
+
+/// The whole statement, ready to drop into a page that has other things to say
+/// as well.
+class DisclaimerTerms extends StatelessWidget {
+  const DisclaimerTerms({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DisclaimerIntro(text: appLocalizations.disclaimerDesc),
+        for (final (index, term) in _termList(appLocalizations).indexed)
+          _DisclaimerTerm(
+            index: index + 1,
+            title: term.title,
+            content: term.content,
+          ),
+      ],
+    );
+  }
+}
+
 /// True only after "Agree" and the restatement; any other way out declines.
 Future<bool> requestDisclaimerConsent() async {
   return await BaseNavigator.push<bool>(
@@ -21,29 +67,6 @@ class DisclaimerView extends StatelessWidget {
   const DisclaimerView({super.key, this.requireConsent = false});
 
   static const _maxContentWidth = 720.0;
-
-  List<({String title, String content})> _terms(AppLocalizations l) => [
-    (
-      title: l.disclaimerSoftwareTitle,
-      content:
-          '${l.disclaimerSoftwareContent}\n\n${l.disclaimerNoServiceStatement}',
-    ),
-    (title: l.disclaimerUsageTitle, content: l.disclaimerUsageContent),
-    (
-      title: l.disclaimerResponsibilityTitle,
-      content: l.disclaimerResponsibilityContent,
-    ),
-    (
-      title: l.disclaimerThirdPartyTitle,
-      content: l.disclaimerThirdPartyContent,
-    ),
-    (title: l.disclaimerWarrantyTitle, content: l.disclaimerWarrantyContent),
-    (title: l.disclaimerLiabilityTitle, content: l.disclaimerLiabilityContent),
-    (title: l.disclaimerPrivacyTitle, content: l.disclaimerPrivacyContent),
-    (title: l.disclaimerLicenseTitle, content: l.disclaimerLicenseContent),
-    (title: l.disclaimerChangesTitle, content: l.disclaimerChangesContent),
-    (title: l.disclaimerAcceptTitle, content: l.disclaimerAcceptContent),
-  ];
 
   static const _mobileGutter = 16.0;
   static const _desktopGutter = 24.0;
@@ -72,14 +95,13 @@ class DisclaimerView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final terms = _buildTerms(appLocalizations);
     final body = _buildBody(
       padding: const EdgeInsets.symmetric(horizontal: _mobileGutter).copyWith(
         top: context.contentTopPadding,
         // Below the terms the consent bar takes the system bar itself.
         bottom: 32 + (requireConsent ? 0 : context.bottomInset),
       ),
-      children: terms,
+      children: const [DisclaimerTerms()],
     );
     if (!requireConsent) {
       return CommonScaffold(title: appLocalizations.disclaimer, body: body);
@@ -118,7 +140,7 @@ class DisclaimerView extends StatelessWidget {
                       style: AppTextStyle.title2.of(context, emphasized: true),
                     ),
                   ),
-                  ...terms,
+                  const DisclaimerTerms(),
                 ],
               ),
             ),
@@ -126,18 +148,6 @@ class DisclaimerView extends StatelessWidget {
         );
       },
     );
-  }
-
-  List<Widget> _buildTerms(AppLocalizations appLocalizations) {
-    return [
-      _DisclaimerIntro(text: appLocalizations.disclaimerDesc),
-      for (final (index, term) in _terms(appLocalizations).indexed)
-        _DisclaimerTerm(
-          index: index + 1,
-          title: term.title,
-          content: term.content,
-        ),
-    ];
   }
 }
 

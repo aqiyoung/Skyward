@@ -72,6 +72,7 @@
   "confirm": "Confirmar",
   "update": "Actualizar",
   "version": "Versión",
+  "currentVersion": "Versión actual",
   "versionUpdate": "Actualización de versión",
   "versionUpdateChecking": "Comprobando…",
   "versionUpdateLatest": "Actualizado",

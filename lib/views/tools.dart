@@ -3,6 +3,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/about.dart';
 import 'package:skyward/views/access.dart';
@@ -19,7 +20,6 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
-import 'disclaimer.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -39,21 +39,38 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  Widget _getOtherList(bool enableDeveloperMode) {
-    return generateSection(
-      title: context.appLocalizations.other,
-      items: [
-        const _DisclaimerItem(),
-        if (enableDeveloperMode) const _DeveloperItem(),
-        const _InfoItem(),
+  /// What the tab ends on: one way into the about page, the build it is, and
+  /// the two lines the licence asks a reader to be able to find.
+  Widget _getAboutList() {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        generateSection(
+          items: [
+            ListItem.open(
+              title: Text('${appLocalizations.about} $appName'),
+              widget: const AboutView(),
+            ),
+            ListItem(
+              title: Text(appLocalizations.currentVersion),
+              trailing: globalState.hasPackageInfo
+                  ? Text(
+                      globalState.packageInfo.displayVersion,
+                      style: context.listSubtitleStyle,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+        const _CopyrightNotice(),
       ],
     );
   }
 
-  Widget _getSettingList() {
+  Widget _getSettingList(bool enableDeveloperMode) {
     final appLocalizations = context.appLocalizations;
     return generateSection(
-      title: appLocalizations.settings,
       items: [
         const _SettingsSearchItem(),
         const _LocaleItem(),
@@ -66,6 +83,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
         const _GeneralItem(),
+        if (enableDeveloperMode) const _DeveloperItem(),
       ],
       footer: [
         if (system.isAndroid) appLocalizations.accessControlDesc,
@@ -88,14 +106,12 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             return Container();
           }
           return generateSection(
-            title: context.appLocalizations.more,
-            headerPadding: context.sectionHeaderPadding,
             items: state.navigationItems.map(_buildNavigationMenuItem),
           );
         },
       ),
-      _getSettingList(),
-      _getOtherList(developerMode),
+      _getSettingList(developerMode),
+      _getAboutList(),
     ];
     return CommonScaffold(
       title: context.appLocalizations.tools,
@@ -107,7 +123,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            top: context.sectionTopPadding,
+            top: context.contentTopPadding,
             bottom: 20 + context.bottomInset,
           ),
         ),
@@ -275,28 +291,26 @@ class _CustomResourcesItem extends StatelessWidget {
   }
 }
 
-class _DisclaimerItem extends StatelessWidget {
-  const _DisclaimerItem();
+/// The two lines a build owes the reader: who ships it, and the licence it
+/// travels under. Set apart from the card above by air, the way the system
+/// settings pages end.
+class _CopyrightNotice extends StatelessWidget {
+  const _CopyrightNotice();
 
   @override
   Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.gavel),
-      title: Text(context.appLocalizations.disclaimer),
-      widget: const DisclaimerView(),
-    );
-  }
-}
-
-class _InfoItem extends StatelessWidget {
-  const _InfoItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.info),
-      title: Text(context.appLocalizations.about),
-      widget: const AboutView(),
+    final style = AppTextStyle.caption1
+        .of(context)
+        .copyWith(color: context.colorScheme.onSurfaceVariant);
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        children: [
+          Text('Copyright © ${DateTime.now().year} threely', style: style),
+          const SizedBox(height: 2),
+          Text('GPL-3.0', style: style),
+        ],
+      ),
     );
   }
 }

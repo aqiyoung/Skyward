@@ -16,7 +16,18 @@ class GlobalState {
   static GlobalState? _instance;
   GlobalKey<NavigatorState> get navigatorKey => rootNavigatorKey;
   late String appEnv;
-  late PackageInfo packageInfo;
+  PackageInfo? _packageInfo;
+
+  /// What the platform says this build is. The bootstrap fills it in before the
+  /// first frame, so a screen that only shows the number can read it straight
+  /// off; [hasPackageInfo] is there for the hosts that never ran the bootstrap
+  /// -- a test pumping one view on its own -- so such a row can leave the
+  /// number out instead of being the thing that throws.
+  PackageInfo get packageInfo => _packageInfo!;
+
+  set packageInfo(PackageInfo info) => _packageInfo = info;
+
+  bool get hasPackageInfo => _packageInfo != null;
   late Measure measure;
   late ProviderContainer container;
   bool needInitStatus = true;

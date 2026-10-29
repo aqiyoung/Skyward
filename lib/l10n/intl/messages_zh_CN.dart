@@ -1502,6 +1502,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("用户名"),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "version": MessageLookupByLibrary.simpleMessage("版本"),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("当前版本"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("版本更新"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("检查中…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("已是最新"),

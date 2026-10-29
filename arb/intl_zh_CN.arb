@@ -72,6 +72,7 @@
   "confirm": "确定",
   "update": "更新",
   "version": "版本",
+  "currentVersion": "当前版本",
   "versionUpdate": "版本更新",
   "versionUpdateChecking": "检查中…",
   "versionUpdateLatest": "已是最新",

@@ -2016,6 +2016,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("Имя пользователя"),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
     "version": MessageLookupByLibrary.simpleMessage("Версия"),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("Текущая версия"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("Обновление версии"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Проверка…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Актуально"),

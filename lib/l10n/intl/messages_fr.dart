@@ -2074,6 +2074,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("Nom d’utilisateur"),
     "value": MessageLookupByLibrary.simpleMessage("Valeur"),
     "version": MessageLookupByLibrary.simpleMessage("Version"),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("Version actuelle"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("Mise à jour de version"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Vérification…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("À jour"),

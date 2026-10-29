@@ -269,6 +269,11 @@ void main() {
         await tester.drag(scrollables.first, const Offset(0, -400));
         await tester.pump();
       }
+      // The page ends on the terms, which is longer than those four drags, and
+      // the rows this test measures are halfway up it: a view scrolled out of
+      // the cache is not built, so come back to the top before measuring.
+      await tester.drag(scrollables.first, const Offset(0, 4000));
+      await tester.pump();
     }
     expect(tester.takeException(), null);
 

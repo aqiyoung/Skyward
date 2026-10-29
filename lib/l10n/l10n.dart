@@ -590,6 +590,16 @@ class AppLocalizations {
     return Intl.message('Version', name: 'version', desc: '', args: []);
   }
 
+  /// `Current version`
+  String get currentVersion {
+    return Intl.message(
+      'Current version',
+      name: 'currentVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Version update`
   String get versionUpdate {
     return Intl.message(

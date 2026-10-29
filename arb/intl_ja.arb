@@ -72,6 +72,7 @@
   "confirm": "OK",
   "update": "更新",
   "version": "バージョン",
+  "currentVersion": "現在のバージョン",
   "versionUpdate": "バージョンアップデート",
   "versionUpdateChecking": "確認中…",
   "versionUpdateLatest": "最新です",

@@ -1628,6 +1628,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("사용자 이름"),
     "value": MessageLookupByLibrary.simpleMessage("값"),
     "version": MessageLookupByLibrary.simpleMessage("버전"),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("현재 버전"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("버전 업데이트"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("확인 중…"),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("최신 버전"),

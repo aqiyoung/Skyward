@@ -72,6 +72,7 @@
   "confirm": "Confirmer",
   "update": "Mettre à jour",
   "version": "Version",
+  "currentVersion": "Version actuelle",
   "versionUpdate": "Mise à jour de version",
   "versionUpdateChecking": "Vérification…",
   "versionUpdateLatest": "À jour",

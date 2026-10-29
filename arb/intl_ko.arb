@@ -72,6 +72,7 @@
   "confirm": "확인",
   "update": "업데이트",
   "version": "버전",
+  "currentVersion": "현재 버전",
   "versionUpdate": "버전 업데이트",
   "versionUpdateChecking": "확인 중…",
   "versionUpdateLatest": "최신 버전",

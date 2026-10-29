@@ -9,6 +9,8 @@ import 'package:skyward/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'disclaimer.dart';
+
 @immutable
 class Contributor {
   final String avatar;
@@ -171,7 +173,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
         ? appLocalizations.versionUpdateDownloading
         : _updateResultText();
     return CommonScaffold(
-      title: appLocalizations.about,
+      title: '${appLocalizations.about} $appName',
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
@@ -258,6 +260,14 @@ class _AboutViewState extends ConsumerState<AboutView> {
               ),
               _buildContributors(appLocalizations.appIconDesign),
             ],
+          ),
+          // The statement the first launch asks to be accepted, in full. It is
+          // no longer a page of its own; it ends this one, where a reader who
+          // went looking for it will be.
+          ListHeader(title: appLocalizations.disclaimer),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: DisclaimerTerms(),
           ),
         ],
       ),
