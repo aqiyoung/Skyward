@@ -41,24 +41,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  /// What the tab ends on: one way into the about page, the build it is — the
-  /// row that also asks whether a newer one exists — and the two lines the
-  /// licence asks a reader to be able to find.
+  /// What the tab ends on: one way into the about page, and the build it is —
+  /// the row that also asks whether a newer one exists.
   Widget _getAboutList() {
     final appLocalizations = context.appLocalizations;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        generateSection(
-          items: [
-            ListItem.open(
-              title: Text('${appLocalizations.about} $appName'),
-              widget: const AboutView(),
-            ),
-            const _VersionItem(),
-          ],
+    return generateSection(
+      items: [
+        ListItem.open(
+          title: Text('${appLocalizations.about} $appName'),
+          widget: const AboutView(),
         ),
-        const _CopyrightNotice(),
+        const _VersionItem(),
       ],
     );
   }
@@ -399,30 +392,6 @@ class _CustomResourcesItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.customize),
       title: Text(context.appLocalizations.customProfileResources),
       widget: const CustomResourcesView(),
-    );
-  }
-}
-
-/// The two lines a build owes the reader: who ships it, and the licence it
-/// travels under. Set apart from the card above by air, the way the system
-/// settings pages end.
-class _CopyrightNotice extends StatelessWidget {
-  const _CopyrightNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    final style = AppTextStyle.caption1
-        .of(context)
-        .copyWith(color: context.colorScheme.onSurfaceVariant);
-    return Padding(
-      padding: const EdgeInsets.only(top: 20),
-      child: Column(
-        children: [
-          Text('Copyright © ${DateTime.now().year} threely', style: style),
-          const SizedBox(height: 2),
-          Text('GPL-3.0', style: style),
-        ],
-      ),
     );
   }
 }
