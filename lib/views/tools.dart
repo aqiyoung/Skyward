@@ -88,8 +88,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           if (state.navigationItems.isEmpty) {
             return Container();
           }
-          // The page's own gap already clears the bar, so a section's full
-          // lead-in would leave the label sitting well below the title.
+          // The page opens on a label, not a card: the label's own box already
+          // trails the bar, and the body keeps its usual lead-in out of the
+          // way, so the two do not stack up between the title and the list.
           final headerPadding = listHeaderPaddingOf(
             context,
           ).copyWith(top: 12);
@@ -113,7 +114,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            top: context.contentTopPadding,
+            top: context.sectionTopPadding,
             bottom: 20 + context.bottomInset,
           ),
         ),
