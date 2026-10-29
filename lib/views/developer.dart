@@ -94,11 +94,12 @@ class DeveloperView extends ConsumerWidget {
       title: appLocalizations.developerMode,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
           generateSection(
+            leadingGap: false,
             items: [
               ListItem.toggle(
                 title: Text(appLocalizations.developerMode),

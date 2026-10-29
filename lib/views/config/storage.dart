@@ -134,9 +134,10 @@ class _StorageViewState extends State<StorageView> {
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 16),
+        ).copyWith(top: context.cardTopPadding, bottom: 16),
         children: [
           generateSection(
+            leadingGap: false,
             items: [
               for (final area in areas ?? const <_StorageArea>[])
                 ListItem(

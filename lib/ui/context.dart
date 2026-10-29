@@ -45,6 +45,14 @@ extension BuildContextExtension on BuildContext {
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset);
 
+  /// Where the first card of a page sits: the bar's inset plus the air a
+  /// group leaves above itself. The list sets that air over every group, so
+  /// the one that opens a page asks it off and the body puts the same figure
+  /// down here -- one gap between the bar and the card, not two stacked.
+  double get cardTopPadding =>
+      TopInsetScope.of(this) ??
+      (isInCompactSheet ? sheetAppBarHeight : appBarInset + 16);
+
   /// The label that opens such a page, for the pages that start on one. What
   /// the body gave up above it goes here instead, so the label still stands
   /// clear of the bar rather than of nothing.

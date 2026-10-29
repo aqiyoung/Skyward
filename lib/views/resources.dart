@@ -192,11 +192,12 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
         ),
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-            top: context.contentTopPadding,
+            top: context.cardTopPadding,
             bottom: 16 + context.bottomInset,
           ),
           children: [
             generateSection(
+              leadingGap: false,
               items: [
                 ListItem.toggle(
                   title: Text(appLocalizations.autoUpdate),

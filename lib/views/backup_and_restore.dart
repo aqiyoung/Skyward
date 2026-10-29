@@ -85,9 +85,10 @@ class BackupAndRestore extends ConsumerWidget {
       title: appLocalizations.backupAndRestore,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          // The card opens on a section gap of its own, so the body leaves
-          // the bar's height alone rather than adding a second gap over it.
-          top: context.sectionTopPadding,
+          // The card sits as far from the bar as every card below a group
+          // gap does: the body brings the air down here, and the list is
+          // asked not to add its own above the first one.
+          top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
@@ -96,6 +97,7 @@ class BackupAndRestore extends ConsumerWidget {
           // under a label, which made a one-row setting look like a second
           // page; it belongs to the buttons it decides for.
           generateSection(
+            leadingGap: false,
             items: [
               ListItem(
                 onTap: () {

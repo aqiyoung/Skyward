@@ -612,17 +612,22 @@ Widget generateSection({
   List<IconButtonData> actions = const [],
   String? footer,
   EdgeInsets? headerPadding,
+  // Off for the section that opens a page: the body has already left the
+  // group gap above it, and a second one would set the first card twice as
+  // far from the bar as every group below it.
+  bool leadingGap = true,
 }) {
   return Column(
     children: [
       if (items.isNotEmpty)
-        title != null
-            ? ListHeader(
-                title: title,
-                actions: actions,
-                padding: headerPadding,
-              )
-            : const ListSectionGap(),
+        if (title != null)
+          ListHeader(
+            title: title,
+            actions: actions,
+            padding: headerPadding,
+          )
+        else if (leadingGap)
+          const ListSectionGap(),
       generateGroup(items),
       if (items.isNotEmpty && footer != null) ListFooter(text: footer),
     ],

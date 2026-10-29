@@ -92,9 +92,10 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
-        ).copyWith(top: context.contentTopPadding, bottom: 16),
+        ).copyWith(top: context.cardTopPadding, bottom: 16),
         children: [
           generateSection(
+            leadingGap: false,
             items: [
               ListItem(
                 title: const Text(appName),
