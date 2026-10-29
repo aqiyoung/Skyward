@@ -90,8 +90,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     }
     if (notification is UserScrollNotification) {
       _scrollDirection = notification.direction;
-      _scrollSign = 0;
-      _scrollTravel = 0;
+      _resetTravel();
       return false;
     }
     if (notification is! ScrollUpdateNotification ||
@@ -99,9 +98,16 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
         _scrollDirection == ScrollDirection.idle) {
       return false;
     }
-    final delta = notification.scrollDelta ?? 0;
+    _travel(notification.scrollDelta ?? 0);
+    return false;
+  }
+
+  /// The bar answers distance travelled, whichever way the finger came by it:
+  /// a list scrolling, or a page that had nothing of its own to give. Positive
+  /// is the page moving on under the finger, the same way a list reports it.
+  void _travel(double delta) {
     if (delta == 0) {
-      return false;
+      return;
     }
     if (delta.sign != _scrollSign) {
       _scrollSign = delta.sign;
@@ -127,7 +133,11 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
       // A pull the other way is the only thing that brings the bar back.
       _setPhase(_DockPhase.expanded);
     }
-    return false;
+  }
+
+  void _resetTravel() {
+    _scrollSign = 0;
+    _scrollTravel = 0;
   }
 
   void _setPhase(_DockPhase phase) {
@@ -151,8 +161,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     ref.listen(currentPageLabelProvider, (previous, next) {
       if (previous == next) return;
       _dockPhase.value = _DockPhase.expanded;
-      _scrollSign = 0;
-      _scrollTravel = 0;
+      _resetTravel();
     });
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
@@ -187,7 +196,14 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                         isMobile: isMobile,
                         child: NotificationListener<ScrollNotification>(
                           onNotification: dockFollows ? _handleScroll : null,
-                          child: widget.child,
+                          child: _VerticalSwipeRelay(
+                            // Only a phone drags the pages, so only there can
+                            // a page view take a swipe up instead of the bar.
+                            enabled: isMobile,
+                            onStart: _resetTravel,
+                            onSwipe: dockFollows ? _travel : null,
+                            child: widget.child,
+                          ),
                         ),
                       ),
                     ),
@@ -271,6 +287,47 @@ class _BodyPadding extends StatelessWidget {
       removeLeft: isMobile,
       removeRight: isMobile,
       context: context,
+      child: child,
+    );
+  }
+}
+
+/// A page whose content fits the screen leaves the page view the only thing
+/// under the finger that wants the drag, and a swipe up drifts sideways as it
+/// goes: the page view reaches its own slop first and the pages slide instead
+/// of the bar getting out of the way. This asks for vertical drags on the way
+/// down, ahead of the page view, so the bar answers them. A page that does
+/// scroll keeps its recogniser under this one, which takes the drag first.
+class _VerticalSwipeRelay extends StatelessWidget {
+  const _VerticalSwipeRelay({
+    required this.enabled,
+    required this.onStart,
+    required this.onSwipe,
+    required this.child,
+  });
+
+  final bool enabled;
+  final VoidCallback onStart;
+
+  /// Travel in the page's terms, positive for the page moving on under the
+  /// finger — what a list would have reported. Null leaves the bar out of it,
+  /// while the swipe is still kept off the pages.
+  final ValueChanged<double>? onSwipe;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) {
+      return child;
+    }
+    final relay = onSwipe;
+    return GestureDetector(
+      // The bar is not a scrolling surface: a screen reader should hear the
+      // page's own scrollable, not this.
+      excludeFromSemantics: true,
+      onVerticalDragStart: (_) => onStart(),
+      onVerticalDragUpdate: (details) => relay?.call(-details.delta.dy),
       child: child,
     );
   }

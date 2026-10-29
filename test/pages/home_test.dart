@@ -1519,6 +1519,65 @@ void main() {
     expect(container.read(currentPageLabelProvider), PageLabel.profiles);
     expect(find.text('page:profiles').hitTestable(), findsOneWidget);
   });
+
+  testWidgets('a page with nothing to scroll does not slide on a swipe up', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => const Center(child: Text('page:dashboard')),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) => const Center(child: Text('page:profiles')),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(FloatingNavigationBar), findsOneWidget);
+
+    // A finger drifts sideways on its way up; the page view used to reach its
+    // own slop first and carry the page across instead.
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('page:dashboard')),
+    );
+    for (var step = 0; step < 8; step++) {
+      await gesture.moveBy(const Offset(-3, -22));
+      await tester.pump();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
+    expect(find.text('page:profiles').hitTestable(), findsNothing);
+    // And the swipe went to the bar, the way it does on a page that scrolls.
+    expect(find.byType(FloatingNavigationBar), findsNothing);
+  });
 }
 
 class _ThemeManagedTestApp extends StatelessWidget {
