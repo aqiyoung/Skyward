@@ -361,6 +361,9 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   List<int>? _order;
   int _slide = 0;
 
+  /// A finger is carrying the page view across right now.
+  bool _dragging = false;
+
   @override
   void initState() {
     super.initState();
@@ -406,6 +409,13 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     if (index == -1) {
       return;
     }
+    // A drag already has the page under the finger: animating to where it
+    // landed would take the drag out of its hand.
+    if (_dragging &&
+        _pageController.hasClients &&
+        _pageController.page?.round() == index) {
+      return;
+    }
     final tabAnimation = ref.read(appSettingProvider).tabAnimation;
     final isMobile = ref.read(isMobileViewProvider);
     final slide = ++_slide;
@@ -447,10 +457,27 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     _toPage(pageLabel, true);
   }
 
-  /// A drag across settles on a page the selection has not heard about yet:
-  /// the label is what the rest of the app reads, so it takes the page the
-  /// finger chose. Read after the scroll ends, never while it runs — an
-  /// `animateToPage` under a live drag fights the finger.
+  /// The dock reads the label, so the label turns when the page turns: at the
+  /// point the page view itself rounds over to the next page, while the finger
+  /// is still carrying it. Waiting for the settle leaves the highlight behind
+  /// the page it is meant to be pointing at.
+  void _handlePageChanged(int index) {
+    if (!_dragging || _order != null) {
+      return;
+    }
+    if (index < 0 || index >= widget.navigationItems.length) {
+      return;
+    }
+    final label = widget.navigationItems[index].label;
+    if (ref.read(currentPageLabelProvider) == label) {
+      return;
+    }
+    ref.read(currentPageLabelProvider.notifier).toPage(label);
+  }
+
+  /// Where the drag actually came to rest, for the cases the page view does not
+  /// report a round over: a settle that stops short leaves the label alone, and
+  /// this reads the same page it already held.
   void _settleOnDraggedPage() {
     if (!mounted || _order != null || !_pageController.hasClients) {
       return;
@@ -484,11 +511,21 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     );
     // A phone drags from page to page the way it expects to; on a desktop the
     // pages are the sidebar's, and a mouse drag across one is only a slip.
-    final viewMode = ref.watch(navigationStateProvider).viewMode;
-    final dragsPages = viewMode == ViewMode.mobile;
-    return NotificationListener<ScrollEndNotification>(
+    final dragsPages = ref.watch(
+      navigationStateProvider.select(
+        (state) => state.viewMode == ViewMode.mobile,
+      ),
+    );
+    return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification.depth == 0) {
+        if (notification.depth != 0) {
+          return false;
+        }
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null) {
+          _dragging = true;
+        } else if (notification is ScrollEndNotification) {
+          _dragging = false;
           _settleOnDraggedPage();
         }
         return false;
@@ -496,6 +533,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
       child: PageView.builder(
         controller: _pageController,
         physics: dragsPages ? null : const NeverScrollableScrollPhysics(),
+        onPageChanged: _handlePageChanged,
         itemCount: itemCount,
         findChildIndexCallback: (key) {
           if (key is! ValueKey<PageLabel>) {
