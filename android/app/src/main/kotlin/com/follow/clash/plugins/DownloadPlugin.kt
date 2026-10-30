@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import java.security.MessageDigest
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -25,6 +26,11 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     /// the unknown-sources settings) for, so a Dart-side backup call for
     /// the same download does not open a second installer window.
     private var installerOpenedForDownloadId: Long? = null
+
+    /// Expected SHA-256 per download, from the hash the release published
+    /// for its APK asset. Kept in memory only: entries are dropped after
+    /// the download is handled or cancelled.
+    private val expectedSha256 = mutableMapOf<Long, String>()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
@@ -43,11 +49,12 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             "download" -> {
                 val url = call.argument<String>("url")
                 val fileName = call.argument<String>("fileName")
+                val sha256 = call.argument<String>("expectedSha256")
                 if (url.isNullOrBlank() || fileName.isNullOrBlank()) {
                     result.error("bad_arguments", "url and fileName are required", null)
                 } else {
                     try {
-                        result.success(download(url, fileName))
+                        result.success(download(url, fileName, sha256))
                     } catch (error: Exception) {
                         result.error("download_failed", error.message, null)
                     }
@@ -71,6 +78,7 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     result.error("bad_arguments", "downloadId is required", null)
                 } else {
                     unregisterDownloadReceiver()
+                    expectedSha256.remove(downloadId)
                     val manager =
                         context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                     result.success(manager.remove(downloadId) > 0)
@@ -99,7 +107,7 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     /// Hands the file to the system download manager, which keeps it in the
     /// Downloads folder and shows its own progress.
-    private fun download(url: String, fileName: String): Long {
+    private fun download(url: String, fileName: String, sha256: String?): Long {
         val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle(fileName)
@@ -110,6 +118,9 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
         val downloadId = manager.enqueue(request)
+        if (!sha256.isNullOrBlank()) {
+            expectedSha256[downloadId] = sha256
+        }
         registerDownloadReceiver(downloadId)
         return downloadId
     }
@@ -211,8 +222,18 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS),
             )
             if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                expectedSha256.remove(downloadId)
                 return false
             }
+        }
+        // When the release published a SHA-256 for this APK, the file must
+        // match before anything opens an installer for it. A mismatch means
+        // tampering or corruption: delete the file and refuse to install.
+        // Without a published hash (older releases) this step is skipped.
+        val expected = expectedSha256.remove(downloadId)
+        if (expected != null && !verifySha256(manager, downloadId, expected)) {
+            manager.remove(downloadId)
+            return false
         }
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
@@ -241,6 +262,31 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             // The download manager's notification remains the fallback.
             return false
         }
+    }
+
+    /// Computes the SHA-256 of a finished download and compares it with
+    /// the expected hex string. False on any error, so a file that cannot
+    /// be read is never installed.
+    private fun verifySha256(
+        manager: DownloadManager,
+        downloadId: Long,
+        expected: String,
+    ): Boolean {
+        val uri = manager.getUriForDownloadedFile(downloadId) ?: return false
+        val actual = try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                val buffer = ByteArray(8192)
+                var read: Int
+                while (input.read(buffer).also { read = it } != -1) {
+                    digest.update(buffer, 0, read)
+                }
+            } ?: return false
+            digest.digest().joinToString("") { "%02x".format(it) }
+        } catch (_: Exception) {
+            return false
+        }
+        return actual.equals(expected, ignoreCase = true)
     }
 
     companion object {
