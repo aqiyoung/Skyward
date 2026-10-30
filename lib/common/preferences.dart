@@ -127,12 +127,36 @@ class Preferences {
     if (configMap == null) {
       return null;
     }
-    return Config.fromJson(configMap);
+    var config = Config.fromJson(configMap);
+    // The controller secret lives in secure storage, not in the JSON.
+    // A secret still in the JSON (from before the migration) is moved
+    // over once; the next saveConfig strips it.
+    final jsonSecret = config.patchClashConfig.secret;
+    if (jsonSecret.isNotEmpty) {
+      await SecureStore.write(secureKeyControllerSecret, jsonSecret);
+    }
+    final stored = await SecureStore.read(secureKeyControllerSecret);
+    if (stored != null && stored.isNotEmpty) {
+      config = config.copyWith.patchClashConfig(secret: stored);
+    }
+    return config;
   }
 
   Future<bool> saveConfig(Config config) async {
     final preferences = await _store.value;
-    return preferences?.setString(configKey, json.encode(config)) ?? false;
+    // Keep the controller secret out of SharedPreferences: it goes to
+    // secure storage, and the JSON on disk carries an empty secret.
+    // If secure storage is unavailable the secret stays in the JSON
+    // rather than being lost.
+    final secret = config.patchClashConfig.secret;
+    var toSave = config;
+    if (secret.isNotEmpty) {
+      final ok = await SecureStore.write(secureKeyControllerSecret, secret);
+      if (ok) {
+        toSave = config.copyWith.patchClashConfig(secret: '');
+      }
+    }
+    return preferences?.setString(configKey, json.encode(toSave)) ?? false;
   }
 
   Future<SystemDnsRecord?> getSystemDnsRecord() async {
