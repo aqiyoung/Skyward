@@ -421,6 +421,14 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   /// A finger is carrying the page view across right now.
   bool _dragging = false;
 
+  /// A programmatic [jumpToPage] is running right now. The jump dispatches
+  /// its [ScrollEndNotification] synchronously, and the drag-settle in the
+  /// scroll listener must not answer it: settling is only for where a
+  /// user's drag came to rest, and answering inside the build phase (e.g.
+  /// from [didUpdateWidget]) modifies a provider while the widget tree is
+  /// building.
+  bool _programmaticJump = false;
+
   @override
   void initState() {
     super.initState();
@@ -482,10 +490,10 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     final current = _order?[page] ?? page;
     if (_order != null) {
       setState(() => _order = null);
-      _pageController.jumpToPage(current);
+      _jumpToPage(current);
     }
     if (!isMobile || ignoreAnimateTo) {
-      _pageController.jumpToPage(index);
+      _jumpToPage(index);
       return;
     }
     // As TabBarView does, so no page between is built and painted on the way.
@@ -496,7 +504,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
           ..[adjacent] = current
           ..[current] = adjacent;
       });
-      _pageController.jumpToPage(adjacent);
+      _jumpToPage(adjacent);
     }
     final fade = tabAnimation == TabAnimation.fade;
     await _pageController.animateToPage(
@@ -506,6 +514,19 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     );
     if (mounted && slide == _slide && _order != null) {
       setState(() => _order = null);
+    }
+  }
+
+  /// Jumps the page view without answering the jump as a drag: the
+  /// settle in the scroll listener only reconciles where a user's drag came
+  /// to rest, and a programmatic jump always lands exactly where it was
+  /// told to.
+  void _jumpToPage(int page) {
+    _programmaticJump = true;
+    try {
+      _pageController.jumpToPage(page);
+    } finally {
+      _programmaticJump = false;
     }
   }
 
@@ -583,7 +604,12 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
           _dragging = true;
         } else if (notification is ScrollEndNotification) {
           _dragging = false;
-          _settleOnDraggedPage();
+          // A programmatic jump is not a drag coming to rest, and its
+          // notification is dispatched synchronously — settling here would
+          // modify a provider while the widget tree is building.
+          if (!_programmaticJump) {
+            _settleOnDraggedPage();
+          }
         }
         return false;
       },
