@@ -9,6 +9,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
 
@@ -35,6 +36,9 @@ abstract mixin class ServiceListener {
 
   void onServiceStopped() {}
 }
+
+/// SharedPreferences key for the TUN GSO toggle. Defaults to true.
+const _tunGsoKey = 'tun_gso';
 
 class Service {
   static Service? _instance;
@@ -112,11 +116,26 @@ class Service {
 
   Future<bool> start() async {
     _startRequested = true;
+    // Sync the TUN GSO toggle to the native side before the VPN starts,
+    // so VpnOptions.tunOptions carries the user's choice to the core.
+    // Defaults to true (GSO on) if the preference was never set.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final gso = prefs.getBool(_tunGsoKey) ?? true;
+      await methodChannel.invokeMethod('setTunGso', gso);
+    } catch (_) {}
     return await methodChannel.invokeMethod<bool>(
           'start',
           ++_commandRevision,
         ) ??
         false;
+  }
+
+  /// Update the native TUN GSO flag immediately (takes effect on next VPN start).
+  Future<void> setTunGso(bool value) async {
+    try {
+      await methodChannel.invokeMethod('setTunGso', value);
+    } catch (_) {}
   }
 
   Future<bool> stop() async {

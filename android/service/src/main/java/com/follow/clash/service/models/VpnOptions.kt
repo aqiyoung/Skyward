@@ -6,6 +6,11 @@ import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 
+// Set by Dart via the 'setTunGso' method channel call. Defaults to true.
+// Read by VpnOptions.tunOptions when building the JSON for the core.
+@Volatile
+var tunGso: Boolean = true
+
 data class AccessControlProps(
     val enable: Boolean,
     val mode: AccessControlMode,
@@ -43,6 +48,7 @@ val VpnOptions.tunOptions: String
     get() = gson.toJson(
         mapOf(
             "mtu" to tunMtu,
+            "gso" to tunGso,
             "congestion-controller" to congestionController.orEmpty(),
         ),
     )

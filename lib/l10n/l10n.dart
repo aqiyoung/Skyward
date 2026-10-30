@@ -445,6 +445,21 @@ class AppLocalizations {
     return Intl.message('TUN', name: 'tun', desc: '', args: []);
   }
 
+  /// `TUN GSO`
+  String get tunGso {
+    return Intl.message('TUN GSO', name: 'tunGso', desc: '', args: []);
+  }
+
+  /// `Generic Segmentation Offload: higher throughput, needs VPN restart`
+  String get tunGsoDesc {
+    return Intl.message(
+      'Generic Segmentation Offload: higher throughput, needs VPN restart',
+      name: 'tunGsoDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `TUN works only in administrator mode.`
   String get tunDesc {
     return Intl.message(
