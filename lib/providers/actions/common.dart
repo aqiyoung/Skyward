@@ -190,6 +190,7 @@ class CommonAction extends _$CommonAction {
       final downloadId = await downloader.download(
         url: asset.url,
         fileName: asset.name,
+        expectedSha256: asset.sha256,
       );
       if (downloadId == null) {
         throw StateError('download did not start');
@@ -271,7 +272,7 @@ class CommonAction extends _$CommonAction {
     await downloader.install(downloadId);
   }
 
-  ({String url, String name})? _apkAssetOf(
+  ({String url, String name, String? sha256})? _apkAssetOf(
     Map<String, dynamic> release,
     String abi,
   ) {
@@ -291,7 +292,11 @@ class CommonAction extends _$CommonAction {
       if (!name.endsWith('.apk') || !name.contains(abi)) {
         continue;
       }
-      return (url: url, name: name);
+      return (
+        url: url,
+        name: name,
+        sha256: releaseApkSha256(release['body'], name),
+      );
     }
     return null;
   }
@@ -299,17 +304,12 @@ class CommonAction extends _$CommonAction {
   Future<void> checkUpdateResultHandle({
     Map<String, dynamic>? data,
     bool isUser = false,
-    // Silent callers (the version row on the tools tab) get no dialog at
-    // all: a new release starts its background download directly, and
-    // already-latest shows nothing. Startup auto-check is unaffected.
+    // Silent callers (the version row on the tools tab) get no
+    // "already latest" alert. A new release still asks for confirmation
+    // before its background download starts, so a stray tap never pulls
+    // an APK on its own. Startup auto-check is unaffected.
     bool silent = false,
   }) async {
-    if (silent) {
-      if (data != null) {
-        unawaited(_downloadRelease(data));
-      }
-      return;
-    }
     if (data != null) {
       final context = globalState.navigatorKey.currentContext;
       if (context == null) {
@@ -334,7 +334,7 @@ class CommonAction extends _$CommonAction {
       if (res == true) {
         unawaited(_downloadRelease(data));
       }
-    } else if (isUser) {
+    } else if (isUser && !silent) {
       unawaited(
         dialogs.showAlert(
           title: currentAppLocalizations.checkUpdate,

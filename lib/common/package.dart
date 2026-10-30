@@ -97,6 +97,21 @@ int? releaseBuildNumber(Object? body) {
   return value == null ? null : int.tryParse(value);
 }
 
+/// Where the release notes carry a published SHA-256 for an APK asset, as a
+/// comment: `<!-- skyward:apk-sha256:<asset-name>:<hex> -->`. The publish
+/// workflow writes one per APK asset; the downloader refuses to install a
+/// file whose hash does not match, and skips verification when the release
+/// carries no hash (older releases).
+const releaseApkSha256Marker = 'skyward:apk-sha256:';
+
+String? releaseApkSha256(Object? body, String assetName) {
+  if (body is! String) return null;
+  final match = RegExp(
+    '<!--\\s*$releaseApkSha256Marker${RegExp.escape(assetName)}:([0-9a-fA-F]{64})\\s*-->',
+  ).firstMatch(body);
+  return match?.group(1)?.toLowerCase();
+}
+
 /// Whether [remoteVersion] should be offered to someone running
 /// [installedVersion].
 ///

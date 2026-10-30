@@ -18,6 +18,7 @@ import (
 
 type startOptions struct {
 	MTU                  uint32 `json:"mtu"`
+	GSO                  *bool  `json:"gso"`
 	CongestionController string `json:"congestion-controller"`
 }
 
@@ -92,6 +93,7 @@ func Start(fd int, stack, address, dns, rawOptions string) *sing_tun.Listener {
 		Inet4Address:         prefix4,
 		Inet6Address:         prefix6,
 		MTU:                  settings.MTU,
+		GSO:                  settings.GSO == nil || *settings.GSO,
 		CongestionController: settings.CongestionController,
 		FileDescriptor:       dupFd,
 	}

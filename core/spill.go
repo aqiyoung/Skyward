@@ -58,8 +58,15 @@ func writeSpilledResponse(data []byte) (path string, err error) {
 			_ = os.Remove(path)
 		}
 	}()
-	// An elevated Core still answers a host running as the app user.
-	if err := file.Chmod(0o644); err != nil {
+	// The spilled payload can carry the controller secret and proxy
+	// credentials. When elevated, hand the file to the app user first so
+	// it can stay 0o600: the Dart host runs as the app user and must read
+	// it, but no other local user needs to.
+	if err := chownToAppUser(file); err != nil {
+		_ = file.Close()
+		return "", err
+	}
+	if err := file.Chmod(0o600); err != nil {
 		_ = file.Close()
 		return "", err
 	}

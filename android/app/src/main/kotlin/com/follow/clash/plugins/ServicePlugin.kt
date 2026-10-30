@@ -55,8 +55,18 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             "syncState" -> syncState(call, result)
             "start" -> start(call, result)
             "stop" -> stop(call, result)
+            "setTunGso" -> setTunGso(call, result)
             else -> result.notImplemented()
         }
+    }
+    private fun setTunGso(call: MethodCall, result: MethodChannel.Result) {
+        val value = call.arguments as? Boolean
+        if (value == null) {
+            result.error("INVALID_ARGUMENT", "setTunGso requires a boolean", null)
+            return
+        }
+        com.follow.clash.service.models.tunGso = value
+        result.success(null)
     }
 
     private fun onCoreMethodCall(call: MethodCall, result: MethodChannel.Result) {

@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/features/form/form.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/plugins/service.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/views/config/override.dart';
 import 'package:skyward/views/config/tun.dart';
+import 'package:skyward/ui/list.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -178,6 +181,47 @@ class TunStackItem extends ConsumerWidget {
       textBuilder: (stack) => stack.name,
       selector: patchClashConfigProvider.select((state) => state.tun.stack),
       onChanged: _tunWriter((state, value) => state.copyWith.tun(stack: value)),
+    );
+  }
+}
+
+/// TUN GSO (Generic Segmentation Offload) toggle.
+/// Stored in SharedPreferences (default true), synced to the native side
+/// via Service.setTunGso. Takes effect on next VPN start.
+class TunGsoItem extends ConsumerStatefulWidget {
+  const TunGsoItem({super.key});
+
+  @override
+  ConsumerState<TunGsoItem> createState() => _TunGsoItemState();
+}
+
+class _TunGsoItemState extends ConsumerState<TunGsoItem> {
+  static const _key = 'tun_gso';
+  bool _value = true;
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) setState(() => _value = prefs.getBool(_key) ?? true);
+    });
+  }
+
+  Future<void> _onChanged(bool value) async {
+    setState(() => _value = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, value);
+    await Service().setTunGso(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem.toggle(
+      title: Text(appLocalizations.tunGso),
+      subtitle: Text(appLocalizations.tunGsoDesc),
+      value: _value,
+      onChanged: _onChanged,
     );
   }
 }
@@ -487,6 +531,7 @@ List<Widget> networkOptionsItems({
     if (isDesktop) const TUNItem(),
     if (isMacOS) const AutoSetSystemDnsItem(),
     const TunStackItem(),
+    if (!isDesktop) const TunGsoItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
     // (core/lib.go installHooks, vendored dialer.go), so these rows only
     // apply on desktop.
