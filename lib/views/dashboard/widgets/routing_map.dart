@@ -292,11 +292,16 @@ class _RouteMapState extends State<RouteMap>
         if (size.height <= RouteMap.maxHeight) {
           return map;
         }
+        // A wide panel makes the map taller than it should be, so it is
+        // shrunk to fit the height -- the whole world stays visible (a route
+        // to either pole must still show) and clipped to the card rather
+        // than painted past its edges.
         return SizedBox(
           height: RouteMap.maxHeight,
           child: FittedBox(
-            fit: BoxFit.cover,
-            alignment: Alignment.bottomCenter,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+            clipBehavior: Clip.hardEdge,
             child: SizedBox.fromSize(size: size, child: map),
           ),
         );
