@@ -150,6 +150,11 @@ class _DesktopDashboard extends StatelessWidget {
     final middleHeight = (compact ? 152 : 176) * scale;
     final tablesHeight = connectionsTableMinHeight(density, scale);
     final summaryHeight = (compact ? 112 : 120) * scale;
+    // A world map reads best wide: the board takes the full width, and the
+    // connections table below it keeps its row only when the window can spare
+    // it -- on shorter windows the board stays and the table steps down to the
+    // summary cards, which the Connections page still carries in full.
+    final routingHeight = (compact ? 290 : 300) * scale;
     return LayoutBuilder(
       builder: (context, constraints) {
         final room =
@@ -216,6 +221,10 @@ class _DesktopDashboard extends StatelessWidget {
                   middleHeight,
                   row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
                 ),
+                sized(
+                  routingHeight,
+                  const RepaintBoundary(child: RoutingBoardCard()),
+                ),
                 sized(summaryHeight, summaries),
               ],
             ),
@@ -246,13 +255,18 @@ class _DesktopDashboard extends StatelessWidget {
                 (2, const ServiceStatusCard()),
             ]),
           ),
+          sized(
+            routingHeight,
+            row(const [(4, RoutingBoardCard())]),
+          ),
         ];
         final rowsHeight =
             padding.vertical +
             topHeight +
             controlHeight +
             middleHeight +
-            gap * 3;
+            routingHeight +
+            gap * 4;
         final tablesFit = constraints.maxHeight >= rowsHeight + tablesHeight;
         final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
         return SingleChildScrollView(

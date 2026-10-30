@@ -77,7 +77,9 @@ void main() {
   ) async {
     final position = await pumpDashboard(
       tester,
-      const Size(1220, 900),
+      // Tall enough to fit the grid now that the routing board takes a
+      // full-width row: the bounce is only meaningful with no scroll end.
+      const Size(1220, 1120),
       SupportPlatform.MacOS,
     );
     expect(position.maxScrollExtent, 0);

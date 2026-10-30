@@ -540,11 +540,12 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
         shrinkWrap: true,
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           bottom: 20 + context.bottomInset,
-          top: context.contentTopPadding,
+          top: context.sectionTopPadding,
         ),
         children: [
           generateSection(
             title: appLocalizations.basicInfo,
+            headerPadding: context.sectionHeaderPadding,
             items: [
               _buildTypeItem(rule.ruleAction),
               if (rule.ruleAction != RuleAction.MATCH)

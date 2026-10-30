@@ -59,15 +59,26 @@ class _HomeShell extends ConsumerStatefulWidget {
   ConsumerState<_HomeShell> createState() => _HomeShellState();
 }
 
-/// How far the list has to travel under the finger before the labels leave.
+/// How far the list has to travel under the finger before the labels leave,
+/// and how much further before the bar follows them out of the page. Two
+/// steps, so a nudge does not take the whole bar away.
 const double _scrollTravelToCollapse = 12;
+const double _scrollTravelToLeave = 64;
+
+/// The bar has three places to be: whole, icons only, and gone.
+enum _DockPhase { expanded, compact, hidden }
 
 class _HomeShellState extends ConsumerState<_HomeShell> {
-  final _dockCollapsed = ValueNotifier(false);
+  final _dockPhase = ValueNotifier(_DockPhase.expanded);
+
+  /// Which way the finger is pulling this drag, and how far it has come that
+  /// way: a drag that turns around starts counting again, so the bar answers
+  /// the way it is being pulled now.
   ScrollDirection _scrollDirection = ScrollDirection.idle;
+  double _scrollSign = 0;
   double _scrollTravel = 0;
 
-  /// The labels follow the finger, never a list that restores its position
+  /// The bar follows the finger, never a list that restores its position
   /// on its own, nor a page that is not the active one.
   bool _handleScroll(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical ||
@@ -79,26 +90,65 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     }
     if (notification is UserScrollNotification) {
       _scrollDirection = notification.direction;
+      _resetTravel();
+      return false;
+    }
+    if (notification is! ScrollUpdateNotification ||
+        notification.dragDetails == null ||
+        _scrollDirection == ScrollDirection.idle) {
+      return false;
+    }
+    _travel(notification.scrollDelta ?? 0);
+    return false;
+  }
+
+  /// The bar answers distance travelled, whichever way the finger came by it:
+  /// a list scrolling, or a page that had nothing of its own to give. Positive
+  /// is the page moving on under the finger, the same way a list reports it.
+  void _travel(double delta) {
+    if (delta == 0) {
+      return;
+    }
+    if (delta.sign != _scrollSign) {
+      _scrollSign = delta.sign;
       _scrollTravel = 0;
     }
-    if (notification is ScrollUpdateNotification) {
-      if (notification.metrics.extentBefore <= 0) {
-        _dockCollapsed.value = false;
-        _scrollTravel = 0;
-      } else if (notification.dragDetails != null &&
-          _scrollDirection != ScrollDirection.idle) {
-        _scrollTravel += (notification.scrollDelta ?? 0).abs();
-        if (_scrollTravel >= _scrollTravelToCollapse) {
-          _dockCollapsed.value = _scrollDirection == ScrollDirection.reverse;
-        }
+    _scrollTravel += delta.abs();
+    if (delta > 0) {
+      // The page moves on under the finger and the bar gets out of its way:
+      // the labels first, then the bar itself. Where the list happens to end
+      // is no reason to bring it back — a flick that reaches the foot in one
+      // go used to call the bar in halfway through a scroll still going up,
+      // which read as the bar flashing.
+      if (_scrollTravel >= _scrollTravelToLeave) {
+        _setPhase(_DockPhase.hidden);
+      } else if (_scrollTravel >= _scrollTravelToCollapse &&
+          _dockPhase.value == _DockPhase.expanded) {
+        // Folding the labels is one step out of a bar that is still there.
+        // From `hidden` it would be a step back in: the next flick of a fast
+        // scroll would show the bar again only to take it away once more.
+        _setPhase(_DockPhase.compact);
       }
+    } else if (_scrollTravel >= _scrollTravelToCollapse) {
+      // A pull the other way is the only thing that brings the bar back.
+      _setPhase(_DockPhase.expanded);
     }
-    return false;
+  }
+
+  void _resetTravel() {
+    _scrollSign = 0;
+    _scrollTravel = 0;
+  }
+
+  void _setPhase(_DockPhase phase) {
+    if (_dockPhase.value != phase) {
+      _dockPhase.value = phase;
+    }
   }
 
   @override
   void dispose() {
-    _dockCollapsed.dispose();
+    _dockPhase.dispose();
     super.dispose();
   }
 
@@ -110,9 +160,8 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
   Widget build(BuildContext context) {
     ref.listen(currentPageLabelProvider, (previous, next) {
       if (previous == next) return;
-      _dockCollapsed.value = false;
-      _scrollDirection = ScrollDirection.idle;
-      _scrollTravel = 0;
+      _dockPhase.value = _DockPhase.expanded;
+      _resetTravel();
     });
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
@@ -126,7 +175,9 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final hideLabelOnScroll = ref.watch(
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
-    final dockCollapses = isMobile && floating && hideLabelOnScroll;
+    // A floating dock follows the page; only the labels answer to the setting.
+    final dockFollows = isMobile && floating;
+    final dockFoldsLabels = dockFollows && hideLabelOnScroll;
     return Material(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
@@ -144,8 +195,15 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                       child: _BodyPadding(
                         isMobile: isMobile,
                         child: NotificationListener<ScrollNotification>(
-                          onNotification: dockCollapses ? _handleScroll : null,
-                          child: widget.child,
+                          onNotification: dockFollows ? _handleScroll : null,
+                          child: _VerticalSwipeRelay(
+                            // Only a phone drags the pages, so only there can
+                            // a page view take a swipe up instead of the bar.
+                            enabled: isMobile,
+                            onStart: _resetTravel,
+                            onSwipe: dockFollows ? _travel : null,
+                            child: widget.child,
+                          ),
                         ),
                       ),
                     ),
@@ -155,28 +213,34 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                   start: 0,
                   end: 0,
                   bottom: 0,
-                  child: AnimatedVisibility.bottomNavigation(
-                    visible: isMobile && floating,
-                    child: _NavigationPadding(
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: _dockCollapsed,
-                        builder: (context, collapsed, _) => NavigationDock(
-                          destinations: [
-                            for (final item in navigationItems)
-                              NavigationDockDestination(
-                                glyph: item.glyph,
-                                label: item.label.label,
-                              ),
-                          ],
-                          selectedIndex: state.currentIndex,
-                          onSelected: (index) {
-                            _handleToPage(navigationItems[index].label);
-                          },
-                          scale: dockScale,
-                          showLabel: !(dockCollapses && collapsed),
+                  child: ValueListenableBuilder<_DockPhase>(
+                    valueListenable: _dockPhase,
+                    builder: (context, phase, _) {
+                      final hidden = phase == _DockPhase.hidden;
+                      final compact = phase != _DockPhase.expanded;
+                      return AnimatedVisibility.bottomNavigation(
+                        // The room the inset keeps stays put while the bar
+                        // leaves, so the page under it never moves.
+                        visible: dockFollows && !hidden,
+                        child: _NavigationPadding(
+                          child: NavigationDock(
+                            destinations: [
+                              for (final item in navigationItems)
+                                NavigationDockDestination(
+                                  glyph: item.glyph,
+                                  label: item.label.label,
+                                ),
+                            ],
+                            selectedIndex: state.currentIndex,
+                            onSelected: (index) {
+                              _handleToPage(navigationItems[index].label);
+                            },
+                            scale: dockScale,
+                            showLabel: !(dockFoldsLabels && compact),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -223,6 +287,47 @@ class _BodyPadding extends StatelessWidget {
       removeLeft: isMobile,
       removeRight: isMobile,
       context: context,
+      child: child,
+    );
+  }
+}
+
+/// A page whose content fits the screen leaves the page view the only thing
+/// under the finger that wants the drag, and a swipe up drifts sideways as it
+/// goes: the page view reaches its own slop first and the pages slide instead
+/// of the bar getting out of the way. This asks for vertical drags on the way
+/// down, ahead of the page view, so the bar answers them. A page that does
+/// scroll keeps its recogniser under this one, which takes the drag first.
+class _VerticalSwipeRelay extends StatelessWidget {
+  const _VerticalSwipeRelay({
+    required this.enabled,
+    required this.onStart,
+    required this.onSwipe,
+    required this.child,
+  });
+
+  final bool enabled;
+  final VoidCallback onStart;
+
+  /// Travel in the page's terms, positive for the page moving on under the
+  /// finger — what a list would have reported. Null leaves the bar out of it,
+  /// while the swipe is still kept off the pages.
+  final ValueChanged<double>? onSwipe;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) {
+      return child;
+    }
+    final relay = onSwipe;
+    return GestureDetector(
+      // The bar is not a scrolling surface: a screen reader should hear the
+      // page's own scrollable, not this.
+      excludeFromSemantics: true,
+      onVerticalDragStart: (_) => onStart(),
+      onVerticalDragUpdate: (details) => relay?.call(-details.delta.dy),
       child: child,
     );
   }
@@ -313,6 +418,17 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   List<int>? _order;
   int _slide = 0;
 
+  /// A finger is carrying the page view across right now.
+  bool _dragging = false;
+
+  /// A programmatic [jumpToPage] is running right now. The jump dispatches
+  /// its [ScrollEndNotification] synchronously, and the drag-settle in the
+  /// scroll listener must not answer it: settling is only for where a
+  /// user's drag came to rest, and answering inside the build phase (e.g.
+  /// from [didUpdateWidget]) modifies a provider while the widget tree is
+  /// building.
+  bool _programmaticJump = false;
+
   @override
   void initState() {
     super.initState();
@@ -358,6 +474,13 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     if (index == -1) {
       return;
     }
+    // A drag already has the page under the finger: animating to where it
+    // landed would take the drag out of its hand.
+    if (_dragging &&
+        _pageController.hasClients &&
+        _pageController.page?.round() == index) {
+      return;
+    }
     final tabAnimation = ref.read(appSettingProvider).tabAnimation;
     final isMobile = ref.read(isMobileViewProvider);
     final slide = ++_slide;
@@ -367,10 +490,10 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     final current = _order?[page] ?? page;
     if (_order != null) {
       setState(() => _order = null);
-      _pageController.jumpToPage(current);
+      _jumpToPage(current);
     }
     if (!isMobile || ignoreAnimateTo) {
-      _pageController.jumpToPage(index);
+      _jumpToPage(index);
       return;
     }
     // As TabBarView does, so no page between is built and painted on the way.
@@ -381,7 +504,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
           ..[adjacent] = current
           ..[current] = adjacent;
       });
-      _pageController.jumpToPage(adjacent);
+      _jumpToPage(adjacent);
     }
     final fade = tabAnimation == TabAnimation.fade;
     await _pageController.animateToPage(
@@ -394,9 +517,58 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     }
   }
 
+  /// Jumps the page view without answering the jump as a drag: the
+  /// settle in the scroll listener only reconciles where a user's drag came
+  /// to rest, and a programmatic jump always lands exactly where it was
+  /// told to.
+  void _jumpToPage(int page) {
+    _programmaticJump = true;
+    try {
+      _pageController.jumpToPage(page);
+    } finally {
+      _programmaticJump = false;
+    }
+  }
+
   void _updatePageController() {
     final pageLabel = ref.read(currentPageLabelProvider);
     _toPage(pageLabel, true);
+  }
+
+  /// The dock reads the label, so the label turns when the page turns: at the
+  /// point the page view itself rounds over to the next page, while the finger
+  /// is still carrying it. Waiting for the settle leaves the highlight behind
+  /// the page it is meant to be pointing at.
+  void _handlePageChanged(int index) {
+    if (!_dragging || _order != null) {
+      return;
+    }
+    if (index < 0 || index >= widget.navigationItems.length) {
+      return;
+    }
+    final label = widget.navigationItems[index].label;
+    if (ref.read(currentPageLabelProvider) == label) {
+      return;
+    }
+    ref.read(currentPageLabelProvider.notifier).toPage(label);
+  }
+
+  /// Where the drag actually came to rest, for the cases the page view does not
+  /// report a round over: a settle that stops short leaves the label alone, and
+  /// this reads the same page it already held.
+  void _settleOnDraggedPage() {
+    if (!mounted || _order != null || !_pageController.hasClients) {
+      return;
+    }
+    final page = _pageController.page?.round();
+    if (page == null || page < 0 || page >= widget.navigationItems.length) {
+      return;
+    }
+    final label = widget.navigationItems[page].label;
+    if (ref.read(currentPageLabelProvider) == label) {
+      return;
+    }
+    ref.read(currentPageLabelProvider.notifier).toPage(label);
   }
 
   @override
@@ -415,32 +587,60 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         (state) => state.tabAnimation == TabAnimation.fade,
       ),
     );
-    return PageView.builder(
-      controller: _pageController,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: itemCount,
-      findChildIndexCallback: (key) {
-        if (key is! ValueKey<PageLabel>) {
-          return null;
+    // A phone drags from page to page the way it expects to; on a desktop the
+    // pages are the sidebar's, and a mouse drag across one is only a slip.
+    final dragsPages = ref.watch(
+      navigationStateProvider.select(
+        (state) => state.viewMode == ViewMode.mobile,
+      ),
+    );
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.depth != 0) {
+          return false;
         }
-        final index = widget.navigationItems.indexWhere(
-          (item) => item.label == key.value,
-        );
-        if (index == -1) {
-          return null;
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null) {
+          _dragging = true;
+        } else if (notification is ScrollEndNotification) {
+          _dragging = false;
+          // A programmatic jump is not a drag coming to rest, and its
+          // notification is dispatched synchronously — settling here would
+          // modify a provider while the widget tree is building.
+          if (!_programmaticJump) {
+            _settleOnDraggedPage();
+          }
         }
-        return _order?.indexOf(index) ?? index;
+        return false;
       },
-      itemBuilder: (context, index) {
-        final page = widget.pageBuilder(context, _order?[index] ?? index);
-        return _FadeTabPage(
-          key: page.key,
-          controller: _pageController,
-          position: index,
-          enabled: fade,
-          child: page,
-        );
-      },
+      child: PageView.builder(
+        controller: _pageController,
+        physics: dragsPages ? null : const NeverScrollableScrollPhysics(),
+        onPageChanged: _handlePageChanged,
+        itemCount: itemCount,
+        findChildIndexCallback: (key) {
+          if (key is! ValueKey<PageLabel>) {
+            return null;
+          }
+          final index = widget.navigationItems.indexWhere(
+            (item) => item.label == key.value,
+          );
+          if (index == -1) {
+            return null;
+          }
+          return _order?.indexOf(index) ?? index;
+        },
+        itemBuilder: (context, index) {
+          final page = widget.pageBuilder(context, _order?[index] ?? index);
+          return _FadeTabPage(
+            key: page.key,
+            controller: _pageController,
+            position: index,
+            enabled: fade,
+            child: page,
+          );
+        },
+      ),
     );
   }
 }

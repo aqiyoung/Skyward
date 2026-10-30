@@ -305,14 +305,23 @@ class _HeaderRates extends ConsumerWidget {
 
   static const _maxWidth = 150.0;
 
+  /// Fixed box: the per-second numbers change the content's natural width,
+  /// and a FittedBox under a max-width-only constraint rescales on every
+  /// tick, moving the card's height and making the page jump. The box stays
+  /// put now; long numbers still shrink inside it, they just never move it.
+  /// Taller than the two lines' natural height so the usual case renders
+  /// unscaled, centred on the right.
+  static const _height = 38.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final traffics = ref.watch(trafficsProvider);
     final total = ref.watch(totalTrafficProvider);
     final latest = traffics.list.safeLast(const Traffic());
     final outline = context.colorScheme.outlineVariant;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: _maxWidth),
+    return SizedBox(
+      width: _maxWidth,
+      height: _height,
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: AlignmentDirectional.centerEnd,

@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/ui/metrics.dart';
 import 'package:skyward/views/about.dart';
 import 'package:skyward/views/access.dart';
 import 'package:skyward/views/backup_and_restore.dart';
@@ -20,7 +22,6 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
-import 'disclaimer.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -40,21 +41,24 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  Widget _getOtherList(bool enableDeveloperMode) {
+  /// What the tab ends on: one way into the about page, and the build it is —
+  /// the row that also asks whether a newer one exists.
+  Widget _getAboutList() {
+    final appLocalizations = context.appLocalizations;
     return generateSection(
-      title: context.appLocalizations.other,
       items: [
-        const _DisclaimerItem(),
-        if (enableDeveloperMode) const _DeveloperItem(),
-        const _InfoItem(),
+        ListItem.open(
+          title: Text('${appLocalizations.about} $appName'),
+          widget: const AboutView(),
+        ),
+        const _VersionItem(),
       ],
     );
   }
 
-  Widget _getSettingList() {
+  Widget _getSettingList(bool enableDeveloperMode) {
     final appLocalizations = context.appLocalizations;
     return generateSection(
-      title: appLocalizations.settings,
       items: [
         const _SettingsSearchItem(),
         const _LocaleItem(),
@@ -67,6 +71,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _AdvancedConfigItem(),
         const _CustomResourcesItem(),
         const _GeneralItem(),
+        if (enableDeveloperMode) const _DeveloperItem(),
       ],
       footer: [
         if (system.isAndroid) appLocalizations.accessControlDesc,
@@ -88,20 +93,14 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           if (state.navigationItems.isEmpty) {
             return Container();
           }
-          // The page's own gap already clears the bar, so a section's full
-          // lead-in would leave the label sitting well below the title.
-          final headerPadding = listHeaderPaddingOf(
-            context,
-          ).copyWith(top: 12);
           return generateSection(
-            title: context.appLocalizations.more,
-            headerPadding: headerPadding,
+            leadingGap: false,
             items: state.navigationItems.map(_buildNavigationMenuItem),
           );
         },
       ),
-      _getSettingList(),
-      _getOtherList(developerMode),
+      _getSettingList(developerMode),
+      _getAboutList(),
     ];
     return CommonScaffold(
       title: context.appLocalizations.tools,
@@ -113,11 +112,128 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            top: context.contentTopPadding,
+            top: context.cardTopPadding,
             bottom: 20 + context.bottomInset,
           ),
         ),
       ),
+    );
+  }
+}
+
+enum _VersionCheck { checking, latest, found, failed }
+
+/// The build a reader is running, and the way to ask for the next one: the
+/// version sits on the right where a value belongs, and the chevron after it
+/// says the row does something. While a check runs -- or a found package
+/// downloads -- the version is what is no longer the news, so the row carries
+/// the check's own word there instead, and goes back to naming the build once
+/// that word has been read.
+class _VersionItem extends ConsumerStatefulWidget {
+  const _VersionItem();
+
+  @override
+  ConsumerState<_VersionItem> createState() => _VersionItemState();
+}
+
+class _VersionItemState extends ConsumerState<_VersionItem> {
+  /// How long a finished check keeps the right-hand side: long enough to be
+  /// read once, not so long that the version stays hidden behind it.
+  static const _hold = Duration(seconds: 4);
+
+  _VersionCheck? _check;
+  Timer? _holdTimer;
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Puts [check] on the row. A finished check is left there for [_hold] and
+  /// then gives the row back to the version; "checking" stays until it lands.
+  void _show(_VersionCheck check) {
+    _holdTimer?.cancel();
+    if (check != _VersionCheck.checking) {
+      _holdTimer = Timer(_hold, () {
+        if (!mounted) return;
+        setState(() => _check = null);
+      });
+    }
+    setState(() => _check = check);
+  }
+
+  /// The check runs in place, the way it did on the about page it was moved
+  /// from: no dialog, no banner over the page. A release found starts its
+  /// download in the background, and the row says so for as long as it lasts.
+  Future<void> _checkUpdate() async {
+    // One check at a time, and none over the top of a download already
+    // running: the row would go back to naming a release it is fetching.
+    if (_check == _VersionCheck.checking ||
+        ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
+      return;
+    }
+    _show(_VersionCheck.checking);
+    final Map<String, dynamic>? release;
+    try {
+      release = await request.checkForUpdate();
+    } catch (_) {
+      if (!mounted) return;
+      _show(_VersionCheck.failed);
+      return;
+    }
+    if (!mounted) return;
+    if (release == null) {
+      _show(_VersionCheck.latest);
+      return;
+    }
+    _show(_VersionCheck.found);
+    unawaited(
+      ref
+          .read(commonActionProvider.notifier)
+          .checkUpdateResultHandle(data: release, silent: true),
+    );
+  }
+
+  String? _checkText(AppLocalizations appLocalizations) => switch (_check) {
+    _VersionCheck.checking => appLocalizations.versionUpdateChecking,
+    _VersionCheck.latest => appLocalizations.versionUpdateLatest,
+    _VersionCheck.found => appLocalizations.versionUpdateFound,
+    _VersionCheck.failed => appLocalizations.versionUpdateFailed,
+    null => null,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    // A package on its way is not a find to announce: once the release has
+    // been handed to the download, the row says what is happening instead of
+    // naming the version for the minutes that takes.
+    final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
+    final version = globalState.hasPackageInfo
+        ? globalState.packageInfo.displayVersion
+        : null;
+    final text = downloading
+        ? appLocalizations.versionUpdateDownloading
+        : _checkText(appLocalizations) ?? version;
+    return ListItem(
+      title: Text(appLocalizations.currentVersion),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (text != null) ...[
+            Text(
+              text,
+              style: context.listSubtitleStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 8),
+          ],
+          const GlyphIcon(AppGlyphs.chevronForward),
+        ],
+      ),
+      onTap: _checkUpdate,
     );
   }
 }
@@ -277,32 +393,6 @@ class _CustomResourcesItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.customize),
       title: Text(context.appLocalizations.customProfileResources),
       widget: const CustomResourcesView(),
-    );
-  }
-}
-
-class _DisclaimerItem extends StatelessWidget {
-  const _DisclaimerItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.gavel),
-      title: Text(context.appLocalizations.disclaimer),
-      widget: const DisclaimerView(),
-    );
-  }
-}
-
-class _InfoItem extends StatelessWidget {
-  const _InfoItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.info),
-      title: Text(context.appLocalizations.about),
-      widget: const AboutView(),
     );
   }
 }

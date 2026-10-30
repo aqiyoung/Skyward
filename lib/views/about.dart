@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
-import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'disclaimer.dart';
 
 @immutable
 class Contributor {
@@ -24,8 +25,6 @@ class AboutView extends ConsumerStatefulWidget {
   ConsumerState<AboutView> createState() => _AboutViewState();
 }
 
-enum _UpdateResult { checking, latest, found, failed }
-
 class _AboutViewState extends ConsumerState<AboutView> {
   // Moved here from AboutView in the PR #31 fix: the contributors row
   // is built by this state, and a bare _contributors in state code
@@ -35,61 +34,6 @@ class _AboutViewState extends ConsumerState<AboutView> {
     Contributor(avatar: 'assets/images/avatar/june2.jpg', name: 'June2'),
     Contributor(avatar: 'assets/images/avatar/arue.jpg', name: 'Arue'),
   ];
-
-  _UpdateResult? _updateResult;
-  bool _isCheckingUpdate = false;
-
-  String? _updateResultText() {
-    final appLocalizations = context.appLocalizations;
-    return switch (_updateResult) {
-      _UpdateResult.checking => appLocalizations.versionUpdateChecking,
-      _UpdateResult.latest => appLocalizations.versionUpdateLatest,
-      _UpdateResult.found => appLocalizations.versionUpdateFound,
-      _UpdateResult.failed => appLocalizations.versionUpdateFailed,
-      null => null,
-    };
-  }
-
-  // The check runs directly, not through loadingRun: no loading bar
-  // under the title, no dialog, no banner — the only place its result
-  // appears is the version-update row itself, as its trailing text.
-  Future<void> _checkUpdate() async {
-    if (_isCheckingUpdate) return;
-    setState(() {
-      _isCheckingUpdate = true;
-      _updateResult = _UpdateResult.checking;
-    });
-    final Map<String, dynamic>? release;
-    try {
-      release = await request.checkForUpdate();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.failed;
-      });
-      return;
-    }
-    if (!mounted) return;
-    if (release != null) {
-      // A new release is found: show it on the row and start its
-      // background download at once, still with no dialog.
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.found;
-      });
-      unawaited(
-        ref
-            .read(commonActionProvider.notifier)
-            .checkUpdateResultHandle(data: release, silent: true),
-      );
-    } else {
-      setState(() {
-        _isCheckingUpdate = false;
-        _updateResult = _UpdateResult.latest;
-      });
-    }
-  }
 
   Widget _buildLinkItem({
     required Glyph glyph,
@@ -158,9 +102,8 @@ class _AboutViewState extends ConsumerState<AboutView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final updateResultText = _updateResultText();
     return CommonScaffold(
-      title: appLocalizations.about,
+      title: '${appLocalizations.about} $appName',
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.contentTopPadding,
@@ -179,39 +122,12 @@ class _AboutViewState extends ConsumerState<AboutView> {
             },
           ),
           const SizedBox(height: 8),
-          // Reference-style top card, no leading icons, no section
-          // header: the version is a plain row with the number on the
-          // right, and version update is a row whose trailing shows the
-          // chevron plus, once checked, the check result itself.
+          // No headings over any of the cards: the rows say what they are, and
+          // a label above two of them only said it twice. The update check is
+          // not here either -- it belongs to the row that names the build, on
+          // the tools tab, so this page is only what the build is and what it
+          // stands on.
           generateSection(
-            items: [
-              ListItem(
-                title: Text(appLocalizations.version),
-                trailing: Text(
-                  globalState.packageInfo.displayVersion,
-                  style: context.listSubtitleStyle,
-                ),
-              ),
-              ListItem(
-                title: Text(appLocalizations.versionUpdate),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (updateResultText != null)
-                      Text(
-                        updateResultText,
-                        style: context.listSubtitleStyle,
-                      ),
-                    if (updateResultText != null) const SizedBox(width: 8),
-                    const GlyphIcon(AppGlyphs.chevronForward),
-                  ],
-                ),
-                onTap: _checkUpdate,
-              ),
-            ],
-          ),
-          generateSection(
-            title: appLocalizations.more,
             items: [
               _buildLinkItem(
                 glyph: AppGlyphs.code,
@@ -231,13 +147,24 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 url: 'https://github.com/$repository/blob/main/LICENSE',
                 label: 'GPL-3.0',
               ),
+              // The terms are a page of their own, reached from this row: read
+              // here in full, they were a scroll few ever finished.
+              ListItem.open(
+                leading: IconWell(
+                  AppGlyphs.rules,
+                  side: 40,
+                  glyphSize: 20,
+                  shape: AppShape.md,
+                ),
+                title: Text(appLocalizations.disclaimer),
+                widget: const DisclaimerView(),
+              ),
             ],
           ),
           generateSection(
-            title: appLocalizations.otherContributors,
             items: [
-              // Upstream FlClash lives here, not in More: More already has
-              // this project's own Project entry, so a second project
+              // Upstream FlClash lives here, not on the card above: that
+              // one carries this project's own entry, so a second project
               // there reads as a competing project link.
               _buildLogoLinkItem(
                 asset: 'assets/images/avatar/flclash.png',

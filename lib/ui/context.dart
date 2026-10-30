@@ -36,6 +36,30 @@ extension BuildContextExtension on BuildContext {
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset + 12);
 
+  /// The same, for a page whose first block brings its own air: a section
+  /// label, or a card the list already sets apart with a section gap. The
+  /// label sits in a box with room for its actions, which trails the bar on
+  /// its own, so the gap the body leaves before a card would be spent twice
+  /// and the label would read as belonging to nothing.
+  double get sectionTopPadding =>
+      TopInsetScope.of(this) ??
+      (isInCompactSheet ? sheetAppBarHeight : appBarInset);
+
+  /// Where the first card of a page sits: the bar's inset plus the air a
+  /// group leaves above itself. The list sets that air over every group, so
+  /// the one that opens a page asks it off and the body puts the same figure
+  /// down here -- one gap between the bar and the card, not two stacked.
+  double get cardTopPadding =>
+      TopInsetScope.of(this) ??
+      (isInCompactSheet ? sheetAppBarHeight : appBarInset + 16);
+
+  /// The label that opens such a page, for the pages that start on one. What
+  /// the body gave up above it goes here instead, so the label still stands
+  /// clear of the bar rather than of nothing.
+  EdgeInsets get sectionHeaderPadding => isInCompactSheet
+      ? listHeaderPaddingOf(this)
+      : listHeaderPaddingOf(this).copyWith(top: 12.mAp(this));
+
   /// What the end of a body scrolls clear of: the system bar the body runs
   /// under and what floats over its foot. A docked search only counts below
   /// the scaffold that docks it.

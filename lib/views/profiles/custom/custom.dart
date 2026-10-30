@@ -531,11 +531,12 @@ class _MoreSectionsView extends ConsumerWidget {
       title: appLocalizations.more,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
           generateSection(
+            leadingGap: false,
             items: [
               _sectionRow(
                 context,

@@ -43,10 +43,10 @@ class AdvancedConfigView extends StatelessWidget {
       title: appLocalizations.advancedConfig,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
+          top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
-        children: [generateSection(items: items)],
+        children: [generateSection(leadingGap: false, items: items)],
       ),
     );
   }
