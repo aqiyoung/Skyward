@@ -270,7 +270,9 @@ Future<int> _ensureMacosDependencies() async {
     return 0;
   }
   stdout.writeln('Installing appdmg (DMG creator)...');
-  final result = await Process.run('npm', ['install', '-g', 'appdmg']);
+  // Pinned: an unpinned `npm install -g appdmg` pulls whatever the registry
+  // serves today, so a compromised publish would run during our build.
+  final result = await Process.run('npm', ['install', '-g', 'appdmg@0.6.6']);
   if (result.exitCode != 0) {
     stderr.write(result.stderr);
   }
@@ -342,8 +344,52 @@ Future<int> _ensureLinuxDependencies() async {
     stderr.write(dlResult.stderr);
     return dlResult.exitCode;
   }
+  // The `continuous` tag is rebuilt on every upstream commit with no
+  // versioning, so the download is verified against a pinned SHA-256
+  // before it is ever executed. A mismatch fails the build instead of
+  // running an unknown binary; update the pinned hash only when
+  // intentionally taking a newer upstream build.
+  if (!await _verifyAppimagetool(appimagetool)) {
+    return 1;
+  }
   await Process.run('chmod', ['+x', appimagetool]);
   return 0;
+}
+
+/// Pinned SHA-256 of the appimagetool `continuous` build, per arch,
+/// taken 2026-10-30. See `_ensureLinuxDependencies`.
+const _appimagetoolSha256 = {
+  'x86_64':
+      'b90f4a8b18967545fda78a445b27680a1642f1ef9488ced28b65398f2be7add2',
+  'aarch64':
+      'a48972e5ae91c944c5a7c80214e7e0a42dd6aa3ae979d8756203512a74ff574d',
+};
+
+Future<bool> _verifyAppimagetool(String path) async {
+  final expected = _appimagetoolSha256[appImageToolArch(_detectArch())];
+  if (expected == null) {
+    stderr.writeln('No pinned appimagetool hash for this arch; refusing.');
+    await File(path).delete();
+    return false;
+  }
+  final hashResult = await Process.run('sha256sum', [path]);
+  if (hashResult.exitCode != 0) {
+    stderr.write(hashResult.stderr);
+    await File(path).delete();
+    return false;
+  }
+  final actual = (hashResult.stdout as String).split(RegExp(r'\s+')).first;
+  if (actual != expected) {
+    stderr.writeln(
+      'appimagetool SHA-256 mismatch: upstream rebuilt the continuous tag. '
+      'Expected $expected, got $actual. '
+      'Review the upstream change, then update _appimagetoolSha256.',
+    );
+    await File(path).delete();
+    return false;
+  }
+  stdout.writeln('appimagetool SHA-256 verified.');
+  return true;
 }
 
 String appImageToolArch(String arch) {
