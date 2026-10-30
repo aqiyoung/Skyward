@@ -54,6 +54,8 @@
   "runtimeConfig": "ランタイム設定",
   "allowLan": "LANプロキシ",
   "tun": "TUN",
+  "tunGso": "TUN GSO",
+  "tunGsoDesc": "Generic Segmentation Offload：スループット向上、VPN再起動が必要",
   "tunDesc": "TUN は管理者モードでのみ有効です。",
   "minimizeOnExit": "終了時に最小化",
   "autoLaunch": "自動起動",

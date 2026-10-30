@@ -54,6 +54,8 @@
   "runtimeConfig": "Конфигурация выполнения",
   "allowLan": "Разрешить LAN",
   "tun": "TUN",
+  "tunGso": "TUN GSO",
+  "tunGsoDesc": "Generic Segmentation Offload: выше пропускная способность, нужен перезапуск VPN",
   "tunDesc": "TUN работает только в режиме администратора.",
   "minimizeOnExit": "Сворачивать при выходе",
   "autoLaunch": "Автозапуск",
