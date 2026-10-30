@@ -66,7 +66,9 @@ void main() {
   tearDown(() => container.dispose());
 
   Future<void> pumpRequestsTable(WidgetTester tester) async {
-    const size = Size(1220, 824);
+    // Tall enough for the tables row now that the routing board takes a
+    // full-width row of its own above it.
+    const size = Size(1220, 1120);
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

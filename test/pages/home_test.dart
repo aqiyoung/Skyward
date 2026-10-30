@@ -1441,6 +1441,13 @@ void main() {
                   },
                 ),
               ),
+              // The floating bar needs at least two destinations; the
+              // dock under test is the same with a second page beside it.
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) => const Text('page:profiles'),
+              ),
             ],
           ),
         ),

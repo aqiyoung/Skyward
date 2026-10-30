@@ -95,8 +95,8 @@ void main() {
       .position
       .maxScrollExtent;
 
-  testWidgets('the desktop fills the window with four rows, the controls '
-      'under the exit', (tester) async {
+  testWidgets('the desktop stacks five rows with the routing board, the '
+      'controls under the exit', (tester) async {
     await pumpDashboard(tester, const Size(1220, 824));
 
     final current = rectOf(tester, CurrentOutboundCard);
@@ -107,8 +107,9 @@ void main() {
     final intranet = rectOf(tester, IntranetIpCard);
     final profile = rectOf(tester, ProfilesCard);
     final service = rectOf(tester, ServiceStatusCard);
-    final table = rectOf(tester, ConnectionsTableCard);
-    final groups = rectOf(tester, ProxyGroupsCard);
+    final routing = rectOf(tester, RoutingBoardCard);
+    final stats = rectOf(tester, ConnectionStatsCard);
+    final groups = rectOf(tester, ProxyGroupsSummaryCard);
 
     expect(current.height, 208);
     expect(current.width, closeTo(upload.width * 2 + 16, 0.01));
@@ -123,11 +124,20 @@ void main() {
     expect(profile.left, closeTo(intranet.right + 16, 0.01));
     expect(service.width, closeTo(current.width, 0.01));
     expect(find.byType(MemoryInfo), findsNothing);
-    expect(table.top, intranet.bottom + 16);
-    expect(table.width / groups.width, closeTo(1.5, 0.01));
-    expect(groups.top, table.top);
-    expect(table.bottom, 824 - 24);
-    expect(scrollExtentOf(tester), 0);
+    // The routing board takes a full-width row of its own now, so this
+    // window no longer spares the tables row: the summaries step down to
+    // their fixed height and the page scrolls.
+    expect(find.byType(ConnectionsTableCard), findsNothing);
+    expect(find.byType(ProxyGroupsCard), findsNothing);
+    expect(routing.top, intranet.bottom + 16);
+    expect(routing.height, 300);
+    expect(routing.left, closeTo(current.left, 0.01));
+    expect(routing.right, closeTo(tun.right, 0.01));
+    expect(stats.top, routing.bottom + 16);
+    expect(stats.height, 120);
+    expect(stats.width, closeTo(groups.width, 0.01));
+    expect(groups.top, stats.top);
+    expect(scrollExtentOf(tester), 204);
     expect(find.byType(NetworkControlCard), findsNothing);
     expect(tester.takeException(), isNull);
 
@@ -137,7 +147,7 @@ void main() {
   testWidgets('the table lines its text up with the column and its head with '
       'the group tiles', (tester) async {
     seedGroups(10);
-    for (final size in const [Size(1220, 824), Size(1000, 900)]) {
+    for (final size in const [Size(1440, 1200), Size(1000, 1100)]) {
       await pumpDashboard(tester, size);
 
       final head = tester.getRect(
@@ -198,7 +208,10 @@ void main() {
     );
 
     expect(rectOf(tester, CurrentOutboundCard).height, 208);
-    expect(find.byType(ConnectionsTableCard), findsOneWidget);
+    // The routing board's row leaves this window too short for the tables.
+    expect(find.byType(RoutingBoardCard), findsOneWidget);
+    expect(find.byType(ConnectionsTableCard), findsNothing);
+    expect(find.byType(ConnectionStatsCard), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -212,7 +225,8 @@ void main() {
     expect(rectOf(tester, CurrentOutboundCard).height, 176);
     expect(rectOf(tester, OutboundModeBar).height, 56);
     expect(rectOf(tester, IntranetIpCard).height, 152);
-    expect(scrollExtentOf(tester), 0);
+    expect(rectOf(tester, RoutingBoardCard).height, 290);
+    expect(scrollExtentOf(tester), 226);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -221,7 +235,7 @@ void main() {
   testWidgets('a window too short for the tables gives their height to the '
       'summaries, with no list left to scroll inside the page', (tester) async {
     seedGroups(12);
-    await pumpDashboard(tester, const Size(1000, 660));
+    await pumpDashboard(tester, const Size(1000, 1000));
 
     final current = rectOf(tester, CurrentOutboundCard);
     final stats = rectOf(tester, ConnectionStatsCard);
@@ -229,7 +243,7 @@ void main() {
     expect(find.byType(ConnectionsTableCard), findsNothing);
     expect(find.byType(ProxyGroupsCard), findsNothing);
     expect(stats.height, greaterThan(112));
-    expect(stats.bottom, 660 - 24);
+    expect(stats.bottom, 1000 - 24);
     expect(stats.width, closeTo(current.width, 0.01));
     expect(groups.top, stats.top);
     expect(find.text('12 groups', findRichText: true), findsOneWidget);
@@ -252,7 +266,7 @@ void main() {
 
   testWidgets('the tables take the bottom row once it holds a few '
       'connections', (tester) async {
-    await pumpDashboard(tester, const Size(924, 737));
+    await pumpDashboard(tester, const Size(924, 1060));
 
     final table = rectOf(tester, ConnectionsTableCard);
     expect(table.height, lessThan(240));
@@ -285,7 +299,7 @@ void main() {
 
   testWidgets('a resize lays the cards out for the new width in its first '
       'frame, before the view size catches up', (tester) async {
-    await pumpDashboard(tester, const Size(1440, 900));
+    await pumpDashboard(tester, const Size(1440, 1200));
 
     tester.view.physicalSize = const Size(600, 800);
     await tester.pump();
@@ -298,7 +312,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(rectOf(tester, OutboundModeBar).width, 800 - 16 - 24);
 
-    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.physicalSize = const Size(1440, 1200);
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(find.byType(ConnectionsTableCard), findsOneWidget);
