@@ -92,6 +92,7 @@ func Start(fd int, stack, address, dns, rawOptions string) *sing_tun.Listener {
 		Inet4Address:         prefix4,
 		Inet6Address:         prefix6,
 		MTU:                  settings.MTU,
+		GSO:                  true,
 		CongestionController: settings.CongestionController,
 		FileDescriptor:       dupFd,
 	}
