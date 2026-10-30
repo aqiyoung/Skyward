@@ -58,10 +58,18 @@ class SystemDownloader {
   }
 
   /// Hands the file to the system download manager and returns its id.
-  Future<int?> download({required String url, required String fileName}) {
+  /// When [expectedSha256] is given, the native side verifies the
+  /// downloaded file against it before opening the installer, and refuses
+  /// to install on mismatch.
+  Future<int?> download({
+    required String url,
+    required String fileName,
+    String? expectedSha256,
+  }) {
     return _methodChannel.invokeMethod<int>('download', {
       'url': url,
       'fileName': fileName,
+      if (expectedSha256 != null) 'expectedSha256': expectedSha256,
     });
   }
 

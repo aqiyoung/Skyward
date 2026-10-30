@@ -72,7 +72,13 @@ class LinkManager {
   }
 
   void _handle(Uri uri, Function(String url) installConfigCallBack) {
-    commonPrint.log('onAppLink: $uri');
+    // The uri can carry a subscription link with a token in `url`: never
+    // log it whole, the log can be exported and shared.
+    final logged = uri.replace(queryParameters: {
+      for (final entry in uri.queryParameters.entries)
+        entry.key: entry.key == 'url' ? '<redacted>' : entry.value,
+    });
+    commonPrint.log('onAppLink: $logged');
     final url = _installConfigUrl(uri);
     if (url != null) {
       installConfigCallBack(url);
