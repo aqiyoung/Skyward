@@ -261,6 +261,11 @@ func patchTun(target *LC.Tun, params *tunSchema) {
 }
 
 func routeConfig(cfg *config.Config) *route.Config {
+	// The Dart side talks to the core through its own RPC, never the
+	// mihomo REST API, so the upstream management surface (/upgrade,
+	// /configs PUT/PATCH, /rules PATCH, /restart) is disabled. (Android
+	// already defaults to embed mode via patch_android.go.)
+	route.SetEmbedMode(true)
 	controller := cfg.Controller
 	routeCfg := &route.Config{
 		Addr:        controller.ExternalController,

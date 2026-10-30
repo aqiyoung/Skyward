@@ -2,7 +2,11 @@
 
 package core
 
+import "os"
+
 func initOwnership(homeDir string) {}
+
+func chownToAppUser(f *os.File) error { return nil }
 
 func scheduleReclaimOwnership() {}
 
