@@ -169,6 +169,17 @@ func reclaimDirOwnership(path string) {
 	}
 }
 
+// chownToAppUser hands an open file to the real (non-root) user when the
+// core runs elevated. The fd was just created by us and never shared, so
+// fchown on it is safe. After this, 0o600 is enough for the Dart host
+// (running as the app user) to read the file.
+func chownToAppUser(f *os.File) error {
+	if !isElevated() {
+		return nil
+	}
+	return f.Chown(realUid, realGid)
+}
+
 func initOwnership(homeDir string) {
 	reclaimHomeDir.Store(homeDir)
 	reclaimOwnership(homeDir)
