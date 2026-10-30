@@ -36,7 +36,7 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
       - name: Checkout our source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.branch }}
 
@@ -77,7 +77,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: artifact-${{ inputs.channel }}-*
           merge-multiple: true
@@ -109,11 +109,13 @@ jobs:
           # we show -- goes in the notes, where the next run reads it back from.
           tag="v${VERSION}"
           commit="$(git rev-parse --short HEAD)"
+          commit_full="$(git rev-parse HEAD)"
           # `+` needs escaping the moment the URL travels through anything that
           # reads it as a space, which is every link in the Telegram message.
           tag_url="${tag//+/%2B}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "tag_url=$tag_url" >> "$GITHUB_OUTPUT"
+          echo "commit_full=$commit_full" >> "$GITHUB_OUTPUT"
 
           (cd dist && sha256sum ./* > SHA256SUMS)
 
@@ -149,6 +151,13 @@ jobs:
               [ "$name" = SHA256SUMS ] && continue
               echo "| \`${name}\` | [download](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${name}) |"
             done
+            echo
+            echo "<!-- skyward apk hashes, verified by the in-app updater -->"
+            for f in dist/*.apk; do
+              name="$(basename "$f")"
+                sum="$(sha256sum "$f" | cut -d' ' -f1)"
+                  echo "<!-- skyward:apk-sha256:${name}:${sum} -->"
+              done
           } > release-notes.md
 
           echo "tag=$tag commit=$commit"
@@ -163,6 +172,7 @@ jobs:
           VERSION: ${{ inputs.version }}
           BUILD_NUMBER: ${{ inputs.build_number }}
           CHANNEL: ${{ inputs.channel }}
+          COMMIT: ${{ steps.meta.outputs.commit_full }}
         run: |
           set -euo pipefail
           if [ "$CHANNEL" = stable ]; then
@@ -180,7 +190,7 @@ jobs:
           fi
           gh release create "$TAG" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$BRANCH" \
+            --target "$COMMIT" \
             --title "$title" \
             --notes-file release-notes.md \
             ${{ inputs.prerelease && '--prerelease' || '--latest' }}
