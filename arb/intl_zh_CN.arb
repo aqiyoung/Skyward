@@ -56,6 +56,8 @@
   "tun": "虚拟网卡",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "通用分段卸载：提升吞吐，需重启 VPN 生效",
+  "vpnRestartPrompt": "重启 VPN 后生效",
+  "vpnRestartAction": "重启",
   "tunDesc": "虚拟网卡仅在管理员模式生效。",
   "minimizeOnExit": "退出时最小化",
   "autoLaunch": "自启动",

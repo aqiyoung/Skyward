@@ -56,6 +56,8 @@
   "tun": "TUN",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "Generic Segmentation Offload : débit supérieur, redémarrage du VPN requis",
+  "vpnRestartPrompt": "Redémarrez le VPN",
+  "vpnRestartAction": "Redémarrer",
   "tunDesc": "TUN ne fonctionne qu’en mode administrateur.",
   "minimizeOnExit": "Réduire à la fermeture",
   "autoLaunch": "Lancement automatique",

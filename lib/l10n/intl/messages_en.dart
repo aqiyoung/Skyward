@@ -1882,6 +1882,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
     "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload: higher throughput, needs VPN restart"),
+    "vpnRestartPrompt" : MessageLookupByLibrary.simpleMessage("Restart VPN to apply"),
+    "vpnRestartAction" : MessageLookupByLibrary.simpleMessage("Restart"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN could not be authorized, so it was turned off.",
     ),

@@ -11,6 +11,7 @@ import 'package:skyward/views/config/override.dart';
 import 'package:skyward/views/config/tun.dart';
 import 'package:skyward/ui/list.dart';
 import 'package:skyward/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' show dirname, join;
@@ -38,6 +39,24 @@ ConfigWriter<T> _tunWriter<T>(_TunUpdate<T> update) {
   return (ref, value) => ref
       .read(patchClashConfigProvider.notifier)
       .update((state) => update(state, value));
+}
+
+/// Show a SnackBar prompting to restart VPN after a setting change
+/// that requires VPN restart to take effect.
+void showVpnRestartPrompt(BuildContext context) {
+  final l = context.appLocalizations;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(l.vpnRestartPrompt),
+      action: SnackBarAction(
+        label: l.vpnRestartAction,
+        onPressed: () async {
+          await Service().stop();
+          await Service().start();
+        },
+      ),
+    ),
+  );
 }
 
 ConfigToggleItem _vpnToggle({
@@ -180,7 +199,10 @@ class TunStackItem extends ConsumerWidget {
       options: TunStack.values,
       textBuilder: (stack) => stack.name,
       selector: patchClashConfigProvider.select((state) => state.tun.stack),
-      onChanged: _tunWriter((state, value) => state.copyWith.tun(stack: value)),
+      onChanged: (ref, value) {
+        _tunWriter((state, v) => state.copyWith.tun(stack: v))(ref, value);
+        showVpnRestartPrompt(context);
+      },
     );
   }
 }
@@ -212,6 +234,7 @@ class _TunGsoItemState extends ConsumerState<TunGsoItem> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_key, value);
     await Service().setTunGso(value);
+    if (mounted) showVpnRestartPrompt(context);
   }
 
   @override

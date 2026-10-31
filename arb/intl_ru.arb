@@ -56,6 +56,8 @@
   "tun": "TUN",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "Generic Segmentation Offload: выше пропускная способность, нужен перезапуск VPN",
+  "vpnRestartPrompt": "Перезапустите VPN",
+  "vpnRestartAction": "Перезапустить",
   "tunDesc": "TUN работает только в режиме администратора.",
   "minimizeOnExit": "Сворачивать при выходе",
   "autoLaunch": "Автозапуск",
