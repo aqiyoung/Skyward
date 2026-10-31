@@ -1468,6 +1468,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
     "tunGsoDesc": MessageLookupByLibrary.simpleMessage("通用分段卸载：提升吞吐，需重启 VPN 生效"),
+    "vpnRestartPrompt" : MessageLookupByLibrary.simpleMessage("重启 VPN 后生效"),
+    "vpnRestartAction" : MessageLookupByLibrary.simpleMessage("重启"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),
