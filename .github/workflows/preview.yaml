@@ -421,33 +421,16 @@ jobs:
 
           # A retried run reuses its number, so the tag may already exist.
           gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
-          # The tag names the commit this preview was built from. --target would
-          # resolve the branch when the tag is created, which can be a later
-          # commit, and the next preview's compare range then comes back empty.
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-            -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
-          gh release create "$tag" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Skyward ${VERSION}（预览版）" \
-            --notes-file preview-notes.md \
-            --prerelease
-
-      # Every push to `beta` adds one, so the list would otherwise fill with
-      # them: keep the newest few and drop the rest together with their tags.
-      - name: Prune old previews
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
-            --json tagName,createdAt,isPrerelease \
-            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("preview-")))]
-                  | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' \
-          | while read -r tag; do
-              [ -z "$tag" ] && continue
-              echo "deleting $tag"
-              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-            done
+     
+      # Push preview APK to Telegram instead of GitHub release
+            for apk in dist/*.apk; do
+                    [ -f "$apk" ] || continue
+                            echo "Uploading $apk to Telegram..."
+                                    curl -s -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+                                              -F "document=@$apk" \
+                                                        -F "caption=Skyward 预览版 ${VERSION} ($(git rev-parse --short HEAD))" \
+                                                                  "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+                                                                        done
 
       # Same shape as the release announcement: a plain sendMessage carrying
       # links, because the APK is far over the cloud Bot API's 50 MB upload cap.
