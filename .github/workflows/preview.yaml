@@ -385,8 +385,8 @@ jobs:
       - name: Publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          BASE_NUMBER: ${{ steps.vers
+          ion.outputs.build_number }}
           VERSION_CODE: ${{ steps.verify.outputs.version_code }}
           REF: ${{ inputs.ref || github.ref_name }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
