@@ -460,23 +460,6 @@ class AppLocalizations {
     );
   }
 
-  String get vpnRestartPrompt {
-    return Intl.message(
-      'Restart VPN to apply',
-      name: 'vpnRestartPrompt',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get vpnRestartAction {
-    return Intl.message(
-      'Restart',
-      name: 'vpnRestartAction',
-      desc: '',
-      args: [],
-    );
-  }
 
   /// `TUN works only in administrator mode.`
   String get tunDesc {

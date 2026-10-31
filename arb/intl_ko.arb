@@ -56,8 +56,6 @@
   "tun": "TUN",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "Generic Segmentation Offload: 처리량 향상, VPN 재시작 필요",
-  "vpnRestartPrompt": "VPN을 다시 시작하세요",
-  "vpnRestartAction": "다시 시작",
   "tunDesc": "TUN은 관리자 모드에서만 작동합니다.",
   "minimizeOnExit": "종료 시 최소화",
   "autoLaunch": "자동 실행",
