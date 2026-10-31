@@ -110,8 +110,13 @@ Map<String, dynamic>? _parseProxyLink(String link) {
   if (lower.startsWith('vless://')) return _parseVless(link);
   if (lower.startsWith('vmess://')) return _parseVmess(link);
   if (lower.startsWith('trojan://')) return _parseTrojan(link);
+  if (lower.startsWith('ssr://')) return _parseSsr(link);
   if (lower.startsWith('ss://')) return _parseSs(link);
-  // TODO: ssr, hysteria2, tuic, etc.
+  if (lower.startsWith('hysteria2://')) return _parseHysteria2(link);
+  if (lower.startsWith('hysteria://')) return _parseHysteria(link);
+  if (lower.startsWith('tuic://')) return _parseTuic(link);
+  if (lower.startsWith('socks5://')) return _parseSocks5(link);
+  if (lower.startsWith('http://')) return _parseHttp(link);
   return null;
 }
 
@@ -242,6 +247,199 @@ Map<String, dynamic>? _parseSs(String link) {
     }
   } catch (_) {}
   return null;
+}
+
+
+Map<String, dynamic>? _parseSsr(String link) {
+  // ssr://base64(host:port:protocol:method:obfs:base64pass/?obfsparam=...&protoparam=...&remarks=...&group=...)
+  try {
+    var b64 = link.substring('ssr://'.length);
+    // Remove fragment if present
+    final hashIdx = b64.indexOf('#');
+    if (hashIdx != -1) b64 = b64.substring(0, hashIdx);
+    var padded = b64;
+    while (padded.length % 4 != 0) padded += '=';
+    final decoded = utf8.decode(base64.decode(padded));
+    // format: host:port:protocol:method:obfs:base64pass/?params
+    final mainParts = decoded.split('/?');
+    final parts = mainParts[0].split(':');
+    if (parts.length < 6) return null;
+    final host = parts[0];
+    final port = int.tryParse(parts[1]) ?? 443;
+    final protocol = parts[2];
+    final method = parts[3];
+    final obfs = parts[4];
+    var password = parts[5];
+    try {
+      var pp = password;
+      while (pp.length % 4 != 0) pp += '=';
+      password = utf8.decode(base64.decode(pp));
+    } catch (_) {}
+    String name = '$host:$port';
+    String? obfsParam;
+    String? protocolParam;
+    String? group;
+    if (mainParts.length > 1) {
+      final params = Uri.splitQueryString(mainParts[1]);
+      if (params['remarks'] != null) {
+        var r = params['remarks']!;
+        while (r.length % 4 != 0) r += '=';
+        try { name = utf8.decode(base64.decode(r)); } catch (_) {}
+      }
+      if (params['obfsparam'] != null) {
+        var o = params['obfsparam']!;
+        while (o.length % 4 != 0) o += '=';
+        try { obfsParam = utf8.decode(base64.decode(o)); } catch (_) {}
+      }
+      if (params['protoparam'] != null) {
+        var p = params['protoparam']!;
+        while (p.length % 4 != 0) p += '=';
+        try { protocolParam = utf8.decode(base64.decode(p)); } catch (_) {}
+      }
+      if (params['group'] != null) {
+        var g = params['group']!;
+        while (g.length % 4 != 0) g += '=';
+        try { group = utf8.decode(base64.decode(g)); } catch (_) {}
+      }
+    }
+    return {
+      'name': name,
+      'type': 'ssr',
+      'server': host,
+      'port': port,
+      'cipher': method,
+      'password': password,
+      'protocol': protocol,
+      'obfs': obfs,
+      if (obfsParam != null && obfsParam.isNotEmpty) 'obfs-param': obfsParam,
+      if (protocolParam != null && protocolParam.isNotEmpty) 'protocol-param': protocolParam,
+      if (group != null && group.isNotEmpty) 'group': group,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+Map<String, dynamic>? _parseHysteria2(String link) {
+  // hysteria2://password@host:port?query#name
+  try {
+    final uri = Uri.parse(link);
+    final name = uri.fragment.isNotEmpty
+        ? Uri.decodeComponent(uri.fragment)
+        : '${uri.host}:${uri.port}';
+    final params = uri.queryParameters;
+    return {
+      'name': name,
+      'type': 'hysteria2',
+      'server': uri.host,
+      'port': uri.port != 0 ? uri.port : 443,
+      'password': Uri.decodeComponent(uri.userInfo),
+      if (params['sni'] != null) 'sni': params['sni'],
+      if (params['insecure'] == '1') 'skip-cert-verify': true,
+      if (params['obfs'] != null) 'obfs': params['obfs'],
+      if (params['obfs-password'] != null) 'obfs-password': params['obfs-password'],
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+Map<String, dynamic>? _parseHysteria(String link) {
+  // hysteria://host:port?protocol=udp&auth=...&upmbps=...&downmbps=...#name
+  try {
+    final uri = Uri.parse(link);
+    final name = uri.fragment.isNotEmpty
+        ? Uri.decodeComponent(uri.fragment)
+        : '${uri.host}:${uri.port}';
+    final params = uri.queryParameters;
+    return {
+      'name': name,
+      'type': 'hysteria',
+      'server': uri.host,
+      'port': uri.port != 0 ? uri.port : 443,
+      if (params['auth'] != null) 'auth-str': params['auth'],
+      if (params['protocol'] != null) 'protocol': params['protocol'],
+      if (params['upmbps'] != null) 'up': params['upmbps'],
+      if (params['downmbps'] != null) 'down': params['downmbps'],
+      if (params['sni'] != null) 'sni': params['sni'],
+      if (params['insecure'] == '1') 'skip-cert-verify': true,
+      if (params['obfs'] != null) 'obfs': params['obfs'],
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+Map<String, dynamic>? _parseTuic(String link) {
+  // tuic://uuid:password@host:port?congestion_controller=...&alpn=h3&sni=...#name
+  try {
+    final uri = Uri.parse(link);
+    final name = uri.fragment.isNotEmpty
+        ? Uri.decodeComponent(uri.fragment)
+        : '${uri.host}:${uri.port}';
+    final params = uri.queryParameters;
+    final userInfo = Uri.decodeComponent(uri.userInfo);
+    final parts = userInfo.split(':');
+    return {
+      'name': name,
+      'type': 'tuic',
+      'server': uri.host,
+      'port': uri.port != 0 ? uri.port : 443,
+      'uuid': parts[0],
+      'password': parts.length > 1 ? parts.sublist(1).join(':') : '',
+      if (params['sni'] != null) 'sni': params['sni'],
+      if (params['alpn'] != null) 'alpn': params['alpn']!.split(','),
+      if (params['congestion_controller'] != null)
+        'congestion-controller': params['congestion_controller'],
+      if (params['disable_sni'] == '1') 'disable-sni': true,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+Map<String, dynamic>? _parseSocks5(String link) {
+  // socks5://user:pass@host:port#name
+  try {
+    final uri = Uri.parse(link);
+    final name = uri.fragment.isNotEmpty
+        ? Uri.decodeComponent(uri.fragment)
+        : '${uri.host}:${uri.port}';
+    final userInfo = Uri.decodeComponent(uri.userInfo);
+    final parts = userInfo.split(':');
+    return {
+      'name': name,
+      'type': 'socks5',
+      'server': uri.host,
+      'port': uri.port != 0 ? uri.port : 1080,
+      if (parts.isNotEmpty && parts[0].isNotEmpty) 'username': parts[0],
+      if (parts.length > 1) 'password': parts.sublist(1).join(':'),
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+Map<String, dynamic>? _parseHttp(String link) {
+  // http://user:pass@host:port#name
+  try {
+    final uri = Uri.parse(link);
+    final name = uri.fragment.isNotEmpty
+        ? Uri.decodeComponent(uri.fragment)
+        : '${uri.host}:${uri.port}';
+    final userInfo = Uri.decodeComponent(uri.userInfo);
+    final parts = userInfo.split(':');
+    return {
+      'name': name,
+      'type': 'http',
+      'server': uri.host,
+      'port': uri.port != 0 ? uri.port : 8080,
+      if (parts.isNotEmpty && parts[0].isNotEmpty) 'username': parts[0],
+      if (parts.length > 1) 'password': parts.sublist(1).join(':'),
+    };
+  } catch (_) {
+    return null;
+  }
 }
 
 String _yamlString(String s) {
