@@ -72,14 +72,6 @@ jobs:
     name: Android arm64-v8a
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    services:
-      telegram-bot-api:
-        image: aiogram/telegram-bot-api:latest
-        env:
-          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-        ports:
-          - 8081:8081
     # Job level, not step level: a step's `if` cannot see its own `env`.
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -401,6 +393,7 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
+          tag="preview-${BASE_NUMBER}"
           commit="$(git rev-parse --short HEAD)"
           (cd dist && sha256sum ./* > SHA256SUMS)
 
@@ -425,17 +418,94 @@ jobs:
             echo "签名与本仓库正式版相同，和正式版共用同一套递增的构建号，可以直接互相覆盖安装。这不是正式发布。"
           } >> preview-notes.md
 
+          # A retried run reuses its number, so the tag may already exist.
+          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          # The tag names the commit this preview was built from. --target would
+          # resolve the branch when the tag is created, which can be a later
+          # commit, and the next preview's compare range then comes back empty.
+          #
+          # A tag can outlive its release -- a pruned preview, or a run that
+          # died before publishing -- and `gh release delete` only cleans up a
+          # tag it can see through a release, so move the leftover to this
+          # commit instead of failing with "Reference already exists".
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" \
+              -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          fi
+          gh release create "$tag" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Skyward ${VERSION}（预览版）" \
+            --notes-file preview-notes.md \
+            --prerelease
 
+      # Every push to `beta` adds one, so the list would otherwise fill with
+      # them: keep the newest few and drop the rest together with their tags.
+      - name: Prune old previews
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json tagName,createdAt,isPrerelease \
+            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("preview-")))]
+                  | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' \
+          | while read -r tag; do
+              [ -z "$tag" ] && continue
+              echo "deleting $tag"
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
+            done
 
+      # The APK is far over the cloud Bot API's 50 MB upload cap, so the message
+      # carries links to the release rather than the file itself.
+      - name: Announce on Telegram
+        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION_CODE: ${{ steps.verify.outputs.version_code }}
+          REF: ${{ inputs.ref || github.ref_name }}
+          TAG: preview-${{ steps.version.outputs.build_number }}
+          APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          # gh-proxy.com in front of github.com: the assets live on GitHub,
+          # which is unreachable for a large part of the audience.
+          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/"
 
+          {
+            echo "🧪 Skyward ${VERSION}（预览版）构建成功"
+            echo
+            # Telegram cuts a message at 4096 characters, so the changelog is
+            # capped here and the release page carries the rest.
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo "自 \`${PREVIOUS}\` 以来："
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
+              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
+              echo
+            fi
+            for f in dist/*; do
+              name="$(basename "$f")"
+              [ "$name" = SHA256SUMS ] && continue
+              echo "• ${name}"
+              echo "  ${prefix}${name}"
+            done
+            echo
+            echo "分支 \`${REF}\` ｜ 包名 \`${APPLICATION_ID}\` ｜ versionCode \`${VERSION_CODE}\` ｜ Android arm64-v8a 单架构"
+            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装；装回正式版要先卸载）"
+          } > /tmp/msg.txt
 
+          cat /tmp/msg.txt
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@/tmp/msg.txt" \
+            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
 
-          # Push preview APK to Telegram instead of GitHub release
-          for apk in dist/*.apk; do
-            [ -f "$apk" ] || continue
-            echo "Uploading $apk to Telegram..."
-            curl -s -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-              -F "document=@$apk" \
-              -F "caption=Skyward 预览版" \
-              "http://localhost:8081/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
-          done
