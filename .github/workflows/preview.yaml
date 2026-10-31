@@ -514,7 +514,7 @@ jobs:
             fi
             echo
             echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
-            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装；装回正式版要先卸载）"
+            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
 
