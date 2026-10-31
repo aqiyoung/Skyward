@@ -123,31 +123,91 @@ Map<String, dynamic>? _parseProxyLink(String link) {
 Map<String, dynamic>? _parseVless(String link) {
   try {
     final uri = Uri.parse(link);
-    final name = uri.fragment.isNotEmpty 
-        ? Uri.decodeComponent(uri.fragment) 
-        : '${uri.host}:${uri.port}';
     final params = uri.queryParameters;
+    
+    // userInfo may be base64-encoded "uuid@host:port" or "method:uuid@host:port"
+    // or plain "uuid". Try to decode.
+    String userInfo = Uri.decodeComponent(uri.userInfo);
+    String host = uri.host;
+    int port = uri.port;
+    try {
+      // Try base64 decode (for links like vless://base64(uuid@host:port)?...)
+      var padded = userInfo;
+      // Only try if it looks like base64 (no @ : . characters typical in plain)
+      if (!userInfo.contains('@') && RegExp(r'^[A-Za-z0-9+/=_-]+$').hasMatch(userInfo)) {
+        while (padded.length % 4 != 0) padded += '=';
+        final decoded = utf8.decode(base64.decode(padded));
+        if (decoded.contains('@')) {
+          // Format: [method:]uuid@host:port
+          final atIdx = decoded.lastIndexOf('@');
+          final uuidPart = decoded.substring(0, atIdx);
+          final hostPort = decoded.substring(atIdx + 1);
+          // uuidPart may be "uuid" or "method:uuid"
+          final colonIdx = uuidPart.indexOf(':');
+          userInfo = colonIdx != -1 ? uuidPart.substring(colonIdx + 1) : uuidPart;
+          final hpColon = hostPort.lastIndexOf(':');
+          if (hpColon != -1) {
+            host = hostPort.substring(0, hpColon);
+            port = int.tryParse(hostPort.substring(hpColon + 1)) ?? port;
+          } else {
+            host = hostPort;
+          }
+        }
+      }
+    } catch (_) {
+      // Not base64, use as-is
+    }
+    // userInfo may still be "method:uuid", extract uuid
+    String uuid = userInfo;
+    final colonIdx = userInfo.indexOf(':');
+    if (colonIdx != -1 && !userInfo.contains('@')) {
+      // Could be "auto:uuid" format
+      final possibleUuid = userInfo.substring(colonIdx + 1);
+      if (possibleUuid.contains('-')) {
+        uuid = possibleUuid;
+      }
+    }
+    
+    // Name from remarks param or fragment
+    String name;
+    if (params['remarks'] != null) {
+      name = params['remarks']!;
+    } else if (uri.fragment.isNotEmpty) {
+      name = Uri.decodeComponent(uri.fragment);
+    } else {
+      name = '$host:$port';
+    }
     
     final proxy = <String, dynamic>{
       'name': name,
       'type': 'vless',
-      'server': uri.host,
-      'port': uri.port,
-      'uuid': Uri.decodeComponent(uri.userInfo),
+      'server': host,
+      'port': port,
+      'uuid': uuid,
     };
     
-    // Security
+    // Security: support security=tls/reality, tls=1, and xtls/pbk indicators
     final security = params['security'] ?? 'none';
-    if (security == 'tls' || security == 'reality') {
+    final tlsParam = params['tls'];
+    final hasTls = security == 'tls' || tlsParam == '1' || tlsParam == 'true';
+    // Reality indicated by security=reality, or pbk (public key), or xtls param
+    final isReality = security == 'reality' || 
+        params['pbk'] != null || 
+        params['xtls'] != null;
+    
+    if (hasTls || isReality) {
       proxy['tls'] = true;
-      if (params['sni'] != null) proxy['servername'] = params['sni'];
-      if (security == 'reality') {
+      // servername from sni or peer param
+      final sni = params['sni'] ?? params['peer'];
+      if (sni != null) proxy['servername'] = sni;
+      if (isReality) {
         proxy['reality-opts'] = {
           'public-key': params['pbk'] ?? '',
           'short-id': params['sid'] ?? '',
         };
       }
-      if (params['fp'] != null) proxy['fingerprint'] = params['fp'];
+      final fp = params['fp'] ?? params['fingerprint'];
+      if (fp != null) proxy['fingerprint'] = fp;
       if (params['alpn'] != null) {
         proxy['alpn'] = params['alpn']!.split(',');
       }
@@ -169,6 +229,14 @@ Map<String, dynamic>? _parseVless(String link) {
           'grpc-service-name': params['serviceName'] ?? '',
         };
       }
+    }
+    
+    // UDP and TFO
+    if (params['udp'] == '1' || params['udp'] == 'true') {
+      proxy['udp'] = true;
+    }
+    if (params['tfo'] == '1' || params['tfo'] == 'true') {
+      proxy['tfo'] = true;
     }
     
     return proxy;
