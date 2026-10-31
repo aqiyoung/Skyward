@@ -72,6 +72,17 @@ jobs:
     name: Android arm64-v8a
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    # The APK is ~60 MB, past the cloud Bot API's 50 MB upload cap, so the
+    # upload goes through this server instead of api.telegram.org. It exists
+    # only for the length of the job.
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
     # Job level, not step level: a step's `if` cannot see its own `env`.
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -460,7 +471,9 @@ jobs:
 
       # The APK is far over the cloud Bot API's 50 MB upload cap, so the message
       # carries links to the release rather than the file itself.
-      - name: Announce on Telegram
+      # The file itself, not a link: the self-hosted server above takes 2 GB,
+      # while the cloud Bot API would answer 413 for this APK.
+      - name: Upload the preview to Telegram
         if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -469,43 +482,55 @@ jobs:
           REF: ${{ inputs.ref || github.ref_name }}
           TAG: preview-${{ steps.version.outputs.build_number }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
-          PREVIOUS: ${{ steps.changelog.outputs.previous }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          # gh-proxy.com in front of github.com: the assets live on GitHub,
-          # which is unreachable for a large part of the audience.
-          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/"
+          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
 
-          {
-            echo "🧪 Skyward ${VERSION}（预览版）构建成功"
-            echo
-            # Telegram cuts a message at 4096 characters, so the changelog is
-            # capped here and the release page carries the rest.
-            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
-              echo "自 \`${PREVIOUS}\` 以来："
-              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
-              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
-              echo
+          # A container without TELEGRAM_API_ID/TELEGRAM_API_HASH exits at
+          # once, and the only symptom would be a refused connection here.
+          up=""
+          for _ in $(seq 1 30); do
+            if curl -fsS --max-time 5 "${api}/getMe" > /tmp/getme.json 2>/dev/null; then
+              up=1
+              break
             fi
-            for f in dist/*; do
-              name="$(basename "$f")"
-              [ "$name" = SHA256SUMS ] && continue
-              echo "• ${name}"
-              echo "  ${prefix}${name}"
-            done
-            echo
-            echo "分支 \`${REF}\` ｜ 包名 \`${APPLICATION_ID}\` ｜ versionCode \`${VERSION_CODE}\` ｜ Android arm64-v8a 单架构"
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
-            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo
-            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装；装回正式版要先卸载）"
-          } > /tmp/msg.txt
+            sleep 2
+          done
+          if [ -z "$up" ] || ! grep -q '"ok":true' /tmp/getme.json; then
+            echo "::error::telegram-bot-api never answered on localhost:8081 — check TELEGRAM_API_ID/TELEGRAM_API_HASH (container log above) and TELEGRAM_BOT_TOKEN"
+            exit 1
+          fi
 
-          cat /tmp/msg.txt
-          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text@/tmp/msg.txt" \
-            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
+          # A caption is capped at 1024 characters: the changelog is trimmed
+          # and the release page carries the rest.
+          {
+            echo "🧪 Skyward ${VERSION}（预览版）"
+            echo
+            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID} ｜ versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            if [ -n "${CHANGELOG}" ]; then
+              echo
+              printf '%s\n' "${CHANGELOG}" | cut -c1-80 | awk 'NR<=6'
+            fi
+            echo
+            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装；装回正式版要先卸载）"
+          } > /tmp/caption.txt
+          cat /tmp/caption.txt
+
+          shopt -s nullglob
+          for apk in dist/*.apk; do
+            echo "uploading $(basename "${apk}") ($(du -h "${apk}" | cut -f1))..."
+            response="$(curl -fsS --max-time 900 \
+              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "document=@${apk}" \
+              -F "caption=$(cat /tmp/caption.txt)" \
+              "${api}/sendDocument")"
+            if ! printf '%s' "$response" | grep -q '"ok":true'; then
+              echo "::error::Telegram refused $(basename "${apk}"): ${response}"
+              exit 1
+            fi
+            echo "telegram accepted $(basename "${apk}")"
+          done
+
 
