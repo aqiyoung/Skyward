@@ -381,7 +381,6 @@ jobs:
           name: preview-android-arm64
           path: ./dist
           if-no-files-found: error
-
       - name: Publish the preview
         env:
           GH_TOKEN: ${{ github.token }}
