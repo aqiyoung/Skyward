@@ -424,3 +424,13 @@ jobs:
                                                                       
 
       
+
+          # Push preview APK to Telegram instead of GitHub release
+          for apk in dist/*.apk; do
+            [ -f "$apk" ] || continue
+            echo "Uploading $apk to Telegram..."
+            curl -s -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -F "document=@$apk" \
+              -F "caption=Skyward 预览版" \
+              "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+          done
