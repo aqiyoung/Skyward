@@ -56,8 +56,6 @@
   "tun": "TUN",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "Generic Segmentation Offload: higher throughput, needs VPN restart",
-  "vpnRestartPrompt": "Restart VPN to apply",
-  "vpnRestartAction": "Restart",
   "tunDesc": "TUN works only in administrator mode.",
   "minimizeOnExit": "Minimize on exit",
   "autoLaunch": "Auto launch",

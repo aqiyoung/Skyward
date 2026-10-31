@@ -1617,8 +1617,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
     "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload：スループット向上、VPN再起動が必要"),
-    "vpnRestartPrompt" : MessageLookupByLibrary.simpleMessage("VPNを再起動して適用"),
-    "vpnRestartAction" : MessageLookupByLibrary.simpleMessage("再起動"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN の権限を取得できなかったため、オフにしました。",
     ),
