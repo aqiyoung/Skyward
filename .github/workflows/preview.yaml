@@ -401,7 +401,6 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          tag="preview-${BASE_NUMBER}"
           commit="$(git rev-parse --short HEAD)"
           (cd dist && sha256sum ./* > SHA256SUMS)
 
@@ -426,9 +425,7 @@ jobs:
             echo "签名与本仓库正式版相同，和正式版共用同一套递增的构建号，可以直接互相覆盖安装。这不是正式发布。"
           } >> preview-notes.md
 
-          # A retried run reuses its number, so the tag may already exist.
-          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
-     
+          
                                                                       
 
       
