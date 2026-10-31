@@ -460,6 +460,7 @@ class AppLocalizations {
     );
   }
 
+
   /// `TUN works only in administrator mode.`
   String get tunDesc {
     return Intl.message(

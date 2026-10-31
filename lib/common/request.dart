@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/common/subscription.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 class Request {
@@ -172,14 +173,31 @@ Uint8List decompressUnlabeled(Uint8List bytes) {
     [0x78, final flags, ...] when (0x78 << 8 | flags) % 31 == 0 => zlib,
     _ => null,
   };
-  if (codec == null) {
-    return bytes;
+  Uint8List decompressed = bytes;
+  if (codec != null) {
+    try {
+      decompressed = Uint8List.fromList(codec.decode(bytes));
+    } on FormatException {
+      decompressed = bytes;
+    }
   }
+  // Convert plain-text proxy link subscriptions to Clash YAML
   try {
-    return Uint8List.fromList(codec.decode(bytes));
-  } on FormatException {
-    return bytes;
+    final text = utf8.decode(decompressed);
+    if (looksLikeProxyLinks(text)) {
+      final yaml = convertToClashConfig(text);
+      return Uint8List.fromList(utf8.encode(yaml));
+    }
+    // Try base64
+    final decoded = tryBase64Decode(text);
+    if (decoded != null) {
+      final yaml = convertToClashConfig(decoded);
+      return Uint8List.fromList(utf8.encode(yaml));
+    }
+  } catch (_) {
+    // Not text, return as-is
   }
+  return decompressed;
 }
 
 /// dart:io turns [Uri.userInfo] into Basic credentials still percent-encoded.

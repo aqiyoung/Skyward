@@ -7,6 +7,7 @@ import 'package:skyward/features/form/form.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/plugins/service.dart';
 import 'package:skyward/providers/config.dart';
+import 'package:skyward/providers/action.dart';
 import 'package:skyward/views/config/override.dart';
 import 'package:skyward/views/config/tun.dart';
 import 'package:skyward/ui/list.dart';
@@ -212,6 +213,18 @@ class _TunGsoItemState extends ConsumerState<TunGsoItem> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_key, value);
     await Service().setTunGso(value);
+    if (mounted) {
+      dialogs.showNotifier(
+        currentAppLocalizations.vpnConfigChangeDetected,
+        level: MessageLevel.warning,
+        actionState: MessageActionState(
+          actionText: currentAppLocalizations.restart,
+          action: () async {
+            await ref.read(setupActionProvider.notifier).restartVpn();
+          },
+        ),
+      );
+    }
   }
 
   @override
