@@ -923,13 +923,11 @@ class _RenderPressTransform extends RenderProxyBox {
       super.paint(context, offset);
       return;
     }
-    layer = context.pushTransform(
-      needsCompositing,
-      offset,
-      _transform,
-      super.paint,
-      oldLayer: layer is TransformLayer ? layer as TransformLayer? : null,
-    );
+    final transformLayer =
+        layer is TransformLayer ? layer as TransformLayer : TransformLayer();
+    transformLayer.transform = _transform;
+    context.pushLayer(transformLayer, super.paint, offset);
+    layer = transformLayer;
   }
 }
 
@@ -2119,13 +2117,9 @@ class _RenderLensTint extends RenderProxyBox {
       super.paint(context, offset);
       return;
     }
-    handle.layer = context.pushTransform(
-      needsCompositing,
-      offset,
-      motion,
-      super.paint,
-      oldLayer: handle.layer,
-    );
+    final transformLayer = handle.layer ??= TransformLayer();
+    transformLayer.transform = motion;
+    context.pushLayer(transformLayer, super.paint, offset);
   }
 
   @override
@@ -2166,30 +2160,30 @@ class _RenderLensTint extends RenderProxyBox {
     ).expandToInclude(bounds).inflate(_labelInset * _scale);
     final lens = AppShape.full.getOuterPath(lensBounds);
     if (outside) {
-      _outside.layer = context.pushClipPath(
-        needsCompositing,
-        offset,
-        reach,
-        Path()
-          ..fillType = PathFillType.evenOdd
-          ..addRect(reach)
-          ..addPath(lens, Offset.zero),
+      final outsideLayer = _outside.layer ??= ClipPathLayer();
+      outsideLayer.clipPath = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(reach)
+        ..addPath(lens, Offset.zero);
+      outsideLayer.clipBehavior = Clip.antiAlias;
+      context.pushLayer(
+        outsideLayer,
         (context, offset) => _paintMoved(context, offset, rest, _outsideMotion),
-        oldLayer: _outside.layer,
+        offset,
       );
     } else {
       _outside.layer = null;
       _outsideMotion.layer = null;
     }
     if (inside) {
-      _inside.layer = context.pushClipPath(
-        needsCompositing,
-        offset,
-        lensBounds,
-        lens,
+      final insideLayer = _inside.layer ??= ClipPathLayer();
+      insideLayer.clipPath = lens;
+      insideLayer.clipBehavior = Clip.antiAlias;
+      context.pushLayer(
+        insideLayer,
         (context, offset) =>
             _paintTinted(context, offset, lensBounds, magnified),
-        oldLayer: _inside.layer,
+        offset,
       );
     } else {
       _inside.layer = null;
