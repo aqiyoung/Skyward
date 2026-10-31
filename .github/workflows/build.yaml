@@ -512,9 +512,9 @@ jobs:
           TAG: ${{ github.ref_name }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          python -m pip install --upgrade pip
-          pip install requests
-          python release_telegram.py
+          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"; for i in $(seq 1 30); do curl -fsS --max-time 5 "${api}/getMe" >/dev/null 2>&1 && break || sleep 2; done # wait for the telegram-bot-api service (localhost:8081), same as preview.yaml
+          apk=$(ls dist/*android-arm64*.apk | head -n 1); link="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"; case "${TAG}" in *"-"*) link="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}";; esac; caption="$(echo "${TAG}"; echo "${link}"; echo; cat telegram.md 2>/dev/null)" # pick the android-arm64 APK and build the caption (tag + release/run link + changelog)
+          echo "uploading ${apk}..."; curl -fsS --max-time 900 -F "chat_id=${TELEGRAM_CHAT_ID}" -F "document=@${apk}" -F "caption=${caption}" "${api}/sendDocument" | grep -q '"ok":true' && echo "telegram accepted ${apk}" # upload the file directly instead of release_telegram.py
 
       - name: Patch release.md
         run: |
