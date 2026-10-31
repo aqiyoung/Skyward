@@ -423,8 +423,18 @@ jobs:
           # The tag names the commit this preview was built from. --target would
           # resolve the branch when the tag is created, which can be a later
           # commit, and the next preview's compare range then comes back empty.
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-            -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          #
+          # A tag can outlive its release -- a pruned preview, or a run that
+          # died before publishing -- and `gh release delete` only cleans up a
+          # tag it can see through a release, so move the leftover to this
+          # commit instead of failing with "Reference already exists".
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" \
+              -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          fi
           gh release create "$tag" dist/* \
             --repo "$GITHUB_REPOSITORY" \
             --title "Skyward ${VERSION}（预览版）" \
