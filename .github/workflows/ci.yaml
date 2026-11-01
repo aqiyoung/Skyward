@@ -273,7 +273,8 @@ jobs:
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$titles" \
+            preview_tags=$(git tag --list "preview-*" | sed -n "s/^preview-\(${day_prefix}[0-9]*\)$/\1/p" || true)
+          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           # 10#: past the eighth build of a day the stamp carries a leading zero,
           # and bash would read a bare 09 as an invalid octal number.
