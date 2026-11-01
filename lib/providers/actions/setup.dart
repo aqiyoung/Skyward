@@ -130,11 +130,8 @@ class SetupAction extends _$SetupAction {
       return;
     }
     _refreshRunningState();
-    // Battery optimization: 3s interval instead of 1s, and the timer is
-    // already stopped when the app is not visible (see _syncRuntimeTicker
-    // which checks _isTrafficShown via appVisibleProvider).
     _runtimeTimer = Timer.periodic(
-      const Duration(seconds: 3),
+      const Duration(seconds: 1),
       (_) => _refreshRunningState(),
     );
   }
