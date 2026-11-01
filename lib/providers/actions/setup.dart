@@ -122,16 +122,20 @@ class SetupAction extends _$SetupAction {
   }
 
   void _syncRuntimeTicker() {
-    if (_startTime == null || !_isTrafficShown) {
+    if (_startTime == null) {
       _stopRuntimeTicker();
       return;
     }
-    if (_runtimeTimer != null) {
-      return;
-    }
+    // Battery optimization: 1s in foreground for responsive UI,
+    // 3s in background to save power while keeping notifications updated.
+    final isForeground = ref.read(appVisibleProvider);
+    final interval = isForeground
+        ? const Duration(seconds: 1)
+        : const Duration(seconds: 3);
+    _stopRuntimeTicker();
     _refreshRunningState();
     _runtimeTimer = Timer.periodic(
-      const Duration(seconds: 1),
+      interval,
       (_) => _refreshRunningState(),
     );
   }
