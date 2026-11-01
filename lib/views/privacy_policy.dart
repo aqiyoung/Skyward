@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/ui/ui.dart';
@@ -84,14 +83,12 @@ class _PolicySection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyle.headline.of(context),
           ),
           const SizedBox(height: 8),
           Text(
             content,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTextStyle.subheadline.of(context),
           ),
         ],
       ),
