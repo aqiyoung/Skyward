@@ -997,5 +997,18 @@
   "diagnostics": "Diagnostics",
   "clearCache": "Vider le cache",
   "type": "Type",
-  "pasteDesc": "Coller un lien d'abonnement depuis le presse-papiers"
+  "pasteDesc": "Coller un lien d'abonnement depuis le presse-papiers",
+  "privacyPolicy": "Privacy Policy",
+  "privacyPolicyDataCollectionTitle": "Data Collection",
+  "privacyPolicyDataCollectionContent": "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
+  "privacyPolicyDataUseTitle": "How We Use Data",
+  "privacyPolicyDataUseContent": "All data stays on your device. We use it solely to provide the app's functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
+  "privacyPolicyDataSharingTitle": "Data Sharing",
+  "privacyPolicyDataSharingContent": "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
+  "privacyPolicyDataSecurityTitle": "Data Security",
+  "privacyPolicyDataSecurityContent": "Your configuration and subscription data is stored in the app's private storage on your device, protected by the operating system's sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
+  "privacyPolicyDataRetentionTitle": "Data Retention",
+  "privacyPolicyDataRetentionContent": "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
+  "privacyPolicyContactTitle": "Contact",
+  "privacyPolicyContactContent": "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward."
 }
