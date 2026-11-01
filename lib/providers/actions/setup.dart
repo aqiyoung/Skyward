@@ -47,6 +47,10 @@ class SetupAction extends _$SetupAction {
   }
 
   Timer? _runtimeTimer;
+
+  /// Current ticker interval in seconds. 1 when traffic is active, 10 when idle.
+  /// This only affects UI number refreshes, never the VPN connection itself.
+  int _tickerIntervalSeconds = 1;
   final _setupScheduler = SerialTaskScheduler();
   final _listenerScheduler = SerialTaskScheduler();
   _RunRequest? _latestRunRequest;
@@ -130,8 +134,17 @@ class SetupAction extends _$SetupAction {
       return;
     }
     _refreshRunningState();
+    _startSmartTicker();
+  }
+
+  /// Starts the ticker at the current smart interval.
+  /// Active traffic (up/down > 0) refreshes every 1s; idle refreshes every 10s.
+  /// This only controls how often UI numbers update - the VPN connection
+  /// itself is completely unaffected and never interrupted.
+  void _startSmartTicker() {
+    _stopRuntimeTicker();
     _runtimeTimer = Timer.periodic(
-      const Duration(seconds: 1),
+      Duration(seconds: _tickerIntervalSeconds),
       (_) => _refreshRunningState(),
     );
   }
@@ -139,11 +152,30 @@ class SetupAction extends _$SetupAction {
   void _stopRuntimeTicker() {
     _runtimeTimer?.cancel();
     _runtimeTimer = null;
+    _tickerIntervalSeconds = 1;
   }
 
   void _refreshRunningState() {
     _updateRunTime();
     unawaited(ref.read(commonActionProvider.notifier).updateTraffic());
+    _adjustTickerInterval();
+  }
+
+  /// Adjusts the ticker interval based on current traffic.
+  /// Has traffic -> 1s (live numbers); idle -> 10s (saves battery).
+  /// Only restarts the timer when the interval actually changes.
+  void _adjustTickerInterval() {
+    final traffics = ref.read(trafficsProvider);
+    final latest = traffics.length == 0 ? null : traffics[traffics.length - 1];
+    final hasTraffic = latest != null && latest.speed > 0;
+    final wantInterval = hasTraffic ? 1 : 10;
+    if (wantInterval != _tickerIntervalSeconds) {
+      _tickerIntervalSeconds = wantInterval;
+      // Only restart if the ticker is supposed to be running
+      if (_runtimeTimer != null && _startTime != null && _isTrafficShown) {
+        _startSmartTicker();
+      }
+    }
   }
 
   void _updateRunTime() {
