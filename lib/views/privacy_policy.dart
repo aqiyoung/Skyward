@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/ui/ui.dart';
@@ -27,10 +28,10 @@ class PrivacyPolicyView extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: _maxContentWidth),
           child: ListView(
             padding: EdgeInsets.symmetric(
-              horizontal: context.isMobile
+              horizontal: context.isMobileView
                   ? _mobileGutter
                   : _desktopGutter,
-              vertical: context.isMobile ? 16 : _desktopTopPadding,
+              vertical: context.isMobileView ? 16 : _desktopTopPadding,
             ),
             children: [
               _PolicySection(
@@ -83,14 +84,14 @@ class _PolicySection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: context.textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             content,
-            style: context.textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
