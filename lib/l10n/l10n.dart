@@ -8390,4 +8390,134 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
     }
     return false;
   }
+
+  /// `Privacy Policy`
+  String get privacyPolicy {
+    return Intl.message(
+      'Privacy Policy',
+      name: 'privacyPolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data Collection`
+  String get privacyPolicyDataCollectionTitle {
+    return Intl.message(
+      'Data Collection',
+      name: 'privacyPolicyDataCollectionTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Skyward does not collect or upload your subscription URLs...`
+  String get privacyPolicyDataCollectionContent {
+    return Intl.message(
+      'Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).',
+      name: 'privacyPolicyDataCollectionContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `How We Use Data`
+  String get privacyPolicyDataUseTitle {
+    return Intl.message(
+      'How We Use Data',
+      name: 'privacyPolicyDataUseTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All data stays on your device...`
+  String get privacyPolicyDataUseContent {
+    return Intl.message(
+      'All data stays on your device. We use it solely to provide the app\'s functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.',
+      name: 'privacyPolicyDataUseContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data Sharing`
+  String get privacyPolicyDataSharingTitle {
+    return Intl.message(
+      'Data Sharing',
+      name: 'privacyPolicyDataSharingTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `We do not share, sell, or disclose your data...`
+  String get privacyPolicyDataSharingContent {
+    return Intl.message(
+      'We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.',
+      name: 'privacyPolicyDataSharingContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data Security`
+  String get privacyPolicyDataSecurityTitle {
+    return Intl.message(
+      'Data Security',
+      name: 'privacyPolicyDataSecurityTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your configuration and subscription data...`
+  String get privacyPolicyDataSecurityContent {
+    return Intl.message(
+      'Your configuration and subscription data is stored in the app\'s private storage on your device, protected by the operating system\'s sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.',
+      name: 'privacyPolicyDataSecurityContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data Retention`
+  String get privacyPolicyDataRetentionTitle {
+    return Intl.message(
+      'Data Retention',
+      name: 'privacyPolicyDataRetentionTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data remains on your device...`
+  String get privacyPolicyDataRetentionContent {
+    return Intl.message(
+      'Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.',
+      name: 'privacyPolicyDataRetentionContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contact`
+  String get privacyPolicyContactTitle {
+    return Intl.message(
+      'Contact',
+      name: 'privacyPolicyContactTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `If you have questions...`
+  String get privacyPolicyContactContent {
+    return Intl.message(
+      'If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.',
+      name: 'privacyPolicyContactContent',
+      desc: '',
+      args: [],
+    );
+  }
 }

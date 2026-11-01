@@ -1530,5 +1530,44 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
+    "privacyPolicy": MessageLookupByLibrary.simpleMessage(
+      "隐私政策",
+    ),
+    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
+      "数据收集",
+    ),
+    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
+      "Skyward 不会收集或上传你的订阅地址、节点信息、配置内容、访问的网站、连接记录、流量内容和日志，这些数据仅保存在你的设备本地，开发者无法获取。\n\n本软件只会在你使用相应功能时访问外部网络，例如更新订阅时访问你提供的订阅地址、检查更新时访问 GitHub。",
+    ),
+    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
+      "数据使用",
+    ),
+    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
+      "所有数据都保留在你的设备上，仅用于提供 App 功能：管理你的代理配置、建立 VPN 连接、显示网络统计。我们不会将你的数据用于广告、统计或任何其他目的。",
+    ),
+    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
+      "数据共享",
+    ),
+    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
+      "我们不会与任何第三方共享、出售或披露你的数据。App 内未集成任何数据统计 SDK、崩溃上报服务或广告框架。",
+    ),
+    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
+      "数据安全",
+    ),
+    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
+      "你的配置和订阅数据保存在设备上 App 的私有存储中，受操作系统沙盒保护。敏感信息（如控制器密钥）在系统支持的情况下存储于系统密钥库。",
+    ),
+    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
+      "数据保留",
+    ),
+    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
+      "数据会保留在你的设备上，直到你删除为止。卸载 App 会清除所有应用数据。我们没有任何接收你数据的服务器，因此也不会在服务器上保留任何数据。",
+    ),
+    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
+      "联系方式",
+    ),
+    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
+      "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。",
+    ),
   };
 }
