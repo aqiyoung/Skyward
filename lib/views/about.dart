@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'disclaimer.dart';
+import 'privacy_policy.dart';
 
 @immutable
 class Contributor {
@@ -158,6 +159,16 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 ),
                 title: Text(appLocalizations.disclaimer),
                 widget: const DisclaimerView(),
+              ),
+              ListItem.open(
+                leading: IconWell(
+                  AppGlyphs.info,
+                  side: 40,
+                  glyphSize: 20,
+                  shape: AppShape.md,
+                ),
+                title: Text(appLocalizations.privacyPolicy),
+                widget: const PrivacyPolicyView(),
               ),
             ],
           ),

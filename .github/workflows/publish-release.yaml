@@ -34,6 +34,18 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    # Self-hosted telegram-bot-api so sendDocument accepts the 60 MB+
+    # installers the cloud Bot API would reject -- the same setup beta's
+    # build.yaml uses since ece6895. Needs the TELEGRAM_API_ID and
+    # TELEGRAM_API_HASH secrets.
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
     steps:
       - name: Checkout our source
         uses: actions/checkout@v4
@@ -140,7 +152,7 @@ jobs:
               printf '%s\n' "$CHANGELOG"
             fi
             echo
-            echo "签名用的是本仓库自己的证书，与上游官方构建不同，所以：**装过其它版本（官方版或本仓库更早的构建）必须先卸载一次**，之后就能直接覆盖升级。"
+            echo "签名用的是本仓库自己的证书，与上游官方不同，所以：**装过其它版本（官方版或本仓库更早的构建）必须先卸载一次**，之后就能直接覆盖升级。"
             echo
             echo "| 文件 | 下载 |"
             echo "| --- | --- |"
@@ -185,11 +197,11 @@ jobs:
             --notes-file release-notes.md \
             ${{ inputs.prerelease && '--prerelease' || '--latest' }}
 
-      # Same shape as the other release bots in this account
-      # (aqiyoung/datbox-android, aqiyoung/iptv-app-check): a plain sendMessage
-      # carrying download links. The installers are far over the 50 MB cap the
-      # cloud Bot API puts on uploads, and a link uploads nothing at all, so no
-      # self-hosted Bot API server is needed.
+      # The APK goes up as a document through the self-hosted telegram-bot-api
+      # (localhost:8081) -- the same approach beta's build.yaml uses since
+      # ece6895. The local API lifts the 50 MB upload cap the cloud Bot API
+      # enforces, so the 60 MB+ installer uploads as a file. If this run
+      # produced no android APK, fall back to the links-only message.
       - name: Announce on Telegram
         if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
         env:
@@ -239,9 +251,51 @@ jobs:
 
           cat /tmp/msg.txt
 
-          # -f: a rejected post (bad token, chat the bot cannot write to) fails
-          # visibly instead of reporting success.
-          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text@/tmp/msg.txt" \
+          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          apks=(dist/*android-arm64*.apk)
+          apk="${apks[0]:-}"
+
+          send_links() {
+            # -f: a rejected post (bad token, chat the bot cannot write to)
+            # fails visibly instead of reporting success.
+            curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text@/tmp/msg.txt" \
+              || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
+          }
+
+          if [ -z "$apk" ]; then
+            echo "::notice::no android-arm64 APK in dist/; announcing with download links only"
+            send_links
+            exit 0
+          fi
+
+          # Wait for the telegram-bot-api service (localhost:8081).
+          for i in $(seq 1 30); do
+            curl -fsS --max-time 5 "${api}/getMe" >/dev/null 2>&1 && break || sleep 2
+          done
+
+          # A document caption is cut at 1024 characters: version header, a
+          # short changelog excerpt and the links. The release page carries
+          # the full notes and every platform's files.
+          {
+            echo "📦 Skyward ${VERSION}（${label}）"
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG_URL}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
+              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
+            fi
+          } > /tmp/caption.txt
+          caption="$(cat /tmp/caption.txt)"
+
+          echo "uploading ${apk}..."
+          # -f: a rejected upload (bad token, chat the bot cannot write to)
+          # fails visibly instead of reporting success.
+          curl -fsS --max-time 900 \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "document=@${apk}" \
+            -F "caption=${caption}" \
+            "${api}/sendDocument" | grep -q '"ok":true' \
+            && echo "telegram accepted ${apk}" \
             || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"

@@ -407,7 +407,7 @@ mod tests {
         assert!(unit.contains("Group=1001\n"));
         assert!(unit.contains("Environment=SKYWARD_HELPER_OWNER_UID=1000\n"));
         assert!(unit.contains("Environment=SKYWARD_HELPER_OWNER_GID=1001\n"));
-        assert!(unit.contains("RuntimeDirectory=flclash\n"));
+        assert!(unit.contains("RuntimeDirectory=skyward\n"));
         assert!(unit.contains("Restart=on-failure\n"));
         assert!(unit.contains("StartLimitBurst=5\n"));
     }
