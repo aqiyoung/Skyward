@@ -55,7 +55,7 @@
   "allowLan": "Разрешить LAN",
   "tun": "TUN",
   "tunGso": "TUN GSO",
-  "tunGsoDesc": "Увеличивает скорость сети. Требуется перезапуск VPN.",
+  "tunGsoDesc": "Generic Segmentation Offload: выше пропускная способность, нужен перезапуск VPN",
   "tunDesc": "TUN работает только в режиме администратора.",
   "minimizeOnExit": "Сворачивать при выходе",
   "autoLaunch": "Автозапуск",
@@ -1010,5 +1010,6 @@
   "privacyPolicyDataRetentionTitle": "Data Retention",
   "privacyPolicyDataRetentionContent": "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
   "privacyPolicyContactTitle": "Contact",
-  "privacyPolicyContactContent": "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward."
+  "privacyPolicyContactContent": "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+  "rulePresetAdBlock": "Block Ads"
 }

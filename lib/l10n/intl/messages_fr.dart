@@ -2029,7 +2029,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Améliore la vitesse réseau. Nécessite un redémarrage du VPN."),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload : débit supérieur, redémarrage du VPN requis"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN n’a pas pu être autorisé et a donc été désactivé.",
     ),
@@ -2144,6 +2144,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
       "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+    ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
+      "Block Ads",
     ),
   };
 }
