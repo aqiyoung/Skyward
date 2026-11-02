@@ -47,7 +47,16 @@ enum RulePreset {
     'DOMAIN-SUFFIX,criteo.com,REJECT',
     'DOMAIN-SUFFIX,outbrain.com,REJECT',
     'DOMAIN-SUFFIX,taboola.com,REJECT',
-    // Chinese ad platforms
+    // Chinese ad platforms - Pangle (ByteDance)
+    'DOMAIN-SUFFIX,pangle.io,REJECT',
+    'DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT',
+    'DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT',
+    'DOMAIN,api-access.pangolin-sdk-toutiao.com,REJECT',
+    'DOMAIN,is.snssdk.com,REJECT',
+    // Chinese ad platforms - GDT (Tencent)
+    'DOMAIN-SUFFIX,gdt.qq.com,REJECT',
+    'DOMAIN,pgdt.gtimg.cn,REJECT',
+    'DOMAIN,mi.gdt.qq.com,REJECT',
     // App ad SDKs (common)
     'DOMAIN-SUFFIX,umeng.com,REJECT',
     'DOMAIN-SUFFIX,umtrack.com,REJECT',
