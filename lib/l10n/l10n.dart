@@ -8559,4 +8559,14 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
       args: [],
     );
   }
+
+  /// `Block Ads`
+  String get rulePresetAdBlock {
+    return Intl.message(
+      'Block Ads',
+      name: 'rulePresetAdBlock',
+      desc: '',
+      args: [],
+    );
+  }
 }
