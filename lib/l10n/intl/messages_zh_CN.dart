@@ -1467,7 +1467,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("通用分段卸载：提升吞吐，需重启 VPN 生效"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("开启可提升网速，修改后需重启 VPN 生效"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),

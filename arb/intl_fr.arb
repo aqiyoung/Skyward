@@ -55,7 +55,7 @@
   "allowLan": "Autoriser le LAN",
   "tun": "TUN",
   "tunGso": "TUN GSO",
-  "tunGsoDesc": "Generic Segmentation Offload : débit supérieur, redémarrage du VPN requis",
+  "tunGsoDesc": "Améliore la vitesse réseau. Nécessite un redémarrage du VPN.",
   "tunDesc": "TUN ne fonctionne qu’en mode administrateur.",
   "minimizeOnExit": "Réduire à la fermeture",
   "autoLaunch": "Lancement automatique",

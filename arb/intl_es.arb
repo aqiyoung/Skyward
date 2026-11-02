@@ -55,7 +55,7 @@
   "allowLan": "Permitir LAN",
   "tun": "TUN",
   "tunGso": "TUN GSO",
-  "tunGsoDesc": "Generic Segmentation Offload: mayor rendimiento, requiere reiniciar VPN",
+  "tunGsoDesc": "Mejora la velocidad de red. Requiere reiniciar la VPN.",
   "tunDesc": "TUN solo funciona en modo administrador.",
   "minimizeOnExit": "Minimizar al salir",
   "autoLaunch": "Inicio automático",

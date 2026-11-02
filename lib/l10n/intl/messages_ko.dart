@@ -1591,7 +1591,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload: 처리량 향상, VPN 재시작 필요"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("네트워크 속도 향상. 변경 후 VPN 재시작 필요."),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN 권한을 얻지 못해 끄기로 되돌렸습니다.",
     ),

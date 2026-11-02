@@ -2028,7 +2028,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload: mayor rendimiento, requiere reiniciar VPN"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Mejora la velocidad de red. Requiere reiniciar la VPN."),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo autorizar TUN, por lo que se desactivó.",
     ),
