@@ -8358,6 +8358,39 @@ class AppLocalizations {
       args: [],
     );
   }
+}
+
+class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
+  const AppLocalizationDelegate();
+
+  List<Locale> get supportedLocales {
+    return const <Locale>[
+      Locale.fromSubtags(languageCode: 'en'),
+      Locale.fromSubtags(languageCode: 'es'),
+      Locale.fromSubtags(languageCode: 'fr'),
+      Locale.fromSubtags(languageCode: 'ja'),
+      Locale.fromSubtags(languageCode: 'ko'),
+      Locale.fromSubtags(languageCode: 'ru'),
+      Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
+    ];
+  }
+
+  @override
+  bool isSupported(Locale locale) => _isSupported(locale);
+  @override
+  Future<AppLocalizations> load(Locale locale) => AppLocalizations.load(locale);
+  @override
+  bool shouldReload(AppLocalizationDelegate old) => false;
+
+  bool _isSupported(Locale locale) {
+    for (var supportedLocale in supportedLocales) {
+      if (supportedLocale.languageCode == locale.languageCode) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// `Privacy Policy`
   String get privacyPolicy {
     return Intl.message(
@@ -8487,36 +8520,14 @@ class AppLocalizations {
       args: [],
     );
   }
-}
 
-class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
-  const AppLocalizationDelegate();
-
-  List<Locale> get supportedLocales {
-    return const <Locale>[
-      Locale.fromSubtags(languageCode: 'en'),
-      Locale.fromSubtags(languageCode: 'es'),
-      Locale.fromSubtags(languageCode: 'fr'),
-      Locale.fromSubtags(languageCode: 'ja'),
-      Locale.fromSubtags(languageCode: 'ko'),
-      Locale.fromSubtags(languageCode: 'ru'),
-      Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
-    ];
-  }
-
-  @override
-  bool isSupported(Locale locale) => _isSupported(locale);
-  @override
-  Future<AppLocalizations> load(Locale locale) => AppLocalizations.load(locale);
-  @override
-  bool shouldReload(AppLocalizationDelegate old) => false;
-
-  bool _isSupported(Locale locale) {
-    for (var supportedLocale in supportedLocales) {
-      if (supportedLocale.languageCode == locale.languageCode) {
-        return true;
-      }
-    }
-    return false;
+  /// `Block Ads`
+  String get rulePresetAdBlock {
+    return Intl.message(
+      'Block Ads',
+      name: 'rulePresetAdBlock',
+      desc: '',
+      args: [],
+    );
   }
 }
