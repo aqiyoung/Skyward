@@ -275,27 +275,29 @@ jobs:
             curl -fsS --max-time 5 "${api}/getMe" >/dev/null 2>&1 && break || sleep 2
           done
 
-          # A document caption is cut at 1024 characters: version header, a
-          # short changelog excerpt and the links. The release page carries
-          # the full notes and every platform's files.
+          # A document caption is cut at 1024 characters, so it carries only the
+          # version header and the release-page link. The full per-platform
+          # download links and the changelog go out as a follow-up text message
+          # via send_links below; the release page carries the full notes too.
           {
             echo "📦 Skyward ${VERSION}（${label}）"
             echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG_URL}"
-            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
-              echo
-              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
-              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
-            fi
           } > /tmp/caption.txt
           caption="$(cat /tmp/caption.txt)"
 
           echo "uploading ${apk}..."
           # -f: a rejected upload (bad token, chat the bot cannot write to)
           # fails visibly instead of reporting success.
-          curl -fsS --max-time 900 \
+          if curl -fsS --max-time 900 \
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "document=@${apk}" \
             -F "caption=${caption}" \
-            "${api}/sendDocument" | grep -q '"ok":true' \
-            && echo "telegram accepted ${apk}" \
-            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
+            "${api}/sendDocument" | grep -q '"ok":true'; then
+            echo "telegram accepted ${apk}"
+          else
+            echo "::error::APK 文档推送失败（检查 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID）；仍会补发各平台下载链接"
+          fi
+          # 有 APK 时上面只把安卓 APK 作为文档发出，而文档 caption 受 Telegram 1024 字限制，
+          # 只能放版本号与 Release 页链接，放不下 7 个平台的下载链接。所以无论 APK 是否上传成功，
+          # 这里都再补发一条文本消息（send_links）列出全部平台，否则 TG 频道里看起来「只有安卓」。
+          send_links
