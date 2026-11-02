@@ -2145,5 +2145,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
       "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
     ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
+      "Block Ads",
+    ),
   };
 }
