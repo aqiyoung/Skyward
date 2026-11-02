@@ -8530,4 +8530,44 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
       args: [],
     );
   }
+
+  /// `Data Security`
+  String get privacyPolicySecurityTitle {
+    return Intl.message(
+      'Data Security',
+      name: 'privacyPolicySecurityTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Data Security content`
+  String get privacyPolicySecurityContent {
+    return Intl.message(
+      'We implement appropriate security measures to protect your data.',
+      name: 'privacyPolicySecurityContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User Rights`
+  String get privacyPolicyUserRightsTitle {
+    return Intl.message(
+      'User Rights',
+      name: 'privacyPolicyUserRightsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User Rights content`
+  String get privacyPolicyUserRightsContent {
+    return Intl.message(
+      'You have the right to access, correct, or delete your personal data.',
+      name: 'privacyPolicyUserRightsContent',
+      desc: '',
+      args: [],
+    );
+  }
 }
