@@ -374,6 +374,9 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default([]) List<String> serviceOrder,
     @Default([]) List<String> disabledServices,
     @Default({}) Map<String, Map<String, double>> tableColumnWidths,
+    /// Blocks the ad and tracker names in `features/ad_block` unless the
+    /// reader turns the module off.
+    @Default(true) bool adBlock,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

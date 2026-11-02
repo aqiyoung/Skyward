@@ -502,6 +502,11 @@ class SetupAction extends _$SetupAction {
       ),
     );
     final appendSystemDns = networkSetting.appendSystemDns;
+    // The ad-block module rides in with the added rules: those are what sits in
+    // front of everything a subscription ships, so no rule set can undo it.
+    final adBlock = ref.read(
+      appSettingProvider.select((state) => state.adBlock),
+    );
     final isCustom = setupState.profileType == ProfileType.custom;
     final scriptContent =
         !isCustom && setupState.extendType == ExtendType.script
@@ -549,7 +554,9 @@ class SetupAction extends _$SetupAction {
         bypassPrivateRoute: networkSetting.bypassPrivateRoute,
         keepEmptyDnsOverrides: setupState.profileType != ProfileType.custom,
         appendSystemDns: appendSystemDns,
-        addedRules: setupState.addedRules,
+        addedRules: adBlock
+            ? withAdBlockRules(setupState.addedRules)
+            : setupState.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
         matchTarget:

@@ -1721,5 +1721,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
     ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "一般的な広告・追跡ドメインを遮断します。ルールは購読のルールより先に適用されます。",
+    ),
   };
 }

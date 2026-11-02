@@ -1572,5 +1572,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "广告过滤",
     ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "拦截常见广告与追踪域名，规则排在订阅规则之前。",
+    ),
   };
 }

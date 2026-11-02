@@ -10,6 +10,7 @@ import 'package:skyward/common/system_dns.dart';
 import 'package:skyward/core/core.dart';
 import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/plugins/app.dart';
 import 'package:skyward/plugins/download.dart';

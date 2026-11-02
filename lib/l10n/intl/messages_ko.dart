@@ -1698,5 +1698,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
     ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "일반적인 광고·추적 도메인을 차단합니다. 규칙은 구독 규칙보다 먼저 적용됩니다.",
+    ),
   };
 }

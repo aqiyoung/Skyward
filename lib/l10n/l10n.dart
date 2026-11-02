@@ -8538,6 +8538,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Blocks common ad and tracker domains, ahead of the rules a subscription ships.`
+  String get adBlockDescription {
+    return Intl.message(
+      'Blocks common ad and tracker domains, ahead of the rules a subscription ships.',
+      name: 'adBlockDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1011,5 +1011,6 @@
   "privacyPolicyDataRetentionContent": "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
   "privacyPolicyContactTitle": "Contact",
   "privacyPolicyContactContent": "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
-  "rulePresetAdBlock": "Block Ads"
+  "rulePresetAdBlock": "Block Ads",
+  "adBlockDescription": "일반적인 광고·추적 도메인을 차단합니다. 규칙은 구독 규칙보다 먼저 적용됩니다."
 }
