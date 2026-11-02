@@ -172,6 +172,12 @@ jobs:
           sha="$(git rev-parse HEAD)"
           claimed="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" \
             --jq '.object.sha' 2>/dev/null || true)"
+          # An unknown ref answers 404 with a JSON body on stdout rather than an
+          # empty string, so anything that is not a commit sha means the number
+          # is still free.
+          if ! printf '%s' "$claimed" | grep -Eq '^[0-9a-f]{40}$'; then
+            claimed=""
+          fi
           if [ -n "$claimed" ] && [ "$claimed" != "$sha" ]; then
             echo "::error::${TAG} is already claimed by ${claimed}; another run took this number"
             exit 1
