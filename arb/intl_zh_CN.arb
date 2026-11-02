@@ -55,7 +55,7 @@
   "allowLan": "局域网代理",
   "tun": "虚拟网卡",
   "tunGso": "TUN GSO",
-  "tunGsoDesc": "通用分段卸载：提升吞吐，需重启 VPN 生效",
+  "tunGsoDesc": "开启可提升网速，修改后需重启 VPN 生效",
   "tunDesc": "虚拟网卡仅在管理员模式生效。",
   "minimizeOnExit": "退出时最小化",
   "autoLaunch": "自启动",
@@ -1010,6 +1010,5 @@
   "privacyPolicyDataRetentionTitle": "数据保留",
   "privacyPolicyDataRetentionContent": "数据会保留在你的设备上，直到你删除为止。卸载 App 会清除所有应用数据。我们没有任何接收你数据的服务器，因此也不会在服务器上保留任何数据。",
   "privacyPolicyContactTitle": "联系方式",
-  "privacyPolicyContactContent": "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。",
-  "rulePresetAdBlock": "广告过滤"
+  "privacyPolicyContactContent": "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。"
 }
