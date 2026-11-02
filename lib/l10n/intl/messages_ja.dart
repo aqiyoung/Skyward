@@ -1616,7 +1616,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("ネットワーク速度を向上。変更後はVPNの再起動が必要。"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Generic Segmentation Offload：スループット向上、VPN再起動が必要"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN の権限を取得できなかったため、オフにしました。",
     ),
@@ -1717,6 +1717,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
       "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+    ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
+      "Block Ads",
     ),
   };
 }
