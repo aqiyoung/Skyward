@@ -275,9 +275,10 @@ jobs:
             curl -fsS --max-time 5 "${api}/getMe" >/dev/null 2>&1 && break || sleep 2
           done
 
-          # A document caption is cut at 1024 characters: version header, a
-          # short changelog excerpt and the links. The release page carries
-          # the full notes and every platform's files.
+          # A document caption is cut at 1024 characters, so it carries only the
+          # version header and the release-page link. The full per-platform
+          # download links and the changelog go out as a follow-up text message
+          # via send_links below; the release page carries the full notes too.
           {
             echo "📦 Skyward ${VERSION}（${label}）"
             echo "https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG_URL}"
