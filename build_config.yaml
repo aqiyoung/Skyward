@@ -1,6 +1,6 @@
 tags: with_gvisor
 go_ldflags: "-w -s"
-core_version: v1.19.33-skyward.1
+core_version: v1.19.33-skyward.2
 core_dir: core
 core_name: SkywardCore
 output_dir: libclash
