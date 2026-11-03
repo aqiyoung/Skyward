@@ -1,0 +1,44 @@
+name: test probe
+
+# Temporary: the beta suite stopped finishing (13 min became 30+), and a
+# cancelled job keeps no log, so this runs the same suite with a per-test
+# timeout -- a test that hangs fails with its own name instead of holding the
+# job until the six-hour limit. Delete once the suite is green again.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to test
+        default: beta
+      timeout:
+        description: Per-test timeout
+        default: 120s
+      path:
+        description: Test path, empty for the whole suite
+        default: ''
+
+jobs:
+  probe:
+    name: Probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: 3.47.6
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: |
+          flutter --version
+          flutter pub get
+
+      - name: Run the tests
+        run: flutter test --reporter expanded --timeout ${{ inputs.timeout }} ${{ inputs.path }}
