@@ -43,11 +43,15 @@ class DAVTransport {
     Dio? dio,
   }) : _base = Uri.parse(uri.trim()),
        _dio = dio ?? Dio() {
-    // Backups carry the user's credentials: never route them through the
-    // proxy and never skip TLS, regardless of the app-wide setting.
-    _dio.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () => createSecureDirectClient(),
-    );
+    if (dio == null) {
+      // Backups carry the user's credentials: never route them through the
+      // proxy and never skip TLS, regardless of the app-wide setting. Only the
+      // default client gets this isolation; a caller-supplied dio (e.g. in
+      // tests) keeps its own adapter.
+      _dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () => createSecureDirectClient(),
+      );
+    }
     _dio.options
       ..connectTimeout = const Duration(seconds: 8)
       ..sendTimeout = const Duration(seconds: 60)
