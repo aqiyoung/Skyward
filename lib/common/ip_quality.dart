@@ -159,8 +159,22 @@ Future<_Answer> _query(
   if (response.statusCode != HttpStatus.ok) {
     throw const _SourceFailure(IpQualitySourceStatus.failed);
   }
-  final json = jsonDecode(response.data ?? '') as Map<String, dynamic>;
-  final answer = _parse(source, ip, json);
+  final data = response.data;
+  Map<String, dynamic>? decoded;
+  if (data is String) {
+    try {
+      final parsed = jsonDecode(data);
+      if (parsed is Map) {
+        decoded = Map<String, dynamic>.from(parsed);
+      }
+    } catch (_) {
+      decoded = null;
+    }
+  }
+  if (decoded == null) {
+    throw const _SourceFailure(IpQualitySourceStatus.failed);
+  }
+  final answer = _parse(source, ip, decoded);
   if (answer == null) {
     throw const _SourceFailure(IpQualitySourceStatus.noType);
   }

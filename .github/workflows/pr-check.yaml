@@ -1,0 +1,58 @@
+name: pr-check
+
+# Lightweight Dart validation for pull requests and feature-branch pushes.
+#
+# The release pipeline (build.yaml / ci.yaml) only runs on `main`/`beta` or by
+# manual dispatch, so feature PRs were never automatically checked. This keeps
+# that split: full release builds stay on the release channels, while every PR
+# gets a fast analyze + test gate so Dart regressions (e.g. the security fixes
+# in this repo) are caught before merge.
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+      - beta
+
+concurrency:
+  group: pr-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+
+jobs:
+  dart:
+    name: Dart analyze & test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      # The setup hook would otherwise build the Go core assets, which are not
+      # needed for analyze/test and require the Go toolchain + submodules.
+      - name: Skip Go core asset build
+        run: yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: dart run tool/test.dart -- --reporter expanded

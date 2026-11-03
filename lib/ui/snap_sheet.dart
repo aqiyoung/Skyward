@@ -317,7 +317,7 @@ class _SheetModel extends ChangeNotifier {
     : detents = route.detents,
       fitsContent = route.fitsContent {
     _ticker = vsync.createTicker(_tick);
-    route.animation!.addListener(_syncLift);
+    route.animation?.addListener(_syncLift);
   }
 
   final SnapSheetRoute<dynamic> route;
@@ -745,7 +745,7 @@ class _SheetModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    route.animation!.removeListener(_syncLift);
+    route.animation?.removeListener(_syncLift);
     _ticker.dispose();
     settling.dispose();
     open.dispose();

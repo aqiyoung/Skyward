@@ -1,9 +1,13 @@
 name: build
 
-# Called twice per channel by ci.yaml: once with `stage: test` to gate the
-# channel on its own test suite, once with `stage: build` to produce the
-# artifacts. Split in two so a failing test blocks the release while a single
-# failing platform still publishes the rest.
+# Called twice per channel: once with `stage: test` to gate the channel on its
+# own test suite, once with `stage: build` to produce the artifacts. Split in
+# two so a failing test blocks the release while a single failing platform
+# still publishes the rest.
+#
+# Two callers pass the platform set: ci.yaml asks for `all`, ci-android.yaml
+# asks for `android` only -- the phone builds stay on the fast channel while the
+# desktop ones are paused.
 #
 # The signing keystore is injected from repository secrets; without it
 # upstream's Gradle falls back to the debug key and appends a `.dev` suffix, so
@@ -37,6 +41,11 @@ on:
         description: Whether to test or to build
         required: true
         type: string
+      platforms:
+        description: Which platforms to build (see the `plan` job) -- defaults to all of them
+        required: false
+        type: string
+        default: all
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -73,35 +82,48 @@ jobs:
       - name: Run the tests
         run: flutter test --reporter expanded
 
+  # The matrix is data, not YAML: a build that only wants the phone passes
+  # `platforms: android` and the one row below is the whole matrix. Keeping the
+  # rows here means a caller names a set instead of repeating runner labels.
+  plan:
+    name: Plan platforms
+    if: inputs.stage == 'build'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Pick the platforms to build
+        id: plan
+        env:
+          WANT: ${{ inputs.platforms || 'all' }}
+        run: |
+          set -euo pipefail
+          android='{"platform":"android","os":"ubuntu-latest"}'
+          linux_amd64='{"platform":"linux","os":"ubuntu-22.04","arch":"amd64"}'
+          linux_arm64='{"platform":"linux","os":"ubuntu-24.04-arm","arch":"arm64"}'
+          windows_amd64='{"platform":"windows","os":"windows-2022","arch":"amd64"}'
+          windows_arm64='{"platform":"windows","os":"windows-11-arm","arch":"arm64"}'
+          macos_amd64='{"platform":"macos","os":"macos-15-intel","arch":"amd64"}'
+          macos_arm64='{"platform":"macos","os":"macos-latest","arch":"arm64"}'
+          case "$WANT" in
+            all) rows=("$android" "$linux_amd64" "$linux_arm64" "$windows_amd64" "$windows_arm64" "$macos_amd64" "$macos_arm64") ;;
+            android) rows=("$android") ;;
+            *) echo "::error::unknown platforms '$WANT' (expected all or android)"; exit 1 ;;
+          esac
+          matrix=$(printf '%s\n' "${rows[@]}" | paste -sd, -)
+          echo "matrix=[$matrix]" >> "$GITHUB_OUTPUT"
+          echo "platforms $WANT: [$matrix]"
+
   build:
     name: ${{ matrix.platform }} ${{ matrix.arch }}
     if: inputs.stage == 'build'
+    needs: plan
     runs-on: ${{ matrix.os }}
     timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: linux
-            os: ubuntu-22.04
-            arch: amd64
-          - platform: linux
-            os: ubuntu-24.04-arm
-            arch: arm64
-          - platform: windows
-            os: windows-2022
-            arch: amd64
-          - platform: windows
-            os: windows-11-arm
-            arch: arm64
-          - platform: macos
-            os: macos-15-intel
-            arch: amd64
-          - platform: macos
-            os: macos-latest
-            arch: arm64
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
