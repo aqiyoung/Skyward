@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:skyward/enum/enum.dart';
 import 'print.dart';
 import 'protocol.dart';
 import 'string.dart';
@@ -60,11 +61,27 @@ bool _isSafeInstallUrl(String url) {
     return false;
   }
   final address = InternetAddress.tryParse(parsed.host);
-  if (address != null &&
-      (address.isLoopback || address.isLinkLocal || address.isPrivate)) {
+  if (address != null && _isUnsafeAddress(address)) {
     return false;
   }
   return true;
+}
+
+/// Rejects loopback, link-local (incl. cloud metadata 169.254.169.254) and
+/// RFC1918 private addresses. [InternetAddress] has no `isPrivate` getter on
+/// this Dart version, so the private ranges are checked manually.
+bool _isUnsafeAddress(InternetAddress address) {
+  if (address.isLoopback || address.isLinkLocal) return true;
+  if (address.type == InternetAddressType.IPv4) {
+    final b = address.rawAddress;
+    if (b.length >= 2) {
+      final a = b[0];
+      if (a == 10) return true;
+      if (a == 172 && b[1] >= 16 && b[1] <= 31) return true;
+      if (a == 192 && b[1] == 168) return true;
+    }
+  }
+  return false;
 }
 
 class LinkManager {

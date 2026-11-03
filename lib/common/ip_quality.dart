@@ -160,20 +160,16 @@ Future<_Answer> _query(
     throw const _SourceFailure(IpQualitySourceStatus.failed);
   }
   final data = response.data;
-  final Map<String, dynamic>? decoded;
-  if (data is Map<String, dynamic>) {
-    decoded = data;
-  } else if (data is String) {
+  Map<String, dynamic>? decoded;
+  if (data is String) {
     try {
       final parsed = jsonDecode(data);
-      decoded = parsed is Map<String, dynamic>
-          ? parsed
-          : (parsed is Map ? Map<String, dynamic>.from(parsed) : null);
+      if (parsed is Map) {
+        decoded = Map<String, dynamic>.from(parsed);
+      }
     } catch (_) {
       decoded = null;
     }
-  } else {
-    decoded = null;
   }
   if (decoded == null) {
     throw const _SourceFailure(IpQualitySourceStatus.failed);

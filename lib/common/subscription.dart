@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 
+import 'package:skyward/enum/enum.dart';
 import 'package:skyward/common/print.dart';
 
 /// Proxy link schemes we recognize.
