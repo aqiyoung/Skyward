@@ -480,10 +480,14 @@ abstract final class AppGlyphs {
   /// fit. [more] is the same mark standing up, which the app bar already uses
   /// to open a menu; a tab bar reads a vertical one as a menu rather than a
   /// page.
+  ///
+  /// The dots are a diameter wider than [more]'s and sit on a 6/12/18 grid:
+  /// the other tab marks are filled bodies some 17 units across, and a 2.8
+  /// dot reads as a lighter icon beside them rather than a smaller one.
   static const moreHorizontal = Glyph([
-    GlyphCircle(5.5, 12, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(12, 12, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(18.5, 12, 1.4, role: GlyphRole.line, solid: true),
+    GlyphCircle(6, 12, 2, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 12, 2, role: GlyphRole.line, solid: true),
+    GlyphCircle(18, 12, 2, role: GlyphRole.line, solid: true),
   ]);
 
   static const moreCircle = Glyph([
