@@ -132,7 +132,13 @@ jobs:
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$titles" \
+          # A preview publish creates no release, so the number it claimed
+          # survives only in the tag the next step writes. Read those back too,
+          # or this run counts to the same number the last one already took.
+          claimed=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            --jq '.[].ref' 2>/dev/null || true)
+          highest_stamp=$(printf '%s\n%s\n' "$titles" "$claimed" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
           build_number=$(( day_prefix * 100 + stamp ))
