@@ -156,10 +156,12 @@ class Request {
     final response = await HttpOverrides.runWithHttpOverrides(
       () => dio.get<void>(
         'https://github.com/$repository/releases/latest',
-      options: Options(
-        followRedirects: false,
-        validateStatus: (status) => status != null && status < 400,
+        options: Options(
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 400,
+        ),
       ),
+      DirectOverrides(),
     );
     final location = response.headers.value(HttpHeaders.locationHeader);
     final segments = Uri.tryParse(location ?? '')?.pathSegments ?? const [];
