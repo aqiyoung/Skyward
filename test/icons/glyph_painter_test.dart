@@ -18,7 +18,7 @@ final _glyphs = {
   'dns': AppGlyphs.dns,
   'resources': AppGlyphs.resources,
   'logs': AppGlyphs.logs,
-  'tools': AppGlyphs.tools,
+  'moreHorizontal': AppGlyphs.moreHorizontal,
   'target': AppGlyphs.target,
   'arrowBack': AppGlyphs.arrowBack,
   'chevronBack': AppGlyphs.chevronBack,

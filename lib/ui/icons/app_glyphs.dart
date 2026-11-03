@@ -94,25 +94,6 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.detail),
   ]);
 
-  static const tools = Glyph([
-    GlyphBox(3, 7, 21, 20, 2.8),
-    GlyphPolyline([
-      GlyphVertex(9, 7),
-      GlyphVertex(9, 4.6, 1.4),
-      GlyphVertex(15, 4.6, 1.4),
-      GlyphVertex(15, 7),
-    ], role: GlyphRole.line),
-    GlyphPolyline([
-      GlyphVertex(3.2, 12.6),
-      GlyphVertex(9.6, 12.6),
-    ], role: GlyphRole.detail),
-    GlyphPolyline([
-      GlyphVertex(14.4, 12.6),
-      GlyphVertex(20.8, 12.6),
-    ], role: GlyphRole.detail),
-    GlyphBox(10.4, 11, 13.6, 14.4, 1, role: GlyphRole.detail),
-  ]);
-
   static const target = Glyph([
     GlyphArc(
       12,
@@ -493,6 +474,16 @@ abstract final class AppGlyphs {
     GlyphCircle(12, 5.5, 1.4, role: GlyphRole.line, solid: true),
     GlyphCircle(12, 12, 1.4, role: GlyphRole.line, solid: true),
     GlyphCircle(12, 18.5, 1.4, role: GlyphRole.line, solid: true),
+  ]);
+
+  /// The three dots laid flat, for the tab that holds the pages which do not
+  /// fit. [more] is the same mark standing up, which the app bar already uses
+  /// to open a menu; a tab bar reads a vertical one as a menu rather than a
+  /// page.
+  static const moreHorizontal = Glyph([
+    GlyphCircle(5.5, 12, 1.4, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 12, 1.4, role: GlyphRole.line, solid: true),
+    GlyphCircle(18.5, 12, 1.4, role: GlyphRole.line, solid: true),
   ]);
 
   static const moreCircle = Glyph([
