@@ -1956,7 +1956,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Допуск"),
-    "tools": MessageLookupByLibrary.simpleMessage("Инструменты"),
+    "tools": MessageLookupByLibrary.simpleMessage("Ещё"),
     "torch": MessageLookupByLibrary.simpleMessage("Фонарик"),
     "total": MessageLookupByLibrary.simpleMessage("Всего"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("Загружено"),

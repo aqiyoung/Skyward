@@ -1452,7 +1452,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("提示"),
     "toggle": MessageLookupByLibrary.simpleMessage("切换"),
     "tolerance": MessageLookupByLibrary.simpleMessage("容差"),
-    "tools": MessageLookupByLibrary.simpleMessage("工具"),
+    "tools": MessageLookupByLibrary.simpleMessage("更多"),
     "torch": MessageLookupByLibrary.simpleMessage("手电筒"),
     "total": MessageLookupByLibrary.simpleMessage("总计"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("下载总量"),

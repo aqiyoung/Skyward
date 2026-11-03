@@ -1576,7 +1576,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("안내"),
     "toggle": MessageLookupByLibrary.simpleMessage("전환"),
     "tolerance": MessageLookupByLibrary.simpleMessage("허용 오차"),
-    "tools": MessageLookupByLibrary.simpleMessage("도구"),
+    "tools": MessageLookupByLibrary.simpleMessage("더 보기"),
     "torch": MessageLookupByLibrary.simpleMessage("손전등"),
     "total": MessageLookupByLibrary.simpleMessage("합계"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("다운로드량"),

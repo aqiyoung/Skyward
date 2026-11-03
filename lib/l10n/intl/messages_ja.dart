@@ -1601,7 +1601,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("ヒント"),
     "toggle": MessageLookupByLibrary.simpleMessage("切り替え"),
     "tolerance": MessageLookupByLibrary.simpleMessage("許容値"),
-    "tools": MessageLookupByLibrary.simpleMessage("ツール"),
+    "tools": MessageLookupByLibrary.simpleMessage("その他"),
     "torch": MessageLookupByLibrary.simpleMessage("ライト"),
     "total": MessageLookupByLibrary.simpleMessage("合計"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("ダウンロード量"),
