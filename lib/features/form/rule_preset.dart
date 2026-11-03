@@ -33,7 +33,7 @@ enum RulePreset {
     'GEOSITE,category-public-tracker,DIRECT',
     'GEOSITE,category-pt,DIRECT',
     r'PROCESS-NAME-REGEX,(?i)^(qbittorrent|transmission.*|deluge.*|aria2c|motrix|utorrent|bitcomet)(\.exe)?$,DIRECT',
-  ]),
+  ]);
 
   final Glyph glyph;
   final List<String> rawRules;
