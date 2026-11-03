@@ -3,6 +3,8 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:skyward/common/secure_client.dart';
 import 'package:skyward/common/string.dart';
 
 final class DAVException implements Exception {
@@ -29,8 +31,10 @@ final class DAVException implements Exception {
   }
 }
 
-/// Requests go through `Dio`, so they inherit the app-wide HttpOverrides: the
-/// user's proxy selection and the TLS certificate setting apply here too.
+/// Requests are sent through a dedicated client that always verifies TLS and
+/// never routes through the proxy, so a user's "skip certificate verification"
+/// choice for proxy traffic cannot expose backup credentials or MITM the
+/// backup server.
 class DAVTransport {
   DAVTransport({
     required String uri,
@@ -39,6 +43,11 @@ class DAVTransport {
     Dio? dio,
   }) : _base = Uri.parse(uri.trim()),
        _dio = dio ?? Dio() {
+    // Backups carry the user's credentials: never route them through the
+    // proxy and never skip TLS, regardless of the app-wide setting.
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () => createSecureDirectClient(),
+    );
     _dio.options
       ..connectTimeout = const Duration(seconds: 8)
       ..sendTimeout = const Duration(seconds: 60)

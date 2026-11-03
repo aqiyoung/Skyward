@@ -27,6 +27,11 @@ on:
         required: true
         type: boolean
 
+# Creates GitHub releases, so it needs write access to contents. Declared here
+# rather than relying on the caller's workflow-level permissions.
+permissions:
+  contents: write
+
 jobs:
   release:
     name: ${{ inputs.channel }}
@@ -48,7 +53,7 @@ jobs:
           - 8081:8081
     steps:
       - name: Checkout our source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.branch }}
 

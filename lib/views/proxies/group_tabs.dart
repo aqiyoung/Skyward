@@ -61,7 +61,7 @@ class _GroupTabsState extends State<GroupTabs> {
 
   void _follow(TabController controller) {
     _selected.value = controller.index;
-    controller.animation!.addListener(_handleAnimation);
+    controller.animation?.addListener(_handleAnimation);
     WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(jump: true));
   }
 
@@ -70,7 +70,7 @@ class _GroupTabsState extends State<GroupTabs> {
     final controller = widget.controller;
     final index = controller.indexIsChanging
         ? controller.index
-        : controller.animation!.value.round();
+        : (controller.animation?.value ?? controller.index).round();
     if (index == _selected.value) {
       return;
     }

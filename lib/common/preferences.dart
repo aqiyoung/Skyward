@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:skyward/common/boot_record.dart';
 import 'package:skyward/common/common.dart';
+import 'package:skyward/common/secure_store.dart';
 import 'package:skyward/common/system_dns.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
@@ -83,6 +84,23 @@ class Preferences {
       final configString = preferences?.getString(configKey);
       if (configString == null) return null;
       final Map<String, Object?>? configMap = json.decode(configString);
+      if (configMap == null) return null;
+      // Restore the real WebDAV password from the keystore when the config only
+      // holds the sentinel placeholder.
+      for (final key in const ['davProps', 'dav']) {
+        final dav = configMap[key];
+        if (dav is Map && dav['password'] == _davPasswordSentinel) {
+          final real = await DavSecretStore.readPassword();
+          if (real != null && real.isNotEmpty) {
+            (dav as Map<String, Object?>)['password'] = real;
+          } else {
+            commonPrint.log(
+              'WebDAV password missing from keystore; leaving it empty',
+              logLevel: LogLevel.warning,
+            );
+          }
+        }
+      }
       return configMap;
     } catch (e) {
       commonPrint.log(
@@ -122,6 +140,10 @@ class Preferences {
     }
   }
 
+  /// Placeholder written to the plaintext config file in place of the real
+  /// WebDAV password, which is kept in the OS keystore instead.
+  static const _davPasswordSentinel = '__skyward_secure_dav__';
+
   Future<Config?> getConfig() async {
     final configMap = await getConfigMap();
     if (configMap == null) {
@@ -132,6 +154,20 @@ class Preferences {
 
   Future<bool> saveConfig(Config config) async {
     final preferences = await _store.value;
+    // Keep the WebDAV password out of the plaintext config: store it in the
+    // keystore and persist only a sentinel here.
+    final dav = config.davProps;
+    if (dav != null) {
+      if (dav.password.isNotEmpty && dav.password != _davPasswordSentinel) {
+        await DavSecretStore.writePassword(dav.password);
+        config = config.copyWith(
+          davProps: dav.copyWith(password: _davPasswordSentinel),
+        );
+      } else if (dav.password.isEmpty) {
+        // Password cleared: drop the keystore copy too.
+        await DavSecretStore.deletePassword();
+      }
+    }
     return preferences?.setString(configKey, json.encode(config)) ?? false;
   }
 

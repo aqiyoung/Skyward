@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
@@ -33,7 +34,37 @@ String? _installConfigUrl(Uri uri) {
     return null;
   }
   final url = uri.queryParameters['url']?.trim();
-  return url == null || url.isEmpty ? null : url;
+  if (url == null || url.isEmpty) {
+    return null;
+  }
+  // SSRF / abuse guard: only fetch over public http/https, and never at
+  // loopback, link-local (e.g. cloud metadata 169.254.169.254) or private
+  // addresses. A web page or other app could otherwise make Skyward probe the
+  // device or internal services through this deep link. Hostnames are allowed
+  // (their resolved address cannot be checked statically here).
+  if (!_isSafeInstallUrl(url)) {
+    commonPrint.log(
+      'rejected unsafe install-config url',
+      logLevel: LogLevel.warning,
+    );
+    return null;
+  }
+  return url;
+}
+
+bool _isSafeInstallUrl(String url) {
+  final parsed = Uri.tryParse(url);
+  if (parsed == null ||
+      (parsed.scheme != 'http' && parsed.scheme != 'https') ||
+      parsed.host.isEmpty) {
+    return false;
+  }
+  final address = InternetAddress.tryParse(parsed.host);
+  if (address != null &&
+      (address.isLoopback || address.isLinkLocal || address.isPrivate)) {
+    return false;
+  }
+  return true;
 }
 
 class LinkManager {
