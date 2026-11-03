@@ -15,10 +15,6 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
-  // Update checks hit GitHub over a client that always verifies TLS and never
-  // routes through the proxy, so a MITM on an unverified proxy link cannot
-  // forge an update or its published SHA-256.
-  late final Dio _secureDio;
   String? userAgent;
 
   ProviderReader? _read;
@@ -43,10 +39,6 @@ class Request {
         };
         return client;
       },
-    );
-    _secureDio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
-    _secureDio.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () => createSecureDirectClient(),
     );
   }
 
@@ -105,9 +97,12 @@ class Request {
   /// spent, for example), this falls back to the latest stable alone.
   Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
-      final response = await _secureDio.get<List<dynamic>>(
-        'https://api.github.com/repos/$repository/releases?per_page=30',
-        options: Options(responseType: ResponseType.json),
+      final response = await HttpOverrides.runWithHttpOverrides(
+        () => dio.get<List<dynamic>>(
+          'https://api.github.com/repos/$repository/releases?per_page=30',
+          options: Options(responseType: ResponseType.json),
+        ),
+        DirectOverrides(),
       );
       var candidates =
           (response.data ?? []).whereType<Map<String, dynamic>>().toList();
@@ -144,9 +139,12 @@ class Request {
   @visibleForTesting
   Future<Map<String, dynamic>> latestRelease() async {
     try {
-      final response = await _secureDio.get<Map<String, dynamic>>(
-        'https://api.github.com/repos/$repository/releases/latest',
-        options: Options(responseType: ResponseType.json),
+      final response = await HttpOverrides.runWithHttpOverrides(
+        () => dio.get<Map<String, dynamic>>(
+          'https://api.github.com/repos/$repository/releases/latest',
+          options: Options(responseType: ResponseType.json),
+        ),
+        DirectOverrides(),
       );
       return response.data!;
     } on DioException catch (error) {
@@ -155,8 +153,9 @@ class Request {
         logLevel: LogLevel.warning,
       );
     }
-    final response = await _secureDio.get<void>(
-      'https://github.com/$repository/releases/latest',
+    final response = await HttpOverrides.runWithHttpOverrides(
+      () => dio.get<void>(
+        'https://github.com/$repository/releases/latest',
       options: Options(
         followRedirects: false,
         validateStatus: (status) => status != null && status < 400,
