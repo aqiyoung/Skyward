@@ -4,9 +4,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // here: the WebDAV password now lives in the platform keystore instead of the
 // plaintext shared_preferences file.
 //
-// flutter_secure_storage 9.x resolves cleanly with the rest of the dependency
-// tree; if a future `flutter pub get` ever re-breaks, pin an older patch of
-// this single package rather than dropping secure storage again.
+// Pinned to ^11.x: 9.x pulls win32 ^5.0.0, which conflicts with the repo's
+// locked win32 ^6.4.0 and fails `flutter pub get` (seen in CI). 11.x resolves
+// cleanly against win32 ^6.x. The store only uses the stable read/write/delete
+// core API, so cross-major upgrades are safe.
 
 /// Stores the WebDAV password in the OS keystore so it is not readable from the
 /// plaintext `shared_preferences` XML/JSON that any app with storage access or a
