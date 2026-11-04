@@ -11,6 +11,7 @@ import 'package:skyward/views/about.dart';
 import 'package:skyward/views/access.dart';
 import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
+import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/config/storage.dart';
 import 'package:skyward/views/hotkey.dart';
@@ -66,6 +67,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _BackupItem(),
         const _StorageItem(),
         const _DiagnosticsItem(),
+        const _DnsLeakItem(),
         if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
@@ -302,6 +304,19 @@ class _DiagnosticsItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.status),
       title: Text(context.appLocalizations.diagnostics),
       widget: const DiagnosticsView(),
+    );
+  }
+}
+
+class _DnsLeakItem extends StatelessWidget {
+  const _DnsLeakItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const IconWell(AppGlyphs.dns),
+      title: Text(context.appLocalizations.dnsLeakCheck),
+      widget: const DnsLeakView(),
     );
   }
 }

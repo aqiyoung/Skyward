@@ -96,6 +96,17 @@ extension RestoreStrategyL10n on RestoreStrategy {
   }
 }
 
+extension WebrtcGuardL10n on WebrtcGuard {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      WebrtcGuard.block => appLocalizations.webrtcGuardBlock,
+      WebrtcGuard.proxy => appLocalizations.webrtcGuardProxy,
+      WebrtcGuard.off => appLocalizations.webrtcGuardOff,
+    };
+  }
+}
+
 extension ColorStyleL10n on ColorStyle {
   String get label {
     final appLocalizations = currentAppLocalizations;

@@ -5,6 +5,7 @@ import 'package:skyward/views/config/ad_block.dart';
 import 'package:skyward/views/config/advanced.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/dns.dart';
+import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/config/network.dart';
 import 'package:skyward/views/config/rules.dart';
@@ -301,9 +302,14 @@ final _advancedEntries = <SettingsEntry>[
     page: (l) => l.advancedConfig,
     view: _scriptsView,
   ),
+  SettingsEntry(
+    title: (l) => l.webrtcGuard,
+    page: (l) => l.network,
+    view: _networkView,
+  ),
 ];
 
-/// The two pages that read the app's own state rather than change a setting.
+/// The pages that read the app's own state rather than change a setting.
 final _maintenanceEntries = <SettingsEntry>[
   SettingsEntry(
     title: (l) => l.storage,
@@ -314,6 +320,11 @@ final _maintenanceEntries = <SettingsEntry>[
     title: (l) => l.diagnostics,
     page: (l) => l.settings,
     view: _diagnosticsView,
+  ),
+  SettingsEntry(
+    title: (l) => l.dnsLeakCheck,
+    page: (l) => l.settings,
+    view: _dnsLeakView,
   ),
 ];
 
@@ -338,3 +349,5 @@ Widget _scriptsView(BuildContext context) => const ScriptsView();
 Widget _storageView(BuildContext context) => const StorageView();
 
 Widget _diagnosticsView(BuildContext context) => const DiagnosticsView();
+
+Widget _dnsLeakView(BuildContext context) => const DnsLeakView();

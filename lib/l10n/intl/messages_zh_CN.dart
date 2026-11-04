@@ -208,9 +208,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage("只允许选中应用进入VPN"),
     "about": MessageLookupByLibrary.simpleMessage("关于"),
     "accessControl": MessageLookupByLibrary.simpleMessage("访问控制"),
+    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
+      "只允许选中应用进入VPN",
+    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "访问控制决定哪些应用使用代理。",
     ),
@@ -233,6 +235,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "actionTun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
     "actionUpdateProfiles": MessageLookupByLibrary.simpleMessage("更新全部配置"),
     "actionView": MessageLookupByLibrary.simpleMessage("显示/隐藏"),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "拦截常见广告与追踪域名，规则排在订阅规则之前。",
+    ),
     "add": MessageLookupByLibrary.simpleMessage("添加"),
     "addCustomProxy": MessageLookupByLibrary.simpleMessage("添加代理"),
     "addFilters": MessageLookupByLibrary.simpleMessage("添加筛选"),
@@ -421,6 +426,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "createProfileFromUrlTip": m7,
     "creationTime": MessageLookupByLibrary.simpleMessage("创建时间"),
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage("含启动键，不可移除"),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("当前版本"),
     "custom": MessageLookupByLibrary.simpleMessage("自定义"),
     "customColor": MessageLookupByLibrary.simpleMessage("自定义颜色"),
     "customImportDroppedSubRules": m8,
@@ -565,6 +571,41 @@ class MessageLookup extends MessageLookupByLibrary {
       "未添加时劫持所有发往 53 端口的 DNS 请求（any:53）。",
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS劫持"),
+    "dnsLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "未通过的项：到「进阶配置 → 网络」打开 VPN 与 DNS 劫持，在系统设置里关闭私人 DNS；DNS 覆写里把明文上游换成 DoH。",
+    ),
+    "dnsLeakCheck": MessageLookupByLibrary.simpleMessage("DNS 泄漏自检"),
+    "dnsLeakDirect": MessageLookupByLibrary.simpleMessage("53 端口直出"),
+    "dnsLeakDirectBad": MessageLookupByLibrary.simpleMessage(
+      "直接向 223.5.5.5 查询拿到了真实地址，明文 DNS 仍可直出",
+    ),
+    "dnsLeakEncrypted": MessageLookupByLibrary.simpleMessage("加密解析"),
+    "dnsLeakEncryptedBad": MessageLookupByLibrary.simpleMessage(
+      "上游是明文 DNS，查询内容会原样发出",
+    ),
+    "dnsLeakExternal": MessageLookupByLibrary.simpleMessage("在浏览器中验证"),
+    "dnsLeakFail": MessageLookupByLibrary.simpleMessage("未通过"),
+    "dnsLeakFakeIp": MessageLookupByLibrary.simpleMessage("伪造地址"),
+    "dnsLeakFakeIpBad": MessageLookupByLibrary.simpleMessage(
+      "解析结果不是 198.18.x.x，Fake-IP 没有接管这次查询",
+    ),
+    "dnsLeakHijack": MessageLookupByLibrary.simpleMessage("DNS 劫持"),
+    "dnsLeakHijackBad": MessageLookupByLibrary.simpleMessage(
+      "未配置 any:53，其他解析器的查询不会被接管",
+    ),
+    "dnsLeakIpv6": MessageLookupByLibrary.simpleMessage("IPv6"),
+    "dnsLeakIpv6Bad": MessageLookupByLibrary.simpleMessage(
+      "本机有全局 IPv6 地址，v6 流量可能绕过 IPv4 接管",
+    ),
+    "dnsLeakPass": MessageLookupByLibrary.simpleMessage("通过"),
+    "dnsLeakRerun": MessageLookupByLibrary.simpleMessage("重新检测"),
+    "dnsLeakRunning": MessageLookupByLibrary.simpleMessage("检测中"),
+    "dnsLeakTunnel": MessageLookupByLibrary.simpleMessage("流量接管"),
+    "dnsLeakTunnelBad": MessageLookupByLibrary.simpleMessage(
+      "内核未运行或 VPN 未开启，域名由应用自行解析",
+    ),
+    "dnsLeakUnknown": MessageLookupByLibrary.simpleMessage("无法判断"),
+    "dnsLeakWarn": MessageLookupByLibrary.simpleMessage("注意"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS模式"),
     "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS 覆写"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
@@ -944,13 +985,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkConnectionError": MessageLookupByLibrary.simpleMessage(
       "无法连接到服务器，请检查网络连接或代理设置",
     ),
+    "networkControl": MessageLookupByLibrary.simpleMessage("网络控制"),
     "networkHostLookupError": MessageLookupByLibrary.simpleMessage(
       "无法解析服务器地址，请确认链接正确且 DNS 可用",
     ),
-    "networkControl": MessageLookupByLibrary.simpleMessage("网络控制"),
     "networkName": MessageLookupByLibrary.simpleMessage("网络名称"),
-    "networkOverview": MessageLookupByLibrary.simpleMessage("网络概览"),
     "networkNotFoundError": m54,
+    "networkOverview": MessageLookupByLibrary.simpleMessage("网络概览"),
     "networkRateLimitedError": MessageLookupByLibrary.simpleMessage(
       "请求过于频繁（HTTP 429），请稍后再试",
     ),
@@ -1046,6 +1087,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("请按下组合键"),
     "preview": MessageLookupByLibrary.simpleMessage("预览"),
     "previousMatch": MessageLookupByLibrary.simpleMessage("上一个匹配"),
+    "privacyPolicy": MessageLookupByLibrary.simpleMessage("隐私政策"),
+    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
+      "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。",
+    ),
+    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage("联系方式"),
+    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
+      "Skyward 不会收集或上传你的订阅地址、节点信息、配置内容、访问的网站、连接记录、流量内容和日志，这些数据仅保存在你的设备本地，开发者无法获取。\n\n本软件只会在你使用相应功能时访问外部网络，例如更新订阅时访问你提供的订阅地址、检查更新时访问 GitHub。",
+    ),
+    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
+      "数据收集",
+    ),
+    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
+      "数据会保留在你的设备上，直到你删除为止。卸载 App 会清除所有应用数据。我们没有任何接收你数据的服务器，因此也不会在服务器上保留任何数据。",
+    ),
+    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
+      "数据保留",
+    ),
+    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
+      "你的配置和订阅数据保存在设备上 App 的私有存储中，受操作系统沙盒保护。敏感信息（如控制器密钥）在系统支持的情况下存储于系统密钥库。",
+    ),
+    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
+      "数据安全",
+    ),
+    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
+      "我们不会与任何第三方共享、出售或披露你的数据。App 内未集成任何数据统计 SDK、崩溃上报服务或广告框架。",
+    ),
+    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
+      "数据共享",
+    ),
+    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
+      "所有数据都保留在你的设备上，仅用于提供 App 功能：管理你的代理配置、建立 VPN 连接、显示网络统计。我们不会将你的数据用于广告、统计或任何其他目的。",
+    ),
+    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage("数据使用"),
     "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage("私钥密码"),
     "process": MessageLookupByLibrary.simpleMessage("进程"),
@@ -1162,8 +1236,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeAddress": MessageLookupByLibrary.simpleMessage("路由地址"),
     "routeBoard": MessageLookupByLibrary.simpleMessage("路由"),
     "routeBoardDesc": MessageLookupByLibrary.simpleMessage("本机到目的地经过的节点"),
-    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("排除路由地址"),
     "routeCarrier": MessageLookupByLibrary.simpleMessage("运营商"),
+    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("排除路由地址"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("本机"),
     "routeTo": MessageLookupByLibrary.simpleMessage("目的地"),
     "routeVia": MessageLookupByLibrary.simpleMessage("节点"),
@@ -1257,6 +1331,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleListInvalid": MessageLookupByLibrary.simpleMessage(
       "规则必须是 YAML 列表，每项一条规则，例如 - DOMAIN,example.com,DIRECT",
     ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage("广告过滤"),
     "rulePresetBittorrentDirect": MessageLookupByLibrary.simpleMessage(
       "BT 下载直连",
     ),
@@ -1466,12 +1541,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("传输协议"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
-    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("开启可提升网速，修改后需重启 VPN 生效"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage("虚拟网卡仅在管理员模式生效。"),
+    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("开启可提升网速，修改后需重启 VPN 生效"),
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "添加的项会覆写所有配置的虚拟网卡设置，未添加的项沿用配置自身的设置。自定义配置自己添加的项优先。",
     ),
@@ -1504,13 +1579,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("用户名"),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "version": MessageLookupByLibrary.simpleMessage("版本"),
-    "currentVersion": MessageLookupByLibrary.simpleMessage("当前版本"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("版本更新"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("检查中…"),
-    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("已是最新"),
-    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("发现新版本"),
     "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("下载中…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("检查失败"),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("发现新版本"),
+    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("已是最新"),
     "view": MessageLookupByLibrary.simpleMessage("查看"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("鲜明"),
@@ -1521,6 +1595,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "VPN 通过 VpnService 自动路由系统所有流量。",
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
+    "webrtcGuard": MessageLookupByLibrary.simpleMessage("WebRTC"),
+    "webrtcGuardBlock": MessageLookupByLibrary.simpleMessage("拦截"),
+    "webrtcGuardDesc": MessageLookupByLibrary.simpleMessage(
+      "网页与通话会通过 STUN 询问本机公网地址。拦截最安全，但点对点连接会退化为中继或失败；经代理会换成节点出口地址，需要节点支持 UDP；不处理则交给配置里的规则。",
+    ),
+    "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("不处理"),
+    "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("经代理"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
@@ -1530,50 +1611,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
-    "privacyPolicy": MessageLookupByLibrary.simpleMessage(
-      "隐私政策",
-    ),
-    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
-      "数据收集",
-    ),
-    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
-      "Skyward 不会收集或上传你的订阅地址、节点信息、配置内容、访问的网站、连接记录、流量内容和日志，这些数据仅保存在你的设备本地，开发者无法获取。\n\n本软件只会在你使用相应功能时访问外部网络，例如更新订阅时访问你提供的订阅地址、检查更新时访问 GitHub。",
-    ),
-    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
-      "数据使用",
-    ),
-    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
-      "所有数据都保留在你的设备上，仅用于提供 App 功能：管理你的代理配置、建立 VPN 连接、显示网络统计。我们不会将你的数据用于广告、统计或任何其他目的。",
-    ),
-    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
-      "数据共享",
-    ),
-    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
-      "我们不会与任何第三方共享、出售或披露你的数据。App 内未集成任何数据统计 SDK、崩溃上报服务或广告框架。",
-    ),
-    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
-      "数据安全",
-    ),
-    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
-      "你的配置和订阅数据保存在设备上 App 的私有存储中，受操作系统沙盒保护。敏感信息（如控制器密钥）在系统支持的情况下存储于系统密钥库。",
-    ),
-    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
-      "数据保留",
-    ),
-    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
-      "数据会保留在你的设备上，直到你删除为止。卸载 App 会清除所有应用数据。我们没有任何接收你数据的服务器，因此也不会在服务器上保留任何数据。",
-    ),
-    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
-      "联系方式",
-    ),
-    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
-      "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。",
-    ),
-    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
-      "广告过滤",
-    ),
-    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
-      "拦截常见广告与追踪域名，规则排在订阅规则之前。",
-    ),
   };
 }
