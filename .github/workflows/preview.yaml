@@ -196,6 +196,11 @@ jobs:
 
       # What changed since the previous preview, so the phone shows the point of
       # the build rather than a bare version number.
+      #
+      # The caption is read by Chinese-speaking users while commit subjects are
+      # English, so the prose comes from CHANGELOG.zh.md: its `未发布` section is
+      # what this build is about. The commit range is only the fallback for a
+      # tree that carries no section of its own.
       - name: Collect the changelog
         id: changelog
         env:
@@ -211,8 +216,23 @@ jobs:
           commit="$(git rev-parse HEAD)"
 
           entries=""
+          if [ -f CHANGELOG.zh.md ]; then
+            # Only the `## 未发布` section: a versioned section below it is
+            # history the phone has already been told about.
+            entries=$(awk '
+              /^## 未发布[[:space:]]*$/ { capture = 1; next }
+              /^## / { capture = 0 }
+              capture && NF { print }
+            ' CHANGELOG.zh.md)
+          fi
+
           if [ -n "$previous" ]; then
             echo "changelog: $previous...$commit"
+          fi
+          if [ -n "$entries" ]; then
+            echo "changelog source: CHANGELOG.zh.md (未发布)"
+          elif [ -n "$previous" ]; then
+            echo "::notice::no 未发布 section in CHANGELOG.zh.md; falling back to commit subjects"
             entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
@@ -505,18 +525,21 @@ jobs:
             exit 1
           fi
 
-          # A caption is capped at 1024 characters: the changelog is trimmed
-          # and the release page carries the rest.
+          # A caption is capped at 1024 characters. The entries are already
+          # short and in Chinese, so they are shown whole -- cutting by byte
+          # (`cut -c`) would split a multi-byte character in half.
           {
             echo "🧪 Skyward ${VERSION}（预览版）"
             echo
-            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID} ｜ versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID}"
+            echo "versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
             if [ -n "${CHANGELOG}" ]; then
               echo
-              printf '%s\n' "${CHANGELOG}" | cut -c1-80 | awk 'NR<=6'
+              echo "📝 本次更新"
+              printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "⬇️ 全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
