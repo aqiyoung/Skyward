@@ -1477,7 +1477,10 @@ void main() {
       ]);
       expect(overlay['mixed-port'], isNot(1));
       expect(await configFile.readAsString(), 'previous');
-      expect(globalState.lastConfigCounts, (groups: 2, proxies: 3, rules: 6));
+      expect(
+        globalState.lastConfigCounts,
+        (groups: 2, proxies: 3, rules: webrtcGuardRules.length + 6),
+      );
 
       await setupAction.applyProfile();
       expect(pushed, hasLength(1));
