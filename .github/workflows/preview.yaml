@@ -198,9 +198,9 @@ jobs:
       # the build rather than a bare version number.
       #
       # The caption is read by Chinese-speaking users while commit subjects are
-      # English, so the prose comes from CHANGELOG.zh.md: its `未发布` section is
-      # what this build is about. The commit range is only the fallback for a
-      # tree that carries no section of its own.
+      # English, so the prose comes from the `Changelog-Zh:` trailer each
+      # user-visible commit carries. CHANGELOG.zh.md's `未发布` section is only
+      # the fallback for a range written before that rule existed.
       - name: Collect the changelog
         id: changelog
         env:
@@ -208,9 +208,14 @@ jobs:
           TAG: preview-${{ steps.version.outputs.build_number }}
         run: |
           set -euo pipefail
+          # The checkout is one commit deep, so the range below would otherwise
+          # hold just this merge commit — and every commit worth describing is
+          # behind it. Deepen before walking history.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet \
+            || true
           # Preview releases are deleted (Telegram-only policy), so look up
           # previous preview by git tag instead of the releases API.
-          git fetch --tags --quiet || true
           previous=$(git tag --list "preview-*" --sort=-creatordate \
             | grep -vx "$TAG" | head -1 || true)
           commit="$(git rev-parse HEAD)"
@@ -222,10 +227,16 @@ jobs:
             # trailer, and the caption is built from those. One line each, so
             # the caption never needs a second hand-written file to stay in
             # sync. Falls back to CHANGELOG.zh.md when the range has none.
-            entries=$(git log --no-merges --reverse \
-              --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+            #
+            # Fields are tab-separated: bash drops NUL bytes in command
+            # substitution, which silently emptied a `%x00` split. Merges are
+            # kept because the merge commit is often the only one carrying the
+            # trailer; duplicates are folded after, not filtered before.
+            entries=$(git log --reverse \
+              --format='%h%x09%(trailers:key=Changelog-Zh,valueonly)' \
               "$previous..$commit" 2>/dev/null \
-              | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | awk -F'\t' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | awk '!seen[$0]++' \
               | tac | awk 'NR<=8' || true)
           fi
 
