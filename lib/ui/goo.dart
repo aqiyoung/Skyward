@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'package:material_ui/material_ui.dart';
 import 'package:skyward/ui/liquid_glass.dart';
 import 'package:skyward/ui/navigation_dock.dart';
 
@@ -37,6 +38,19 @@ class GooSurface extends StatelessWidget {
 
   static bool of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<_GooScope>() != null;
+
+  // Retained from the fork's earlier goo: button.dart still reads
+  // GooSurface.buttonStyle, so keep it alongside upstream's buttonBackground.
+  static const buttonStyle = ButtonStyle(
+    backgroundColor: WidgetStatePropertyAll(Colors.transparent),
+    backgroundBuilder: _paneBehind,
+  );
+
+  static Widget _paneBehind(
+    BuildContext context,
+    Set<WidgetState> states,
+    Widget? child,
+  ) => GooPane(child: child);
 
   /// Stands a button's content on a pane of the surface.
   static Widget buttonBackground(
