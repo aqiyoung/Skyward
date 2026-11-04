@@ -33,8 +33,18 @@ final _genericTrailerPattern = RegExp(
   caseSensitive: false,
 );
 
-/// The only suffixed trailer. The changelog ships English, and anything else
-/// belongs in a post-processing step, not in the commit message.
+/// Trailers that carry a language suffix. `Changelog-Zh` is the Chinese text
+/// the app shows when it runs in Chinese; Telegram uses it too, so a preview
+/// caption is Chinese without a second, hand-maintained file.
+///
+/// Any `Changelog-zh`/`Changelog-zh-CN` spelling is accepted and normalized, so
+/// a contributor does not have to remember the exact casing.
+final _zhTrailerPattern = RegExp(
+  r'^Changelog-zh(?:-[A-Za-z0-9]+)?$',
+  caseSensitive: false,
+);
+
+/// The only suffixed trailer that changes how an entry is grouped.
 const _knownSuffixedTrailer = 'Changelog-Type';
 
 /// The parser is pure: it never touches git or the filesystem, so every rule
@@ -65,6 +75,7 @@ class ChangelogParser {
       return const <ChangelogItem>[];
     }
 
+    final textZh = _zhText(trailers);
     final items = <ChangelogItem>[];
     final breakingText = trailers['BREAKING CHANGE'];
     if (bang || breakingText != null) {
@@ -81,6 +92,7 @@ class ChangelogParser {
             id: commit.shortHash,
             scope: _normalizeScope(scope),
             text: _text(breakingText, description),
+            textZh: textZh,
           ),
         ),
       );
@@ -95,6 +107,7 @@ class ChangelogParser {
             id: commit.shortHash,
             scope: _normalizeScope(scope),
             text: _text(changelog, description),
+            textZh: textZh,
           ),
         ),
       );
@@ -160,14 +173,28 @@ class ChangelogParser {
     return trailers;
   }
 
+  /// The Chinese text a `Changelog-Zh:` trailer carries, or null when the
+  /// commit has none. There is deliberately no fallback to the subject: an
+  /// absent translation must leave the entry English rather than pass English
+  /// off as Chinese in a Chinese UI.
+  String? _zhText(Map<String, String> trailers) {
+    for (final entry in trailers.entries) {
+      if (_zhTrailerPattern.hasMatch(entry.key) && entry.value.isNotEmpty) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
   void _warnUnknownTrailer(String key, RawCommit commit) {
-    if (key == _knownSuffixedTrailer || !key.contains('-')) {
+    if (key == _knownSuffixedTrailer ||
+        _zhTrailerPattern.hasMatch(key) ||
+        !key.contains('-')) {
       return;
     }
     warnings.add(
       '${commit.shortHash} uses an unsupported changelog trailer: $key. '
-      'The changelog is English only; $_knownSuffixedTrailer is the only '
-      'suffixed trailer left.',
+      'Changelog-Type and Changelog-Zh are the only suffixed trailers left.',
     );
   }
 }

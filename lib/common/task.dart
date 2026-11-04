@@ -13,6 +13,29 @@ Future<T> decodeJSONTask<T>(String data) async {
   return compute<String, T>(_decodeJSON, data);
 }
 
+/// Rules placed ahead of every profile's own rules so a page cannot learn the
+/// real public address through WebRTC while the proxy is on.
+///
+/// WebRTC opens STUN/TURN sockets of its own and they do not follow the proxy
+/// chain, so a scripted page could otherwise read the real address straight
+/// from the STUN reply. 3478 and 5349 are the RFC 5389 STUN/TURN ports, 19302
+/// is the one Google's public STUN service answers on, and the keyword covers
+/// the named STUN hosts (stun.l.google.com, stun.services.mozilla.com, ...)
+/// that a page may try before it settles on a port. Matching by domain also
+/// works under fake-IP, where the name is never resolved to a real address.
+///
+/// A profile's own proxies, proxy groups and rules are left untouched; these
+/// four entries only sit in front of them, so the user's split routing still
+/// decides everything else. Peer-to-peer media (video calls, remote desktop)
+/// does go through these ports, which is the trade this guard deliberately
+/// makes: it is the same socket a page would use to read the real address.
+const webrtcGuardRules = <String>[
+  'DST-PORT,3478,REJECT',
+  'DST-PORT,5349,REJECT',
+  'DST-PORT,19302,REJECT',
+  'DOMAIN-KEYWORD,stun,REJECT',
+];
+
 Future<T> _decodeJSON<T>(String content) async {
   return json.decode(content);
 }
@@ -372,7 +395,15 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         .map((item) => item.definition)
         .toList();
   }
-  rawConfig['rules'] = rules;
+  // The guards sit in front of the profile's own rules, which are otherwise
+  // untouched. A profile that carried no rules at all used to leave the core
+  // with an empty list and "connect everything directly"; the guards in front
+  // make that an explicit terminal rule instead, so the core still loads.
+  rawConfig['rules'] = [
+    ...webrtcGuardRules,
+    ...rules,
+    if (rules.isEmpty) 'MATCH,DIRECT',
+  ];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
 }

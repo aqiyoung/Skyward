@@ -232,12 +232,29 @@ void main() {
       expect(const PatchClashConfig().dnsOverrideKeys, isEmpty);
     });
 
-    test('the baseline a profile without DNS is given stays minimal', () {
-      expect(baselineDns.overrideJson(baselineDnsOverrideKeys), {
-        'enable': true,
-        'enhanced-mode': 'fake-ip',
-        'nameserver': baselineDns.nameserver,
+    test('the baseline a profile without DNS is given splits DNS by region', () {
+      final json = baselineDns.overrideJson(baselineDnsOverrideKeys);
+
+      expect(json['enable'], true);
+      expect(json['enhanced-mode'], 'fake-ip');
+      expect(json['default-nameserver'], ['223.5.5.5', '119.29.29.29']);
+      expect(json['nameserver'], baselineDns.nameserver);
+      expect(json['nameserver-policy'], {
+        'geosite:cn': [
+          'https://doh.pub/dns-query',
+          'https://dns.alidns.com/dns-query',
+        ],
+        'geoip:cn': [
+          'https://doh.pub/dns-query',
+          'https://dns.alidns.com/dns-query',
+        ],
       });
+      expect(json['proxy-server-nameserver'], ['223.5.5.5', '119.29.29.29']);
+      expect(json['fallback'], [
+        'https://dns.cloudflare.com/dns-query',
+        'https://dns.google/dns-query',
+      ]);
+      expect(json['fallback-filter'], containsPair('geoip-code', 'CN'));
     });
 
     test('a config saved before the key set keeps the keys it overrode', () {

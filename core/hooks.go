@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
-	mihomoHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/component/proxydialer"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/dns"
@@ -14,7 +13,6 @@ import (
 )
 
 func init() {
-	mihomoHttp.TLSConfigHook = relaxCertVerify
 	adapter.UrlTestHook = func(url string, name string, delay uint16, timedOut bool) {
 		sendMessage(DelayMessage, &Delay{Url: url, Name: name, Value: delayValue(delay, timedOut)})
 	}

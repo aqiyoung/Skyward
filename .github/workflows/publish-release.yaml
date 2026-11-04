@@ -79,11 +79,37 @@ jobs:
           entries=""
           if [ -n "$previous" ]; then
             echo "changelog: $previous...$commit"
+            git fetch --tags --quiet || true
+            # One line per user-visible commit, in Chinese. The release page and
+            # the Telegram message both read this list, so the same copy serves
+            # the app (which also carries it as structured JSON) and the channel.
+            entries=$(git log --no-merges --reverse \
+              --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+              "$previous..$commit" 2>/dev/null \
+              | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | tac | awk 'NR<=40' || true)
+          else
+            echo "::notice::no earlier release of this channel; the changelog starts here"
+          fi
+
+          if [ -n "$entries" ]; then
+            echo "changelog source: Changelog-Zh trailers"
+          elif [ -f CHANGELOG.zh.md ]; then
+            entries=$(awk '
+              /^## 未发布[[:space:]]*$/ { capture = 1; next }
+              /^## / { capture = 0 }
+              capture && NF { print }
+            ' CHANGELOG.zh.md)
+            if [ -n "$entries" ]; then
+              echo "changelog source: CHANGELOG.zh.md (未发布)"
+            fi
+          fi
+
+          if [ -z "$entries" ] && [ -n "$previous" ]; then
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
             entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | head -40 || true)
-          else
-            echo "::notice::no earlier release of this channel; the changelog starts here"
           fi
 
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
@@ -167,6 +193,13 @@ jobs:
               echo "| \`${name}\` | [download](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${name}) |"
             done
           } > release-notes.md
+
+          # The app reads this block from the release body to show the update log
+          # in the reader's own language, so it travels with the notes above.
+          if [ -n "$PREVIOUS" ] && command -v node >/dev/null 2>&1; then
+            node tool/release_changelog.mjs "$PREVIOUS" HEAD "$VERSION" "$CHANNEL" \
+              >> release-notes.md
+          fi
 
           echo "tag=$tag commit=$commit"
           ls -la dist

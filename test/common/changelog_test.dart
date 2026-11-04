@@ -48,6 +48,26 @@ void main() {
       );
     });
 
+    test('shows the Chinese entry when the app runs in Chinese', () {
+      const payload =
+          '{"schemaVersion":2,"versions":[{"version":"0.8.96",'
+          '"tag":"v0.8.96","date":"","prerelease":false,"groups":'
+          '[{"type":"feat","entries":[{"id":"1a2b3c4",'
+          '"text":"Override scripts","textZh":"覆盖脚本"}]}]}]}';
+
+      final zh = parseReleaseChangelog(_body(payload), languageCode: 'zh');
+      final en = parseReleaseChangelog(_body(payload), languageCode: 'en');
+
+      expect(zh?.visibleGroups.single.entries.single.text, '覆盖脚本');
+      expect(en?.visibleGroups.single.entries.single.text, 'Override scripts');
+    });
+
+    test('falls back to English for an entry with no translation', () {
+      final zh = parseReleaseChangelog(_body(_payload), languageCode: 'zh');
+
+      expect(zh?.visibleGroups.single.entries.single.text, 'Override scripts');
+    });
+
     test('returns null for a body without the payload', () {
       expect(parseReleaseChangelog('- Override scripts'), isNull);
     });
