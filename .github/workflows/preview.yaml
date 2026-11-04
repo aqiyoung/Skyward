@@ -503,7 +503,6 @@ jobs:
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
           VERSION_CODE: ${{ steps.verify.outputs.version_code }}
           REF: ${{ inputs.ref || github.ref_name }}
-          TAG: preview-${{ steps.version.outputs.build_number }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
@@ -539,7 +538,7 @@ jobs:
               printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
-            echo "⬇️ 全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "⬇️ 安装包即本条消息附件"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
