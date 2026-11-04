@@ -168,11 +168,9 @@ class _DnsLeakViewState extends ConsumerState<DnsLeakView> {
       ),
       (
         title: l.dnsLeakFakeIp,
-        detail: result == null
-            ? l.dnsLeakUnknown
-            : isFakeIp(lookup)
-            ? lookup
-            : l.dnsLeakFakeIpBad,
+        // The address itself is the finding: 198.18.x.x says the core answered,
+        // anything else is what the device was told without it.
+        detail: lookup ?? l.dnsLeakUnknown,
         level: result == null
             ? _Level.unknown
             : isFakeIp(lookup)
@@ -181,13 +179,7 @@ class _DnsLeakViewState extends ConsumerState<DnsLeakView> {
       ),
       (
         title: l.dnsLeakDirect,
-        detail: result == null
-            ? l.dnsLeakUnknown
-            : direct == null
-            ? l.dnsLeakUnknown
-            : isFakeIp(direct)
-            ? direct
-            : l.dnsLeakDirectBad,
+        detail: direct ?? l.dnsLeakUnknown,
         level: result == null
             ? _Level.unknown
             : direct == null
