@@ -1,3 +1,9 @@
+// Runs on its own: the receiver talks to a real socket, and any bundle holding
+// a widget test installs a binding that turns every HttpClient request into a
+// 400 before it leaves the process.
+@TestOn('vm')
+library;
+
 import 'dart:convert';
 import 'dart:io';
 
