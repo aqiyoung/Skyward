@@ -266,7 +266,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.getSize(sidebar).width, 48);
-    expect(find.text('Tools'), findsNWidgets(2));
+    // The label is a tooltip that only renders on hover, so the row is
+    // identified by the glyph the collapsed bar actually paints.
+    expect(_glyph(AppGlyphs.moreHorizontal), findsAtLeastNWidgets(1));
     expect(container.read(appSettingProvider).sidebarExpanded, isTrue);
     expect(tester.takeException(), isNull);
   });
