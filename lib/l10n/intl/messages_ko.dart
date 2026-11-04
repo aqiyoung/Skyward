@@ -1646,6 +1646,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "앱의 글자가 이렇게 표시됩니다",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("테마"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
+
     "themeColor": MessageLookupByLibrary.simpleMessage("테마 색상"),
     "themeMode": MessageLookupByLibrary.simpleMessage("테마 모드"),
     "tight": MessageLookupByLibrary.simpleMessage("좁게"),

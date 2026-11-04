@@ -7,6 +7,7 @@ import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -120,6 +121,11 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
                 onTap: _databaseSize == null ? null : () => _copy(rows),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+          generateSection(
+            title: appLocalizations.dnsLeakCheck,
+            items: [const DnsLeakCheck()],
           ),
         ],
       ),

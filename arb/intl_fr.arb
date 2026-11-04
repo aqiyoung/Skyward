@@ -50,6 +50,10 @@
   "ru": "Russe",
   "zhCN": "Chinois simplifié",
   "theme": "Thème",
+  "appearance": "Appearance",
+  "configuration": "Configuration",
+  "data": "Data",
+
   "extend": "Extension",
   "runtimeConfig": "Configuration d’exécution",
   "allowLan": "Autoriser le LAN",

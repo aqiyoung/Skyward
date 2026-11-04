@@ -50,6 +50,10 @@
   "ru": "ロシア語",
   "zhCN": "簡体字中国語",
   "theme": "テーマ",
+  "appearance": "Appearance",
+  "configuration": "Configuration",
+  "data": "Data",
+
   "extend": "拡張",
   "runtimeConfig": "ランタイム設定",
   "allowLan": "LANプロキシ",

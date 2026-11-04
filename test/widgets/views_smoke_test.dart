@@ -28,6 +28,7 @@ import 'package:skyward/views/profiles/custom/custom_proxies.dart';
 import 'package:skyward/views/profiles/custom/rules.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/views/proxies/tab.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/theme.dart';
 import 'package:skyward/views/views.dart';
 import 'package:material_ui/material_ui.dart';
@@ -117,7 +118,7 @@ void main() {
   }
 
   final toolDestinations = <String, Type>{
-    'Theme': ThemeView,
+    'Appearance': AppearanceView,
     'Backup and restore': BackupAndRestore,
     'General': GeneralView,
     'Advanced configuration': AdvancedConfigView,
@@ -161,6 +162,36 @@ void main() {
       expect(tester.takeException(), null);
     });
   }
+
+  testWidgets('appearance opens Theme', (tester) async {
+    // Theme is no longer a direct entry in More; it now lives inside
+    // AppearanceView (the P1 consolidation of language + theme).
+    final container = ProviderContainer(
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: AppearanceView()),
+      ),
+    );
+    await tester.pump();
+
+    final theme = find.text('Theme');
+    await tester.scrollUntilVisible(
+      theme,
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(theme);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ThemeView), findsOneWidget);
+    expect(tester.takeException(), null);
+  });
 
   testWidgets('user agent item opens the page that applies a preset', (
     tester,

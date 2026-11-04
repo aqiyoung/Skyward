@@ -2095,6 +2095,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Le texte de l’app ressemblera à ceci",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("Thème"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
+
     "themeColor": MessageLookupByLibrary.simpleMessage("Couleur du thème"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Mode du thème"),
     "tight": MessageLookupByLibrary.simpleMessage("Serrée"),

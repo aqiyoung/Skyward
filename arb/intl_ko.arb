@@ -50,6 +50,10 @@
   "ru": "러시아어",
   "zhCN": "중국어 간체",
   "theme": "테마",
+  "appearance": "Appearance",
+  "configuration": "Configuration",
+  "data": "Data",
+
   "extend": "확장",
   "runtimeConfig": "런타임 구성",
   "allowLan": "LAN 허용",

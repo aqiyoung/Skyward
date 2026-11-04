@@ -9,9 +9,9 @@ import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/about.dart';
 import 'package:skyward/views/access.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
-import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/config/storage.dart';
 import 'package:skyward/views/hotkey.dart';
@@ -23,7 +23,6 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
-import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
   const ToolsView({super.key});
@@ -59,27 +58,38 @@ class _ToolViewState extends ConsumerState<ToolsView> {
 
   Widget _getSettingList(bool enableDeveloperMode) {
     final appLocalizations = context.appLocalizations;
-    return generateSection(
-      items: [
-        const _SettingsSearchItem(),
-        const _LocaleItem(),
-        const _ThemeItem(),
-        const _BackupItem(),
-        const _StorageItem(),
-        const _DiagnosticsItem(),
-        const _DnsLeakItem(),
-        if (system.isDesktop) const _HotkeyItem(),
-        if (system.isAndroid) const _AccessItem(),
-        const _AdvancedConfigItem(),
-        const _CustomResourcesItem(),
-        const _GeneralItem(),
-        if (enableDeveloperMode) const _DeveloperItem(),
+    return Column(
+      children: [
+        generateSection(
+          items: [
+            const _SettingsSearchItem(),
+            const _AppearanceItem(),
+            if (system.isAndroid) const _AccessItem(),
+            if (system.isDesktop) const _HotkeyItem(),
+            if (enableDeveloperMode) const _DeveloperItem(),
+          ],
+          footer: system.isAndroid ? appLocalizations.accessControlDesc : null,
+        ),
+        generateSection(
+          title: appLocalizations.data,
+          items: [
+            const _StorageItem(),
+            const _BackupItem(),
+          ],
+        ),
+        generateSection(
+          title: appLocalizations.configuration,
+          items: [
+            const _GeneralItem(),
+            const _AdvancedConfigItem(),
+            const _CustomResourcesItem(),
+          ],
+          footer: [
+            appLocalizations.advancedConfigDesc,
+            appLocalizations.customProfileResourcesDesc,
+          ].join('\n'),
+        ),
       ],
-      footer: [
-        if (system.isAndroid) appLocalizations.accessControlDesc,
-        appLocalizations.advancedConfigDesc,
-        appLocalizations.customProfileResourcesDesc,
-      ].join('\n'),
     );
   }
 
@@ -240,47 +250,19 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
   }
 }
 
-class _LocaleItem extends ConsumerWidget {
-  const _LocaleItem();
-
-  String _getLocaleString(BuildContext context, Locale? locale) {
-    if (locale == null) return context.appLocalizations.defaultText;
-    return locale.label;
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(
-      appSettingProvider.select((state) => state.locale),
-    );
-    final currentLocale = getLocaleForString(locale);
-    return ListItem<Locale?>.options(
-      leading: const IconWell(AppGlyphs.language),
-      title: Text(context.appLocalizations.language),
-      options: [null, ...AppLocalizations.delegate.supportedLocales],
-      onChanged: (Locale? locale) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(locale: locale?.toString()));
-      },
-      textBuilder: (locale) => _getLocaleString(context, locale),
-      value: currentLocale,
-    );
-  }
-}
-
-class _ThemeItem extends StatelessWidget {
-  const _ThemeItem();
+class _AppearanceItem extends StatelessWidget {
+  const _AppearanceItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
       leading: const IconWell(AppGlyphs.paintbrush),
-      title: Text(context.appLocalizations.theme),
-      widget: const ThemeView(),
+      title: Text(context.appLocalizations.appearance),
+      widget: const AppearanceView(),
     );
   }
 }
+
 
 class _StorageItem extends StatelessWidget {
   const _StorageItem();
@@ -308,18 +290,6 @@ class _DiagnosticsItem extends StatelessWidget {
   }
 }
 
-class _DnsLeakItem extends StatelessWidget {
-  const _DnsLeakItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.dns),
-      title: Text(context.appLocalizations.dnsLeakCheck),
-      widget: const DnsLeakView(),
-    );
-  }
-}
 
 class _BackupItem extends StatelessWidget {
   const _BackupItem();

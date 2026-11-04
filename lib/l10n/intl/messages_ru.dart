@@ -2031,6 +2031,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Так будет выглядеть текст в приложении",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
+
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Режим темы"),
     "tight": MessageLookupByLibrary.simpleMessage("Плотный"),

@@ -420,6 +420,21 @@ class AppLocalizations {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
+  /// `Appearance`
+  String get appearance {
+    return Intl.message('Appearance', name: 'appearance', desc: '', args: []);
+  }
+
+  /// `Data`
+  String get data {
+    return Intl.message('Data', name: 'data', desc: '', args: []);
+  }
+
+  /// `Configuration`
+  String get configuration {
+    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
+  }
+
   /// `Extend`
   String get extend {
     return Intl.message('Extend', name: 'extend', desc: '', args: []);

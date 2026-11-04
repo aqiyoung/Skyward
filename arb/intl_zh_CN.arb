@@ -50,6 +50,10 @@
   "ru": "俄语",
   "zhCN": "中文简体",
   "theme": "主题",
+  "appearance": "外观",
+  "configuration": "配置",
+  "data": "数据",
+
   "extend": "扩展",
   "runtimeConfig": "运行时配置",
   "allowLan": "局域网代理",
