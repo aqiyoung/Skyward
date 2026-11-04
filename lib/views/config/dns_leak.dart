@@ -54,16 +54,16 @@ const _probeResolver = '223.5.5.5';
 
 const _dnsLeakUrl = 'https://browserleaks.com/dns';
 
-class DnsLeakView extends ConsumerStatefulWidget {
-  const DnsLeakView({super.key, this.probe});
+class DnsLeakCheck extends ConsumerStatefulWidget {
+  const DnsLeakCheck({super.key, this.probe});
 
   final DnsProbe? probe;
 
   @override
-  ConsumerState<DnsLeakView> createState() => _DnsLeakViewState();
+  ConsumerState<DnsLeakCheck> createState() => _DnsLeakCheckState();
 }
 
-class _DnsLeakViewState extends ConsumerState<DnsLeakView> {
+class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
   DnsProbeResult? _result;
   var _running = false;
 
@@ -210,55 +210,49 @@ class _DnsLeakViewState extends ConsumerState<DnsLeakView> {
     final config = ref.watch(patchClashConfigProvider);
     final status = ref.watch(coreStatusProvider);
     final findings = _findings(l, config, status);
-    return BaseScaffold(
-      title: l.dnsLeakCheck,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.cardTopPadding, bottom: 16),
-        children: [
-          generateSection(
-            leadingGap: false,
-            items: [
-              for (final finding in findings)
-                ListItem(
-                  leading: IconWell(_statusGlyph(finding.level), side: 24),
-                  title: Text(finding.title),
-                  subtitle: finding.detail == null
-                      ? null
-                      : Text(finding.detail!),
-                  trailing: Text(
-                    _statusText(l, finding.level),
-                    style: context.listSubtitleStyle.copyWith(
-                      color: _statusColor(context.colorScheme, finding.level),
-                    ),
+    return Column(
+      children: [
+        generateSection(
+          leadingGap: false,
+          items: [
+            for (final finding in findings)
+              ListItem(
+                leading: IconWell(_statusGlyph(finding.level), side: 24),
+                title: Text(finding.title),
+                subtitle: finding.detail == null
+                    ? null
+                    : Text(finding.detail!),
+                trailing: Text(
+                  _statusText(l, finding.level),
+                  style: context.listSubtitleStyle.copyWith(
+                    color: _statusColor(context.colorScheme, finding.level),
                   ),
                 ),
-            ],
-            footer: l.dnsLeakAdvice,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TonalButton(
-                  label: _running ? l.dnsLeakRunning : l.dnsLeakRerun,
-                  glyph: AppGlyphs.refresh,
-                  onPressed: _running ? null : _run,
-                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TonalButton(
-                  label: l.dnsLeakExternal,
-                  glyph: AppGlyphs.link,
-                  onPressed: () => unawaited(launchUrl(Uri.parse(_dnsLeakUrl))),
-                ),
+          ],
+          footer: l.dnsLeakAdvice,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TonalButton(
+                label: _running ? l.dnsLeakRunning : l.dnsLeakRerun,
+                glyph: AppGlyphs.refresh,
+                onPressed: _running ? null : _run,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TonalButton(
+                label: l.dnsLeakExternal,
+                glyph: AppGlyphs.link,
+                onPressed: () => unawaited(launchUrl(Uri.parse(_dnsLeakUrl))),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -407,5 +401,27 @@ Future<List<String>> _globalIpv6() async {
     return global;
   } catch (_) {
     return const [];
+  }
+}
+
+/// Page wrapper around [DnsLeakCheck], kept so the standalone entry and
+/// the widget test can still open it as a full screen.
+class DnsLeakView extends StatelessWidget {
+  const DnsLeakView({super.key, this.probe});
+
+  final DnsProbe? probe;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    return BaseScaffold(
+      title: l.dnsLeakCheck,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ).copyWith(top: context.cardTopPadding, bottom: 16),
+        children: [DnsLeakCheck(probe: probe)],
+      ),
+    );
   }
 }

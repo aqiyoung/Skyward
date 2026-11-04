@@ -1671,6 +1671,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "アプリ内の文字はこの大きさで表示されます",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("テーマ"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
+
     "themeColor": MessageLookupByLibrary.simpleMessage("テーマカラー"),
     "themeMode": MessageLookupByLibrary.simpleMessage("テーマモード"),
     "tight": MessageLookupByLibrary.simpleMessage("コンパクト"),
