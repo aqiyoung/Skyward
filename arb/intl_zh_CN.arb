@@ -7,7 +7,7 @@
   "proxies": "代理",
   "profile": "配置",
   "profiles": "配置",
-  "tools": "工具",
+  "tools": "更多",
   "logs": "日志",
   "resources": "资源",
   "trafficUsage": "流量统计",
@@ -1011,5 +1011,6 @@
   "privacyPolicyDataRetentionContent": "数据会保留在你的设备上，直到你删除为止。卸载 App 会清除所有应用数据。我们没有任何接收你数据的服务器，因此也不会在服务器上保留任何数据。",
   "privacyPolicyContactTitle": "联系方式",
   "privacyPolicyContactContent": "如果你对本隐私政策有疑问，请在 https://github.com/aqiyoung/Skyward 提交 issue。",
-  "rulePresetAdBlock": "广告过滤"
+  "rulePresetAdBlock": "广告过滤",
+  "adBlockDescription": "拦截常见广告与追踪域名，规则排在订阅规则之前。"
 }

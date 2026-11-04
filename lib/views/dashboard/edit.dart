@@ -324,6 +324,11 @@ class _PresenceState extends State<_Presence>
       if (mounted) {
         widget.onSettled();
       }
+    }, onError: (error, stack) {
+      commonPrint.log(
+        'leaving animation settled with error: $error',
+        logLevel: LogLevel.warning,
+      );
     });
   }
 

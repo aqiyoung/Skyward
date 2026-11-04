@@ -6,6 +6,7 @@ import 'package:skyward/views/config/network.dart';
 import 'package:skyward/views/config/scripts.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'ad_block.dart';
 import 'rules.dart';
 
 class AdvancedConfigView extends StatelessWidget {
@@ -27,6 +28,11 @@ class AdvancedConfigView extends StatelessWidget {
         title: const Text('DNS'),
         leading: const IconWell(AppGlyphs.dns),
         widget: const DnsView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.rulePresetAdBlock),
+        leading: const IconWell(AppGlyphs.block),
+        widget: const AdBlockView(),
       ),
       ListItem.open(
         title: Text(appLocalizations.addedRules),

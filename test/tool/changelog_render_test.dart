@@ -163,7 +163,7 @@ void main() {
 
       expect(
         text,
-        '<b>Bug Fixes</b>\n• Reject &lt;script&gt; &amp; "quoted" input',
+        '<b>问题修复</b>\n• Reject &lt;script&gt; &amp; "quoted" input',
       );
     });
 
@@ -226,13 +226,36 @@ void main() {
         moreUrl: 'https://example.com',
       );
 
-      expect(text, '<b>Bug Fixes</b>\n• Fix TUN');
+      expect(text, '<b>问题修复</b>\n• Fix TUN');
+    });
+
+    test('prefers the Chinese text when the commit carries one', () {
+      final text = renderTelegram(
+        version(
+          groups: [
+            ChangelogGroup(
+              type: ChangelogType.feat,
+              entries: const [
+                ChangelogEntry(
+                  id: '5d6e7f8',
+                  scope: 'network',
+                  text: 'Block WebRTC probes',
+                  textZh: '网络｜拦截 WebRTC 探测',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(text, '<b>新功能</b>\n• 网络｜拦截 WebRTC 探测');
+      expect(text, isNot(contains('Block WebRTC probes')));
     });
 
     test('says so when a version has no user facing changes', () {
       expect(
         renderTelegram(version(), moreUrl: 'https://example.com'),
-        '• $emptyVersionNote',
+        '• $emptyVersionNoteZh',
       );
     });
 

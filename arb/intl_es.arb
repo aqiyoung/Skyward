@@ -7,7 +7,7 @@
   "proxies": "Proxies",
   "profile": "Perfil",
   "profiles": "Perfiles",
-  "tools": "Herramientas",
+  "tools": "Más",
   "logs": "Registros",
   "resources": "Recursos",
   "trafficUsage": "Uso de tráfico",
@@ -1011,5 +1011,6 @@
   "privacyPolicyDataRetentionContent": "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
   "privacyPolicyContactTitle": "Contact",
   "privacyPolicyContactContent": "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
-  "rulePresetAdBlock": "Block Ads"
+  "rulePresetAdBlock": "Block Ads",
+  "adBlockDescription": "Bloquea los dominios habituales de publicidad y rastreo, por delante de las reglas de la suscripción."
 }

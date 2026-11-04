@@ -1956,7 +1956,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Допуск"),
-    "tools": MessageLookupByLibrary.simpleMessage("Инструменты"),
+    "tools": MessageLookupByLibrary.simpleMessage("Ещё"),
     "torch": MessageLookupByLibrary.simpleMessage("Фонарик"),
     "total": MessageLookupByLibrary.simpleMessage("Всего"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("Загружено"),
@@ -2091,6 +2091,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
+    ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "Блокирует распространённые домены рекламы и трекеров — раньше правил подписки.",
     ),
   };
 }

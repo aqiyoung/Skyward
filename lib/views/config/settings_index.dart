@@ -1,6 +1,7 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
+import 'package:skyward/views/config/ad_block.dart';
 import 'package:skyward/views/config/advanced.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/dns.dart';
@@ -286,6 +287,11 @@ final _advancedEntries = <SettingsEntry>[
     view: _dnsView,
   ),
   SettingsEntry(
+    title: (l) => l.rulePresetAdBlock,
+    page: (l) => l.advancedConfig,
+    view: _adBlockView,
+  ),
+  SettingsEntry(
     title: (l) => l.addedRules,
     page: (l) => l.advancedConfig,
     view: _rulesView,
@@ -322,6 +328,8 @@ Widget _networkView(BuildContext context) => BaseScaffold(
 Widget _dnsView(BuildContext context) => const DnsView();
 
 Widget _advancedView(BuildContext context) => const AdvancedConfigView();
+
+Widget _adBlockView(BuildContext context) => const AdBlockView();
 
 Widget _rulesView(BuildContext context) => const AddedRulesView();
 

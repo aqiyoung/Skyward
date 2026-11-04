@@ -1866,7 +1866,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Tip"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolerance"),
-    "tools": MessageLookupByLibrary.simpleMessage("Tools"),
+    "tools": MessageLookupByLibrary.simpleMessage("More"),
     "torch": MessageLookupByLibrary.simpleMessage("Flashlight"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("Downloaded"),
@@ -1991,6 +1991,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
+    ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "Blocks common ad and tracker domains, ahead of the rules a subscription ships.",
     ),
   };
 }

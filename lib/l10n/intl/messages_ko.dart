@@ -1576,7 +1576,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("안내"),
     "toggle": MessageLookupByLibrary.simpleMessage("전환"),
     "tolerance": MessageLookupByLibrary.simpleMessage("허용 오차"),
-    "tools": MessageLookupByLibrary.simpleMessage("도구"),
+    "tools": MessageLookupByLibrary.simpleMessage("더 보기"),
     "torch": MessageLookupByLibrary.simpleMessage("손전등"),
     "total": MessageLookupByLibrary.simpleMessage("합계"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("다운로드량"),
@@ -1697,6 +1697,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
+    ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "일반적인 광고·추적 도메인을 차단합니다. 규칙은 구독 규칙보다 먼저 적용됩니다.",
     ),
   };
 }

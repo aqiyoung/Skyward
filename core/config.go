@@ -154,7 +154,6 @@ func applyConfig(params *SetupParams) error {
 	defer configMu.Unlock()
 
 	setTestURL(params.TestURL)
-	skipCertVerify.Store(params.SkipCertVerify)
 	cfg, err := loadSetupConfig(params)
 	if err != nil {
 		// The fallback is what keeps the listeners serving while the host
@@ -231,9 +230,6 @@ func updateConfig(params *UpdateParams) error {
 	patchController(params)
 	if params.Authentication != nil {
 		applyAuthentication(currentConfig, *params.Authentication)
-	}
-	if params.SkipCertVerify != nil {
-		skipCertVerify.Store(*params.SkipCertVerify)
 	}
 
 	updateListeners(currentConfig)

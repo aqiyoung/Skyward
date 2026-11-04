@@ -100,6 +100,10 @@ type DecryptConfigParams struct {
 type SetupParams struct {
 	SelectedMap    map[string]string `json:"selected-map"`
 	TestURL        string            `json:"test-url"`
+	// SkipCertVerify is retained for API compatibility. The kernel always
+	// verifies TLS for its own downloads (subscriptions, GeoX, providers); the
+	// global flag no longer relaxes them. Proxy outbound TLS is governed per-node
+	// by skip-cert-verify in the proxy config.
 	SkipCertVerify bool              `json:"skip-cert-verify"`
 	Base           *SetupBase        `json:"base,omitempty"`
 }
@@ -144,6 +148,7 @@ type UpdateParams struct {
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
 	GeoUpdateInterval  *int               `json:"geo-update-interval"`
 	GeoXUrl            map[string]string  `json:"geox-url"`
+	// SkipCertVerify is retained for API compatibility; see SetupParams.SkipCertVerify.
 	SkipCertVerify     *bool              `json:"skip-cert-verify"`
 }
 

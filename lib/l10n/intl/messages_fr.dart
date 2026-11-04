@@ -2014,7 +2014,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Astuce"),
     "toggle": MessageLookupByLibrary.simpleMessage("Basculer"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolérance"),
-    "tools": MessageLookupByLibrary.simpleMessage("Outils"),
+    "tools": MessageLookupByLibrary.simpleMessage("Plus"),
     "torch": MessageLookupByLibrary.simpleMessage("Lampe torche"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
     "totalDownload": MessageLookupByLibrary.simpleMessage("Reçu"),
@@ -2147,6 +2147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
       "Block Ads",
+    ),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "Bloque les domaines publicitaires et de suivi courants, avant les règles de l’abonnement.",
     ),
   };
 }

@@ -33,39 +33,6 @@ enum RulePreset {
     'GEOSITE,category-public-tracker,DIRECT',
     'GEOSITE,category-pt,DIRECT',
     r'PROCESS-NAME-REGEX,(?i)^(qbittorrent|transmission.*|deluge.*|aria2c|motrix|utorrent|bitcomet)(\.exe)?$,DIRECT',
-  ]),
-  adBlock(AppGlyphs.block, [
-    // Google ads & tracking
-    'DOMAIN-SUFFIX,doubleclick.net,REJECT',
-    'DOMAIN-SUFFIX,googlesyndication.com,REJECT',
-    'DOMAIN-SUFFIX,googleadservices.com,REJECT',
-    'DOMAIN-SUFFIX,google-analytics.com,REJECT',
-    'DOMAIN-SUFFIX,googletagmanager.com,REJECT',
-    'DOMAIN-SUFFIX,googletagservices.com,REJECT',
-    // Common ad networks
-    'DOMAIN-SUFFIX,adnxs.com,REJECT',
-    'DOMAIN-SUFFIX,criteo.com,REJECT',
-    'DOMAIN-SUFFIX,outbrain.com,REJECT',
-    'DOMAIN-SUFFIX,taboola.com,REJECT',
-    // Pangle (ByteDance)
-    'DOMAIN-SUFFIX,pangle.io,REJECT',
-    'DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT',
-    'DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT',
-    'DOMAIN,api-access.pangolin-sdk-toutiao.com,REJECT',
-    'DOMAIN,is.snssdk.com,REJECT',
-    // GDT (Tencent)
-    'DOMAIN-SUFFIX,gdt.qq.com,REJECT',
-    'DOMAIN,pgdt.gtimg.cn,REJECT',
-    'DOMAIN,mi.gdt.qq.com,REJECT',
-    // Common SDKs
-    'DOMAIN-SUFFIX,umeng.com,REJECT',
-    'DOMAIN-SUFFIX,umtrack.com,REJECT',
-    // Tracking
-    'DOMAIN-SUFFIX,scorecardresearch.com,REJECT',
-    'DOMAIN-SUFFIX,quantserve.com,REJECT',
-    'DOMAIN-SUFFIX,hotjar.com,REJECT',
-    'DOMAIN-SUFFIX,mixpanel.com,REJECT',
-    'DOMAIN-SUFFIX,amplitude.com,REJECT',
   ]);
 
   final Glyph glyph;
@@ -82,7 +49,6 @@ enum RulePreset {
     RulePreset.systemServicesDirect =>
       appLocalizations.rulePresetSystemServicesDirect,
     RulePreset.bittorrentDirect => appLocalizations.rulePresetBittorrentDirect,
-    RulePreset.adBlock => appLocalizations.rulePresetAdBlock,
   };
 
   List<Rule> get rules => rawRules.map(Rule.parse).toList();

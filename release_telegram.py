@@ -9,9 +9,20 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TAG = os.getenv("TAG")
 RUN_ID = os.getenv("RUN_ID")
 
-IS_STABLE = "-" not in TAG
+IS_STABLE = "-" not in TAG if TAG else False
 
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "@FlClash")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+# Never fall back to a default channel. If the fork's credentials or target
+# chat are not configured, skip the announcement instead of leaking a build to
+# the upstream @FlClash channel.
+if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
+    print(
+        "TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set; "
+        "skipping Telegram announcement."
+    )
+    sys.exit(0)
+
 API_URL = f"http://localhost:8081/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup"
 
 DIST_DIR = os.path.join(os.getcwd(), "dist")

@@ -19,15 +19,49 @@ const defaultProfileTun = ProfileTun();
 
 /// What a profile that brings no DNS section of its own is given, so the core
 /// always resolves. The user's own override set starts empty.
+///
+/// The baseline is fake-IP with encrypted upstreams split by region: domestic
+/// names are answered by a domestic DoH through `nameserver-policy`, everything
+/// else by the default upstreams, and a polluted answer (one that resolves into
+/// China for a name asked to the fallback) is re-queried against an overseas
+/// DoH. A profile that carries its own `dns:` section is left alone, and the
+/// user's override set still wins key by key, so an existing split survives.
 const baselineDnsOverrideKeys = {
   DnsOverrideKey.enable,
   DnsOverrideKey.enhancedMode,
+  DnsOverrideKey.defaultNameserver,
   DnsOverrideKey.nameserver,
+  DnsOverrideKey.nameserverPolicy,
+  DnsOverrideKey.proxyServerNameserver,
+  DnsOverrideKey.fallback,
+  DnsOverrideKey.fallbackFilterGeoip,
+  DnsOverrideKey.fallbackFilterGeoipCode,
 };
 const baselineDns = Dns(
   enable: true,
   enhancedMode: DnsMode.fakeIp,
+  // Plain-IP domestic resolvers, used only to bootstrap the DoH hostnames
+  // below. They must stay reachable without any DNS, hence no hostnames here.
+  defaultNameserver: ['223.5.5.5', '119.29.29.29'],
   nameserver: ['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'],
+  // Resolving a proxy server's own hostname must not go through the proxy it
+  // is about to open, so pin it to a domestic resolver.
+  proxyServerNameserver: ['223.5.5.5', '119.29.29.29'],
+  nameserverPolicy: {
+    // Domestic names keep resolving through a domestic DoH only, so CDN
+    // answers stay close and are never replaced by an overseas resolver.
+    'geosite:cn':
+        'https://doh.pub/dns-query,https://dns.alidns.com/dns-query',
+    'geoip:cn': 'https://doh.pub/dns-query,https://dns.alidns.com/dns-query',
+  },
+  // Overseas encrypted resolvers, consulted only when the primary answer looks
+  // polluted. If they are unreachable the primary answer is kept, so a blocked
+  // fallback degrades to the old behaviour instead of breaking resolution.
+  fallback: [
+    'https://dns.cloudflare.com/dns-query',
+    'https://dns.google/dns-query',
+  ],
+  fallbackFilter: FallbackFilter(geoipCode: 'CN'),
 );
 const defaultGeoXUrl = {
   GeoResource.MMDB:
