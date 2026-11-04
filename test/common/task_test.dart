@@ -221,11 +221,15 @@ void main() {
         startsWith('/profiles/providers/7/rules/'),
       );
       expect(config['rules'], [
+        ...webrtcGuardRules,
         'DOMAIN-SUFFIX,added.example,Original',
         'DOMAIN,existing.example,DIRECT',
         'MATCH,Original',
       ]);
-      expect(result.counts, (groups: 0, proxies: 0, rules: 3));
+      expect(
+        result.counts,
+        (groups: 0, proxies: 0, rules: webrtcGuardRules.length + 3),
+      );
     },
   );
 
@@ -267,6 +271,7 @@ void main() {
 
       final overridden = await makeRealProfileTask(state);
       expect((loadYaml(overridden.yaml) as YamlMap)['rules'], [
+        ...webrtcGuardRules,
         'DOMAIN-SUFFIX,added.example,HK',
         'DOMAIN,existing.example,DIRECT',
         'MATCH,Original',
@@ -274,7 +279,7 @@ void main() {
 
       final blank = await makeRealProfileTask(state.copyWith(matchTarget: ' '));
       expect(
-        (loadYaml(blank.yaml) as YamlMap)['rules'].first,
+        (loadYaml(blank.yaml) as YamlMap)['rules'][webrtcGuardRules.length],
         'DOMAIN-SUFFIX,added.example,Original',
       );
     },
@@ -382,7 +387,10 @@ void main() {
     expect(config['proxy-groups'], hasLength(1));
     expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
     expect(config['proxy-groups'][0]['type'], 'select');
-    expect(config['rules'], ['DOMAIN,custom.example,DIRECT']);
+    expect(config['rules'], [
+      ...webrtcGuardRules,
+      'DOMAIN,custom.example,DIRECT',
+    ]);
   });
 
   test('makeRealProfileTask keeps the DNS keys it cannot edit', () async {

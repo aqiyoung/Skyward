@@ -76,20 +76,23 @@ void main() {
     });
   });
 
-  test(
-    'fills the minimal defaults plus overrides for a profile without DNS',
-    () async {
-      final dns = await _dnsOf(rawConfig: {});
+  test('fills the baseline split DNS plus overrides for a profile without DNS',
+      () async {
+    final dns = await _dnsOf(rawConfig: {});
 
-      expect(dns, {
-        'enable': true,
-        'enhanced-mode': 'fake-ip',
-        'nameserver': ['1.1.1.1'],
-        'ipv6': true,
-        'fallback-filter': {'geoip': true},
-      });
-    },
-  );
+    expect(dns['enable'], true);
+    expect(dns['enhanced-mode'], 'fake-ip');
+    // The override still wins for every key it names.
+    expect(dns['nameserver'], ['1.1.1.1']);
+    expect(dns['ipv6'], true);
+    // The baseline around it is the region-split one.
+    expect(dns['default-nameserver'], ['223.5.5.5', '119.29.29.29']);
+    expect(dns['nameserver-policy'], contains('geosite:cn'));
+    expect(dns['proxy-server-nameserver'], ['223.5.5.5', '119.29.29.29']);
+    expect(dns['fallback'], contains('https://dns.google/dns-query'));
+    expect(dns['fallback-filter'], containsPair('geoip', true));
+    expect(dns['fallback-filter'], containsPair('geoip-code', 'CN'));
+  });
 
   test('a key picked without a value writes nothing', () async {
     final dns = await _dnsOf(
