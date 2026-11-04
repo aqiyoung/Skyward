@@ -565,6 +565,7 @@ class SetupAction extends _$SetupAction {
             ? setupState.matchTarget
             : lastMatchTarget(profileBase.base.matchRules),
         safeMode: ref.read(safeModeProvider),
+        webrtcGuard: ref.read(appSettingProvider).webrtcGuard,
       ),
     );
     if (profileBase == null) {

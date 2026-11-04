@@ -242,9 +242,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage("Solo las apps seleccionadas usan la VPN"),
     "about": MessageLookupByLibrary.simpleMessage("Acerca de"),
     "accessControl": MessageLookupByLibrary.simpleMessage("Control de acceso"),
+    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
+      "Solo las apps seleccionadas usan la VPN",
+    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "El control de acceso elige qué apps usan el proxy.",
     ),
@@ -271,6 +273,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Actualizar perfiles",
     ),
     "actionView": MessageLookupByLibrary.simpleMessage("Mostrar/Ocultar"),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "Bloquea los dominios habituales de publicidad y rastreo, por delante de las reglas de la suscripción.",
+    ),
     "add": MessageLookupByLibrary.simpleMessage("Añadir"),
     "addCustomProxy": MessageLookupByLibrary.simpleMessage("Añadir proxy"),
     "addFilters": MessageLookupByLibrary.simpleMessage("Añadir filtros"),
@@ -581,6 +586,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "Contiene el botón de inicio y no se puede quitar",
     ),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("Versión actual"),
     "custom": MessageLookupByLibrary.simpleMessage("Personalizado"),
     "customColor": MessageLookupByLibrary.simpleMessage("Color personalizado"),
     "customImportDroppedSubRules": m8,
@@ -775,6 +781,51 @@ class MessageLookup extends MessageLookupByLibrary {
       "Sin esta entrada, TUN secuestra todas las consultas DNS al puerto 53 (any:53).",
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Secuestro de DNS"),
+    "dnsLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "Para lo que falle, active la VPN y el secuestro de DNS en «Avanzado → Red», desactive el DNS privado en los ajustes del sistema y sustituya los servidores en claro por DoH en las sustituciones de DNS.",
+    ),
+    "dnsLeakCheck": MessageLookupByLibrary.simpleMessage(
+      "Comprobación de fugas DNS",
+    ),
+    "dnsLeakDirect": MessageLookupByLibrary.simpleMessage(
+      "Fuga por el puerto 53",
+    ),
+    "dnsLeakDirectBad": MessageLookupByLibrary.simpleMessage(
+      "Una consulta directa a 223.5.5.5 devolvió una dirección real, así que el DNS en claro sigue saliendo",
+    ),
+    "dnsLeakEncrypted": MessageLookupByLibrary.simpleMessage(
+      "Resolución cifrada",
+    ),
+    "dnsLeakEncryptedBad": MessageLookupByLibrary.simpleMessage(
+      "El servidor superior es DNS en claro, así que cada consulta se puede leer de camino",
+    ),
+    "dnsLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Verificar en el navegador",
+    ),
+    "dnsLeakFail": MessageLookupByLibrary.simpleMessage("Fallo"),
+    "dnsLeakFakeIp": MessageLookupByLibrary.simpleMessage("Dirección falsa"),
+    "dnsLeakFakeIpBad": MessageLookupByLibrary.simpleMessage(
+      "La respuesta no es 198.18.x.x, así que esta consulta no la atendió el fake-IP",
+    ),
+    "dnsLeakHijack": MessageLookupByLibrary.simpleMessage("Secuestro de DNS"),
+    "dnsLeakHijackBad": MessageLookupByLibrary.simpleMessage(
+      "any:53 no está definido, así que las consultas a otros resolutores no se capturan",
+    ),
+    "dnsLeakIpv6": MessageLookupByLibrary.simpleMessage("IPv6"),
+    "dnsLeakIpv6Bad": MessageLookupByLibrary.simpleMessage(
+      "Este equipo tiene una dirección IPv6 global y el tráfico v6 puede saltarse una captura solo IPv4",
+    ),
+    "dnsLeakPass": MessageLookupByLibrary.simpleMessage("Correcto"),
+    "dnsLeakRerun": MessageLookupByLibrary.simpleMessage("Comprobar de nuevo"),
+    "dnsLeakRunning": MessageLookupByLibrary.simpleMessage("Comprobando"),
+    "dnsLeakTunnel": MessageLookupByLibrary.simpleMessage(
+      "Captura del tráfico",
+    ),
+    "dnsLeakTunnelBad": MessageLookupByLibrary.simpleMessage(
+      "El núcleo está detenido o la VPN está apagada, así que las apps resuelven los nombres por su cuenta",
+    ),
+    "dnsLeakUnknown": MessageLookupByLibrary.simpleMessage("Sin determinar"),
+    "dnsLeakWarn": MessageLookupByLibrary.simpleMessage("Atención"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Modo DNS"),
     "dnsOverride": MessageLookupByLibrary.simpleMessage("Sobrescritura de DNS"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
@@ -1045,9 +1096,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Introduce el contenido de la regla",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Este sistema oculta la lista de apps instaladas hasta que se concede el permiso. Autorízalo para configurar el proxy por app.",
     ),
@@ -1305,13 +1357,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkConnectionError": MessageLookupByLibrary.simpleMessage(
       "No se pudo conectar con el servidor. Comprueba tu conexión de red o los ajustes del proxy",
     ),
+    "networkControl": MessageLookupByLibrary.simpleMessage("Control de red"),
     "networkHostLookupError": MessageLookupByLibrary.simpleMessage(
       "No se pudo resolver la dirección del servidor. Comprueba que la URL sea correcta y que el DNS funcione",
     ),
-    "networkControl": MessageLookupByLibrary.simpleMessage("Control de red"),
     "networkName": MessageLookupByLibrary.simpleMessage("Nombre de la red"),
-    "networkOverview": MessageLookupByLibrary.simpleMessage("Resumen de red"),
     "networkNotFoundError": m54,
+    "networkOverview": MessageLookupByLibrary.simpleMessage("Resumen de red"),
     "networkRateLimitedError": MessageLookupByLibrary.simpleMessage(
       "Demasiadas solicitudes (HTTP 429). Espera un momento e inténtalo de nuevo",
     ),
@@ -1450,6 +1502,43 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("Vista previa"),
     "previousMatch": MessageLookupByLibrary.simpleMessage(
       "Coincidencia anterior",
+    ),
+    "privacyPolicy": MessageLookupByLibrary.simpleMessage("Privacy Policy"),
+    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
+      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+    ),
+    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
+      "Contact",
+    ),
+    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
+      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
+    ),
+    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Collection",
+    ),
+    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
+      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
+    ),
+    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Retention",
+    ),
+    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
+      "Your configuration and subscription data is stored in the app\'s private storage on your device, protected by the operating system\'s sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
+    ),
+    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Security",
+    ),
+    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
+      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
+    ),
+    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Sharing",
+    ),
+    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
+      "All data stays on your device. We use it solely to provide the app\'s functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
+    ),
+    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
+      "How We Use Data",
     ),
     "privateKey": MessageLookupByLibrary.simpleMessage("Clave privada"),
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage(
@@ -1613,10 +1702,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeBoardDesc": MessageLookupByLibrary.simpleMessage(
       "El camino del tráfico desde este dispositivo",
     ),
+    "routeCarrier": MessageLookupByLibrary.simpleMessage("Operador"),
     "routeExcludeAddress": MessageLookupByLibrary.simpleMessage(
       "Direcciones excluidas de la ruta",
     ),
-    "routeCarrier": MessageLookupByLibrary.simpleMessage("Operador"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Dispositivo"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Destino"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Nodo"),
@@ -1738,6 +1827,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleListInvalid": MessageLookupByLibrary.simpleMessage(
       "Las reglas deben ser una lista YAML con una regla por elemento, por ejemplo - DOMAIN,example.com,DIRECT",
     ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage("Block Ads"),
     "rulePresetBittorrentDirect": MessageLookupByLibrary.simpleMessage(
       "BitTorrent directo",
     ),
@@ -2027,13 +2117,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("Transporte"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
-    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("Mejora la velocidad de red. Requiere reiniciar la VPN."),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo autorizar TUN, por lo que se desactivó.",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage(
       "TUN solo funciona en modo administrador.",
+    ),
+    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage(
+      "Mejora la velocidad de red. Requiere reiniciar la VPN.",
     ),
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Las entradas añadidas aquí sustituyen los ajustes de TUN de todos los perfiles; lo que no añadas conserva el ajuste del propio perfil. Las entradas que añade un perfil personalizado tienen prioridad.",
@@ -2075,13 +2167,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("Usuario"),
     "value": MessageLookupByLibrary.simpleMessage("Valor"),
     "version": MessageLookupByLibrary.simpleMessage("Versión"),
-    "currentVersion": MessageLookupByLibrary.simpleMessage("Versión actual"),
-    "versionUpdate": MessageLookupByLibrary.simpleMessage("Actualización de versión"),
-    "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("Comprobando…"),
+    "versionUpdate": MessageLookupByLibrary.simpleMessage(
+      "Actualización de versión",
+    ),
+    "versionUpdateChecking": MessageLookupByLibrary.simpleMessage(
+      "Comprobando…",
+    ),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage(
+      "Descargando…",
+    ),
+    "versionUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Error al comprobar",
+    ),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage(
+      "Nueva versión disponible",
+    ),
     "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("Actualizado"),
-    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("Nueva versión disponible"),
-    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("Descargando…"),
-    "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("Error al comprobar"),
     "view": MessageLookupByLibrary.simpleMessage("Ver"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtual"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vivo"),
@@ -2094,6 +2195,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "Configuración de WebDAV",
     ),
+    "webrtcGuard": MessageLookupByLibrary.simpleMessage("WebRTC"),
+    "webrtcGuardBlock": MessageLookupByLibrary.simpleMessage("Bloquear"),
+    "webrtcGuardDesc": MessageLookupByLibrary.simpleMessage(
+      "Las páginas y las llamadas preguntan a un servidor STUN la dirección pública de este equipo. Bloquear es lo más seguro, pero el punto a punto recurre a un repetidor o falla. Vía proxy entrega la dirección de salida del nodo, lo que exige un nodo con UDP. Sin cambios deja el descubrimiento a las reglas del perfil.",
+    ),
+    "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Sin cambios"),
+    "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Vía proxy"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Modo lista blanca"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Escribir en el sistema",
@@ -2105,50 +2213,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Sí"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chino simplificado"),
-    "privacyPolicy": MessageLookupByLibrary.simpleMessage(
-      "Privacy Policy",
-    ),
-    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Collection",
-    ),
-    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
-      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
-    ),
-    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
-      "How We Use Data",
-    ),
-    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
-      "All data stays on your device. We use it solely to provide the app's functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
-    ),
-    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Sharing",
-    ),
-    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
-      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
-    ),
-    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Security",
-    ),
-    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
-      "Your configuration and subscription data is stored in the app's private storage on your device, protected by the operating system's sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
-    ),
-    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Retention",
-    ),
-    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
-      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
-    ),
-    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
-      "Contact",
-    ),
-    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
-      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
-    ),
-    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
-      "Block Ads",
-    ),
-    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
-      "Bloquea los dominios habituales de publicidad y rastreo, por delante de las reglas de la suscripción.",
-    ),
   };
 }

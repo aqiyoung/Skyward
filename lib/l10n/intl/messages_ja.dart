@@ -211,9 +211,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage("選択したアプリのみVPNを経由します"),
     "about": MessageLookupByLibrary.simpleMessage("アプリについて"),
     "accessControl": MessageLookupByLibrary.simpleMessage("アクセス制御"),
+    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
+      "選択したアプリのみVPNを経由します",
+    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "アクセス制御では、プロキシを利用するアプリを選びます。",
     ),
@@ -236,6 +238,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "actionTun": MessageLookupByLibrary.simpleMessage("TUN"),
     "actionUpdateProfiles": MessageLookupByLibrary.simpleMessage("プロファイルを更新"),
     "actionView": MessageLookupByLibrary.simpleMessage("表示/非表示"),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "一般的な広告・追跡ドメインを遮断します。ルールは購読のルールより先に適用されます。",
+    ),
     "add": MessageLookupByLibrary.simpleMessage("追加"),
     "addCustomProxy": MessageLookupByLibrary.simpleMessage("プロキシを追加"),
     "addFilters": MessageLookupByLibrary.simpleMessage("フィルターを追加"),
@@ -458,6 +463,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "起動ボタンがあるため削除できません",
     ),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("現在のバージョン"),
     "custom": MessageLookupByLibrary.simpleMessage("カスタム"),
     "customColor": MessageLookupByLibrary.simpleMessage("カスタムカラー"),
     "customImportDroppedSubRules": m8,
@@ -620,6 +626,41 @@ class MessageLookup extends MessageLookupByLibrary {
       "追加しない場合、ポート 53 宛てのすべての DNS 問い合わせをハイジャックします（any:53）。",
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
+    "dnsLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "不合格の項目は「詳細設定 → ネットワーク」で VPN と DNS ハイジャックを有効にし、システム設定のプライベート DNS を無効にしてください。DNS 上書きでは平文の上流を DoH に置き換えてください。",
+    ),
+    "dnsLeakCheck": MessageLookupByLibrary.simpleMessage("DNS リーク診断"),
+    "dnsLeakDirect": MessageLookupByLibrary.simpleMessage("53 番ポートの直通"),
+    "dnsLeakDirectBad": MessageLookupByLibrary.simpleMessage(
+      "223.5.5.5 への直接問い合わせで実アドレスが返り、平文 DNS がそのまま出ています",
+    ),
+    "dnsLeakEncrypted": MessageLookupByLibrary.simpleMessage("暗号化された解決"),
+    "dnsLeakEncryptedBad": MessageLookupByLibrary.simpleMessage(
+      "上流が平文 DNS のため、問い合わせ内容がそのまま出ていきます",
+    ),
+    "dnsLeakExternal": MessageLookupByLibrary.simpleMessage("ブラウザーで確認"),
+    "dnsLeakFail": MessageLookupByLibrary.simpleMessage("不合格"),
+    "dnsLeakFakeIp": MessageLookupByLibrary.simpleMessage("偽のアドレス"),
+    "dnsLeakFakeIpBad": MessageLookupByLibrary.simpleMessage(
+      "応答が 198.18.x.x ではないため、この問い合わせは Fake-IP が処理していません",
+    ),
+    "dnsLeakHijack": MessageLookupByLibrary.simpleMessage("DNS ハイジャック"),
+    "dnsLeakHijackBad": MessageLookupByLibrary.simpleMessage(
+      "any:53 が未設定のため、他のリゾルバーへの問い合わせは取り込まれません",
+    ),
+    "dnsLeakIpv6": MessageLookupByLibrary.simpleMessage("IPv6"),
+    "dnsLeakIpv6Bad": MessageLookupByLibrary.simpleMessage(
+      "グローバル IPv6 アドレスがあり、v6 通信が IPv4 のみの取り込みを迂回できます",
+    ),
+    "dnsLeakPass": MessageLookupByLibrary.simpleMessage("合格"),
+    "dnsLeakRerun": MessageLookupByLibrary.simpleMessage("再診断"),
+    "dnsLeakRunning": MessageLookupByLibrary.simpleMessage("診断中"),
+    "dnsLeakTunnel": MessageLookupByLibrary.simpleMessage("通信の取り込み"),
+    "dnsLeakTunnelBad": MessageLookupByLibrary.simpleMessage(
+      "コアが停止中か VPN が未接続のため、アプリが独自に名前を解決します",
+    ),
+    "dnsLeakUnknown": MessageLookupByLibrary.simpleMessage("判定不可"),
+    "dnsLeakWarn": MessageLookupByLibrary.simpleMessage("注意"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
     "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS の上書き"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
@@ -1037,13 +1078,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkConnectionError": MessageLookupByLibrary.simpleMessage(
       "サーバーに接続できませんでした。ネットワーク接続またはプロキシ設定を確認してください",
     ),
+    "networkControl": MessageLookupByLibrary.simpleMessage("ネットワーク制御"),
     "networkHostLookupError": MessageLookupByLibrary.simpleMessage(
       "サーバーのアドレスを解決できませんでした。URL が正しいこと、DNS が使えることを確認してください",
     ),
-    "networkControl": MessageLookupByLibrary.simpleMessage("ネットワーク制御"),
     "networkName": MessageLookupByLibrary.simpleMessage("ネットワーク名"),
-    "networkOverview": MessageLookupByLibrary.simpleMessage("ネットワーク概要"),
     "networkNotFoundError": m54,
+    "networkOverview": MessageLookupByLibrary.simpleMessage("ネットワーク概要"),
     "networkRateLimitedError": MessageLookupByLibrary.simpleMessage(
       "リクエストが多すぎます（HTTP 429）。しばらく待ってから再試行してください",
     ),
@@ -1149,6 +1190,43 @@ class MessageLookup extends MessageLookupByLibrary {
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("キーの組み合わせを押してください"),
     "preview": MessageLookupByLibrary.simpleMessage("プレビュー"),
     "previousMatch": MessageLookupByLibrary.simpleMessage("前の一致"),
+    "privacyPolicy": MessageLookupByLibrary.simpleMessage("Privacy Policy"),
+    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
+      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+    ),
+    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
+      "Contact",
+    ),
+    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
+      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
+    ),
+    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Collection",
+    ),
+    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
+      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
+    ),
+    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Retention",
+    ),
+    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
+      "Your configuration and subscription data is stored in the app\'s private storage on your device, protected by the operating system\'s sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
+    ),
+    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Security",
+    ),
+    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
+      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
+    ),
+    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Sharing",
+    ),
+    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
+      "All data stays on your device. We use it solely to provide the app\'s functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
+    ),
+    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
+      "How We Use Data",
+    ),
     "privateKey": MessageLookupByLibrary.simpleMessage("秘密鍵"),
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage("秘密鍵のパスフレーズ"),
     "process": MessageLookupByLibrary.simpleMessage("プロセス"),
@@ -1269,8 +1347,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeAddress": MessageLookupByLibrary.simpleMessage("ルートアドレス"),
     "routeBoard": MessageLookupByLibrary.simpleMessage("ルート"),
     "routeBoardDesc": MessageLookupByLibrary.simpleMessage("この端末から目的地までの経路"),
-    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("ルート除外アドレス"),
     "routeCarrier": MessageLookupByLibrary.simpleMessage("回線事業者"),
+    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("ルート除外アドレス"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("端末"),
     "routeTo": MessageLookupByLibrary.simpleMessage("宛先"),
     "routeVia": MessageLookupByLibrary.simpleMessage("ノード"),
@@ -1380,6 +1458,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleListInvalid": MessageLookupByLibrary.simpleMessage(
       "ルールは 1 項目に 1 つのルールを書いた YAML リストにしてください。例：- DOMAIN,example.com,DIRECT",
     ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage("Block Ads"),
     "rulePresetBittorrentDirect": MessageLookupByLibrary.simpleMessage(
       "BitTorrent を直接接続",
     ),
@@ -1615,12 +1694,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("トランスポート"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
-    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("ネットワーク速度を向上。変更後はVPNの再起動が必要。"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN の権限を取得できなかったため、オフにしました。",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage("TUN は管理者モードでのみ有効です。"),
+    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワーク速度を向上。変更後はVPNの再起動が必要。",
+    ),
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "ここで追加した項目は、すべてのプロファイルの TUN 設定を上書きします。追加していない項目はプロファイル自身の設定のままです。カスタムプロファイル自身が追加した項目が優先されます。",
     ),
@@ -1653,13 +1734,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("ユーザー名"),
     "value": MessageLookupByLibrary.simpleMessage("値"),
     "version": MessageLookupByLibrary.simpleMessage("バージョン"),
-    "currentVersion": MessageLookupByLibrary.simpleMessage("現在のバージョン"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("バージョンアップデート"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("確認中…"),
-    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("最新です"),
-    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("新しいバージョンがあります"),
-    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("ダウンロード中…"),
+    "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage(
+      "ダウンロード中…",
+    ),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("確認に失敗しました"),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("新しいバージョンがあります"),
+    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("最新です"),
     "view": MessageLookupByLibrary.simpleMessage("表示"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("仮想 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("ビビッド"),
@@ -1670,6 +1752,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "VPN は VpnService でシステムの全トラフィックを自動的にルーティングします。",
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
+    "webrtcGuard": MessageLookupByLibrary.simpleMessage("WebRTC"),
+    "webrtcGuardBlock": MessageLookupByLibrary.simpleMessage("遮断"),
+    "webrtcGuardDesc": MessageLookupByLibrary.simpleMessage(
+      "ページや通話は STUN サーバーにこの端末の公開アドレスを問い合わせます。遮断が最も安全ですが、P2P 通信はリレー経由になるか失敗します。プロキシ経由ではノードの出口アドレスが渡され、UDP に対応したノードが必要です。未処理では設定のルールに任せます。",
+    ),
+    "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("未処理"),
+    "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("プロキシ経由"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
@@ -1679,50 +1768,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
-    "privacyPolicy": MessageLookupByLibrary.simpleMessage(
-      "Privacy Policy",
-    ),
-    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Collection",
-    ),
-    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
-      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
-    ),
-    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
-      "How We Use Data",
-    ),
-    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
-      "All data stays on your device. We use it solely to provide the app's functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
-    ),
-    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Sharing",
-    ),
-    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
-      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
-    ),
-    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Security",
-    ),
-    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
-      "Your configuration and subscription data is stored in the app's private storage on your device, protected by the operating system's sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
-    ),
-    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Retention",
-    ),
-    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
-      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
-    ),
-    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
-      "Contact",
-    ),
-    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
-      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
-    ),
-    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
-      "Block Ads",
-    ),
-    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
-      "一般的な広告・追跡ドメインを遮断します。ルールは購読のルールより先に適用されます。",
-    ),
   };
 }

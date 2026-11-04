@@ -377,6 +377,8 @@ abstract class AppSettingProps with _$AppSettingProps {
     /// Blocks the ad and tracker names in `features/ad_block` unless the
     /// reader turns the module off.
     @Default(true) bool adBlock,
+    /// What the generated config does with WebRTC's own address discovery.
+    @Default(WebrtcGuard.block) WebrtcGuard webrtcGuard,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

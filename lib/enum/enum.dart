@@ -865,6 +865,22 @@ enum RuleProviderFormat { yaml, text, mrs }
 
 enum RestoreStrategy { compatible, override }
 
+/// What happens to WebRTC's address discovery before a profile's own rules see
+/// it. Discovery asks a STUN server what the machine's public address is, over
+/// UDP that a proxy built for TCP does not always carry.
+enum WebrtcGuard {
+  /// Drop the discovery traffic. No address leaves, and calls fall back to a
+  /// relay or fail where the peer offers none.
+  block,
+
+  /// Send discovery through the proxy, so the peer learns the exit address
+  /// rather than this machine's own. Needs a node that carries UDP.
+  proxy,
+
+  /// Leave the traffic to the profile's rules, like any other connection.
+  off,
+}
+
 enum TabAnimation { slide, fade }
 
 enum LiquidGlassMode { none, standard, ultra }

@@ -89,6 +89,9 @@ _AppSettingProps _$AppSettingPropsFromJson(
       ) ??
       const {},
   adBlock: json['adBlock'] as bool? ?? true,
+  webrtcGuard:
+      $enumDecodeNullable(_$WebrtcGuardEnumMap, json['webrtcGuard']) ??
+      WebrtcGuard.block,
 );
 
 Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
@@ -127,6 +130,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'disabledServices': instance.disabledServices,
       'tableColumnWidths': instance.tableColumnWidths,
       'adBlock': instance.adBlock,
+      'webrtcGuard': _$WebrtcGuardEnumMap[instance.webrtcGuard]!,
     };
 
 const _$TabAnimationEnumMap = {
@@ -143,6 +147,12 @@ const _$EditorFontSizeEnumMap = {
   EditorFontSize.standard: 'standard',
   EditorFontSize.large: 'large',
   EditorFontSize.extraLarge: 'extraLarge',
+};
+
+const _$WebrtcGuardEnumMap = {
+  WebrtcGuard.block: 'block',
+  WebrtcGuard.proxy: 'proxy',
+  WebrtcGuard.off: 'off',
 };
 
 const _$DashboardWidgetEnumMap = {
