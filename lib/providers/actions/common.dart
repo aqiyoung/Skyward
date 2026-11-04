@@ -102,8 +102,19 @@ class CommonAction extends _$CommonAction {
     return res != null;
   }
 
+  /// The language the interface is in: the app's own choice, or the platform
+  /// locale when the setting follows the system. The in-app update log uses it
+  /// so a Chinese user reads the Chinese entry the commit carried.
+  String get _interfaceLanguageCode =>
+      (getLocaleForString(ref.read(appSettingProvider).locale) ??
+              PlatformDispatcher.instance.locale)
+          .languageCode;
+
   TextSpan _releaseSpan(BuildContext context, String tagName, String? body) {
-    final version = parseReleaseChangelog(body);
+    final version = parseReleaseChangelog(
+      body,
+      languageCode: _interfaceLanguageCode,
+    );
     return TextSpan(
       text: '$tagName \n',
       style: AppTextStyle.title2.of(context),

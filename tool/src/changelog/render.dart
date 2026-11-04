@@ -25,6 +25,23 @@ const telegramLimit = 900;
 
 const emptyVersionNote = 'Internal improvements only.';
 
+const emptyVersionNoteZh = '仅内部改进';
+
+/// Telegram captions are Chinese. The channel is Chinese-first and a single
+/// broadcast cannot follow each reader's locale, so the caption is rendered
+/// from `Changelog-Zh:` when a commit carries one and falls back to the English
+/// entry otherwise — a forgotten translation stays visible instead of silently
+/// dropping the line.
+const _zhTitles = <ChangelogType, String>{
+  ChangelogType.breaking: '破坏性变更',
+  ChangelogType.feat: '新功能',
+  ChangelogType.fix: '问题修复',
+  ChangelogType.perf: '性能优化',
+  ChangelogType.revert: '回滚',
+};
+
+String _zhTitle(ChangelogType type) => _zhTitles[type] ?? type.title;
+
 String renderMarkdown(Changelog changelog) {
   final buffer = StringBuffer()
     ..writeln(changelogTitle)
@@ -101,12 +118,12 @@ String escapeTelegramHtml(String value) => value
 String renderTelegram(ChangelogVersion version, {String? moreUrl}) {
   final buffer = StringBuffer();
   if (version.isEmpty) {
-    buffer.writeln('• ${escapeTelegramHtml(emptyVersionNote)}');
+    buffer.writeln('• ${escapeTelegramHtml(emptyVersionNoteZh)}');
   }
   for (final group in version.groups) {
-    buffer.writeln('<b>${escapeTelegramHtml(group.type.title)}</b>');
+    buffer.writeln('<b>${escapeTelegramHtml(_zhTitle(group.type))}</b>');
     for (final entry in group.entries) {
-      buffer.writeln('• ${escapeTelegramHtml(entry.text)}');
+      buffer.writeln('• ${escapeTelegramHtml(entry.textFor('zh'))}');
     }
     buffer.writeln();
   }

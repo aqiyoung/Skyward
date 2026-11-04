@@ -216,27 +216,41 @@ jobs:
           commit="$(git rev-parse HEAD)"
 
           entries=""
-          if [ -f CHANGELOG.zh.md ]; then
-            # Only the `## 未发布` section: a versioned section below it is
+          if [ -n "$previous" ]; then
+            echo "changelog: $previous...$commit"
+            # The rule: every user-visible commit carries a `Changelog-Zh:`
+            # trailer, and the caption is built from those. One line each, so
+            # the caption never needs a second hand-written file to stay in
+            # sync. Falls back to CHANGELOG.zh.md when the range has none.
+            entries=$(git log --no-merges --reverse \
+              --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+              "$previous..$commit" 2>/dev/null \
+              | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | tac | awk 'NR<=8' || true)
+          fi
+
+          if [ -n "$entries" ]; then
+            echo "changelog source: Changelog-Zh trailers"
+          elif [ -f CHANGELOG.zh.md ]; then
+            # Fallback for older commits written before the trailer rule: only
+            # the `## 未发布` section, since a versioned section below it is
             # history the phone has already been told about.
             entries=$(awk '
               /^## 未发布[[:space:]]*$/ { capture = 1; next }
               /^## / { capture = 0 }
               capture && NF { print }
             ' CHANGELOG.zh.md)
+            if [ -n "$entries" ]; then
+              echo "changelog source: CHANGELOG.zh.md (未发布)"
+            fi
           fi
 
-          if [ -n "$previous" ]; then
-            echo "changelog: $previous...$commit"
-          fi
-          if [ -n "$entries" ]; then
-            echo "changelog source: CHANGELOG.zh.md (未发布)"
-          elif [ -n "$previous" ]; then
-            echo "::notice::no 未发布 section in CHANGELOG.zh.md; falling back to commit subjects"
+          if [ -z "$entries" ] && [ -n "$previous" ]; then
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
             entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
-          else
+          elif [ -z "$previous" ]; then
             echo "::notice::this is the first preview; no changelog range"
           fi
 

@@ -39,22 +39,42 @@ class RawCommit {
 }
 
 class ChangelogEntry {
-  const ChangelogEntry({required this.id, required this.text, this.scope});
+  const ChangelogEntry({
+    required this.id,
+    required this.text,
+    this.scope,
+    this.textZh,
+  });
 
   final String id;
   final String? scope;
+
+  /// English text, shown to every locale that has no translation of its own.
   final String text;
+
+  /// Chinese text from a `Changelog-Zh:` trailer. Optional: an entry without
+  /// one simply falls back to [text] in a Chinese UI.
+  final String? textZh;
+
+  /// The text for a locale: Chinese when the app runs in Chinese and the commit
+  /// carried a translation, English otherwise.
+  String textFor(String languageCode) =>
+      languageCode == 'zh' && textZh != null && textZh!.isNotEmpty
+      ? textZh!
+      : text;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     if (scope != null) 'scope': scope,
     'text': text,
+    if (textZh != null) 'textZh': textZh,
   };
 
   static ChangelogEntry fromJson(Map<String, dynamic> json) => ChangelogEntry(
     id: json['id'] as String,
     scope: json['scope'] as String?,
     text: json['text'] as String,
+    textZh: json['textZh'] as String?,
   );
 }
 

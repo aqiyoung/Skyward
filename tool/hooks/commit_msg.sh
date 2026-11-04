@@ -73,11 +73,16 @@ groups='breaking|feat|fix|perf|revert'
 while IFS= read -r line; do
   if [[ "$line" =~ ^Changelog-([A-Za-z0-9-]+): ]]; then
     key="${BASH_REMATCH[1]}"
-    if [[ "$key" != 'Type' ]]; then
+    key_lower="$(printf '%s' "$key" | tr '[:upper:]' '[:lower:]')"
+    # Changelog-Zh (or Changelog-zh-CN) is the Chinese copy the app shows in a
+    # Chinese UI and the Telegram caption is built from.
+    if [[ "$key" != 'Type' && ! "$key_lower" =~ ^zh(-[a-z0-9]+)?$ ]]; then
       echo "Unknown changelog trailer: Changelog-$key" >&2
-      echo "The changelog is English only; Changelog-Type is the only" >&2
-      echo "suffixed trailer. Do not add translations to commit messages." >&2
+      echo "Changelog-Type and Changelog-Zh are the only suffixed trailers." >&2
       exit 1
+    fi
+    if [[ "$key" != 'Type' ]]; then
+      continue
     fi
     value="${line#*: }"
     if [[ ! "$value" =~ ^($groups)$ ]]; then
@@ -88,7 +93,7 @@ while IFS= read -r line; do
   fi
   if [[ "$line" =~ ^Breaking-([A-Za-z0-9-]+): ]]; then
     echo "Unknown breaking trailer: Breaking-${BASH_REMATCH[1]}" >&2
-    echo "The changelog is English only; use BREAKING CHANGE: alone." >&2
+    echo "Use BREAKING CHANGE: alone; its Chinese copy goes in Changelog-Zh." >&2
     exit 1
   fi
 done <<<"$body"
@@ -119,10 +124,20 @@ fi
 
 type="${subject%%[(:!]*}"
 
-if [[ "$type" =~ ^(feat|fix|perf)$ ]] && ! grep -qE '^Changelog:' <<<"$body"; then
-  cat >&2 <<EOF
+if [[ "$type" =~ ^(feat|fix|perf)$ ]]; then
+  if ! grep -qE '^Changelog:' <<<"$body"; then
+    cat >&2 <<EOF
 Note: no "Changelog:" trailer, so the changelog will reuse this subject.
 
   Changelog: $description
 EOF
+  fi
+  if ! grep -qiE '^Changelog-zh(-[A-Za-z0-9]+)?:' <<<"$body"; then
+    cat >&2 <<EOF
+Note: no "Changelog-Zh:" trailer, so a Chinese UI and the Telegram caption
+show the English entry. Add the Chinese copy:
+
+  Changelog-Zh: 分类｜说明（40 字以内）
+EOF
+  fi
 fi
