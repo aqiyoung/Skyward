@@ -101,7 +101,15 @@ void main() {
   );
 
   Future<void> save(WidgetTester tester) async {
-    await tester.tap(find.byGlyph(AppGlyphs.check).first);
+    // A narrow sheet puts the confirm action at the foot as a labelled button;
+    // a wide one keeps it in the bar as a check glyph. The sheet width follows
+    // the view, so the test looks for whichever one the layout produced.
+    final foot = find.widgetWithText(TextButton, 'Save');
+    if (foot.evaluate().isNotEmpty) {
+      await tester.tap(foot);
+    } else {
+      await tester.tap(find.widgetWithGlyph(IconButton, AppGlyphs.check));
+    }
     await tester.pumpAndSettle();
   }
 
