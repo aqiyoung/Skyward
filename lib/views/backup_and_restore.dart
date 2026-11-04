@@ -1,26 +1,76 @@
 import 'dart:async';
 
 import 'package:skyward/common/common.dart';
+import 'package:skyward/common/dav_client.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/form/form.dart';
+import 'package:skyward/l10n/l10n.dart';
+import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/action.dart';
 import 'package:skyward/providers/app.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/config_item.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// What this page does, and the one choice beside it: a backup of everything
-/// the app keeps on this device, a way to put it back, and the strategy that
-/// decides how a restore meets what is already here — all three on one card,
-/// because the strategy is only ever read as part of the restore.
+/// The same archive, two destinations.
 ///
-/// The cloud half is gone. A backup that needs an account to hold it is a
-/// service, and this app does not run one; the rows that stayed are the ones
-/// that work with nothing but the phone.
-class BackupAndRestore extends ConsumerWidget {
-  const BackupAndRestore({super.key});
+/// The cards read as "off the phone, then on it": a WebDAV server the user
+/// already owns, then a file the system picker hands back. Nothing here needs
+/// an account this app runs — the server row is a place to put a copy, not a
+/// subscription, and it stays absent until someone binds one.
+///
+/// The restore strategy is a card of its own because both cards above consult
+/// it: it decides how an archive meets what is already on the device, whether
+/// the bytes came from a server or from a file.
+class BackupAndRestore extends ConsumerStatefulWidget {
+  const BackupAndRestore({super.key, this.connection});
+
+  /// The reachability probe, owned by the page unless a test hands one in: it
+  /// pings the bound server on open, and a widget test has no server to answer.
+  final DAVConnectionController? connection;
+
+  @override
+  ConsumerState<BackupAndRestore> createState() => _BackupAndRestoreState();
+}
+
+class _BackupAndRestoreState extends ConsumerState<BackupAndRestore> {
+  late final DAVConnectionController _davConnection;
+  late final bool _ownsConnection;
+
+  @override
+  void initState() {
+    super.initState();
+    _davConnection = widget.connection ?? DAVConnectionController();
+    _ownsConnection = widget.connection == null;
+    // The indicator is the only place the page reports reachability, so it has
+    // to follow the binding as edits land, not just at first build.
+    ref.listenManual(davSettingProvider, (_, _) {
+      _updateDAVClient();
+    }, fireImmediately: true);
+  }
+
+  void _updateDAVClient() {
+    unawaited(_davConnection.update(ref.read(davSettingProvider)));
+  }
+
+  @override
+  void dispose() {
+    if (_ownsConnection) {
+      _davConnection.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _showAddWebDAV(DAVProps? dav) async {
+    await showFormSheet<void>(
+      context: context,
+      builder: (_) => WebDAVForm(dav: dav?.copyWith()),
+    );
+  }
 
   Future<void> _run({
     required String title,
@@ -32,7 +82,7 @@ class BackupAndRestore extends ConsumerWidget {
       tag: LoadingTag.backup_restore,
       title: title,
     );
-    if (res != true) return;
+    if (res != true || !mounted) return;
     unawaited(
       dialogs.showAlert(
         title: title,
@@ -41,76 +91,172 @@ class BackupAndRestore extends ConsumerWidget {
     );
   }
 
-  Future<void> _backup(BuildContext context, WidgetRef ref) {
+  Future<void> _backup(BackupDelivery deliver) {
     final appLocalizations = context.appLocalizations;
     return _run(
       title: appLocalizations.backup,
       successMessage: appLocalizations.backupSuccess,
-      task: () => ref
-          .read(backupActionProvider.notifier)
-          .backup((archivePath) async {
-            final savedPath = await picker.saveFileWithPath(
-              getBackupFileName(),
-              archivePath,
-            );
-            return savedPath != null;
-          }),
+      task: () => ref.read(backupActionProvider.notifier).backup(deliver),
     );
   }
 
-  Future<void> _restore(BuildContext context, WidgetRef ref) async {
+  Future<void> _restore(RestoreOption option, BackupFetch fetch) {
     final appLocalizations = context.appLocalizations;
-    final option = await dialogs.showCommonDialog<RestoreOption>(
-      child: const RestoreOptionsDialog(),
-    );
-    if (option == null || !context.mounted) return;
-    final file = await picker.pickerFile();
-    final path = file?.path;
-    if (path == null || !context.mounted) return;
-    await _run(
+    return _run(
       title: appLocalizations.restore,
       successMessage: appLocalizations.restoreSuccess,
-      task: () => ref
-          .read(backupActionProvider.notifier)
-          .restore(option, (_) async => path),
+      task: () =>
+          ref.read(backupActionProvider.notifier).restore(option, fetch),
     );
+  }
+
+  Future<RestoreOption?> _pickRestoreOption() {
+    return dialogs.showCommonDialog<RestoreOption>(
+      child: const RestoreOptionsDialog(),
+    );
+  }
+
+  Future<void> _backupOnWebDAV() async {
+    final client = _davConnection.client;
+    if (client == null) return;
+    await _backup((archivePath) async {
+      await client.upload(archivePath);
+      return true;
+    });
+  }
+
+  Future<void> _restoreOnWebDAV() async {
+    final client = _davConnection.client;
+    if (client == null) return;
+    final option = await _pickRestoreOption();
+    if (option == null || !mounted) return;
+    await _restore(option, (downloadPath) async {
+      await client.download(downloadPath);
+      return downloadPath;
+    });
+  }
+
+  Future<void> _backupOnLocal() {
+    return _backup((archivePath) async {
+      final savedPath = await picker.saveFileWithPath(
+        getBackupFileName(),
+        archivePath,
+      );
+      return savedPath != null;
+    });
+  }
+
+  Future<void> _restoreOnLocal() async {
+    final option = await _pickRestoreOption();
+    if (option == null || !mounted) return;
+    final file = await picker.pickerFile();
+    final path = file?.path;
+    if (path == null || !mounted) return;
+    await _restore(option, (_) async => path);
+  }
+
+  void _handleFileName(String? value) {
+    if (value == null) return;
+    ref
+        .read(davSettingProvider.notifier)
+        .update((state) => state?.copyWith(fileName: value));
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    final dav = ref.watch(davSettingProvider);
     final isLoading = ref.watch(loadingProvider(LoadingTag.backup_restore));
     return CommonScaffold(
       isLoading: isLoading,
       title: appLocalizations.backupAndRestore,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          // The card sits as far from the bar as every card below a group
-          // gap does: the body brings the air down here, and the list is
-          // asked not to add its own above the first one.
-          top: context.cardTopPadding,
+          // The first card opens a group of its own, so the body brings the
+          // air that a titled section needs and the list adds nothing above it.
+          top: context.sectionTopPadding,
           bottom: 16 + context.bottomInset,
         ),
         children: [
-          // One card, three rows: the two things the page does and the one
-          // choice they both stand on. The strategy was a card of its own
-          // under a label, which made a one-row setting look like a second
-          // page; it belongs to the buttons it decides for.
           generateSection(
-            leadingGap: false,
+            title: appLocalizations.remote,
+            headerPadding: context.sectionHeaderPadding,
+            items: [
+              if (dav == null)
+                ListItem(
+                  leading: const IconWell(AppGlyphs.cloudSync),
+                  title: Text(appLocalizations.noInfo),
+                  subtitle: Text(appLocalizations.pleaseBindWebDAV),
+                  trailing: TonalButton(
+                    label: appLocalizations.bind,
+                    onPressed: () => _showAddWebDAV(null),
+                  ),
+                )
+              else ...[
+                ListItem(
+                  leading: const IconWell(AppGlyphs.cloudSync),
+                  title: TooltipText(
+                    text: Text(
+                      dav.user,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Text(appLocalizations.connectivity),
+                        _DavConnectionIndicator(connection: _davConnection),
+                      ],
+                    ),
+                  ),
+                  trailing: TonalButton(
+                    label: appLocalizations.edit,
+                    onPressed: () => _showAddWebDAV(dav),
+                  ),
+                ),
+                ListItem.input(
+                  leading: const IconWell(AppGlyphs.importFile),
+                  title: Text(appLocalizations.file),
+                  subtitle: Text(dav.fileName),
+                  dialogTitle: appLocalizations.file,
+                  value: dav.fileName,
+                  resetValue: defaultDavFileName,
+                  maxLength: TextInputLimits.fileName,
+                  onChanged: _handleFileName,
+                ),
+                ListItem(
+                  leading: const IconWell(AppGlyphs.upload),
+                  onTap: _backupOnWebDAV,
+                  title: Text(appLocalizations.backup),
+                ),
+                ListItem(
+                  leading: const IconWell(AppGlyphs.cloudDownload),
+                  onTap: _restoreOnWebDAV,
+                  title: Text(appLocalizations.restore),
+                ),
+              ],
+            ],
+          ),
+          generateSection(
+            title: appLocalizations.local,
+            headerPadding: context.sectionHeaderPadding,
             items: [
               ListItem(
-                onTap: () {
-                  _backup(context, ref);
-                },
+                onTap: _backupOnLocal,
                 title: Text(appLocalizations.backup),
               ),
               ListItem(
-                onTap: () {
-                  _restore(context, ref);
-                },
+                onTap: _restoreOnLocal,
                 title: Text(appLocalizations.restore),
               ),
+            ],
+          ),
+          generateSection(
+            title: appLocalizations.options,
+            headerPadding: context.sectionHeaderPadding,
+            items: [
               ConfigOptionsItem<RestoreStrategy>(
                 title: (l) => l.restoreStrategy,
                 options: RestoreStrategy.values,
@@ -126,6 +272,48 @@ class BackupAndRestore extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A dot that says whether the bound server answered the last `OPTIONS`.
+///
+/// It spins until the first answer arrives, because "not checked yet" and "not
+/// reachable" are different states and a red dot on open would report a
+/// failure that has not happened.
+class _DavConnectionIndicator extends StatelessWidget {
+  const _DavConnectionIndicator({required this.connection});
+
+  final ValueNotifier<bool?> connection;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ValueListenableBuilder(
+      valueListenable: connection,
+      builder: (context, isConnected, _) {
+        return Center(
+          child: FadeThroughBox(
+            child: isConnected == null
+                ? const CommonCircleLoading(size: 12)
+                : Tooltip(
+                    message: isConnected
+                        ? appLocalizations.connected
+                        : appLocalizations.disconnected,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: !isConnected
+                            ? context.colorScheme.error
+                            : context.colorScheme.success,
+                      ),
+                      width: 12,
+                      height: 12,
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -165,6 +353,162 @@ class _RestoreOptionsDialogState extends State<RestoreOptionsDialog> {
           ),
         ],
       ),
+    );
+  }
+}
+
+enum _DavField { uri, user, password }
+
+class WebDAVForm extends ConsumerStatefulWidget {
+  final DAVProps? dav;
+
+  const WebDAVForm({super.key, this.dav});
+
+  @override
+  ConsumerState<WebDAVForm> createState() => _WebDAVFormState();
+}
+
+class _WebDAVFormState extends ConsumerState<WebDAVForm> {
+  late final TextEditingController _uriController;
+  late final TextEditingController _userController;
+  late final TextEditingController _passwordController;
+  bool _attempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _uriController = TextEditingController(text: widget.dav?.uri);
+    _userController = TextEditingController(text: widget.dav?.user);
+    _passwordController = TextEditingController(text: widget.dav?.password);
+  }
+
+  @override
+  void dispose() {
+    _uriController.dispose();
+    _userController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  ({_DavField field, String message})? _issue(
+    AppLocalizations appLocalizations,
+  ) {
+    final uri = _uriController.text;
+    if (uri.isEmpty || !uri.isUrl) {
+      return (field: _DavField.uri, message: appLocalizations.addressTip);
+    }
+    if (_userController.text.isEmpty) {
+      return (
+        field: _DavField.user,
+        message: appLocalizations.emptyTip(appLocalizations.account),
+      );
+    }
+    if (_passwordController.text.isEmpty) {
+      return (
+        field: _DavField.password,
+        message: appLocalizations.emptyTip(appLocalizations.password),
+      );
+    }
+    return null;
+  }
+
+  void _handleChanged(String _) {
+    if (_attempted) {
+      setState(() {});
+    }
+  }
+
+  void _submit() {
+    if (_issue(context.appLocalizations) != null) {
+      setState(() {
+        _attempted = true;
+      });
+      return;
+    }
+    ref
+        .read(davSettingProvider.notifier)
+        .update(
+          (_) => DAVProps(
+            uri: _uriController.text,
+            user: _userController.text,
+            password: _passwordController.text,
+            fileName: widget.dav?.fileName ?? defaultDavFileName,
+          ),
+        );
+    Navigator.pop(context);
+  }
+
+  void _delete() {
+    ref.read(davSettingProvider.notifier).update((_) => null);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final issue = _attempted ? _issue(appLocalizations) : null;
+    return FormPage(
+      title: appLocalizations.webDAVConfiguration,
+      onSave: _submit,
+      error: issue?.message,
+      children: [
+        generateSection(
+          footer: appLocalizations.addressHelp,
+          items: [
+            FormRow(
+              title: appLocalizations.address,
+              invalid: issue?.field == _DavField.uri,
+              trailing: FormRowTextField(
+                controller: _uriController,
+                hintText: appLocalizations.required,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.next,
+                autocorrect: false,
+                inputFormatters: TextInputLimits.limit(TextInputLimits.uri),
+                onChanged: _handleChanged,
+              ),
+            ),
+            FormRow(
+              title: appLocalizations.account,
+              invalid: issue?.field == _DavField.user,
+              trailing: FormRowTextField(
+                controller: _userController,
+                hintText: appLocalizations.required,
+                textInputAction: TextInputAction.next,
+                autocorrect: false,
+                inputFormatters: TextInputLimits.limit(
+                  TextInputLimits.userName,
+                ),
+                onChanged: _handleChanged,
+              ),
+            ),
+            FormRow(
+              title: appLocalizations.password,
+              invalid: issue?.field == _DavField.password,
+              trailing: FormRowSecretTextField(
+                controller: _passwordController,
+                hintText: appLocalizations.required,
+                textInputAction: TextInputAction.done,
+                inputFormatters: TextInputLimits.limit(
+                  TextInputLimits.password,
+                ),
+                onChanged: _handleChanged,
+                onFieldSubmitted: (_) => _submit(),
+              ),
+            ),
+          ],
+        ),
+        if (widget.dav != null)
+          generateSection(
+            items: [
+              FormRow(
+                title: appLocalizations.delete,
+                titleStyle: TextStyle(color: context.colorScheme.destructive),
+                onPressed: _delete,
+              ),
+            ],
+          ),
+      ],
     );
   }
 }
