@@ -196,6 +196,11 @@ jobs:
 
       # What changed since the previous preview, so the phone shows the point of
       # the build rather than a bare version number.
+      #
+      # The caption is read by Chinese-speaking users while commit subjects are
+      # English, so the prose comes from CHANGELOG.zh.md: its `未发布` section is
+      # what this build is about. The commit range is only the fallback for a
+      # tree that carries no section of its own.
       - name: Collect the changelog
         id: changelog
         env:
@@ -213,10 +218,39 @@ jobs:
           entries=""
           if [ -n "$previous" ]; then
             echo "changelog: $previous...$commit"
+            # The rule: every user-visible commit carries a `Changelog-Zh:`
+            # trailer, and the caption is built from those. One line each, so
+            # the caption never needs a second hand-written file to stay in
+            # sync. Falls back to CHANGELOG.zh.md when the range has none.
+            entries=$(git log --no-merges --reverse \
+              --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+              "$previous..$commit" 2>/dev/null \
+              | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | tac | awk 'NR<=8' || true)
+          fi
+
+          if [ -n "$entries" ]; then
+            echo "changelog source: Changelog-Zh trailers"
+          elif [ -f CHANGELOG.zh.md ]; then
+            # Fallback for older commits written before the trailer rule: only
+            # the `## 未发布` section, since a versioned section below it is
+            # history the phone has already been told about.
+            entries=$(awk '
+              /^## 未发布[[:space:]]*$/ { capture = 1; next }
+              /^## / { capture = 0 }
+              capture && NF { print }
+            ' CHANGELOG.zh.md)
+            if [ -n "$entries" ]; then
+              echo "changelog source: CHANGELOG.zh.md (未发布)"
+            fi
+          fi
+
+          if [ -z "$entries" ] && [ -n "$previous" ]; then
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
             entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
-          else
+          elif [ -z "$previous" ]; then
             echo "::notice::this is the first preview; no changelog range"
           fi
 
@@ -483,7 +517,6 @@ jobs:
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
           VERSION_CODE: ${{ steps.verify.outputs.version_code }}
           REF: ${{ inputs.ref || github.ref_name }}
-          TAG: preview-${{ steps.version.outputs.build_number }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
@@ -505,18 +538,21 @@ jobs:
             exit 1
           fi
 
-          # A caption is capped at 1024 characters: the changelog is trimmed
-          # and the release page carries the rest.
+          # A caption is capped at 1024 characters. The entries are already
+          # short and in Chinese, so they are shown whole -- cutting by byte
+          # (`cut -c`) would split a multi-byte character in half.
           {
             echo "🧪 Skyward ${VERSION}（预览版）"
             echo
-            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID} ｜ versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID}"
+            echo "versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
             if [ -n "${CHANGELOG}" ]; then
               echo
-              printf '%s\n' "${CHANGELOG}" | cut -c1-80 | awk 'NR<=6'
+              echo "📝 本次更新"
+              printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "⬇️ 安装包即本条消息附件"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt

@@ -230,6 +230,25 @@ int _verify(String root) {
     );
   }
 
+  // A reminder, not a failure: a missing translation degrades to English
+  // (app) or stays English in the caption, which is visible but not broken.
+  // Only the newest version is checked, so history does not drown the output.
+  final newest = changelog.versions.isEmpty ? null : changelog.versions.first;
+  if (newest != null) {
+    final untranslated = <String>[
+      for (final group in newest.groups)
+        for (final entry in group.entries)
+          if (entry.textZh == null || entry.textZh!.isEmpty) entry.id,
+    ];
+    if (untranslated.isNotEmpty) {
+      stdout.writeln(
+        '! ${newest.tag}: ${untranslated.length} entries have no '
+        'Changelog-Zh trailer and will read English in a Chinese UI: '
+        '${untranslated.join(', ')}',
+      );
+    }
+  }
+
   if (problems.isEmpty) {
     stdout.writeln('Changelog is consistent with git.');
     return 0;

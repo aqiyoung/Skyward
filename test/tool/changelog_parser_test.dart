@@ -182,15 +182,31 @@ Note: the old handle still works
       );
     });
 
-    test('warns about a translation trailer left in a commit', () {
+    test('reads a Changelog-Zh trailer into the entry', () {
       final parser = ChangelogParser();
-      final items = parser.parse(commit('feat: x', 'Changelog-zh-CN: 新功能'));
+      final items = parser.parse(
+        commit('feat: x', 'Changelog-Zh: 新增 WebRTC 防护'),
+      );
 
       expect(items.single.entry.text, 'X');
-      expect(
-        parser.warnings.single,
-        contains('unsupported changelog trailer: Changelog-zh-CN'),
+      expect(items.single.entry.textZh, '新增 WebRTC 防护');
+      expect(parser.warnings, isEmpty);
+    });
+
+    test('accepts a regional Chinese trailer key', () {
+      final items = ChangelogParser().parse(
+        commit('feat: x', 'Changelog-zh-CN: 新功能'),
       );
+
+      expect(items.single.entry.textZh, '新功能');
+    });
+
+    test('leaves textZh unset when the trailer is absent', () {
+      final items = ChangelogParser().parse(commit('feat: x'));
+
+      expect(items.single.entry.textZh, isNull);
+      expect(items.single.entry.textFor('zh'), 'X');
+      expect(items.single.entry.textFor('en'), 'X');
     });
 
     test('warns about a breaking translation trailer', () {

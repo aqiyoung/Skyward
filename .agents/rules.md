@@ -616,22 +616,29 @@ commit that introduced what it amends.
 ### Changelog Trailers
 
 `tool/changelog.dart` builds the user facing changelog from the commit history, so the trailers below are the copy that
-ships to users. The subject stays the developer facing summary and is only the fallback.
+ships to users. The subject stays the developer facing summary and is only the fallback. Every entry ships in two
+languages: English (`Changelog:`) and Chinese (`Changelog-Zh:`).
 
 ```text
 feat(profiles): support per-profile override script
 
 Changelog: Per-profile override scripts
+Changelog-Zh: 配置｜支持每个配置自定义覆盖脚本
 ```
 
 - `Changelog:` is the English entry. `Changelog: skip` drops the commit from the changelog entirely.
-- The changelog is English only. A `Changelog-<locale>:` or `Breaking-<locale>:` trailer fails the hook, because
-  translated release copy does not belong in the commit history. Translate after the fact if ever needed, not in the
-  commit message.
+- `Changelog-Zh:` is the Chinese entry, and is what a Chinese UI shows in the in-app update log and what the Telegram
+  caption is built from. Write `分类｜说明` within 40 characters, one line. `Changelog-zh-CN` and other regional
+  spellings are accepted; anything else after `Changelog-` still fails the hook.
+- A missing `Changelog-Zh:` does not block the commit: the entry falls back to English, and the `commit-msg` hook and
+  `tool/changelog.dart verify` both name the commit so it can be added. Treat the note as a defect for user-visible
+  commits.
+- `Breaking-<locale>:` is still rejected. A breaking commit takes its Chinese copy from the same `Changelog-Zh:`
+  trailer, so one translation covers both the breaking and the normal entry.
 - `Changelog-Type:` moves an entry into another group, for example to promote a `refactor` that users will notice. Valid
   values are `breaking`, `feat`, `fix`, `perf`, `revert`.
 - `BREAKING CHANGE:` is required whenever the subject carries `!`, and its text becomes the breaking entry. A `!` commit
-  therefore needs two lines of copy: the footer for the breaking entry and `Changelog:` for the normal one.
+  therefore needs two lines of English copy: the footer for the breaking entry and `Changelog:` for the normal one.
 
 `feat`, `fix`, `perf`, `revert` and breaking commits are collected by default; every other type is dropped unless it
 carries a `Changelog:` trailer. Commits missing a trailer reuse their subject; for `feat`, `fix` and `perf` the hook

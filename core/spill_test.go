@@ -65,8 +65,12 @@ func TestHandleMethodCallSpillsALargeResultToAFile(t *testing.T) {
 	}
 	if runtime.GOOS != "windows" {
 		info, _ := os.Stat(envelope.File)
-		if info.Mode().Perm() != 0o644 {
-			t.Errorf("mode = %v, want the host to be able to read it", info.Mode().Perm())
+		// The spilled response can carry the controller secret and proxy
+		// credentials, so writeSpilledResponse keeps it owner-only (0o600);
+		// the Dart host reads it as the app user (the owner). It must not be
+		// group/other readable, so assert the secure mode rather than 0o644.
+		if info.Mode().Perm() != 0o600 {
+			t.Errorf("mode = %v, want owner-only 0o600 so spilled secrets stay private", info.Mode().Perm())
 		}
 	}
 }
