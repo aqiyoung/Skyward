@@ -208,8 +208,16 @@ Map<String, dynamic>? _parseVless(String link) {
       }
       final fp = params['fp'] ?? params['fingerprint'];
       if (fp != null) proxy['fingerprint'] = fp;
-      if (params['alpn'] != null) {
-        proxy['alpn'] = params['alpn']!.split(',');
+      // An empty `alpn=` (the URL ends the query right before the `#name`)
+      // yields [''], which is invalid Clash YAML and makes the whole config
+      // fail validation -- and validateProfile() then strips proxy-groups.
+      final alpn = params['alpn'];
+      if (alpn != null && alpn.trim().isNotEmpty) {
+        proxy['alpn'] = alpn
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
       }
     }
     
@@ -456,7 +464,12 @@ Map<String, dynamic>? _parseTuic(String link) {
       'uuid': parts[0],
       'password': parts.length > 1 ? parts.sublist(1).join(':') : '',
       if (params['sni'] != null) 'sni': params['sni'],
-      if (params['alpn'] != null) 'alpn': params['alpn']!.split(','),
+      if (params['alpn'] != null && params['alpn']!.trim().isNotEmpty)
+        'alpn': params['alpn']!
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList(),
       if (params['congestion_controller'] != null)
         'congestion-controller': params['congestion_controller'],
       if (params['disable_sni'] == '1') 'disable-sni': true,
