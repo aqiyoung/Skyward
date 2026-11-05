@@ -8,6 +8,10 @@ import 'package:material_ui/material_ui.dart';
 
 import 'ad_block.dart';
 import 'rules.dart';
+import 'filters.dart';
+import 'icon_sets.dart';
+import 'providers.dart';
+import 'package:skyward/views/profiles/custom/custom_proxies.dart';
 
 class AdvancedConfigView extends StatelessWidget {
   const AdvancedConfigView({super.key});
@@ -43,6 +47,27 @@ class AdvancedConfigView extends StatelessWidget {
         title: Text(appLocalizations.script),
         leading: const IconWell(AppGlyphs.code),
         widget: const ScriptsView(),
+      ),
+      // 自定义配置资源：原「更多」页独立入口，整合进进阶配置
+      ListItem.open(
+        title: Text(appLocalizations.proxies),
+        leading: const IconWell(AppGlyphs.proxies),
+        widget: const CustomProxiesView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.ruleProviders),
+        leading: const IconWell(AppGlyphs.resources),
+        widget: const ClashProvidersView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.filters),
+        leading: const IconWell(AppGlyphs.filter),
+        widget: const FiltersView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.iconSets),
+        leading: const IconWell(AppGlyphs.photos),
+        widget: const IconSetsView(),
       ),
     ];
     return BaseScaffold(

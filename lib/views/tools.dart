@@ -20,7 +20,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
-import 'config/custom_resources.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
 
@@ -82,12 +81,8 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           items: [
             const _GeneralItem(),
             const _AdvancedConfigItem(),
-            const _CustomResourcesItem(),
           ],
-          footer: [
-            appLocalizations.advancedConfigDesc,
-            appLocalizations.customProfileResourcesDesc,
-          ].join('\n'),
+          footer: appLocalizations.advancedConfigDesc,
         ),
       ],
     );
@@ -365,19 +360,6 @@ class _AdvancedConfigItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.wrench),
       title: Text(context.appLocalizations.advancedConfig),
       widget: const AdvancedConfigView(),
-    );
-  }
-}
-
-class _CustomResourcesItem extends StatelessWidget {
-  const _CustomResourcesItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.customize),
-      title: Text(context.appLocalizations.customProfileResources),
-      widget: const CustomResourcesView(),
     );
   }
 }
