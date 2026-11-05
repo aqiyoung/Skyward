@@ -14,7 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The few facts a reader is asked for when something misbehaves, on one page
-/// they can read out or copy, instead of a screenshot of four other screens.
+/// they can read out, instead of a screenshot of four other screens.
 class DiagnosticsView extends ConsumerStatefulWidget {
   const DiagnosticsView({super.key});
 

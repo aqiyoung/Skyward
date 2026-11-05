@@ -10,7 +10,6 @@ import 'package:skyward/state.dart';
 import 'package:skyward/ui/paged_sheet.dart';
 import 'package:skyward/ui/popup.dart';
 import 'package:skyward/views/config/advanced.dart';
-import 'package:skyward/views/config/custom_resources.dart';
 import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/config/ntp.dart';
 import 'package:skyward/views/config/sniffer.dart';
@@ -61,7 +60,6 @@ void main() {
     'tun config': TunView(1),
     'network config': const Scaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
-    'custom profile resources': const CustomResourcesView(),
     'on demand config': const OnDemandView(),
     'theme': const ThemeView(),
     'backup and restore': const BackupAndRestore(),
@@ -122,7 +120,6 @@ void main() {
     'Backup and restore': BackupAndRestore,
     'General': GeneralView,
     'Advanced configuration': AdvancedConfigView,
-    'Custom profile resources': CustomResourcesView,
   };
 
   for (final entry in toolDestinations.entries) {
