@@ -313,10 +313,10 @@ void main() {
 
       expect(readSetting().floatingNavigationBar, isTrue);
 
-      await pick(tester, 'Navigation bar style', 'Docked');
+      await pick(tester, 'Bottom bar', 'Docked');
       expect(readSetting().floatingNavigationBar, isFalse);
 
-      await pick(tester, 'Navigation bar style', 'Floating');
+      await pick(tester, 'Bottom bar', 'Floating');
       expect(readSetting().floatingNavigationBar, isTrue);
     });
 
@@ -388,7 +388,13 @@ void main() {
       await pumpThemeView(tester);
 
       expect(readTheme().fontFamily, isNull);
-      expect(find.text('Default'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(FontFamilyRow),
+          matching: find.text('Default'),
+        ),
+        findsWidgets,
+      );
 
       await openFonts(tester);
       expect(
@@ -463,7 +469,7 @@ void main() {
       await pumpThemeView(tester);
 
       expect(
-        tester.widget<Text>(find.text('Beta Serif')).style?.fontFamily,
+        tester.widget<Text>(find.text('Beta Serif').first).style?.fontFamily,
         'Beta Serif',
       );
       expect(
