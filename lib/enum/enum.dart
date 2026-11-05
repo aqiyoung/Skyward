@@ -123,6 +123,49 @@ enum LogLevel { debug, info, warning, error, silent }
 
 enum RecordTone { neutral, warning, error }
 
+enum RecordFacetKind {
+  network,
+  rule,
+  mitm,
+  app,
+  proxy,
+  level,
+  type,
+  initiator,
+  cache,
+  rcode,
+}
+
+enum RecordGrouping { app, host, rule, exit }
+
+extension RecordFacetKindExt on RecordFacetKind {
+  String get title {
+    return switch (this) {
+      RecordFacetKind.network => '网络',
+      RecordFacetKind.rule => '规则',
+      RecordFacetKind.mitm => '中间人',
+      RecordFacetKind.app => '应用',
+      RecordFacetKind.proxy => '代理',
+      RecordFacetKind.level => '级别',
+      RecordFacetKind.type => '类型',
+      RecordFacetKind.initiator => '发起者',
+      RecordFacetKind.cache => '缓存',
+      RecordFacetKind.rcode => '响应码',
+    };
+  }
+}
+
+extension RecordGroupingExt on RecordGrouping {
+  String get label {
+    return switch (this) {
+      RecordGrouping.app => '应用',
+      RecordGrouping.host => '主机',
+      RecordGrouping.rule => '规则',
+      RecordGrouping.exit => '出口',
+    };
+  }
+}
+
 extension RecordToneExt on RecordTone {
   Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
