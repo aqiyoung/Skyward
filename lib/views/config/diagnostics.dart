@@ -8,11 +8,9 @@ import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/views/config/dns_leak.dart';
-import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The few facts a reader is asked for when something misbehaves, on one page
@@ -91,9 +89,10 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
     return BaseScaffold(
       title: appLocalizations.diagnostics,
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.cardTopPadding, bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.cardTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
         children: [
           generateSection(
             leadingGap: false,
@@ -112,17 +111,7 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
                 ),
             ],
           ),
-          const SizedBox(height: 24),
-          generateSection(
-            items: [
-              ListItem(
-                title: Text(appLocalizations.copy),
-                leading: const IconWell(AppGlyphs.copy),
-                onTap: _databaseSize == null ? null : () => _copy(rows),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           generateSection(
             title: appLocalizations.dnsLeakCheck,
             items: [const DnsLeakCheck()],
@@ -130,13 +119,5 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
         ],
       ),
     );
-  }
-
-  void _copy(List<(String, String)> rows) {
-    final report = [
-      '$appName v${globalState.packageInfo.displayVersion}',
-      for (final (title, value) in rows) '$title: $value',
-    ].join('\n');
-    Clipboard.setData(ClipboardData(text: report));
   }
 }
