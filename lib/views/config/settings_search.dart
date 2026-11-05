@@ -30,6 +30,7 @@ class _SettingsSearchViewState extends State<SettingsSearchView> {
         .toList();
 
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.search,
       body: Column(
         children: [

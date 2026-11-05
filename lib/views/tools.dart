@@ -101,6 +101,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getAboutList(),
     ];
     return CommonScaffold(
+      rowSeparators: false,
       title: appLocalizations.tools,
       iconActions: [
         IconButtonData(

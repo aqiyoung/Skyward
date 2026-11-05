@@ -104,6 +104,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
+      rowSeparators: false,
       title: '${appLocalizations.about} $appName',
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

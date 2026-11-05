@@ -105,6 +105,7 @@ class HotKeyView extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final labels = ShortcutLabels.host();
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.hotkeyManagement,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

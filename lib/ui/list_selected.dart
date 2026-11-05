@@ -58,8 +58,10 @@ class _DecorationListItemState extends State<DecorationListItem> {
       top: isStart ? AppCorner.xl : AppCorner.none,
       bottom: isEnd ? AppCorner.xl : AppCorner.none,
     );
+    final separated =
+        !proxyDecorator && !isEnd && ListRowSeparatorScope.separatedOf(context);
     final row = _ListRowSeparator(
-      separated: !proxyDecorator && !isEnd,
+      separated: separated,
       emphasized: widget.invalid,
       states: _states,
       endIndent: 14,

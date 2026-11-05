@@ -91,6 +91,32 @@ class FloatingBarScope extends InheritedWidget {
   }
 }
 
+/// Whether the rows of a page draw their bottom hairline. A page of plain
+/// navigation entries opts out with `rowSeparators: false`; dense lists keep
+/// the default so a long column stays scannable. Read by [DecorationListItem],
+/// which still owns the press, error and pixel-alignment behaviour of the line.
+class ListRowSeparatorScope extends InheritedWidget {
+  final bool separated;
+
+  const ListRowSeparatorScope({
+    super.key,
+    required this.separated,
+    required super.child,
+  });
+
+  static bool separatedOf(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<ListRowSeparatorScope>()
+            ?.separated ??
+        true;
+  }
+
+  @override
+  bool updateShouldNotify(ListRowSeparatorScope oldWidget) {
+    return separated != oldWidget.separated;
+  }
+}
+
 class ItemPositionProvider extends InheritedWidget {
   final ItemPosition position;
 
