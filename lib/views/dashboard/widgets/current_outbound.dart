@@ -974,6 +974,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final colors = DashboardColors.of(context);
     final appLocalizations = context.appLocalizations;
     final glass = LiquidGlassScope.of(context);
     final size = widget.size;
@@ -982,13 +983,14 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     // Clash reserves green for running, so in light mode a running button
     // is green with white ink, not the app's blue primary. A stopped button
     // wears a soft primary, so a filled one only ever means the tunnel is
-    // up. Dark mode keeps the primary fill, where green on dark would not
+    // up. The button and the running chip share the same brighter green.
+    // Dark mode keeps the primary fill, where green on dark would not
     // carry the same contrast.
     final isLight = colorScheme.brightness == Brightness.light;
     final fill = !enabled
-        ? DashboardColors.of(context).tone2
+        ? colors.tone2
         : up
-        ? (isLight ? colorScheme.success : colorScheme.primary)
+        ? (isLight ? colors.ok : colorScheme.primary)
         : colorScheme.primaryContainer;
     final ink = !enabled
         ? colorScheme.onSurfaceVariant
@@ -1032,9 +1034,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                       progress: progress,
                       color: glass ? null : color,
                       shadow: enabled
-                          ? (isLight && up
-                                  ? colorScheme.success
-                                  : colorScheme.primary)
+                          ? (isLight && up ? colors.ok : colorScheme.primary)
                               .withValues(alpha: up ? 0.3 : 0.16)
                           : Colors.transparent,
                       ring: _focused

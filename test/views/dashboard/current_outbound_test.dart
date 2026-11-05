@@ -14,6 +14,7 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/providers/routed_probe.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/views/dashboard/layout.dart';
+import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/views/dashboard/widgets/current_outbound.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -594,6 +595,52 @@ void main() {
       expect(container.read(isStartProvider), isTrue);
       await tester.pumpAndSettle();
       expect(find.byTooltip('Stop'), findsOneWidget);
+    });
+
+    testWidgets('a running button and chip share the brighter running green', (
+      tester,
+    ) async {
+      container = containerWith();
+      container.read(runTimeProvider.notifier).value = 1;
+      await pumpCard(tester);
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(CurrentOutboundCard));
+      final green = DashboardColors.of(context).ok;
+      expect(green, DashboardColors.runningGreen);
+      expect(green, isNot(context.colorScheme.success));
+      final stoppedFill = context.colorScheme.primaryContainer;
+
+      final morphPaint = find.descendant(
+        of: startButton(),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint &&
+              widget.painter.runtimeType.toString().contains('MorphPainter'),
+        ),
+      );
+      expect(morphPaint, findsOneWidget);
+      Color? fillOf(Finder finder) =>
+          (tester.widget<CustomPaint>(finder).painter as dynamic).color
+              as Color?;
+      expect(fillOf(morphPaint), green);
+
+      final chipContainers = find.ancestor(
+        of: find.text(context.appLocalizations.running),
+        matching: find.byType(Container),
+      );
+      final chipDecorations = chipContainers
+          .evaluate()
+          .map((element) => (element.widget as Container).decoration)
+          .whereType<ShapeDecoration>();
+      expect(
+        chipDecorations.map((decoration) => decoration.color),
+        contains(green),
+      );
+
+      container.read(runTimeProvider.notifier).value = null;
+      await tester.pumpAndSettle();
+      expect(fillOf(morphPaint), stoppedFill);
     });
 
     testWidgets('a suspended tunnel swaps in the Wi-Fi off glyph and says so', (
