@@ -88,12 +88,23 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
     final clashConfig = ref.watch(patchClashConfigProvider);
     final coreStatus = ref.watch(coreStatusProvider);
     final rows = _rows(appLocalizations, clashConfig, coreStatus);
-    return BaseScaffold(
+    return CommonScaffold(
       title: appLocalizations.diagnostics,
+      // The report is a page-level action, not a row of its own: a card holding
+      // one button read as a section with nothing in it, and pushed the DNS
+      // check it has nothing to do with further down the page.
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.copy,
+          tooltip: appLocalizations.copy,
+          onPressed: () => unawaited(_copy(rows)),
+        ),
+      ],
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.cardTopPadding, bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.cardTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
         children: [
           generateSection(
             leadingGap: false,
@@ -112,17 +123,7 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
                 ),
             ],
           ),
-          const SizedBox(height: 24),
-          generateSection(
-            items: [
-              ListItem(
-                title: Text(appLocalizations.copy),
-                leading: const IconWell(AppGlyphs.copy),
-                onTap: _databaseSize == null ? null : () => _copy(rows),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           generateSection(
             title: appLocalizations.dnsLeakCheck,
             items: [const DnsLeakCheck()],
@@ -132,11 +133,15 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
     );
   }
 
-  void _copy(List<(String, String)> rows) {
+  Future<void> _copy(List<(String, String)> rows) async {
     final report = [
       '$appName v${globalState.packageInfo.displayVersion}',
       for (final (title, value) in rows) '$title: $value',
     ].join('\n');
-    Clipboard.setData(ClipboardData(text: report));
+    await Clipboard.setData(ClipboardData(text: report));
+    if (!mounted) {
+      return;
+    }
+    context.showNotifier(context.appLocalizations.copySuccess);
   }
 }
