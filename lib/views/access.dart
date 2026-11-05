@@ -342,6 +342,7 @@ class _AccessViewState extends ConsumerState<AccessView>
     required List<Package> packages,
     required Set<String> selected,
     required bool isSearching,
+    required bool awaitingPermission,
   }) {
     return FutureBuilder(
       future: _completer.future,
@@ -351,7 +352,9 @@ class _AccessViewState extends ConsumerState<AccessView>
           return const Center(child: CommonCircleLoading.page());
         }
         return NullStatusSwitcher(
-          isEmpty: packages.isEmpty,
+          // Nothing to list is not the same as nothing found: while the
+          // permission is missing the bar already says what to do.
+          isEmpty: packages.isEmpty && !awaitingPermission,
           isSearching: isSearching,
           nullStatus: NullStatus(
             label: appLocalizations.noData,
@@ -463,6 +466,7 @@ class _AccessViewState extends ConsumerState<AccessView>
               packages: viewPackages,
               selected: valueList.toSet(),
               isSearching: query.isNotEmpty,
+              awaitingPermission: needsInstalledAppsPermission,
             ),
           ),
         ),

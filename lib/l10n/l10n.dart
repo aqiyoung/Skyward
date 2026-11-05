@@ -425,6 +425,26 @@ class AppLocalizations {
     return Intl.message('Appearance', name: 'appearance', desc: '', args: []);
   }
 
+  /// `Preferences`
+  String get preferences {
+    return Intl.message(
+      'Preferences',
+      name: 'preferences',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `More theme settings`
+  String get moreThemeSettings {
+    return Intl.message(
+      'More theme settings',
+      name: 'moreThemeSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);

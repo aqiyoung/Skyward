@@ -48,7 +48,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       title: appLocalizations.settings,
       items: [
         const _SettingsSearchItem(),
-        const _AppearanceItem(),
+        const _PreferencesItem(),
         if (system.isAndroid) const _AccessItem(),
         if (system.isDesktop) const _HotkeyItem(),
         const _BackupItem(),
@@ -236,14 +236,14 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
   }
 }
 
-class _AppearanceItem extends StatelessWidget {
-  const _AppearanceItem();
+class _PreferencesItem extends StatelessWidget {
+  const _PreferencesItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const IconWell(AppGlyphs.paintbrush),
-      title: Text(context.appLocalizations.appearance),
+      leading: const IconWell(AppGlyphs.sliders),
+      title: Text(context.appLocalizations.preferences),
       widget: const AppearanceView(),
     );
   }

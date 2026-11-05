@@ -1940,6 +1940,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("More theme settings"),
     "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
 

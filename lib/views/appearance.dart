@@ -7,8 +7,9 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Language and theme together: the two personalization rows that used to
-/// sit as separate entries in More, now on one page.
+/// The two things a reader is most likely to change, both picked in place:
+/// language and theme open as menus on their own row instead of leading to
+/// pages of their own. The rest of the theme settings stay one tap away.
 class AppearanceView extends ConsumerWidget {
   const AppearanceView({super.key});
 
@@ -19,8 +20,11 @@ class AppearanceView extends ConsumerWidget {
       appSettingProvider.select((state) => state.locale),
     );
     final currentLocale = getLocaleForString(locale);
+    final themeMode = ref.watch(
+      themeSettingProvider.select((state) => state.themeMode),
+    );
     return BaseScaffold(
-      title: appLocalizations.appearance,
+      title: appLocalizations.preferences,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
           top: context.cardTopPadding,
@@ -44,10 +48,31 @@ class AppearanceView extends ConsumerWidget {
                     : locale.label,
                 value: currentLocale,
               ),
-              ListItem.open(
+              ListItem<ThemeMode>.options(
                 leading: const IconWell(AppGlyphs.paintbrush),
                 title: Text(appLocalizations.theme),
-                widget: const ThemeView(),
+                options: ThemeMode.values,
+                onChanged: (ThemeMode mode) {
+                  ref
+                      .read(themeSettingProvider.notifier)
+                      .update((state) => state.copyWith(themeMode: mode));
+                },
+                textBuilder: (ThemeMode mode) => switch (mode) {
+                  ThemeMode.system => appLocalizations.auto,
+                  ThemeMode.light => appLocalizations.light,
+                  ThemeMode.dark => appLocalizations.dark,
+                },
+                value: themeMode,
+                extraItems: [
+                  CommonPopupMenuItem(
+                    label: appLocalizations.moreThemeSettings,
+                    section: const CommonPopupMenuSection(),
+                    onPressed: () => showExtend(
+                      context,
+                      builder: (_) => const ThemeView(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

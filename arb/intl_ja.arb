@@ -51,6 +51,8 @@
   "zhCN": "簡体字中国語",
   "theme": "テーマ",
   "appearance": "Appearance",
+  "preferences": "環境設定",
+  "moreThemeSettings": "テーマの詳細設定",
   "configuration": "Configuration",
   "data": "Data",
 

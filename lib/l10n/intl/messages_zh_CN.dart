@@ -1519,6 +1519,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage("应用内的文字将以这个大小显示"),
     "theme": MessageLookupByLibrary.simpleMessage("主题"),
     "appearance": MessageLookupByLibrary.simpleMessage("外观"),
+    "preferences": MessageLookupByLibrary.simpleMessage("偏好设置"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("更多主题设置"),
     "configuration": MessageLookupByLibrary.simpleMessage("配置"),
     "data": MessageLookupByLibrary.simpleMessage("数据"),
 
