@@ -55,37 +55,29 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
+  /// Search, appearance, access control, storage, backup and the configuration
+  /// pages share one card. They are all settings; three separate cards made the
+  /// page read as three unrelated screens, and the two captions above them
+  /// ("data", "configuration") only repeated what the rows already say.
   Widget _getSettingList(bool enableDeveloperMode) {
     final appLocalizations = context.appLocalizations;
-    return Column(
-      children: [
-        generateSection(
-          items: [
-            const _SettingsSearchItem(),
-            const _AppearanceItem(),
-            if (system.isAndroid) const _AccessItem(),
-            if (system.isDesktop) const _HotkeyItem(),
-            if (enableDeveloperMode) const _DeveloperItem(),
-          ],
-          footer: system.isAndroid ? appLocalizations.accessControlDesc : null,
-        ),
-        generateSection(
-          title: appLocalizations.data,
-          items: [
-            const _StorageItem(),
-            const _BackupItem(),
-          ],
-        ),
-        generateSection(
-          title: appLocalizations.configuration,
-          items: [
-            const _GeneralItem(),
-            const _AdvancedConfigItem(),
-            const _DiagnosticsItem(),
-          ],
-          footer: appLocalizations.advancedConfigDesc,
-        ),
+    return generateSection(
+      items: [
+        const _SettingsSearchItem(),
+        const _AppearanceItem(),
+        if (system.isAndroid) const _AccessItem(),
+        if (system.isDesktop) const _HotkeyItem(),
+        if (enableDeveloperMode) const _DeveloperItem(),
+        const _StorageItem(),
+        const _BackupItem(),
+        const _GeneralItem(),
+        const _AdvancedConfigItem(),
+        const _DiagnosticsItem(),
       ],
+      footer: [
+        if (system.isAndroid) appLocalizations.accessControlDesc,
+        appLocalizations.advancedConfigDesc,
+      ].join('\n'),
     );
   }
 
