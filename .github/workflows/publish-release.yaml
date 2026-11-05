@@ -56,12 +56,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.branch }}
-          # Full history: release_changelog.mjs derives the structured changelog
-          # from `git log <previous>..HEAD`, which a default shallow checkout
-          # cannot satisfy -- the range's commits are not fetched, the command
-          # fails, and the `<!-- flclash:changelog:json -->` block is silently
-          # omitted from the release body, so the in-app update log never shows
-          # the curated per-version Chinese notes.
+          # Full history (defense in depth): release_changelog.mjs now pulls the
+          # commit range from the GitHub compare API (immune to shallow clones and
+          # force-pushed history). It only falls back to local `git log
+          # <previous>..HEAD` when `gh` is unavailable; a default shallow
+          # checkout would then fail and silently omit the
+          # `<!-- flclash:changelog:json -->` block, so we keep full history as a
+          # safety net for that fallback path.
           fetch-depth: 0
 
       # What changed since this channel last published. The compare API reads
