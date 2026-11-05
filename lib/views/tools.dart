@@ -47,7 +47,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     return generateSection(
       title: appLocalizations.settings,
       items: [
-        const _SettingsSearchItem(),
         const _PreferencesItem(),
         if (system.isAndroid) const _AccessItem(),
         if (system.isDesktop) const _HotkeyItem(),
@@ -81,6 +80,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     final developerMode = ref.watch(
       appSettingProvider.select((state) => state.developerMode),
     );
@@ -101,7 +101,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getAboutList(),
     ];
     return CommonScaffold(
-      title: context.appLocalizations.tools,
+      title: appLocalizations.tools,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.search,
+          tooltip: appLocalizations.search,
+          onPressed: () => showExtend(
+            context,
+            builder: (_) => const SettingsSearchView(),
+          ),
+        ),
+      ],
       body: Builder(
         builder: (context) => ListView.builder(
           key: toolsStoreKey,
@@ -271,19 +281,6 @@ class _BackupItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.cloudSync),
       title: Text(context.appLocalizations.backupAndRestore),
       widget: const BackupAndRestore(),
-    );
-  }
-}
-
-class _SettingsSearchItem extends StatelessWidget {
-  const _SettingsSearchItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.search),
-      title: Text(context.appLocalizations.search),
-      widget: const SettingsSearchView(),
     );
   }
 }
