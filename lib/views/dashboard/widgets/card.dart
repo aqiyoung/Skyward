@@ -468,8 +468,9 @@ class DashboardChip extends StatelessWidget {
     final (background, foreground) = switch (tone) {
       DashboardChipTone.idle => (colors.tone, colorScheme.onSurfaceVariant),
       // Clash reserves bright green for running: in light mode the ok chip
-      // is a vivid green capsule with white text, not a pale tint. Dark mode
-      // keeps the container pair, where a vivid fill would not read.
+      // is a vivid green capsule with white text, not a pale tint. Its fill
+      // is the running green the start button wears. Dark mode keeps the
+      // container pair, where a vivid fill would not read.
       DashboardChipTone.ok => colorScheme.brightness == Brightness.light
           ? (colors.ok, Colors.white)
           : (colors.okContainer, colors.onOkContainer),
