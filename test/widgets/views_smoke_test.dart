@@ -116,7 +116,7 @@ void main() {
   }
 
   final toolDestinations = <String, Type>{
-    'Appearance': AppearanceView,
+    'Preferences': AppearanceView,
     'Backup and restore': BackupAndRestore,
     'General': GeneralView,
     'Advanced configuration': AdvancedConfigView,
@@ -160,9 +160,9 @@ void main() {
     });
   }
 
-  testWidgets('appearance opens Theme', (tester) async {
-    // Theme is no longer a direct entry in More; it now lives inside
-    // AppearanceView (the P1 consolidation of language + theme).
+  testWidgets('appearance switches theme from the row menu', (tester) async {
+    // Theme is no longer a page of its own: the row opens a menu and the
+    // pick lands straight in the settings.
     final container = ProviderContainer(
       overrides: [profilesProvider.overrideWith(TestProfiles.new)],
     );
@@ -177,13 +177,39 @@ void main() {
     );
     await tester.pump();
 
-    final theme = find.text('Theme');
-    await tester.scrollUntilVisible(
-      theme,
-      500,
-      scrollable: find.byType(Scrollable).first,
+    await tester.tap(find.text('Theme'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Auto'), findsWidgets);
+    expect(find.text('More theme settings'), findsOneWidget);
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(themeSettingProvider).themeMode, ThemeMode.dark);
+    expect(tester.takeException(), null);
+  });
+
+  testWidgets('appearance keeps the rest of the theme settings one tap away', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
     );
-    await tester.tap(theme);
+    addTearDown(container.dispose);
+    globalState.container = container;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: AppearanceView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Theme'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More theme settings'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ThemeView), findsOneWidget);
