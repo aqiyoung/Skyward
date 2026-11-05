@@ -39,6 +39,31 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
+  /// Settings, as upstream groups them: everything that changes how the app
+  /// behaves, in one card under one caption. The two footnotes stay at the
+  /// card's foot because they explain rows that sit inside it.
+  Widget _getSettingList(bool enableDeveloperMode) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.settings,
+      items: [
+        const _SettingsSearchItem(),
+        const _AppearanceItem(),
+        if (system.isAndroid) const _AccessItem(),
+        if (system.isDesktop) const _HotkeyItem(),
+        const _BackupItem(),
+        const _GeneralItem(),
+        const _AdvancedConfigItem(),
+        const _DiagnosticsItem(),
+        if (enableDeveloperMode) const _DeveloperItem(),
+      ],
+      footer: [
+        if (system.isAndroid) appLocalizations.accessControlDesc,
+        appLocalizations.advancedConfigDesc,
+      ].join('\n'),
+    );
+  }
+
   /// What the tab ends on: one way into the about page, and the build it is —
   /// the row that also asks whether a newer one exists.
   Widget _getAboutList() {
@@ -51,31 +76,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         ),
         const _VersionItem(),
       ],
-    );
-  }
-
-  /// Search, appearance, access control, storage, backup and the configuration
-  /// pages share one card. They are all settings; three separate cards made the
-  /// page read as three unrelated screens, and the two captions above them
-  /// ("data", "configuration") only repeated what the rows already say.
-  Widget _getSettingList(bool enableDeveloperMode) {
-    final appLocalizations = context.appLocalizations;
-    return generateSection(
-      items: [
-        const _SettingsSearchItem(),
-        const _AppearanceItem(),
-        if (system.isAndroid) const _AccessItem(),
-        if (system.isDesktop) const _HotkeyItem(),
-        if (enableDeveloperMode) const _DeveloperItem(),
-        const _BackupItem(),
-        const _GeneralItem(),
-        const _AdvancedConfigItem(),
-        const _DiagnosticsItem(),
-      ],
-      footer: [
-        if (system.isAndroid) appLocalizations.accessControlDesc,
-        appLocalizations.advancedConfigDesc,
-      ].join('\n'),
     );
   }
 
