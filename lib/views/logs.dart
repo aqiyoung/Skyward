@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/models/record_filter.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/widgets/record_filter.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,10 +18,6 @@ class LogListController extends ValueNotifier<LogsState> {
 
   void search(String query) {
     value = value.copyWith(query: query);
-  }
-
-  void updateKeywords(List<String> keywords) {
-    value = value.copyWith(keywords: keywords);
   }
 
   void setLogs(List<Log> logs) {
@@ -52,6 +50,7 @@ class LogsView extends ConsumerStatefulWidget {
 class _LogsViewState extends ConsumerState<LogsView>
     with RouteMotionHoldMixin<LogsView> {
   final _listController = LogListController();
+  final _filters = RecordFilterController<Log>(facets: logFacets);
   late final ScrollController _scrollController;
   late final _physics = FollowEndScrollPhysics(
     isFollowing: () => _listController.value.autoScrollToEnd,
@@ -64,7 +63,7 @@ class _LogsViewState extends ConsumerState<LogsView>
       context,
       initialScrollOffset: double.maxFinite,
     );
-    _listController.setLogs(ref.read(logsProvider).list);
+    _setLogs(ref.read(logsProvider).list);
     ref.listenManual(logsProvider.select((state) => state.revision), (_, _) {
       updateLogsThrottler();
     });
@@ -83,6 +82,7 @@ class _LogsViewState extends ConsumerState<LogsView>
   @override
   void dispose() {
     _listController.dispose();
+    _filters.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -101,83 +101,130 @@ class _LogsViewState extends ConsumerState<LogsView>
     );
   }
 
+  void _setLogs(List<Log> logs) {
+    _listController.setLogs(logs);
+    _filters.offer(_listController.value.logs);
+  }
+
   void updateLogsThrottler() {
     throttler.call(FunctionTag.logs, () {
       if (!mounted) {
         return;
       }
-      updateWhenRouteSettled(
-        () => _listController.setLogs(ref.read(logsProvider).list),
-      );
+      updateWhenRouteSettled(() => _setLogs(ref.read(logsProvider).list));
     }, duration: renderThrottleDuration);
   }
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
+    final body = RecordFilterScope(
+      onFilter: _filters.add,
+      child: _buildBody(context),
+    );
     return CommonScaffold(
       iconActions: _buildActions(),
-      onKeywordsUpdate: _listController.updateKeywords,
+      menuItems: _filters.menuItems(context, pinned: false),
       searchState: AppBarSearchState(onSearch: _listController.search),
-      title: appLocalizations.logs,
-      body: ValueListenableBuilder<LogsState>(
-        valueListenable: _listController,
-        builder: (context, state, _) {
-          final logs = state.list;
-          return NullStatusSwitcher(
-            isEmpty: logs.isEmpty,
-            isSearching: state.isSearching,
-            nullStatus: NullStatus(
-              illustration: NullStatusIllustration.logs,
-              label: appLocalizations.nullTip(appLocalizations.logs),
-            ),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: FloatingScrollbar(
-                controller: _scrollController,
-                hintBuilder: (fraction) {
-                  final index = (fraction * (logs.length - 1)).round();
-                  return logs[index].dateTime;
-                },
-                child: ScrollToEndBox(
-                  onCancelToEnd: () {
-                    _listController.setAutoScrollToEnd(false);
-                  },
-                  onResumeToEnd: () {
-                    _listController.resumeAutoScrollToEnd(
-                      ref.read(logsProvider).list,
-                    );
-                  },
-                  controller: _scrollController,
-                  enable: state.autoScrollToEnd,
-                  child: SuperListView.separated(
-                    physics: _physics,
-                    reverse: true,
-                    shrinkWrap: true,
-                    controller: _scrollController,
-                    padding: EdgeInsets.only(
-                      top: context.contentTopPadding,
-                      bottom: 16 + context.bottomInset,
-                    ),
-                    itemCount: logs.length,
-                    extentEstimation: recordListExtentEstimation,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: recordListGap),
-                    itemBuilder: (_, index) {
-                      final log = logs[index];
-                      return LogItem(
-                        log: log,
-                        onClick: (value) {
-                          context.commonScaffoldState?.addKeyword(value);
-                        },
-                      );
-                    },
-                  ),
+      title: context.appLocalizations.logs,
+      body: body,
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListenableBuilder(
+      listenable: Listenable.merge([_listController, _filters]),
+      builder: (context, _) {
+        final state = _listController.value;
+        final logs = _filters.apply(state.list);
+        final isSearching = state.isSearching || _filters.isFiltering;
+        return Column(
+          children: [
+            if (_filters.isFiltering) _FilterChips(filters: _filters),
+            Expanded(
+              child: NullStatusSwitcher(
+                isEmpty: logs.isEmpty,
+                isSearching: isSearching,
+                nullStatus: NullStatus(
+                  illustration: NullStatusIllustration.logs,
+                  label: appLocalizations.nullTip(appLocalizations.logs),
                 ),
+                child: _buildList(context, state, logs),
               ),
             ),
-          );
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildList(BuildContext context, LogsState state, List<Log> logs) {
+    final padding = EdgeInsets.only(
+      top: context.contentTopPadding,
+      bottom: 16 + context.bottomInset,
+    );
+    return Align(
+      alignment: Alignment.topCenter,
+      child: FloatingScrollbar(
+        controller: _scrollController,
+        hintBuilder: (fraction) {
+          final index = (fraction * (logs.length - 1)).round();
+          return logs[index].dateTime;
         },
+        child: ScrollToEndBox(
+          onCancelToEnd: () {
+            _listController.setAutoScrollToEnd(false);
+          },
+          onResumeToEnd: () {
+            _listController.resumeAutoScrollToEnd(ref.read(logsProvider).list);
+            _filters.offer(_listController.value.logs);
+          },
+          controller: _scrollController,
+          enable: state.autoScrollToEnd,
+          child: SuperListView.separated(
+            physics: _physics,
+            reverse: true,
+            shrinkWrap: true,
+            controller: _scrollController,
+            padding: padding,
+            itemCount: logs.length,
+            extentEstimation: recordListExtentEstimation,
+            separatorBuilder: (_, _) =>
+                const SizedBox(height: recordListGap),
+            itemBuilder: (_, index) {
+              final log = logs[index];
+              return LogItem(log: log);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({required this.filters});
+
+  final RecordFilterController<Log> filters;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final filter in filters.filters)
+            TonalChip(
+              label: filters.facetOf(filter.kind)?.label(filter.value) ??
+                  filter.value,
+              color: context.raisedSurfaceLevel.colorOf(colorScheme),
+              foregroundColor: colorScheme.onSurfaceVariant,
+              onPressed: () => filters.remove(filter),
+            ),
+        ],
       ),
     );
   }
@@ -185,9 +232,8 @@ class _LogsViewState extends ConsumerState<LogsView>
 
 class LogItem extends StatelessWidget {
   final Log log;
-  final Function(String)? onClick;
 
-  const LogItem({super.key, required this.log, this.onClick});
+  const LogItem({super.key, required this.log});
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +251,10 @@ class LogItem extends StatelessWidget {
           RecordLabel(
             label: log.logLevel.name,
             tone: tone,
-            onPressed: () => onClick?.call(log.logLevel.name),
+            onPressed: () => RecordFilterScope.add(
+              context,
+              RecordFilter(RecordFacetKind.level, log.logLevel.name),
+            ),
           ),
         ],
       ),
