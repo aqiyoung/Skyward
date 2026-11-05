@@ -295,11 +295,11 @@ void main() {
 
       expect(readTheme().pureBlack, isFalse);
 
-      await tester.tap(find.text('Pure black'));
+      await tester.tap(find.text('Pure black mode'));
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isTrue);
 
-      await tester.tap(find.text('Pure black'));
+      await tester.tap(find.text('Pure black mode'));
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isFalse);
     });
