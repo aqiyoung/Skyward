@@ -29,7 +29,16 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 ## Features
 
 - **One app for Android, Windows, macOS and Linux**, with x64 and ARM64 builds on the desktop.
-- **mihomo (Clash.Meta) core** with rule routing, proxy groups, latency tests, system proxy and TUN mode.
+- **Redesigned dashboard**: only the functions you actually use, with live traffic waveform, per-profile
+  stats and one-tap details. No clutter.
+- **TUN GSO acceleration**: Generic Segmentation Offload lifts single-connection upload throughput up to
+  4x on real devices. Toggleable in settings, on by default.
+- **mihomo (Clash.Meta) core** with rule routing, proxy groups, latency tests, system proxy and TUN mode,
+  defaulting to the high-performance mipstack.
+- **Security hardened**: APK downloads verified by SHA-256, no cloud backup of secrets, QuickAction
+  caller verification, pinned build dependencies and reproducible release tags.
+- **Smart updates**: cross-channel update detection (stable / beta / preview) with background download
+  and system installer on Android.
 - **Profiles** from a subscription link or a file, with a built-in editor, override scripts, and custom rules,
   proxies and proxy groups.
 - **Live views** of connections, requests, DNS queries and logs.
