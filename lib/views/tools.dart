@@ -81,6 +81,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           items: [
             const _GeneralItem(),
             const _AdvancedConfigItem(),
+            const _DiagnosticsItem(),
           ],
           footer: appLocalizations.advancedConfigDesc,
         ),
