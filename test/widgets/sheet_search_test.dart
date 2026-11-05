@@ -144,6 +144,46 @@ void main() {
     }
   });
 
+  testWidgets('a phone page that asks keeps its search a bar button', (
+    tester,
+  ) async {
+    const view = Size(400, 900);
+    tester.view.physicalSize = view;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
+        homeBuilder: (page) => Navigator(
+          onGenerateInitialRoutes: (_, _) => [
+            MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+            MaterialPageRoute<void>(builder: (_) => page),
+          ],
+        ),
+        child: CommonScaffold(
+          title: 'title',
+          searchState: AppBarSearchState(onSearch: queries.add),
+          searchInBar: true,
+          body: const SizedBox.expand(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final barButton = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byGlyph(AppGlyphs.search),
+    );
+    expect(barButton, findsOneWidget);
+    expect(find.byType(SearchField), findsNothing);
+
+    await tester.tap(barButton);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'wiki');
+    await tester.pumpAndSettle();
+    expect(queries, ['wiki']);
+  });
+
   Future<void> openModalSheet(
     WidgetTester tester, {
     Widget? body,
