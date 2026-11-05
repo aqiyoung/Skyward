@@ -168,6 +168,7 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore> {
     final dav = ref.watch(davSettingProvider);
     final isLoading = ref.watch(loadingProvider(LoadingTag.backup_restore));
     return CommonScaffold(
+      rowSeparators: false,
       isLoading: isLoading,
       title: appLocalizations.backupAndRestore,
       body: ListView(

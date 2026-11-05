@@ -438,6 +438,7 @@ class _AccessViewState extends ConsumerState<AccessView>
             }
           : null,
       child: CommonScaffold(
+        rowSeparators: false,
         isLoading: isLoading,
         searchState: AppBarSearchState(onSearch: _onSearch),
         searchActions: [?selectAllAction],

@@ -87,6 +87,7 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
     final coreStatus = ref.watch(coreStatusProvider);
     final rows = _rows(appLocalizations, clashConfig, coreStatus);
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.diagnostics,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

@@ -38,6 +38,7 @@ class AppearanceView extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     final theme = ref.watch(themeSettingProvider);
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.preferences,
       body: ListView(
         padding: EdgeInsets.only(

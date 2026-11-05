@@ -86,6 +86,11 @@ class CommonScaffold extends StatefulWidget {
   /// Puts the toggle of the sort mode in the bar.
   final bool canSort;
 
+  /// Whether the rows in this page draw their bottom hairline. Pages made of
+  /// plain settings entries opt out; long, dense lists keep it. Passed down
+  /// with a [ListRowSeparatorScope] so every list in the body agrees.
+  final bool rowSeparators;
+
   /// Steps the bar's actions aside with the title while the page scrolls
   /// up, and back in while it scrolls down. On by default, so every page
   /// behaves like the dashboard; a page opts out only when its actions
@@ -116,6 +121,7 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
+    this.rowSeparators = true,
     this.hideActionsOnScroll = true,
   });
 
@@ -881,11 +887,14 @@ class CommonScaffoldState extends State<CommonScaffold>
     // The page's bar floats over its body, which leaves the bar's height at
     // its top through MediaQuery padding, as extendBodyBehindAppBar does.
     final barFloats = !isCompact;
-    final sortableBody = SortModeScope(
-      sorting: _sorting,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrolling,
-        child: widget.body,
+    final sortableBody = ListRowSeparatorScope(
+      separated: widget.rowSeparators,
+      child: SortModeScope(
+        sorting: _sorting,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: _handleScrolling,
+          child: widget.body,
+        ),
       ),
     );
     final body = SafeArea(
@@ -1762,12 +1771,22 @@ class _WindowControlsClearance extends StatelessWidget {
 class BaseScaffold extends StatelessWidget {
   final String title;
   final Widget body;
+  final bool rowSeparators;
 
-  const BaseScaffold({super.key, required this.title, required this.body});
+  const BaseScaffold({
+    super.key,
+    required this.title,
+    required this.body,
+    this.rowSeparators = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(body: body, title: title);
+    return CommonScaffold(
+      body: body,
+      title: title,
+      rowSeparators: rowSeparators,
+    );
   }
 }
 
