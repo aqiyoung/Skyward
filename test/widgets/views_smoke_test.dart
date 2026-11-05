@@ -178,8 +178,8 @@ void main() {
     await tester.tap(find.text('Theme'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Auto'), findsWidgets);
-    expect(find.text('More theme settings'), findsOneWidget);
+    expect(find.text('Light'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
@@ -187,7 +187,6 @@ void main() {
     expect(container.read(themeSettingProvider).themeMode, ThemeMode.dark);
     expect(tester.takeException(), null);
   });
-
 
   testWidgets('user agent item opens the page that applies a preset', (
     tester,
