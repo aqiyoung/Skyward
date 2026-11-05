@@ -13,7 +13,6 @@ import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/general.dart';
-import 'package:skyward/views/config/storage.dart';
 import 'package:skyward/views/hotkey.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -68,7 +67,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isAndroid) const _AccessItem(),
         if (system.isDesktop) const _HotkeyItem(),
         if (enableDeveloperMode) const _DeveloperItem(),
-        const _StorageItem(),
         const _BackupItem(),
         const _GeneralItem(),
         const _AdvancedConfigItem(),
@@ -251,20 +249,6 @@ class _AppearanceItem extends StatelessWidget {
   }
 }
 
-
-class _StorageItem extends StatelessWidget {
-  const _StorageItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.dataUsage),
-      title: Text(context.appLocalizations.storage),
-      widget: const StorageView(),
-    );
-  }
-}
-
 class _DiagnosticsItem extends StatelessWidget {
   const _DiagnosticsItem();
 
@@ -277,7 +261,6 @@ class _DiagnosticsItem extends StatelessWidget {
     );
   }
 }
-
 
 class _BackupItem extends StatelessWidget {
   const _BackupItem();
