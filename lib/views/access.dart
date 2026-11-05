@@ -441,6 +441,9 @@ class _AccessViewState extends ConsumerState<AccessView>
         isLoading: isLoading,
         searchState: AppBarSearchState(onSearch: _onSearch),
         searchActions: [?selectAllAction],
+        // The status bar already lives at the foot; a docked field would sit
+        // on top of it, so keep search a button in the bar like upstream.
+        searchInBar: true,
         title: context.appLocalizations.appAccessControl,
         confirmationAction: hasChanges
             ? IconButtonData(

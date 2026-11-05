@@ -72,6 +72,10 @@ class CommonScaffold extends StatefulWidget {
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;
 
+  /// Keeps search a button in the bar on a phone page that would dock it at
+  /// its foot, for one whose foot carries a bar of its own.
+  final bool searchInBar;
+
   /// Shown searching or not and never folded; the first two share a button
   /// group and any after them stand alone.
   final List<IconButtonData> selectionActions;
@@ -102,6 +106,7 @@ class CommonScaffold extends StatefulWidget {
     this.isLoading = false,
     this.searchState,
     this.searchActions = const [],
+    this.searchInBar = false,
     this.selectionActions = const [],
     this.primaryAction,
     this.iconActions = const [],
@@ -863,6 +868,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     final form = _SheetForm.of(
       context,
       searchState: widget.searchState,
+      searchInBar: widget.searchInBar,
       hasConfirmationAction: widget.confirmationAction != null,
     );
     final isCompact = form.isCompact;
@@ -1535,16 +1541,19 @@ class _SheetForm {
   factory _SheetForm.of(
     BuildContext context, {
     required AppBarSearchState? searchState,
+    required bool searchInBar,
     required bool hasConfirmationAction,
   }) {
     final provider = SheetProvider.of(context);
     final isModal = provider != null && provider.type != SheetType.page;
     final isCompact = provider?.type.isCompact ?? false;
     // iOS 27 docks the search of a phone page with no tab bar under it at its
-    // foot, a glass field in sight at rest.
+    // foot, a glass field in sight at rest. A page that keeps a bar of its own
+    // at the foot opts out, so search stays a button in the bar.
     final docksSearch =
         isCompact ||
-        (!isModal &&
+        (!searchInBar &&
+            !isModal &&
             ViewScope.isMobileOf(context) &&
             ModalRoute.of(context)?.impliesAppBarDismissal == true);
     return _SheetForm(
