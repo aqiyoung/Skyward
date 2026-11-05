@@ -53,6 +53,10 @@
   "appearance": "Appearance",
   "preferences": "環境設定",
   "moreThemeSettings": "テーマの詳細設定",
+  "colorsSection": "配色",
+  "navigationSection": "ナビゲーションバー",
+  "motionSection": "モーション",
+  "textSection": "テキスト",
   "configuration": "Configuration",
   "data": "Data",
 

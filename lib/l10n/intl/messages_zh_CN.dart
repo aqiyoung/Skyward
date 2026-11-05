@@ -1521,6 +1521,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("外观"),
     "preferences": MessageLookupByLibrary.simpleMessage("偏好设置"),
     "moreThemeSettings": MessageLookupByLibrary.simpleMessage("更多主题设置"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("导航栏"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("动效"),
+    "textSection": MessageLookupByLibrary.simpleMessage("文字"),
     "configuration": MessageLookupByLibrary.simpleMessage("配置"),
     "data": MessageLookupByLibrary.simpleMessage("数据"),
 

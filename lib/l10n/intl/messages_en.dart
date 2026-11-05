@@ -1942,6 +1942,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
     "moreThemeSettings": MessageLookupByLibrary.simpleMessage("More theme settings"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Colors"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Motion"),
+    "textSection": MessageLookupByLibrary.simpleMessage("Text"),
     "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
 
