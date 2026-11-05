@@ -53,6 +53,10 @@
   "appearance": "Appearance",
   "preferences": "Настройки",
   "moreThemeSettings": "Дополнительные настройки темы",
+  "colorsSection": "Цвета",
+  "navigationSection": "Навигация",
+  "motionSection": "Анимация",
+  "textSection": "Текст",
   "configuration": "Configuration",
   "data": "Data",
 

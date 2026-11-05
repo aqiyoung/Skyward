@@ -1674,6 +1674,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "preferences": MessageLookupByLibrary.simpleMessage("環境設定"),
     "moreThemeSettings": MessageLookupByLibrary.simpleMessage("テーマの詳細設定"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("ナビゲーションバー"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("モーション"),
+    "textSection": MessageLookupByLibrary.simpleMessage("テキスト"),
     "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
 

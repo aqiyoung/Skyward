@@ -53,6 +53,10 @@
   "appearance": "外观",
   "preferences": "偏好设置",
   "moreThemeSettings": "更多主题设置",
+  "colorsSection": "配色",
+  "navigationSection": "导航栏",
+  "motionSection": "动效",
+  "textSection": "文字",
   "configuration": "配置",
   "data": "数据",
 

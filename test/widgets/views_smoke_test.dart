@@ -28,7 +28,6 @@ import 'package:skyward/views/profiles/custom/rules.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/views/proxies/tab.dart';
 import 'package:skyward/views/appearance.dart';
-import 'package:skyward/views/theme.dart';
 import 'package:skyward/views/views.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +60,6 @@ void main() {
     'network config': const Scaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
     'on demand config': const OnDemandView(),
-    'theme': const ThemeView(),
     'backup and restore': const BackupAndRestore(),
     'hotkeys': const HotKeyView(),
     'access control': const AccessView(),
@@ -190,31 +188,6 @@ void main() {
     expect(tester.takeException(), null);
   });
 
-  testWidgets('appearance keeps the rest of the theme settings one tap away', (
-    tester,
-  ) async {
-    final container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
-    );
-    addTearDown(container.dispose);
-    globalState.container = container;
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const TestApp(child: AppearanceView()),
-      ),
-    );
-    await tester.pump();
-
-    await tester.tap(find.text('Theme'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('More theme settings'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ThemeView), findsOneWidget);
-    expect(tester.takeException(), null);
-  });
 
   testWidgets('user agent item opens the page that applies a preset', (
     tester,

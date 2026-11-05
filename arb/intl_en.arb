@@ -53,6 +53,10 @@
   "appearance": "Appearance",
   "preferences": "Preferences",
   "moreThemeSettings": "More theme settings",
+  "colorsSection": "Colors",
+  "navigationSection": "Navigation",
+  "motionSection": "Motion",
+  "textSection": "Text",
   "configuration": "Configuration",
   "data": "Data",
 

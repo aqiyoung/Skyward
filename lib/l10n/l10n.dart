@@ -445,6 +445,31 @@ class AppLocalizations {
     );
   }
 
+  /// `Colors`
+  String get colorsSection {
+    return Intl.message('Colors', name: 'colorsSection', desc: '', args: []);
+  }
+
+  /// `Navigation`
+  String get navigationSection {
+    return Intl.message(
+      'Navigation',
+      name: 'navigationSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Motion`
+  String get motionSection {
+    return Intl.message('Motion', name: 'motionSection', desc: '', args: []);
+  }
+
+  /// `Text`
+  String get textSection {
+    return Intl.message('Text', name: 'textSection', desc: '', args: []);
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);

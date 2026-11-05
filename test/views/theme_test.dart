@@ -9,6 +9,7 @@ import 'package:skyward/providers/app.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/providers/database.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/font_family.dart';
 import 'package:skyward/views/theme.dart';
 import 'package:skyward/views/theme_preview.dart';
@@ -21,12 +22,7 @@ import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
 /// The text scale row, which shares its slider shape with the dock's.
-Finder _textScaleSection() => find
-    .ancestor(of: find.text('Text scaling'), matching: find.byType(Column))
-    .first;
-
-Finder _textScaleSlider() =>
-    find.descendant(of: _textScaleSection(), matching: find.byType(Slider));
+Finder _textScaleSlider() => find.byKey(const ValueKey('textScaleSlider'));
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -52,13 +48,21 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: ThemeView()),
+        child: const TestApp(child: AppearanceView()),
       ),
     );
     await tester.pumpAndSettle();
   }
 
   ThemeProps readTheme() => container.read(themeSettingProvider);
+
+  /// Opens the menu on [row] and picks [option] from it.
+  Future<void> pick(WidgetTester tester, String row, String option) async {
+    await tester.tap(find.text(row).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(option).last);
+    await tester.pumpAndSettle();
+  }
 
   group('theme mode', () {
     testWidgets('defaults to following the system', (tester) async {
@@ -70,16 +74,13 @@ void main() {
     testWidgets('switches to light and back to dark', (tester) async {
       await pumpThemeView(tester);
 
-      await tester.tap(find.text('Light'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Theme', 'Light');
       expect(readTheme().themeMode, ThemeMode.light);
 
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Theme', 'Dark');
       expect(readTheme().themeMode, ThemeMode.dark);
 
-      await tester.tap(find.text('Auto'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Theme', 'Auto');
       expect(readTheme().themeMode, ThemeMode.system);
     });
   });
@@ -229,7 +230,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const TestApp(child: ThemeView()),
+          child: const TestApp(child: AppearanceView()),
         ),
       );
       await tester.pumpAndSettle();
@@ -278,21 +279,12 @@ void main() {
       tester,
     ) async {
       await pumpThemeView(tester);
-      final group = find.ancestor(
-        of: find.text('Liquid Glass').first,
-        matching: find.byType(PreviewChoiceGroup<LiquidGlassMode>),
-      );
-      Finder choice(String label) =>
-          find.descendant(of: group, matching: find.text(label)).last;
-
       expect(readTheme().liquidGlass, LiquidGlassMode.none);
 
-      await tester.tap(choice('Standard'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Liquid Glass', 'Standard');
       expect(readTheme().liquidGlass, LiquidGlassMode.standard);
 
-      await tester.tap(choice('None'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Liquid Glass', 'None');
       expect(readTheme().liquidGlass, LiquidGlassMode.none);
     });
   });
@@ -307,7 +299,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isTrue);
 
-      await tester.tap(find.text('Standard').first);
+      await tester.tap(find.text('Pure black'));
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isFalse);
     });
@@ -321,12 +313,10 @@ void main() {
 
       expect(readSetting().floatingNavigationBar, isTrue);
 
-      await tester.tap(find.text('Docked'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Navigation bar style', 'Docked');
       expect(readSetting().floatingNavigationBar, isFalse);
 
-      await tester.tap(find.text('Floating'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Navigation bar style', 'Floating');
       expect(readSetting().floatingNavigationBar, isTrue);
     });
 
@@ -335,12 +325,10 @@ void main() {
 
       expect(readSetting().tabAnimation, TabAnimation.fade);
 
-      await tester.tap(find.text('Slide'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Tab animation', 'Slide');
       expect(readSetting().tabAnimation, TabAnimation.slide);
 
-      await tester.tap(find.text('Fade'));
-      await tester.pumpAndSettle();
+      await pick(tester, 'Tab animation', 'Fade');
       expect(readSetting().tabAnimation, TabAnimation.fade);
     });
 
@@ -583,10 +571,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.scale, 1);
-      // The dock keeps a percentage of its own; this one is the text scale's.
       expect(
-        find.descendant(of: _textScaleSection(), matching: find.text('100%')),
-        findsOneWidget,
+        tester.widget<Slider>(_textScaleSlider()).value,
+        1,
       );
     });
   });

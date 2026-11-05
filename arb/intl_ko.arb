@@ -53,6 +53,10 @@
   "appearance": "Appearance",
   "preferences": "환경 설정",
   "moreThemeSettings": "테마 세부 설정",
+  "colorsSection": "색상",
+  "navigationSection": "내비게이션 바",
+  "motionSection": "모션",
+  "textSection": "텍스트",
   "configuration": "Configuration",
   "data": "Data",
 
