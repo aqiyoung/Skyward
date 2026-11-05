@@ -56,6 +56,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.branch }}
+          # Full history: release_changelog.mjs derives the structured changelog
+          # from `git log <previous>..HEAD`, which a default shallow checkout
+          # cannot satisfy -- the range's commits are not fetched, the command
+          # fails, and the `<!-- flclash:changelog:json -->` block is silently
+          # omitted from the release body, so the in-app update log never shows
+          # the curated per-version Chinese notes.
+          fetch-depth: 0
 
       # What changed since this channel last published. The compare API reads
       # the range off the tags GitHub already holds, which survives the rebases
