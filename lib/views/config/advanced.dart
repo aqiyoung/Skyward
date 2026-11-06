@@ -24,6 +24,7 @@ class AdvancedConfigView extends StatelessWidget {
         title: Text(appLocalizations.network),
         leading: const IconWell(AppGlyphs.key),
         widget: BaseScaffold(
+          rowSeparators: false,
           title: appLocalizations.network,
           body: const NetworkListView(),
         ),

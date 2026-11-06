@@ -335,6 +335,7 @@ class _ScriptsViewState extends ConsumerState<ScriptsView> {
     final scripts = scriptsState.value ?? [];
     final isLoading = ref.watch(loadingProvider(LoadingTag.scripts));
     return CommonScaffold(
+      rowSeparators: false,
       canSort: scripts.length > 1,
       isLoading: isLoading,
       actions: [

@@ -332,6 +332,7 @@ final _maintenanceEntries = <SettingsEntry>[
 Widget _generalView(BuildContext context) => const GeneralView();
 
 Widget _networkView(BuildContext context) => BaseScaffold(
+  rowSeparators: false,
   title: context.appLocalizations.network,
   body: const NetworkListView(),
 );

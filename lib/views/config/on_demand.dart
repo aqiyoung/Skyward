@@ -377,6 +377,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
     final selectedItems = ref.watch(itemsProvider(key));
     return CommonScaffold(
+      rowSeparators: false,
       body: CustomScrollView(
         slivers: [
           SliverPadding(

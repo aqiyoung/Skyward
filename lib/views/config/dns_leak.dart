@@ -415,6 +415,7 @@ class DnsLeakView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     return BaseScaffold(
+      rowSeparators: false,
       title: l.dnsLeakCheck,
       body: ListView(
         padding: const EdgeInsets.symmetric(

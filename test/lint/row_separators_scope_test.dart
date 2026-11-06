@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-/// Pages reached from "More": rows are settings entries or short groups, so
-/// the hairline is redundant with the icon and trailing control. Long, dense
-/// lists (proxies, connections, requests, logs) keep the default instead.
+/// Pages reached from "More", including the ones behind "Advanced": rows are
+/// settings entries or short groups, so the hairline is redundant with the
+/// icon and trailing control. Long, dense lists (proxies, connections,
+/// requests, logs) keep the default instead.
 const _separatorFreePages = {
   'lib/views/tools.dart',
   'lib/views/about.dart',
@@ -18,6 +19,17 @@ const _separatorFreePages = {
   'lib/views/config/advanced.dart',
   'lib/views/config/diagnostics.dart',
   'lib/views/config/settings_search.dart',
+  // Advanced → Network and the sibling settings sheets. `override.dart` is the
+  // shell shared by DNS, NTP, sniffer and TUN, so it covers them at once.
+  'lib/views/config/settings_index.dart',
+  'lib/views/config/override.dart',
+  'lib/views/config/ad_block.dart',
+  'lib/views/config/rules.dart',
+  'lib/views/config/scripts.dart',
+  'lib/views/config/storage.dart',
+  'lib/views/config/dns_leak.dart',
+  'lib/views/config/on_demand.dart',
+  'lib/views/config/user_agents.dart',
 };
 
 const _optOut = 'rowSeparators: false';
