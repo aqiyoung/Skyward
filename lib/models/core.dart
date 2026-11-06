@@ -291,6 +291,11 @@ abstract class CoreMemoryStats with _$CoreMemoryStats {
     @Default(0) int heapIdle,
     @Default(0) int stackInuse,
     @Default(0) int runtimeOther,
+    // Zero when the kernel is still running on the runtime defaults, so the
+    // client can tell "no budget installed" apart from "a small budget".
+    @Default(0) int budget,
+    @Default(0) int gcPercent,
+    @Default(0) int deviceTotal,
   }) = _CoreMemoryStats;
 
   factory CoreMemoryStats.fromJson(Map<String, Object?> json) =>
@@ -299,6 +304,8 @@ abstract class CoreMemoryStats with _$CoreMemoryStats {
 
 extension CoreMemoryStatsExt on CoreMemoryStats {
   int get runtimeTotal => heapInuse + heapIdle + stackInuse + runtimeOther;
+
+  bool get hasBudget => budget > 0;
 }
 
 SubscriptionInfo? subscriptionInfoFormCore(Map<String, Object?>? json) {

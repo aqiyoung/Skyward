@@ -339,6 +339,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Нет локальных прокси",
     ),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Добавлять системный DNS",
     ),
@@ -496,9 +497,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "color": MessageLookupByLibrary.simpleMessage("Цвет"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("Стиль палитры"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Цвета"),
     "columns": MessageLookupByLibrary.simpleMessage("Столбцы"),
     "compact": MessageLookupByLibrary.simpleMessage("Компактный"),
     "compatible": MessageLookupByLibrary.simpleMessage("Режим совместимости"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "Вы уверены, что хотите удалить все данные?",
@@ -598,6 +601,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Можно добавить",
     ),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("База данных"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "Не удалось сохранить изменение; оно отменено",
@@ -1256,6 +1260,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryAppShared": MessageLookupByLibrary.simpleMessage(
       "Приложение и общая",
     ),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Лимит ядра"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage(
       "Свободная куча",
     ),
@@ -1301,8 +1306,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные настройки темы",
+    ),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Анимация"),
     "name": MessageLookupByLibrary.simpleMessage("Название"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Нижняя панель"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Навигация"),
     "network": MessageLookupByLibrary.simpleMessage("Сеть"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1445,6 +1455,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("Порты"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("Общий ключ"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Настройки"),
     "preferred": MessageLookupByLibrary.simpleMessage("Предпочтительный"),
     "prerequisites": MessageLookupByLibrary.simpleMessage(
       "Предварительные условия",
@@ -2030,17 +2041,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "Так будет выглядеть текст в приложении",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("Тема"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("Настройки"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("Дополнительные настройки темы"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("Цвета"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("Навигация"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("Анимация"),
     "textSection": MessageLookupByLibrary.simpleMessage("Текст"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Режим темы"),
     "tight": MessageLookupByLibrary.simpleMessage("Плотный"),

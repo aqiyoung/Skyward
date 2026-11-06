@@ -412,6 +412,7 @@
   "memoryCoreStack": "Pilas de goroutines",
   "memoryCoreRuntime": "Sobrecarga del runtime",
   "memoryCoreNotRunning": "El núcleo no se está ejecutando",
+  "memoryCoreBudget": "Límite del núcleo",
   "memoryAppResident": "Memoria residente",
   "memoryAppShared": "App y compartida",
   "memoryEstimateDesc": "Estimado a partir de la memoria residente del proceso; puede diferir de lo que indica el sistema.",

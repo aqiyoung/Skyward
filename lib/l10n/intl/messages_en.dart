@@ -331,6 +331,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("App icon design"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("No local proxies"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Append system DNS",
     ),
@@ -478,9 +479,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "color": MessageLookupByLibrary.simpleMessage("Color"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("Color style"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Colors"),
     "columns": MessageLookupByLibrary.simpleMessage("Columns"),
     "compact": MessageLookupByLibrary.simpleMessage("Compact"),
     "compatible": MessageLookupByLibrary.simpleMessage("Compatibility mode"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to clear all data?",
@@ -578,6 +581,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Available to add",
     ),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("Database"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to save the change; it has been rolled back",
@@ -1208,6 +1212,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Resident memory",
     ),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("App & shared"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Core budget"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("Heap idle"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("Heap in use"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(
@@ -1245,8 +1250,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("More"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage(
+      "More theme settings",
+    ),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Motion"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Bottom bar"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1383,6 +1393,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("Ports"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("Pre-shared key"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
     "preferred": MessageLookupByLibrary.simpleMessage("Preferred"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prerequisites"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage(
@@ -1938,17 +1949,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "Text in the app will look like this",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("Theme"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("More theme settings"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("Colors"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("Motion"),
     "textSection": MessageLookupByLibrary.simpleMessage("Text"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
     "tight": MessageLookupByLibrary.simpleMessage("Tight"),
