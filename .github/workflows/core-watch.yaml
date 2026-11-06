@@ -22,11 +22,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   watch:
     runs-on: ubuntu-latest
+    # Creates a lightweight tag to record what was announced.
+    permissions:
+      contents: write
     steps:
       - name: Compare the channel's core with upstream
         id: check

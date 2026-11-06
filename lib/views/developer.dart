@@ -91,6 +91,7 @@ class DeveloperView extends ConsumerWidget {
       appSettingProvider.select((state) => state.developerMode),
     );
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.developerMode,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

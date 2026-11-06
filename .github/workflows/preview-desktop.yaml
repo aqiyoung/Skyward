@@ -67,6 +67,8 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      # 预览版推送优先发到私聊 user ID；未设置时回退到公开频道 TELEGRAM_CHAT_ID。
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -360,7 +362,7 @@ jobs:
             done
 
       - name: Announce on Telegram
-        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        if: env.TELEGRAM_BOT_TOKEN != '' && (env.TELEGRAM_PREVIEW_CHAT_ID != '' || env.TELEGRAM_CHAT_ID != '')
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -401,6 +403,6 @@ jobs:
 
           cat "$RUNNER_TEMP/msg.txt"
           curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "chat_id=${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}" \
             --data-urlencode "text@$RUNNER_TEMP/msg.txt" \
             || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"

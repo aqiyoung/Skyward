@@ -24,6 +24,7 @@ class AdBlockView extends ConsumerWidget {
       appSettingProvider.select((state) => state.adBlock),
     );
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.rulePresetAdBlock,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

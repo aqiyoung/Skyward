@@ -9,20 +9,18 @@ import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/about.dart';
 import 'package:skyward/views/access.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/general.dart';
-import 'package:skyward/views/config/storage.dart';
 import 'package:skyward/views/hotkey.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
-import 'config/custom_resources.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
-import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
   const ToolsView({super.key});
@@ -41,6 +39,30 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
+  /// Settings, as upstream groups them: everything that changes how the app
+  /// behaves, in one card under one caption. The two footnotes stay at the
+  /// card's foot because they explain rows that sit inside it.
+  Widget _getSettingList(bool enableDeveloperMode) {
+    final appLocalizations = context.appLocalizations;
+    return generateSection(
+      title: appLocalizations.settings,
+      items: [
+        const _PreferencesItem(),
+        if (system.isAndroid) const _AccessItem(),
+        if (system.isDesktop) const _HotkeyItem(),
+        const _BackupItem(),
+        const _GeneralItem(),
+        const _AdvancedConfigItem(),
+        const _DiagnosticsItem(),
+        if (enableDeveloperMode) const _DeveloperItem(),
+      ],
+      footer: [
+        if (system.isAndroid) appLocalizations.accessControlDesc,
+        appLocalizations.advancedConfigDesc,
+      ].join('\n'),
+    );
+  }
+
   /// What the tab ends on: one way into the about page, and the build it is —
   /// the row that also asks whether a newer one exists.
   Widget _getAboutList() {
@@ -56,33 +78,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  Widget _getSettingList(bool enableDeveloperMode) {
-    final appLocalizations = context.appLocalizations;
-    return generateSection(
-      items: [
-        const _SettingsSearchItem(),
-        const _LocaleItem(),
-        const _ThemeItem(),
-        const _BackupItem(),
-        const _StorageItem(),
-        const _DiagnosticsItem(),
-        if (system.isDesktop) const _HotkeyItem(),
-        if (system.isAndroid) const _AccessItem(),
-        const _AdvancedConfigItem(),
-        const _CustomResourcesItem(),
-        const _GeneralItem(),
-        if (enableDeveloperMode) const _DeveloperItem(),
-      ],
-      footer: [
-        if (system.isAndroid) appLocalizations.accessControlDesc,
-        appLocalizations.advancedConfigDesc,
-        appLocalizations.customProfileResourcesDesc,
-      ].join('\n'),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     final developerMode = ref.watch(
       appSettingProvider.select((state) => state.developerMode),
     );
@@ -103,7 +101,18 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getAboutList(),
     ];
     return CommonScaffold(
-      title: context.appLocalizations.tools,
+      rowSeparators: false,
+      title: appLocalizations.tools,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.search,
+          tooltip: appLocalizations.search,
+          onPressed: () => showExtend(
+            context,
+            builder: (_) => const SettingsSearchView(),
+          ),
+        ),
+      ],
       body: Builder(
         builder: (context) => ListView.builder(
           key: toolsStoreKey,
@@ -238,57 +247,15 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
   }
 }
 
-class _LocaleItem extends ConsumerWidget {
-  const _LocaleItem();
-
-  String _getLocaleString(BuildContext context, Locale? locale) {
-    if (locale == null) return context.appLocalizations.defaultText;
-    return locale.label;
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(
-      appSettingProvider.select((state) => state.locale),
-    );
-    final currentLocale = getLocaleForString(locale);
-    return ListItem<Locale?>.options(
-      leading: const IconWell(AppGlyphs.language),
-      title: Text(context.appLocalizations.language),
-      options: [null, ...AppLocalizations.delegate.supportedLocales],
-      onChanged: (Locale? locale) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(locale: locale?.toString()));
-      },
-      textBuilder: (locale) => _getLocaleString(context, locale),
-      value: currentLocale,
-    );
-  }
-}
-
-class _ThemeItem extends StatelessWidget {
-  const _ThemeItem();
+class _PreferencesItem extends StatelessWidget {
+  const _PreferencesItem();
 
   @override
   Widget build(BuildContext context) {
     return ListItem.open(
-      leading: const IconWell(AppGlyphs.paintbrush),
-      title: Text(context.appLocalizations.theme),
-      widget: const ThemeView(),
-    );
-  }
-}
-
-class _StorageItem extends StatelessWidget {
-  const _StorageItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.dataUsage),
-      title: Text(context.appLocalizations.storage),
-      widget: const StorageView(),
+      leading: const IconWell(AppGlyphs.sliders),
+      title: Text(context.appLocalizations.preferences),
+      widget: const AppearanceView(),
     );
   }
 }
@@ -315,19 +282,6 @@ class _BackupItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.cloudSync),
       title: Text(context.appLocalizations.backupAndRestore),
       widget: const BackupAndRestore(),
-    );
-  }
-}
-
-class _SettingsSearchItem extends StatelessWidget {
-  const _SettingsSearchItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.search),
-      title: Text(context.appLocalizations.search),
-      widget: const SettingsSearchView(),
     );
   }
 }
@@ -380,19 +334,6 @@ class _AdvancedConfigItem extends StatelessWidget {
       leading: const IconWell(AppGlyphs.wrench),
       title: Text(context.appLocalizations.advancedConfig),
       widget: const AdvancedConfigView(),
-    );
-  }
-}
-
-class _CustomResourcesItem extends StatelessWidget {
-  const _CustomResourcesItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const IconWell(AppGlyphs.customize),
-      title: Text(context.appLocalizations.customProfileResources),
-      widget: const CustomResourcesView(),
     );
   }
 }

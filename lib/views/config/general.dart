@@ -450,6 +450,7 @@ class GeneralView extends ConsumerWidget {
       ),
     );
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.general,
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(

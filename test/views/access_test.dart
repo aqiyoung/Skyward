@@ -104,19 +104,31 @@ void main() {
         .copyWith(accessControlProps: props);
   }
 
-  Future<void> pumpAccessView(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1400, 1400);
+  Future<void> pumpAccessView(
+    WidgetTester tester, {
+    Size view = const Size(1400, 1400),
+    bool pushed = false,
+  }) async {
+    tester.view.physicalSize = view;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    container
-        .read(viewSizeProvider.notifier)
-        .update((_) => const Size(1400, 1400));
+    container.read(viewSizeProvider.notifier).update((_) => view);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: AccessView()),
+        child: TestApp(
+          homeBuilder: pushed
+              ? (page) => Navigator(
+                  onGenerateInitialRoutes: (_, _) => [
+                    MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+                    MaterialPageRoute<void>(builder: (_) => page),
+                  ],
+                )
+              : (page) => page,
+          child: const AccessView(),
+        ),
       ),
     );
     await tester.pump();
@@ -287,6 +299,33 @@ void main() {
         find.text(AppLocalizations.current.noSearchResults),
         findsOneWidget,
       );
+
+      await teardownView(tester);
+    });
+
+    testWidgets('a phone page keeps search in the bar above the status bar', (
+      tester,
+    ) async {
+      seedAccessControl(const AccessControlProps(enable: true));
+      await pumpAccessView(tester, view: const Size(400, 900), pushed: true);
+
+      final barButton = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.search),
+      );
+      expect(barButton, findsOneWidget);
+      expect(find.byType(SearchField), findsNothing);
+      expect(
+        find.text(AppLocalizations.current.accessControlNotAllowDesc),
+        findsOneWidget,
+      );
+
+      await tester.tap(barButton);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'chat');
+      await tester.pumpAndSettle();
+      expect(find.text('Chat'), findsOneWidget);
+      expect(find.text('Browser'), findsNothing);
 
       await teardownView(tester);
     });

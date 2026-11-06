@@ -7,6 +7,7 @@ import 'package:skyward/ui/fade_box.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/inherited.dart';
 import 'package:skyward/ui/l10n.dart';
+import 'package:skyward/ui/loading.dart';
 import 'package:skyward/ui/metrics.dart';
 import 'package:skyward/ui/navigator.dart';
 import 'package:skyward/ui/typography.dart';
@@ -119,11 +120,14 @@ class _NullStatusSwitcherState extends State<NullStatusSwitcher> {
           children: <Widget>[...previousChildren, ?currentChild],
         ),
       ),
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: ScaleTransition(
-          scale: animation.drive(Tween(begin: 0.92, end: 1.0)),
-          child: child,
+      transitionBuilder: (child, animation) => ActivityPresence(
+        animation: animation,
+        child: FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: animation.drive(Tween(begin: 0.92, end: 1.0)),
+            child: child,
+          ),
         ),
       ),
       child: KeyedSubtree(
@@ -182,6 +186,7 @@ class _NullStatusState extends State<NullStatus> {
     final NullStatus(:label, :description, :action, :illustration) = widget;
     final colorScheme = context.colorScheme;
     final compact = MediaQuery.sizeOf(context).height < _compactHeight;
+
     return Align(
       alignment: const Alignment(0.0, -0.2),
       child: SingleChildScrollView(
@@ -195,7 +200,7 @@ class _NullStatusState extends State<NullStatus> {
               _EnterItem(
                 child: EmptyIllustration(
                   type: illustration,
-                  dimension: compact ? 120 : 160,
+                  dimension: EmptyIllustration.dimensionOf(context),
                 ),
               ),
               if (label != null) ...[
@@ -322,6 +327,9 @@ class EmptyIllustration extends StatefulWidget {
     required this.type,
     required this.dimension,
   });
+
+  static double dimensionOf(BuildContext context) =>
+      MediaQuery.sizeOf(context).height < _compactHeight ? 120 : 160;
 
   @override
   State<EmptyIllustration> createState() => _EmptyIllustrationState();

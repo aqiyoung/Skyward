@@ -62,10 +62,14 @@ concurrency:
   group: sync-and-release
   cancel-in-progress: false
 
-# The sync force-pushes our branches and the release creates tags, so the token
-# needs write access to contents.
+# The sync force-pushes our branches and tags, and the preview / publish
+# workflows this one calls create releases and read back earlier runs. A called
+# workflow cannot ask for more than its caller holds, so both scopes have to be
+# granted here as well -- `contents: read` alone makes every dispatch fail at
+# startup.
 permissions:
   contents: write
+  actions: read
 
 env:
   UPSTREAM_REPO: chen08209/FlClash
@@ -74,6 +78,9 @@ jobs:
   sync:
     name: Sync upstream
     runs-on: ubuntu-latest
+    # Force-pushes branches and tags to our repository.
+    permissions:
+      contents: write
     outputs:
       build_preview: ${{ steps.plan.outputs.build_preview }}
       build_stable: ${{ steps.plan.outputs.build_stable }}

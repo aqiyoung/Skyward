@@ -13,122 +13,8 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ThemeView extends StatelessWidget {
-  const ThemeView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return BaseScaffold(
-      title: appLocalizations.theme,
-      body: ListView(
-        padding: EdgeInsets.only(
-          top: context.appBarInset,
-          bottom: 32 + context.bottomInset,
-        ),
-        children: [
-          const ThemeLivePreview(),
-          const SizedBox(height: 16),
-          const _ThemeModeItem(),
-          const SizedBox(height: 16),
-          const _PureBlackItem(),
-          const SizedBox(height: 16),
-          const _PrimaryColorItem(),
-          const SizedBox(height: 16),
-          const _NavigationBarItem(),
-          const SizedBox(height: 16),
-          const _DockScaleItem(),
-          const _DockLabelItem(),
-          const SizedBox(height: 16),
-          const _TabAnimationItem(),
-          const SizedBox(height: 16),
-          const _LiquidGlassItem(),
-          const SizedBox(height: 16),
-          if (system.isMacOS || system.isWindows) ...const [
-            _SidebarBlurItem(),
-            SizedBox(height: 16),
-          ],
-          const _FontFamilyItem(),
-          const SizedBox(height: 16),
-          const _TextScaleFactorItem(),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeModeItem extends ConsumerWidget {
-  const _ThemeModeItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final themeMode = ref.watch(
-      themeSettingProvider.select((state) => state.themeMode),
-    );
-    final floatingBar = ref.watch(_floatingBarProvider);
-    final liquidGlass = ref.watch(_liquidGlassProvider);
-    final light = MiniScreen(
-      colorScheme: ref.watch(genColorSchemeProvider(Brightness.light)),
-      floatingBar: floatingBar,
-      liquidGlass: liquidGlass,
-    );
-    final dark = MiniScreen(
-      colorScheme: ref.watch(genColorSchemeProvider(Brightness.dark)),
-      floatingBar: floatingBar,
-      liquidGlass: liquidGlass,
-    );
-    return PreviewChoiceGroup<ThemeMode>(
-      info: Info(label: appLocalizations.themeMode, glyph: AppGlyphs.sun),
-      value: themeMode,
-      choices: [
-        PreviewChoice(
-          value: ThemeMode.system,
-          label: appLocalizations.auto,
-          pictogram: MiniScreenThumb(
-            screen: MiniSplitScreen(light: light, dark: dark),
-          ),
-        ),
-        PreviewChoice(
-          value: ThemeMode.light,
-          label: appLocalizations.light,
-          pictogram: MiniScreenThumb(screen: light),
-        ),
-        PreviewChoice(
-          value: ThemeMode.dark,
-          label: appLocalizations.dark,
-          pictogram: MiniScreenThumb(screen: dark),
-        ),
-      ],
-      onChanged: (value) {
-        ref
-            .read(themeSettingProvider.notifier)
-            .update((state) => state.copyWith(themeMode: value));
-      },
-    );
-  }
-}
-
-class _PrimaryColorItem extends ConsumerWidget {
-  const _PrimaryColorItem();
-
-  Future<void> _handleReset(BuildContext context, WidgetRef ref) async {
-    final res = await dialogs.showMessage(
-      message: TextSpan(text: context.appLocalizations.resetTip),
-      destructive: true,
-      confirmText: context.appLocalizations.reset,
-    );
-    if (res != true || !context.mounted) {
-      return;
-    }
-    ref.read(themeSettingProvider.notifier).update((state) {
-      return state.copyWith(
-        primaryColors: defaultPrimaryColors,
-        primaryColor: defaultPrimaryColor,
-        colorStyle: ColorStyle.vivid,
-      );
-    });
-  }
+class ThemeColorItem extends ConsumerWidget {
+  const ThemeColorItem({super.key});
 
   Future<void> _handleDelete(
     BuildContext context,
@@ -230,7 +116,6 @@ class _PrimaryColorItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
     final themeColors = ref.watch(
       themeSettingProvider.select(
         (state) => ThemeColorsSelectorState(
@@ -247,52 +132,44 @@ class _PrimaryColorItem extends ConsumerWidget {
         ),
       ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InfoHeader(
-          info: Info(
-            label: appLocalizations.themeColor,
-            glyph: AppGlyphs.palette,
-          ),
-          actions: [
-            if (!themeColors.isDefault)
-              _ResetButton(onPressed: () => _handleReset(context, ref)),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 8,
-            children: [
-              _ColorSwatches(
-                colors: [null, ...themeColors.primaryColors],
-                selected: themeColors.primaryColor,
-                onSelect: (color) => _update(
-                  ref,
-                  (state) => state.copyWith(primaryColor: color),
-                ),
-                onEdit: (color) => _handleEdit(context, ref, color),
-                onDelete: (color) => _handleDelete(context, ref, color),
-                onAdd: () => _handleAdd(context, ref),
-              ),
-              generateGroup([
-                ListItem<ColorStyle>.options(
-                  title: Text(appLocalizations.colorStyle),
-                  options: ColorStyle.values,
-                  value: themeColors.colorStyle,
-                  textBuilder: (style) => style.label,
-                  onChanged: (style) => _update(
-                    ref,
-                    (state) => state.copyWith(colorStyle: style),
-                  ),
-                ),
-              ]),
-            ],
-          ),
-        ),
-      ],
+    return _ColorSwatches(
+      colors: [null, ...themeColors.primaryColors],
+      selected: themeColors.primaryColor,
+      onSelect: (color) => _update(
+        ref,
+        (state) => state.copyWith(primaryColor: color),
+      ),
+      onEdit: (color) => _handleEdit(context, ref, color),
+      onDelete: (color) => _handleDelete(context, ref, color),
+      onAdd: () => _handleAdd(context, ref),
+    );
+  }
+}
+
+/// Whether the colors on screen are still the shipped ones, so the page can
+/// offer a reset only when there is something to reset.
+bool themeColorsAreDefault(ThemeProps state) =>
+    state.primaryColor == defaultPrimaryColor &&
+    intListEquality.equals(state.primaryColors, defaultPrimaryColors) &&
+    state.colorStyle == ColorStyle.vivid;
+
+class ColorStyleItem extends ConsumerWidget {
+  const ColorStyleItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final style = ref.watch(
+      themeSettingProvider.select((state) => state.colorStyle),
+    );
+    return ListItem<ColorStyle>.options(
+      leading: const IconWell(AppGlyphs.palette),
+      title: Text(context.appLocalizations.colorStyle),
+      options: ColorStyle.values,
+      value: style,
+      textBuilder: (style) => style.label,
+      onChanged: (style) => ref
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(colorStyle: style)),
     );
   }
 }
@@ -576,359 +453,8 @@ class _AddColorButton extends StatelessWidget {
   }
 }
 
-final _floatingBarProvider = appSettingProvider.select(
-  (state) => state.floatingNavigationBar,
-);
-
-final _liquidGlassProvider = themeSettingProvider.select(
-  (state) => state.liquidGlass != LiquidGlassMode.none,
-);
-
-class _PureBlackItem extends ConsumerWidget {
-  const _PureBlackItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final pureBlack = ref.watch(
-      themeSettingProvider.select((state) => state.pureBlack),
-    );
-    final floatingBar = ref.watch(_floatingBarProvider);
-    final liquidGlass = ref.watch(_liquidGlassProvider);
-    Widget preview(bool pureBlack) => MiniScreenThumb(
-      screen: MiniScreen(
-        colorScheme: ref.watch(
-          genColorSchemeProvider(Brightness.dark, pureBlack: pureBlack),
-        ),
-        floatingBar: floatingBar,
-        liquidGlass: liquidGlass,
-      ),
-    );
-    return PreviewChoiceGroup<bool>(
-      info: Info(
-        label: appLocalizations.pureBlackMode,
-        glyph: AppGlyphs.pureBlack,
-      ),
-      value: pureBlack,
-      choices: [
-        PreviewChoice(
-          value: false,
-          label: appLocalizations.standard,
-          pictogram: preview(false),
-        ),
-        PreviewChoice(
-          value: true,
-          label: appLocalizations.pureBlack,
-          pictogram: preview(true),
-        ),
-      ],
-      onChanged: (value) {
-        ref
-            .read(themeSettingProvider.notifier)
-            .update((state) => state.copyWith(pureBlack: value));
-      },
-    );
-  }
-}
-
-class _NavigationBarItem extends ConsumerWidget {
-  const _NavigationBarItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final floatingBar = ref.watch(_floatingBarProvider);
-    final liquidGlass = ref.watch(_liquidGlassProvider);
-    final colorScheme = context.colorScheme;
-    return PreviewChoiceGroup<bool>(
-      info: Info(
-        label: appLocalizations.navigationBarStyle,
-        glyph: AppGlyphs.layers,
-      ),
-      value: floatingBar,
-      choices: [
-        PreviewChoice(
-          value: true,
-          label: appLocalizations.floating,
-          pictogram: MiniScreenThumb(
-            screen: MiniScreen(
-              colorScheme: colorScheme,
-              floatingBar: true,
-              liquidGlass: liquidGlass,
-            ),
-          ),
-        ),
-        PreviewChoice(
-          value: false,
-          label: appLocalizations.docked,
-          pictogram: MiniScreenThumb(
-            screen: MiniScreen(colorScheme: colorScheme, floatingBar: false),
-          ),
-        ),
-      ],
-      onChanged: (value) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(floatingNavigationBar: value));
-      },
-    );
-  }
-}
-
-class _DockScaleItem extends ConsumerStatefulWidget {
-  const _DockScaleItem();
-
-  static const _minScale = 0.8;
-  static const _maxScale = 1.2;
-  static const _step = 0.05;
-
-  @override
-  ConsumerState<_DockScaleItem> createState() => _DockScaleItemState();
-}
-
-class _DockScaleItemState extends ConsumerState<_DockScaleItem> {
-  double? _draft;
-
-  void _update(double scale) {
-    setState(() => _draft = null);
-    ref
-        .read(themeSettingProvider.notifier)
-        .update((state) => state.copyWith(dockScale: scale));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final colorScheme = context.colorScheme;
-    final dockScale = ref.watch(
-      themeSettingProvider.select((state) => state.dockScale),
-    );
-    final scale = _draft ?? dockScale;
-    final percent = '${(scale * 100).round()}%';
-    final divisions =
-        ((_DockScaleItem._maxScale - _DockScaleItem._minScale) /
-                _DockScaleItem._step)
-            .round();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InfoHeader(
-          info: Info(
-            label: appLocalizations.dockScale,
-            glyph: AppGlyphs.textSize,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            decoration: ShapeDecoration(
-              color: context.raisedSurfaceLevel.colorOf(colorScheme),
-              shape: AppShape.lg,
-            ),
-            child: Row(
-              spacing: 12,
-              children: [
-                Expanded(
-                  child: SliderTheme(
-                    data: SliderDefaultsM3(context),
-                    child: Slider(
-                      padding: EdgeInsets.zero,
-                      min: _DockScaleItem._minScale,
-                      max: _DockScaleItem._maxScale,
-                      divisions: divisions,
-                      value: scale,
-                      label: percent,
-                      onChanged: (value) => setState(() => _draft = value),
-                      onChangeEnd: _update,
-                    ),
-                  ),
-                ),
-                Text(
-                  percent,
-                  style: AppTextStyle.subheadline
-                      .of(context, emphasized: true)
-                      .copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DockLabelItem extends ConsumerWidget {
-  const _DockLabelItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final hideLabelOnScroll = ref.watch(
-      themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
-    );
-    return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.motion),
-      horizontalTitleGap: 12,
-      title: Text(
-        appLocalizations.hideLabelOnScroll,
-        style: AppTextStyle.subheadline
-            .of(context, emphasized: true)
-            .copyWith(color: context.colorScheme.onSurfaceVariant),
-      ),
-      subtitle: Text(appLocalizations.hideLabelOnScrollDesc),
-      value: hideLabelOnScroll,
-      onChanged: (value) {
-        ref
-            .read(themeSettingProvider.notifier)
-            .update((state) => state.copyWith(dockHideLabelOnScroll: value));
-      },
-    );
-  }
-}
-
-class _TabAnimationItem extends ConsumerWidget {
-  const _TabAnimationItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final tabAnimation = ref.watch(
-      appSettingProvider.select((state) => state.tabAnimation),
-    );
-    final floatingBar = ref.watch(_floatingBarProvider);
-    final liquidGlass = ref.watch(_liquidGlassProvider);
-    final colorScheme = context.colorScheme;
-    Widget switching(TabAnimation tabAnimation) => MiniScreenThumb(
-      screen: MiniScreen(
-        colorScheme: colorScheme,
-        floatingBar: floatingBar,
-        liquidGlass: liquidGlass,
-        selected: 1,
-        previous: 0,
-        progress: 0.55,
-        tabAnimation: tabAnimation,
-      ),
-    );
-    return PreviewChoiceGroup<TabAnimation>(
-      info: Info(label: appLocalizations.tabAnimation, glyph: AppGlyphs.motion),
-      value: tabAnimation,
-      choices: [
-        PreviewChoice(
-          value: TabAnimation.slide,
-          label: appLocalizations.slide,
-          pictogram: switching(TabAnimation.slide),
-        ),
-        PreviewChoice(
-          value: TabAnimation.fade,
-          label: appLocalizations.fade,
-          pictogram: switching(TabAnimation.fade),
-        ),
-      ],
-      onChanged: (value) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(tabAnimation: value));
-      },
-    );
-  }
-}
-
-class _LiquidGlassItem extends ConsumerWidget {
-  const _LiquidGlassItem();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final mode = ref.watch(
-      themeSettingProvider.select((state) => state.liquidGlass),
-    );
-    final colorScheme = context.colorScheme;
-    // Floating either way, as a docked bar stays a fill, over the list page,
-    // whose rows run on under the bar where glass shows them.
-    Widget preview(bool liquidGlass) => MiniScreenThumb(
-      screen: MiniScreen(
-        colorScheme: colorScheme,
-        floatingBar: true,
-        liquidGlass: liquidGlass,
-        selected: 1,
-      ),
-    );
-    return PreviewChoiceGroup<LiquidGlassMode>(
-      info: Info(
-        label: appLocalizations.liquidGlass,
-        glyph: AppGlyphs.liquidGlass,
-      ),
-      value: mode,
-      choices: [
-        PreviewChoice(
-          value: LiquidGlassMode.none,
-          label: appLocalizations.none,
-          pictogram: preview(false),
-        ),
-        PreviewChoice(
-          value: LiquidGlassMode.standard,
-          label: appLocalizations.standard,
-          pictogram: preview(true),
-        ),
-        PreviewChoice(
-          value: LiquidGlassMode.ultra,
-          label: appLocalizations.ultra,
-          pictogram: preview(true),
-        ),
-      ],
-      onChanged: (value) {
-        ref
-            .read(themeSettingProvider.notifier)
-            .update((state) => state.copyWith(liquidGlass: value));
-      },
-    );
-  }
-}
-
-class _SidebarBlurItem extends StatelessWidget {
-  const _SidebarBlurItem();
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InfoHeader(
-          info: Info(label: appLocalizations.sidebar, glyph: AppGlyphs.blur),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              generateGroup([
-                ConfigToggleItem(
-                  title: (l) => l.backgroundBlur,
-                  selector: themeSettingProvider.select(
-                    (state) => state.sidebarBlur,
-                  ),
-                  onChanged: (ref, value) => ref
-                      .read(themeSettingProvider.notifier)
-                      .update((state) => state.copyWith(sidebarBlur: value)),
-                ),
-              ]),
-              ListFooter(text: appLocalizations.sidebarBlurDesc),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FontFamilyItem extends ConsumerWidget {
-  const _FontFamilyItem();
+class FontFamilyRow extends ConsumerWidget {
+  const FontFamilyRow({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -937,29 +463,26 @@ class _FontFamilyItem extends ConsumerWidget {
     final fontFamily = ref.watch(
       themeSettingProvider.select((state) => state.fontFamily),
     );
-    final preview = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-      child: Row(
-        spacing: 12,
+    return ListItem(
+      leading: const IconWell(AppGlyphs.font),
+      title: Text(appLocalizations.fontFamily),
+      subtitle: Text(
+        fontFamily ?? appLocalizations.defaultText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyle.subheadline
+            .of(context)
+            .copyWith(fontFamily: fontFamily),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
         children: [
           Text(
             'Aa',
             style: AppTextStyle.headline
                 .of(context)
                 .copyWith(fontFamily: fontFamily),
-          ),
-          Expanded(
-            child: Text(
-              fontFamily ?? appLocalizations.defaultText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.subheadline
-                  .of(context)
-                  .copyWith(
-                    fontFamily: fontFamily,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-            ),
           ),
           GlyphIcon(
             AppGlyphs.chevronForward,
@@ -968,52 +491,178 @@ class _FontFamilyItem extends ConsumerWidget {
           ),
         ],
       ),
-    );
-    final cardColor = context.raisedSurfaceLevel.colorOf(colorScheme);
-    Widget card(VoidCallback onTap) => Material(
-      color: cardColor,
-      shape: AppShape.lg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(customBorder: AppShape.lg, onTap: onTap, child: preview),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InfoHeader(
-          info: Info(label: appLocalizations.fontFamily, glyph: AppGlyphs.font),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: context.isMobileView
-              ? OpenContainer<void>(
-                  closedShape: AppShape.lg,
-                  closedColor: cardColor,
-                  closedBuilder: (_, open) => card(open),
-                  openBuilder: (_, _) => const FontFamilyView(),
-                )
-              : card(
-                  () => showSheet<void>(
-                    context: context,
-                    builder: (_) => const FontFamilyView(),
-                  ),
-                ),
-        ),
-      ],
+      onTap: () => showExtend(
+        context,
+        builder: (_) => const FontFamilyView(),
+      ),
     );
   }
 }
 
-class _TextScaleFactorItem extends ConsumerStatefulWidget {
-  const _TextScaleFactorItem();
+final _floatingBarProvider = appSettingProvider.select(
+  (state) => state.floatingNavigationBar,
+);
+
+final _liquidGlassProvider = themeSettingProvider.select(
+  (state) => state.liquidGlass != LiquidGlassMode.none,
+);
+
+class _CustomColorSheet extends StatefulWidget {
+  const _CustomColorSheet({
+    required this.initialColor,
+    required this.onConfirmed,
+  });
+
+  final Color initialColor;
+
+  /// Runs once the sheet has closed, so retheming every page cannot stall it.
+  final ValueChanged<int> onConfirmed;
+
+  @override
+  State<_CustomColorSheet> createState() => _CustomColorSheetState();
+}
+
+class _CustomColorSheetState extends State<_CustomColorSheet> {
+  late final _controller = ValueNotifier<Color>(widget.initialColor);
+
+  void _confirm() {
+    final color = _controller.value.toARGB32();
+    final onConfirmed = widget.onConfirmed;
+    unawaited(
+      ModalRoute.of(context)!.completed.whenComplete(() => onConfirmed(color)),
+    );
+    Navigator.of(context).pop();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    // Clears Android's edge back-swipe zone; exclusion rects stop at 200 dp.
+    final gestureInsets = MediaQuery.systemGestureInsetsOf(context);
+    return CommonScaffold(
+      title: appLocalizations.customColor,
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
+        tooltip: appLocalizations.confirm,
+        onPressed: _confirm,
+      ),
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(
+          max(16, gestureInsets.left),
+          context.contentTopPadding,
+          max(16, gestureInsets.right),
+          20 + context.bottomInset,
+        ),
+        children: [
+          ValueListenableBuilder(
+            valueListenable: _controller,
+            builder: (_, color, _) => _CustomColorPreview(
+              color: color,
+              onChanged: (color) => _controller.value = color,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Palette(controller: _controller),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TonalButtonTheme(
+      size: TonalButtonSize.section,
+      child: ElasticPress(
+        child: IconButton(
+          tooltip: context.appLocalizations.reset,
+          onPressed: onPressed,
+          icon: const GlyphIcon(AppGlyphs.reset),
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomColorPreview extends ConsumerWidget {
+  const _CustomColorPreview({required this.color, required this.onChanged});
+
+  static const Size _screenSize = Size(96, 128);
+  static const double _scale = 0.75;
+
+  final Color color;
+  final ValueChanged<Color> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final floatingBar = ref.watch(_floatingBarProvider);
+    final liquidGlass = ref.watch(_liquidGlassProvider);
+    final level = context.raisedSurfaceLevel;
+    Widget screen(Brightness brightness) => ExcludeSemantics(
+      child: SizedBox.fromSize(
+        size: _screenSize * _scale,
+        child: ClipRSuperellipse(
+          borderRadius: AppRadius.md,
+          child: FittedBox(
+            child: SizedBox.fromSize(
+              size: _screenSize,
+              child: MiniScreen(
+                colorScheme: ref.watch(
+                  genColorSchemeProvider(brightness, color: color),
+                ),
+                floatingBar: floatingBar,
+                liquidGlass: liquidGlass,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: ShapeDecoration(
+        color: level.colorOf(context.colorScheme),
+        shape: AppShape.xl,
+      ),
+      child: SurfaceScope(
+        level: level,
+        child: Row(
+          spacing: 12,
+          children: [
+            screen(Brightness.light),
+            screen(Brightness.dark),
+            Expanded(
+              child: HexColorField(color: color, onChanged: onChanged),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TextScaleCard extends ConsumerStatefulWidget {
+  const TextScaleCard({super.key});
 
   static const _step = 0.05;
 
   @override
-  ConsumerState<_TextScaleFactorItem> createState() =>
-      _TextScaleFactorItemState();
+  ConsumerState<TextScaleCard> createState() =>
+      _TextScaleCardState();
 }
 
-class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
+class _TextScaleCardState extends ConsumerState<TextScaleCard> {
   double? _draft;
 
   void _update(TextScale Function(TextScale textScale) update) {
@@ -1037,24 +686,12 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
     final percent = '${(scale * 100).round()}%';
     final level = context.raisedSurfaceLevel;
     final divisions =
-        ((maxTextScale - minTextScale) / _TextScaleFactorItem._step).round();
+        ((maxTextScale - minTextScale) / TextScaleCard._step).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InfoHeader(
-          info: Info(
-            label: appLocalizations.textScale,
-            glyph: AppGlyphs.textSize,
-          ),
-          actions: [
-            if (textScale.enable && textScale.scale != 1)
-              _ResetButton(
-                onPressed: () => _update((state) => state.copyWith(scale: 1)),
-              ),
-          ],
-        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.only(top: 8),
           child: Column(
             spacing: 8,
             children: [
@@ -1152,6 +789,7 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                             child: SliderTheme(
                               data: SliderDefaultsM3(context),
                               child: Slider(
+                                key: const ValueKey('textScaleSlider'),
                                 padding: EdgeInsets.zero,
                                 min: minTextScale,
                                 max: maxTextScale,
@@ -1177,6 +815,11 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                                   ),
                             ),
                           ),
+                          if (textScale.enable && textScale.scale != 1)
+                            _ResetButton(
+                              onPressed: () =>
+                                  _update((state) => state.copyWith(scale: 1)),
+                            ),
                         ],
                       ),
                     ),
@@ -1187,151 +830,6 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ResetButton extends StatelessWidget {
-  const _ResetButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return TonalButtonTheme(
-      size: TonalButtonSize.section,
-      child: ElasticPress(
-        child: IconButton(
-          tooltip: context.appLocalizations.reset,
-          onPressed: onPressed,
-          icon: const GlyphIcon(AppGlyphs.reset),
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomColorSheet extends StatefulWidget {
-  const _CustomColorSheet({
-    required this.initialColor,
-    required this.onConfirmed,
-  });
-
-  final Color initialColor;
-
-  /// Runs once the sheet has closed, so retheming every page cannot stall it.
-  final ValueChanged<int> onConfirmed;
-
-  @override
-  State<_CustomColorSheet> createState() => _CustomColorSheetState();
-}
-
-class _CustomColorSheetState extends State<_CustomColorSheet> {
-  late final _controller = ValueNotifier<Color>(widget.initialColor);
-
-  void _confirm() {
-    final color = _controller.value.toARGB32();
-    final onConfirmed = widget.onConfirmed;
-    unawaited(
-      ModalRoute.of(context)!.completed.whenComplete(() => onConfirmed(color)),
-    );
-    Navigator.of(context).pop();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    // Clears Android's edge back-swipe zone; exclusion rects stop at 200 dp.
-    final gestureInsets = MediaQuery.systemGestureInsetsOf(context);
-    return CommonScaffold(
-      title: appLocalizations.customColor,
-      confirmationAction: IconButtonData(
-        glyph: AppGlyphs.check,
-        tooltip: appLocalizations.confirm,
-        onPressed: _confirm,
-      ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(
-          max(16, gestureInsets.left),
-          context.contentTopPadding,
-          max(16, gestureInsets.right),
-          20 + context.bottomInset,
-        ),
-        children: [
-          ValueListenableBuilder(
-            valueListenable: _controller,
-            builder: (_, color, _) => _CustomColorPreview(
-              color: color,
-              onChanged: (color) => _controller.value = color,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Palette(controller: _controller),
-        ],
-      ),
-    );
-  }
-}
-
-class _CustomColorPreview extends ConsumerWidget {
-  const _CustomColorPreview({required this.color, required this.onChanged});
-
-  static const Size _screenSize = Size(96, 128);
-  static const double _scale = 0.75;
-
-  final Color color;
-  final ValueChanged<Color> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final floatingBar = ref.watch(_floatingBarProvider);
-    final liquidGlass = ref.watch(_liquidGlassProvider);
-    final level = context.raisedSurfaceLevel;
-    Widget screen(Brightness brightness) => ExcludeSemantics(
-      child: SizedBox.fromSize(
-        size: _screenSize * _scale,
-        child: ClipRSuperellipse(
-          borderRadius: AppRadius.md,
-          child: FittedBox(
-            child: SizedBox.fromSize(
-              size: _screenSize,
-              child: MiniScreen(
-                colorScheme: ref.watch(
-                  genColorSchemeProvider(brightness, color: color),
-                ),
-                floatingBar: floatingBar,
-                liquidGlass: liquidGlass,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: ShapeDecoration(
-        color: level.colorOf(context.colorScheme),
-        shape: AppShape.xl,
-      ),
-      child: SurfaceScope(
-        level: level,
-        child: Row(
-          spacing: 12,
-          children: [
-            screen(Brightness.light),
-            screen(Brightness.dark),
-            Expanded(
-              child: HexColorField(color: color, onChanged: onChanged),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

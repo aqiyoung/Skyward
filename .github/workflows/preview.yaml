@@ -61,6 +61,9 @@ concurrency:
 
 permissions:
   contents: write
+  # Reading back the last preview run that actually finished, so a cancelled
+  # run's orphan tag cannot become the changelog baseline.
+  actions: read
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -87,6 +90,11 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      # Preview builds target this chat when set, keeping phone-only builds out
+      # of the public release channel. When unset the step falls back to
+      # TELEGRAM_CHAT_ID, so the current behaviour is preserved until a value
+      # is added.
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -196,6 +204,11 @@ jobs:
 
       # What changed since the previous preview, so the phone shows the point of
       # the build rather than a bare version number.
+      #
+      # The caption is read by Chinese-speaking users while commit subjects are
+      # English, so the prose comes from the `Changelog-Zh:` trailer each
+      # user-visible commit carries. CHANGELOG.zh.md's `未发布` section is only
+      # the fallback for a range written before that rule existed.
       - name: Collect the changelog
         id: changelog
         env:
@@ -203,20 +216,79 @@ jobs:
           TAG: preview-${{ steps.version.outputs.build_number }}
         run: |
           set -euo pipefail
-          # Preview releases are deleted (Telegram-only policy), so look up
-          # previous preview by git tag instead of the releases API.
-          git fetch --tags --quiet || true
-          previous=$(git tag --list "preview-*" --sort=-creatordate \
-            | grep -vx "$TAG" | head -1 || true)
+          # The checkout is one commit deep, so the range below would otherwise
+          # hold just this merge commit — and every commit worth describing is
+          # behind it. Deepen before walking history.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet \
+            || true
           commit="$(git rev-parse HEAD)"
+          # Preview releases are deleted (Telegram-only policy), so tags were
+          # the only record of a build. But a tag is claimed before anything is
+          # built: when a newer push cancels that run, its tag survives with no
+          # artefact behind it. The next caption then compares against a commit
+          # that never shipped -- either an empty range (falling back to stale
+          # CHANGELOG.zh.md prose) or one that skips the cancelled run's work.
+          #
+          # Anchor the range on the head of the last preview run that actually
+          # finished successfully instead. The runs API is read-only here; if
+          # it is unavailable, keep the old tag lookup as a fallback.
+          jq_filter='[.workflow_runs[] | select(.conclusion == "success" and .head_sha != "'"$commit"'")] | .[0].head_sha // ""'
+          previous_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/preview.yaml/runs?status=completed&per_page=30" \
+            --jq "$jq_filter" 2>/dev/null || true)
+          if [ -n "$previous_sha" ] \
+            && git cat-file -e "${previous_sha}^{commit}" 2>/dev/null; then
+            previous="$previous_sha"
+            echo "changelog baseline: last successful preview run on ${previous_sha:0:12}"
+          else
+            previous=$(git tag --list "preview-*" --sort=-creatordate \
+              | grep -vx "$TAG" | head -1 || true)
+            echo "changelog baseline: newest tag (runs API unavailable)"
+          fi
 
           entries=""
           if [ -n "$previous" ]; then
             echo "changelog: $previous...$commit"
+            # The rule: every user-visible commit carries a `Changelog-Zh:`
+            # trailer, and the caption is built from those. One line each, so
+            # the caption never needs a second hand-written file to stay in
+            # sync. Falls back to CHANGELOG.zh.md when the range has none.
+            #
+            # Fields are tab-separated: bash drops NUL bytes in command
+            # substitution, which silently emptied a `%x00` split. Merges are
+            # kept because the merge commit is often the only one carrying the
+            # trailer; duplicates are folded after, not filtered before.
+            entries=$(git log --reverse \
+              --format='%h%x09%(trailers:key=Changelog-Zh,valueonly)' \
+              "$previous..$commit" 2>/dev/null \
+              | awk -F'\t' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | awk '!seen[$0]++' \
+              | tac | awk 'NR<=8' || true)
+          fi
+
+          if [ -n "$entries" ]; then
+            echo "changelog source: Changelog-Zh trailers"
+          elif [ -f CHANGELOG.zh.md ]; then
+            # Fallback for older commits written before the trailer rule: only
+            # the `## 未发布` section, since a versioned section below it is
+            # history the phone has already been told about.
+            entries=$(awk '
+              /^## 未发布[[:space:]]*$/ { capture = 1; next }
+              /^## / { capture = 0 }
+              capture && NF { print }
+            ' CHANGELOG.zh.md)
+            if [ -n "$entries" ]; then
+              echo "changelog source: CHANGELOG.zh.md (未发布)"
+            fi
+          fi
+
+          if [ -z "$entries" ] && [ -n "$previous" ]; then
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
             entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
-          else
+          elif [ -z "$previous" ]; then
             echo "::notice::this is the first preview; no changelog range"
           fi
 
@@ -477,13 +549,15 @@ jobs:
       # The file itself, not a link: the self-hosted server above takes 2 GB,
       # while the cloud Bot API would answer 413 for this APK.
       - name: Upload the preview to Telegram
-        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        # Send whenever a token is present and at least one target chat is
+        # configured. The preview-specific chat takes priority; the public one
+        # is the fallback, so the step still runs if only that is set.
+        if: env.TELEGRAM_BOT_TOKEN != '' && (env.TELEGRAM_PREVIEW_CHAT_ID != '' || env.TELEGRAM_CHAT_ID != '')
         env:
           VERSION: ${{ steps.version.outputs.version }}
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
           VERSION_CODE: ${{ steps.verify.outputs.version_code }}
           REF: ${{ inputs.ref || github.ref_name }}
-          TAG: preview-${{ steps.version.outputs.build_number }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
@@ -505,18 +579,21 @@ jobs:
             exit 1
           fi
 
-          # A caption is capped at 1024 characters: the changelog is trimmed
-          # and the release page carries the rest.
+          # A caption is capped at 1024 characters. The entries are already
+          # short and in Chinese, so they are shown whole -- cutting by byte
+          # (`cut -c`) would split a multi-byte character in half.
           {
             echo "🧪 Skyward ${VERSION}（预览版）"
             echo
-            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID} ｜ versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID}"
+            echo "versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
             if [ -n "${CHANGELOG}" ]; then
               echo
-              printf '%s\n' "${CHANGELOG}" | cut -c1-80 | awk 'NR<=6'
+              echo "📝 本次更新"
+              printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo "⬇️ 安装包即本条消息附件"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
@@ -524,8 +601,11 @@ jobs:
           shopt -s nullglob
           for apk in dist/*.apk; do
             echo "uploading $(basename "${apk}") ($(du -h "${apk}" | cut -f1))..."
+            # Prefer the preview-only chat; fall back to the public one when it
+            # is not configured.
+            chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
             response="$(curl -fsS --max-time 900 \
-              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "chat_id=${chat_id}" \
               -F "document=@${apk}" \
               -F "caption=$(cat /tmp/caption.txt)" \
               "${api}/sendDocument")"

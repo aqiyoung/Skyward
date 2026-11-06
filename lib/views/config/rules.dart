@@ -118,6 +118,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
             }
           : null,
       child: CommonScaffold(
+        rowSeparators: false,
         title: appLocalizations.addedRules,
         searchState: AppBarSearchState(onSearch: _handleSearch),
         actions: [

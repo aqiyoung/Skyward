@@ -13,23 +13,27 @@ void main() {
     int? invalid,
     Widget? leading,
     double top = 0,
+    bool separated = true,
   }) async {
     await tester.pumpWidget(
       TestApp(
         child: Scaffold(
-          body: Padding(
-            padding: EdgeInsets.only(top: top),
-            child: generateSection(
-              items: [
-                for (var index = 0; index < 3; index++)
-                  DecorationListItem(
-                    leading: leading,
-                    title: Text('row $index'),
-                    isSelected: index == selected,
-                    invalid: index == invalid,
-                    onPressed: () {},
-                  ),
-              ],
+          body: ListRowSeparatorScope(
+            separated: separated,
+            child: Padding(
+              padding: EdgeInsets.only(top: top),
+              child: generateSection(
+                items: [
+                  for (var index = 0; index < 3; index++)
+                    DecorationListItem(
+                      leading: leading,
+                      title: Text('row $index'),
+                      isSelected: index == selected,
+                      invalid: index == invalid,
+                      onPressed: () {},
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -57,6 +61,29 @@ void main() {
     expect(tester.renderObject(rows[0]), separator(tester, rows[0]));
     expect(tester.renderObject(rows[1]), separator(tester, rows[1]));
     expect(tester.renderObject(rows[2]), isNot(separator(tester, rows[2])));
+  });
+
+  testWidgets('a page that opts out draws no separator on any row', (
+    tester,
+  ) async {
+    final rows = await pumpRows(tester, separated: false);
+
+    for (final row in rows) {
+      expect(tester.renderObject(row), isNot(separator(tester, row)));
+    }
+  });
+
+  testWidgets('a page that opts out still draws the error emphasis', (
+    tester,
+  ) async {
+    // The scope only turns the hairline off; the card's invalid styling and
+    // the press highlight keep working, so an error row is still marked.
+    final rows = await pumpRows(tester, separated: false, invalid: 1);
+
+    expect(tester.widget<DecorationListItem>(rows[1]).invalid, isTrue);
+    for (final row in rows) {
+      expect(tester.renderObject(row), isNot(separator(tester, row)));
+    }
   });
 
   testWidgets('an invalid row drops the separators on both its edges', (

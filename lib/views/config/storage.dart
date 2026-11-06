@@ -130,6 +130,7 @@ class _StorageViewState extends State<StorageView> {
     final appLocalizations = context.appLocalizations;
     final areas = _areas;
     return BaseScaffold(
+      rowSeparators: false,
       title: appLocalizations.storage,
       body: ListView(
         padding: const EdgeInsets.symmetric(
