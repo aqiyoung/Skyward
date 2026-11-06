@@ -1,4 +1,5 @@
 import 'package:skyward/features/module/module.dart';
+import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:test/test.dart';
 
@@ -142,8 +143,8 @@ DOMAIN-SUFFIX,a.com,REJECT
 
       expect(rules.map((rule) => rule.rawValue), [
         'DOMAIN,a.com,REJECT',
-        'MATCH,Proxy',
         'DOMAIN,b.com,DIRECT',
+        'MATCH,Proxy',
       ]);
     });
 
@@ -179,6 +180,38 @@ DOMAIN-SUFFIX,a.com,REJECT
         ).map((rule) => rule.rawValue),
         ['DOMAIN,a.com,REJECT'],
       );
+    });
+
+    test('keeps a module FINAL at the end, where it belongs', () {
+      const module = Module(
+        id: 5,
+        label: 'ads',
+        content: '[Rule]\nDOMAIN,a.com,REJECT\nFINAL,Proxy\n',
+        policy: 'Proxy',
+      );
+
+      final rules = withModuleRules(
+        modules: [module],
+        rules: [Rule.parse('DOMAIN,b.com,DIRECT')],
+      );
+
+      expect(rules.last.ruleAction, RuleAction.MATCH);
+    });
+
+    test('leaves the config own terminal rule alone', () {
+      const module = Module(
+        id: 6,
+        label: 'ads',
+        content: '[Rule]\nFINAL,Proxy\n',
+        policy: 'Proxy',
+      );
+
+      final rules = withModuleRules(
+        modules: [module],
+        rules: [Rule.parse('MATCH,DIRECT')],
+      );
+
+      expect(rules.map((rule) => rule.rawValue), ['MATCH,DIRECT']);
     });
 
     test('drops a rule whose policy the config cannot route to', () {

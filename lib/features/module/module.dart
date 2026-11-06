@@ -616,6 +616,11 @@ List<Rule> withModuleRules({
 }) {
   final existing = rules.map((rule) => rule.rawValue).toSet();
   final added = <Rule>[];
+  // A module's FINAL becomes MATCH, which ends the list wherever it sits. Put
+  // one in front and the profile's own rules never run, so they are held back
+  // and only appended when nothing else ends the list already.
+  final terminals = <Rule>[];
+  final rulesEndHere = rules.any((rule) => rule.ruleAction == RuleAction.MATCH);
   for (final module in modules) {
     if (!module.enabled) {
       continue;
@@ -630,12 +635,18 @@ List<Rule> withModuleRules({
       if (policies != null && target != null && !policies.contains(target)) {
         continue;
       }
+      if (rule.ruleAction == RuleAction.MATCH) {
+        if (!rulesEndHere && existing.add(raw)) {
+          terminals.add(rule);
+        }
+        continue;
+      }
       if (existing.add(raw)) {
         added.add(rule);
       }
     }
   }
-  return [...added, ...rules];
+  return [...added, ...rules, ...terminals];
 }
 
 /// Every policy name a config can route to, so a module rule can be checked
