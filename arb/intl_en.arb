@@ -412,6 +412,7 @@
   "memoryCoreStack": "Goroutine stacks",
   "memoryCoreRuntime": "Runtime overhead",
   "memoryCoreNotRunning": "Core is not running",
+  "memoryCoreBudget": "Core budget",
   "memoryAppResident": "Resident memory",
   "memoryAppShared": "App & shared",
   "memoryEstimateDesc": "Estimated from process resident memory; it may differ from what the system reports.",

@@ -412,6 +412,7 @@
   "memoryCoreStack": "协程栈",
   "memoryCoreRuntime": "运行时开销",
   "memoryCoreNotRunning": "内核未运行",
+  "memoryCoreBudget": "内核上限",
   "memoryAppResident": "常驻内存",
   "memoryAppShared": "应用及共享",
   "memoryEstimateDesc": "基于进程常驻内存估算，可能与系统显示的数值不同。",
