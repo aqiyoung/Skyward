@@ -285,9 +285,9 @@ const _nodeTags = <String, String>{'UK': 'GB', 'LA': 'US'};
 /// A two letter tag standing on its own, so `IPLC` and `BGP` stay out of it.
 final _codeTag = RegExp(r'(?<![A-Za-z])([A-Z]{2})(?![A-Za-z])');
 
-final _regionStart = 0x1F1E6;
-final _regionEnd = 0x1F1FF;
-final _letterA = 0x41;
+const _regionStart = 0x1F1E6;
+const _regionEnd = 0x1F1FF;
+const _letterA = 0x41;
 
 GeoCountry? geoCountryOf(String? code) {
   if (code == null || code.isEmpty) {

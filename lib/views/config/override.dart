@@ -595,7 +595,7 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
       children: [
         if (spec.target.issues case final issues?)
           CustomIssuesBanner(issues: ref.watch(issues)),
-        if (spec.buildNote(context, ref) case final note?) note,
+        ?spec.buildNote(context, ref),
         AnimatedEntries(
           children: [
             for (final (title, keys) in spec.sectionsOf(

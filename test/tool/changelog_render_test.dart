@@ -233,9 +233,9 @@ void main() {
       final text = renderTelegram(
         version(
           groups: [
-            ChangelogGroup(
+            const ChangelogGroup(
               type: ChangelogType.feat,
-              entries: const [
+              entries: [
                 ChangelogEntry(
                   id: '5d6e7f8',
                   scope: 'network',

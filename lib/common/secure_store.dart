@@ -20,7 +20,7 @@ class DavSecretStore {
 
   static const _key = 'skyward.dav.password';
 
-  static final FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   /// Persists [password]. Call before saving the config that drops it to a
   /// sentinel in plaintext storage.

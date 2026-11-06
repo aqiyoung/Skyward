@@ -1,9 +1,7 @@
 import 'package:skyward/common/common.dart';
-import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Standalone privacy policy page, reachable from the About page.
 /// Required for app store listings (e.g. Google Play).
