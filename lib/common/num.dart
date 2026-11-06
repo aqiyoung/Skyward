@@ -7,8 +7,16 @@ import 'package:material_ui/material_ui.dart';
 /// Pinned to English so every locale reads K and M, never 万 or тыс.
 final _compactFormat = NumberFormat.compact(locale: 'en');
 
+/// Also pinned to English: a count reads the same wherever the app is opened,
+/// and the grouping stays in thousands a Chinese reader expects as well.
+final _groupedFormat = NumberFormat.decimalPattern('en');
+
 extension NumExt on num {
   String get compact => _compactFormat.format(this);
+
+  /// `1,204` — for a count the reader compares at a glance, such as the
+  /// number of rules in a list.
+  String get grouped => _groupedFormat.format(this);
 
   String fixed({int decimals = 2}) {
     String formatted = toStringAsFixed(decimals);
