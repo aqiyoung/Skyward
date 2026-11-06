@@ -248,4 +248,26 @@ void main() {
       expect(event.data, 'test log');
     });
   });
+
+  group('Delay', () {
+    test('keeps the reason a failed test gave', () {
+      final delay = Delay.fromJson({
+        'name': 'node',
+        'url': 'https://example.test',
+        'value': -2,
+        'message': 'dial tcp 1.2.3.4:443: connect: connection refused',
+      });
+
+      expect(delay.value, -2);
+      expect(
+        delay.message,
+        'dial tcp 1.2.3.4:443: connect: connection refused',
+      );
+    });
+
+    test('a test with no reason carries no message', () {
+      final delay = Delay.fromJson({'name': 'node', 'url': 'u', 'value': 42});
+      expect(delay.message, isNull);
+    });
+  });
 }

@@ -10,11 +10,20 @@ extension PackageInfoExtension on PackageInfo {
   /// the revision our release adds on top.
   String get displayVersion => buildVersion.isNotEmpty ? buildVersion : version;
 
-  String get ua => [
+  /// Who this build says it is when it fetches a profile. Providers choose the
+  /// format they answer in from this string, and only a `clash.meta/<version>`
+  /// prefix asks for mihomo YAML -- without it a provider may answer with a
+  /// share-link list, which loses whatever the links cannot carry. The core's
+  /// own version goes in, so the claim stays true when the pin moves; an empty
+  /// [coreVersion] (a host that never asked the core) simply leaves it out.
+  String uaFor(String coreVersion) => [
+    if (coreVersion.isNotEmpty) 'clash.meta/$coreVersion',
     '$appName/v$version',
     'clash-verge',
     'Platform/${Platform.operatingSystem}',
   ].join(' ');
+
+  String get ua => uaFor('');
 }
 
 int compareVersions(String version1, String version2) {

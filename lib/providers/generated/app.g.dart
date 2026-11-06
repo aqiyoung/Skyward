@@ -1492,6 +1492,72 @@ abstract class _$DelayDataSource extends $Notifier<DelayMap> {
   }
 }
 
+/// The reason each failed test gave, kept beside the numbers rather than in
+/// them: the list builds from the numbers and sorts on them, and a row that
+/// only shows "failed" must not rebuild because the core explained itself.
+
+@ProviderFor(DelayFailures)
+final delayFailuresProvider = DelayFailuresProvider._();
+
+/// The reason each failed test gave, kept beside the numbers rather than in
+/// them: the list builds from the numbers and sorts on them, and a row that
+/// only shows "failed" must not rebuild because the core explained itself.
+final class DelayFailuresProvider
+    extends $NotifierProvider<DelayFailures, DelayFailureMap> {
+  /// The reason each failed test gave, kept beside the numbers rather than in
+  /// them: the list builds from the numbers and sorts on them, and a row that
+  /// only shows "failed" must not rebuild because the core explained itself.
+  DelayFailuresProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'delayFailuresProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$delayFailuresHash();
+
+  @$internal
+  @override
+  DelayFailures create() => DelayFailures();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DelayFailureMap value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DelayFailureMap>(value),
+    );
+  }
+}
+
+String _$delayFailuresHash() => r'12d3421928bf5325647abe98d85443e48ec8eb35';
+
+/// The reason each failed test gave, kept beside the numbers rather than in
+/// them: the list builds from the numbers and sorts on them, and a row that
+/// only shows "failed" must not rebuild because the core explained itself.
+
+abstract class _$DelayFailures extends $Notifier<DelayFailureMap> {
+  DelayFailureMap build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<DelayFailureMap, DelayFailureMap>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<DelayFailureMap, DelayFailureMap>,
+              DelayFailureMap,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(PendingDelayTests)
 final pendingDelayTestsProvider = PendingDelayTestsProvider._();
 

@@ -250,12 +250,14 @@ _Delay _$DelayFromJson(Map<String, dynamic> json) => _Delay(
   name: json['name'] as String,
   url: json['url'] as String,
   value: (json['value'] as num?)?.toInt(),
+  message: json['message'] as String?,
 );
 
 Map<String, dynamic> _$DelayToJson(_Delay instance) => <String, dynamic>{
   'name': instance.name,
   'url': instance.url,
   'value': instance.value,
+  'message': instance.message,
 };
 
 _ProbeParams _$ProbeParamsFromJson(Map<String, dynamic> json) => _ProbeParams(
