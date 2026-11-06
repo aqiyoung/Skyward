@@ -207,7 +207,10 @@ Map<String, dynamic>? _parseVless(String link) {
         };
       }
       final fp = params['fp'] ?? params['fingerprint'];
-      if (fp != null) proxy['fingerprint'] = fp;
+      // mihomo names the TLS fingerprint `client-fingerprint`; a plain
+      // `fingerprint` key is ignored, which leaves a Reality node without the
+      // fingerprint its server expects.
+      if (fp != null) proxy['client-fingerprint'] = fp;
       // An empty `alpn=` (the URL ends the query right before the `#name`)
       // yields [''], which is invalid Clash YAML and makes the whole config
       // fail validation -- and validateProfile() then strips proxy-groups.
@@ -221,6 +224,22 @@ Map<String, dynamic>? _parseVless(String link) {
       }
     }
     
+    // Keys a vless link carries that the server actually enforces. Dropping
+    // them is what makes an imported node look broken: `flow` is the XTLS
+    // vision mode a Reality server expects, and `encryption` has to travel with
+    // it.
+    final flow = params['flow'];
+    if (flow != null && flow.isNotEmpty) proxy['flow'] = flow;
+    final encryption = params['encryption'];
+    if (encryption != null && encryption.isNotEmpty) {
+      proxy['encryption'] = encryption;
+    }
+    final packetEncoding =
+        params['packetEncoding'] ?? params['packet-encoding'];
+    if (packetEncoding != null && packetEncoding.isNotEmpty) {
+      proxy['packet-encoding'] = packetEncoding;
+    }
+
     // Transport
     final type = params['type'] ?? 'tcp';
     if (type != 'tcp') {
