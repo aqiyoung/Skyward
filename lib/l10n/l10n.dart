@@ -8904,6 +8904,14 @@ class AppLocalizations {
       args: [count],
     );
   }
+  String get moduleGeneralTip {
+    return Intl.message(
+      'These entries are not applied yet; the core has no matching switch.',
+      name: 'moduleGeneralTip',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

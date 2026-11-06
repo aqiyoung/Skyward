@@ -1645,5 +1645,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage("内核没有对应配置项"),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "这些项还没有接入配置，内核没有对应的开关。",
+    ),
   };
 }

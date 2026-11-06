@@ -2092,5 +2092,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "These entries are not applied yet; the core has no matching switch.",
+    ),
   };
 }

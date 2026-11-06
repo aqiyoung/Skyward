@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/features/features.dart';
-import 'package:skyward/features/form/form.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
@@ -369,6 +368,20 @@ class ModuleDetailView extends ConsumerWidget {
                 ),
             ],
           ),
+          if (parsed.general.isNotEmpty)
+            generateSection(
+              title: appLocalizations.general,
+              footer: appLocalizations.moduleGeneralTip,
+              items: [
+                for (final entry in parsed.general)
+                  ListItem(
+                    title: Text(
+                      '${entry.key} = ${entry.value}',
+                      style: AppTextStyle.footnote.of(context).toJetBrainsMono,
+                    ),
+                  ),
+              ],
+            ),
           generateSection(
             title:
                 '${appLocalizations.moduleSkipped} · ${parsed.skipped.length}',

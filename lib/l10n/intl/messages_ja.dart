@@ -1814,5 +1814,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "これらはまだ設定に反映されていません。コアに対応するスイッチがありません。",
+    ),
   };
 }

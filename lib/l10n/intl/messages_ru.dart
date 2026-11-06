@@ -2196,5 +2196,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "Эти пункты пока не применяются: в ядре нет соответствующего переключателя.",
+    ),
   };
 }

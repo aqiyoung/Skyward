@@ -2263,5 +2263,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "Estos elementos aún no se aplican; el núcleo no tiene ese interruptor.",
+    ),
   };
 }

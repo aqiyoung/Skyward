@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:skyward/common/common.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 

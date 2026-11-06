@@ -2262,5 +2262,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "Ces entrées ne sont pas encore appliquées ; le noyau n'a pas d'interrupteur correspondant.",
+    ),
   };
 }

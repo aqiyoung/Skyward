@@ -1791,5 +1791,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "moduleUpdated": m87,
     "moduleRulesTruncated": m88,
+    "moduleGeneralTip": MessageLookupByLibrary.simpleMessage(
+      "이 항목은 아직 설정에 반영되지 않았습니다. 코어에 해당 스위치가 없습니다.",
+    ),
   };
 }
