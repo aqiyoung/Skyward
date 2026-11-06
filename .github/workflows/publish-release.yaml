@@ -87,15 +87,27 @@ jobs:
           entries=""
           if [ -n "$previous" ]; then
             echo "changelog: $previous...$commit"
-            git fetch --tags --quiet || true
-            # One line per user-visible commit, in Chinese. The release page and
-            # the Telegram message both read this list, so the same copy serves
-            # the app (which also carries it as structured JSON) and the channel.
-            entries=$(git log --no-merges --reverse \
-              --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
-              "$previous..$commit" 2>/dev/null \
-              | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+            # The previous release's tag is not necessarily an ancestor: beta is
+            # rebased onto upstream/dev, so `git log previous..HEAD` reports a
+            # mangled range -- commits the tag already contains, minus the ones
+            # it does not -- and its trailers come back empty. Ask the compare
+            # API for the messages of the commits it actually returns and pull
+            # the trailers out of them; the same source release_changelog.mjs
+            # uses.
+            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+              --jq '.commits[].commit.message' 2>/dev/null \
+              | sed -n 's/^Changelog-Zh:[[:space:]]*//p' \
+              | awk 'NF { print "- " $0 }' \
               | tac | awk 'NR<=40' || true)
+            if [ -z "$entries" ]; then
+              echo "::notice::the compare API carried no Changelog-Zh trailer; trying the local range"
+              git fetch --tags --quiet || true
+              entries=$(git log --no-merges --reverse \
+                --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+                "$previous..$commit" 2>/dev/null \
+                | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+                | tac | awk 'NR<=40' || true)
+            fi
           else
             echo "::notice::no earlier release of this channel; the changelog starts here"
           fi
@@ -114,10 +126,10 @@ jobs:
           fi
 
           if [ -z "$entries" ] && [ -n "$previous" ]; then
-            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
-            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
-              --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
-              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | head -40 || true)
+            # Commit subjects are English and read like an update log without
+            # being one, so they are not used as a stand-in: the section is
+            # left out and the log says why.
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; this release carries no changelog"
           fi
 
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
@@ -204,9 +216,16 @@ jobs:
 
           # The app reads this block from the release body to show the update log
           # in the reader's own language, so it travels with the notes above.
-          if [ -n "$PREVIOUS" ] && command -v node >/dev/null 2>&1; then
-            node tool/release_changelog.mjs "$PREVIOUS" HEAD "$VERSION" "$CHANNEL" \
-              >> release-notes.md
+          # A missing block is invisible in the release page but leaves the app
+          # without an update log, so say so loudly instead of skipping quietly.
+          if [ -n "$PREVIOUS" ]; then
+            if command -v node >/dev/null 2>&1; then
+              node tool/release_changelog.mjs "$PREVIOUS" HEAD "$VERSION" "$CHANNEL" \
+                >> release-notes.md \
+                || echo "::warning::release_changelog.mjs failed; the in-app changelog JSON is missing from this release"
+            else
+              echo "::warning::node is not on PATH; the in-app changelog JSON is missing from this release"
+            fi
           fi
 
           echo "tag=$tag commit=$commit"
