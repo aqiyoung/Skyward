@@ -390,6 +390,20 @@ class _ModuleDetailViewState extends ConsumerState<ModuleDetailView> {
                 ),
             ],
           ),
+          if (parsed.arguments.isNotEmpty)
+            generateSection(
+              title: appLocalizations.additionalParameters,
+              items: [
+                for (final entry in parsed.arguments.entries)
+                  ListItem(
+                    title: Text(
+                      entry.key,
+                      style: AppTextStyle.footnote.of(context).toJetBrainsMono,
+                    ),
+                    trailing: Text(entry.value),
+                  ),
+              ],
+            ),
           if (parsed.general.isNotEmpty)
             generateSection(
               title: appLocalizations.general,
