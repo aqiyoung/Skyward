@@ -1048,5 +1048,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "Устройство имеет глобальный адрес IPv6, и трафик v6 может обойти перехват только для IPv4",
   "dnsLeakAdvice": "Для непройденных пунктов включите VPN и перехват DNS в разделе «Дополнительно → Сеть», отключите Private DNS в настройках системы и замените обычные вышестоящие серверы на DoH в переопределениях DNS.",
-  "dnsLeakExternal": "Проверить в браузере"
+  "dnsLeakExternal": "Проверить в браузере",
+  "modules": "Модули",
+  "author": "Автор",
+  "moduleSkipped": "Пропущено",
+  "modulePolicy": "Политика",
+  "modulePolicyTip": "Правила с PROXY используют эту политику; пусто — пропустить их.",
+  "modulePasteTip": "Вставьте текст файла .sgmodule, .module, .plugin, .stoverride или .conf.",
+  "moduleEmpty": "Модуль пуст.",
+  "moduleNoUrl": "У этого модуля нет исходного URL для обновления.",
+  "moduleSkipHttps": "Нужно расшифрование HTTPS, ядро этого не делает",
+  "moduleSkipScript": "Нужна среда выполнения скриптов, у ядра её нет",
+  "moduleSkipRule": "Ядро не знает такого типа правила",
+  "moduleSkipRuleSet": "Удалённый набор правил требует отдельной загрузки",
+  "moduleSkipPolicy": "Указывает на PROXY, политика не задана",
+  "moduleSkipGeneral": "В ядре нет такого поля",
+  "moduleGeneralTip": "Эти пункты пока не применяются: в ядре нет соответствующего переключателя.",
+  "moduleUpdated": "Обновлено: {label}",
+  "moduleRulesTruncated": "Всего {count}, показаны первые"
 }

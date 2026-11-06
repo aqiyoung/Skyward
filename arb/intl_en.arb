@@ -1048,5 +1048,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "This device holds a global IPv6 address, and v6 traffic can bypass an IPv4-only capture",
   "dnsLeakAdvice": "For anything that failed, open VPN and DNS hijacking in Advanced > Network, turn off Private DNS in the system settings, and replace plain upstreams with DoH under DNS overrides.",
-  "dnsLeakExternal": "Verify in a browser"
+  "dnsLeakExternal": "Verify in a browser",
+  "modules": "Modules",
+  "author": "Author",
+  "moduleSkipped": "Skipped",
+  "modulePolicy": "Policy",
+  "modulePolicyTip": "Rules that name PROXY use this policy; leave it empty to skip them.",
+  "modulePasteTip": "Paste the text of a .sgmodule, .module, .plugin, .stoverride or .conf file.",
+  "moduleEmpty": "The module is empty.",
+  "moduleNoUrl": "This module has no source URL to update from.",
+  "moduleSkipHttps": "Needs HTTPS decryption, which the core does not do.",
+  "moduleSkipScript": "Needs a script runtime, which the core does not have.",
+  "moduleSkipRule": "The core has no such rule type.",
+  "moduleSkipRuleSet": "A remote rule set needs its own download.",
+  "moduleSkipPolicy": "Points at PROXY, and no policy is set.",
+  "moduleSkipGeneral": "The core has no matching field.",
+  "moduleGeneralTip": "These entries are not applied yet; the core has no matching switch.",
+  "moduleUpdated": "Updated {label}",
+  "moduleRulesTruncated": "{count} rules, showing the first part only"
 }

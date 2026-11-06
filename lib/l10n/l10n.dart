@@ -427,12 +427,7 @@ class AppLocalizations {
 
   /// `Preferences`
   String get preferences {
-    return Intl.message(
-      'Preferences',
-      name: 'preferences',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Preferences', name: 'preferences', desc: '', args: []);
   }
 
   /// `More theme settings`
@@ -470,14 +465,19 @@ class AppLocalizations {
     return Intl.message('Text', name: 'textSection', desc: '', args: []);
   }
 
+  /// `Configuration`
+  String get configuration {
+    return Intl.message(
+      'Configuration',
+      name: 'configuration',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);
-  }
-
-  /// `Configuration`
-  String get configuration {
-    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
   }
 
   /// `Extend`
@@ -8761,42 +8761,28 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Modules`
   String get modules {
-    return Intl.message(
-      'Modules',
-      name: 'modules',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Modules', name: 'modules', desc: '', args: []);
   }
 
+  /// `Author`
   String get author {
-    return Intl.message(
-      'Author',
-      name: 'author',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Author', name: 'author', desc: '', args: []);
   }
 
+  /// `Skipped`
   String get moduleSkipped {
-    return Intl.message(
-      'Skipped',
-      name: 'moduleSkipped',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Skipped', name: 'moduleSkipped', desc: '', args: []);
   }
 
+  /// `Policy`
   String get modulePolicy {
-    return Intl.message(
-      'Policy',
-      name: 'modulePolicy',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Policy', name: 'modulePolicy', desc: '', args: []);
   }
 
+  /// `Rules that name PROXY use this policy; leave it empty to skip them.`
   String get modulePolicyTip {
     return Intl.message(
       'Rules that name PROXY use this policy; leave it empty to skip them.',
@@ -8806,6 +8792,7 @@ class AppLocalizations {
     );
   }
 
+  /// `Paste the text of a .sgmodule, .module, .plugin, .stoverride or .conf file.`
   String get modulePasteTip {
     return Intl.message(
       'Paste the text of a .sgmodule, .module, .plugin, .stoverride or .conf file.',
@@ -8815,6 +8802,7 @@ class AppLocalizations {
     );
   }
 
+  /// `The module is empty.`
   String get moduleEmpty {
     return Intl.message(
       'The module is empty.',
@@ -8824,6 +8812,7 @@ class AppLocalizations {
     );
   }
 
+  /// `This module has no source URL to update from.`
   String get moduleNoUrl {
     return Intl.message(
       'This module has no source URL to update from.',
@@ -8833,6 +8822,7 @@ class AppLocalizations {
     );
   }
 
+  /// `Needs HTTPS decryption, which the core does not do.`
   String get moduleSkipHttps {
     return Intl.message(
       'Needs HTTPS decryption, which the core does not do.',
@@ -8842,6 +8832,7 @@ class AppLocalizations {
     );
   }
 
+  /// `Needs a script runtime, which the core does not have.`
   String get moduleSkipScript {
     return Intl.message(
       'Needs a script runtime, which the core does not have.',
@@ -8851,6 +8842,7 @@ class AppLocalizations {
     );
   }
 
+  /// `The core has no such rule type.`
   String get moduleSkipRule {
     return Intl.message(
       'The core has no such rule type.',
@@ -8860,6 +8852,7 @@ class AppLocalizations {
     );
   }
 
+  /// `A remote rule set needs its own download.`
   String get moduleSkipRuleSet {
     return Intl.message(
       'A remote rule set needs its own download.',
@@ -8869,6 +8862,7 @@ class AppLocalizations {
     );
   }
 
+  /// `Points at PROXY, and no policy is set.`
   String get moduleSkipPolicy {
     return Intl.message(
       'Points at PROXY, and no policy is set.',
@@ -8878,6 +8872,7 @@ class AppLocalizations {
     );
   }
 
+  /// `The core has no matching field.`
   String get moduleSkipGeneral {
     return Intl.message(
       'The core has no matching field.',
@@ -8887,6 +8882,17 @@ class AppLocalizations {
     );
   }
 
+  /// `These entries are not applied yet; the core has no matching switch.`
+  String get moduleGeneralTip {
+    return Intl.message(
+      'These entries are not applied yet; the core has no matching switch.',
+      name: 'moduleGeneralTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updated {label}`
   String moduleUpdated(Object label) {
     return Intl.message(
       'Updated $label',
@@ -8896,20 +8902,13 @@ class AppLocalizations {
     );
   }
 
+  /// `{count} rules, showing the first part only`
   String moduleRulesTruncated(Object count) {
     return Intl.message(
       '$count rules, showing the first part only',
       name: 'moduleRulesTruncated',
       desc: '',
       args: [count],
-    );
-  }
-  String get moduleGeneralTip {
-    return Intl.message(
-      'These entries are not applied yet; the core has no matching switch.',
-      name: 'moduleGeneralTip',
-      desc: '',
-      args: [],
     );
   }
 }
