@@ -62,11 +62,14 @@ concurrency:
   group: sync-and-release
   cancel-in-progress: false
 
-# Most jobs here only build and upload artifacts, so the default is read. The
-# sync job force-pushes branches and tags (declared below), and the reused
-# publish-release / preview workflows declare their own write access.
+# The sync force-pushes our branches and tags, and the preview / publish
+# workflows this one calls create releases and read back earlier runs. A called
+# workflow cannot ask for more than its caller holds, so both scopes have to be
+# granted here as well -- `contents: read` alone makes every dispatch fail at
+# startup.
 permissions:
-  contents: read
+  contents: write
+  actions: read
 
 env:
   UPSTREAM_REPO: chen08209/FlClash
