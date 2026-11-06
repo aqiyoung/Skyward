@@ -140,11 +140,11 @@ class _ModulesViewState extends ConsumerState<ModulesView> {
 
   Widget _buildItem(List<Module> modules, int index) {
     final module = modules[index];
-    final parsed = parseModule(module.content, fallbackName: module.label);
+    // No parse per row: a module can be thousands of lines, and this runs on
+    // every scroll tick. The detail page is where the text is read.
     final subtitle = [
       if (module.author?.isNotEmpty == true) module.author!,
       if (module.version?.isNotEmpty == true) 'v${module.version}',
-      parsed.format.label,
     ].join(' · ');
     return SortableItem(
       key: ValueKey(module.id),
@@ -160,12 +160,14 @@ class _ModulesViewState extends ConsumerState<ModulesView> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            subtitle: Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.listCaptionStyle,
-            ),
+            subtitle: subtitle.isEmpty
+                ? null
+                : Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.listCaptionStyle,
+                  ),
             trailing: CommonSwitch(
               value: module.enabled,
               onChanged: (value) {
@@ -247,12 +249,31 @@ class _ModulesViewState extends ConsumerState<ModulesView> {
 /// The page reads the stored text again rather than a parsed snapshot: what a
 /// module means is a property of its text, and an update can change both the
 /// rules and the sections that get skipped.
-class ModuleDetailView extends ConsumerWidget {
-  static const _maxRulesShown = 300;
-
+class ModuleDetailView extends ConsumerStatefulWidget {
   final int moduleId;
 
   const ModuleDetailView(this.moduleId, {super.key});
+
+  @override
+  ConsumerState<ModuleDetailView> createState() => _ModuleDetailViewState();
+}
+
+class _ModuleDetailViewState extends ConsumerState<ModuleDetailView> {
+  static const _maxRulesShown = 300;
+
+  int? _parsedHash;
+  ParsedModule? _parsed;
+
+  /// Reading the file on every frame would show up on a long module, so the
+  /// result is kept until the text changes.
+  ParsedModule _parse(Module module) {
+    final hash = module.content.hashCode;
+    if (_parsed == null || _parsedHash != hash) {
+      _parsedHash = hash;
+      _parsed = parseModule(module.content, fallbackName: module.label);
+    }
+    return _parsed!;
+  }
 
   String _skipReason(ModuleSkipReason reason, AppLocalizations l10n) {
     return switch (reason) {
@@ -266,12 +287,13 @@ class ModuleDetailView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final module = ref.watch(
       importedModulesProvider.select(
-        (state) =>
-            state.value?.where((item) => item.id == moduleId).firstOrNull,
+        (state) => state.value
+            ?.where((item) => item.id == widget.moduleId)
+            .firstOrNull,
       ),
     );
     if (module == null) {
@@ -280,7 +302,7 @@ class ModuleDetailView extends ConsumerWidget {
         body: const SizedBox.shrink(),
       );
     }
-    final parsed = parseModule(module.content, fallbackName: module.label);
+    final parsed = _parse(module);
     final shownRules = parsed.rules.take(_maxRulesShown).toList();
     return CommonScaffold(
       title: module.label,
