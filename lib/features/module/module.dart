@@ -164,7 +164,6 @@ const _rewriteSections = {
   'body rewrite',
   'map local',
   'map remote',
-  'host',
   'rewrite_local',
   'rewrite_remote',
   'mitm',
@@ -178,7 +177,6 @@ const _scriptSections = {
   'task_local',
   'task_remote',
   'panel',
-  'plugin',
 };
 
 /// Targets that all mean "throw it away" in mihomo.
@@ -300,7 +298,11 @@ ParsedModule parseModule(String content, {String fallbackName = 'Module'}) {
     sections[current]!.add(line);
   }
 
-  final metadata = _readMetadata(sections['metadata'] ?? const []);
+  // Loon keeps the same fields in `[Plugin]` that QX keeps in `[metadata]`.
+  final metadata = _readMetadata([
+    ...?sections['metadata'],
+    ...?sections['plugin'],
+  ]);
   final format = _detectFormat(sections, header);
   final rules = <ModuleRule>[];
   final skipped = <ModuleSkip>[];
@@ -345,6 +347,23 @@ ParsedModule parseModule(String content, {String fallbackName = 'Module'}) {
             section: section,
             content: line,
             reason: ModuleSkipReason.scriptRuntime,
+          ),
+        );
+      }
+      continue;
+    }
+    if (section == 'plugin') {
+      continue;
+    }
+    if (section == 'host') {
+      // A host-to-address map is a DNS answer, and the core has no field for
+      // one in a profile.
+      for (final line in lines) {
+        skipped.add(
+          ModuleSkip(
+            section: section,
+            content: line,
+            reason: ModuleSkipReason.unsupportedGeneral,
           ),
         );
       }
