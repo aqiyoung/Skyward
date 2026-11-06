@@ -123,6 +123,49 @@ enum LogLevel { debug, info, warning, error, silent }
 
 enum RecordTone { neutral, warning, error }
 
+enum RecordFacetKind {
+  network,
+  rule,
+  mitm,
+  app,
+  proxy,
+  level,
+  type,
+  initiator,
+  cache,
+  rcode,
+}
+
+enum RecordGrouping { app, host, rule, exit }
+
+extension RecordFacetKindExt on RecordFacetKind {
+  String get title {
+    return switch (this) {
+      RecordFacetKind.network => '网络',
+      RecordFacetKind.rule => '规则',
+      RecordFacetKind.mitm => '中间人',
+      RecordFacetKind.app => '应用',
+      RecordFacetKind.proxy => '代理',
+      RecordFacetKind.level => '级别',
+      RecordFacetKind.type => '类型',
+      RecordFacetKind.initiator => '发起者',
+      RecordFacetKind.cache => '缓存',
+      RecordFacetKind.rcode => '响应码',
+    };
+  }
+}
+
+extension RecordGroupingExt on RecordGrouping {
+  String get label {
+    return switch (this) {
+      RecordGrouping.app => '应用',
+      RecordGrouping.host => '主机',
+      RecordGrouping.rule => '规则',
+      RecordGrouping.exit => '出口',
+    };
+  }
+}
+
 extension RecordToneExt on RecordTone {
   Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -864,6 +907,22 @@ enum RuleProviderBehavior { domain, ipcidr, classical }
 enum RuleProviderFormat { yaml, text, mrs }
 
 enum RestoreStrategy { compatible, override }
+
+/// What happens to WebRTC's address discovery before a profile's own rules see
+/// it. Discovery asks a STUN server what the machine's public address is, over
+/// UDP that a proxy built for TCP does not always carry.
+enum WebrtcGuard {
+  /// Drop the discovery traffic. No address leaves, and calls fall back to a
+  /// relay or fail where the peer offers none.
+  block,
+
+  /// Send discovery through the proxy, so the peer learns the exit address
+  /// rather than this machine's own. Needs a node that carries UDP.
+  proxy,
+
+  /// Leave the traffic to the profile's rules, like any other connection.
+  off,
+}
 
 enum TabAnimation { slide, fade }
 

@@ -78,11 +78,16 @@ final class _OptionsAction<T> extends _ListItemAction {
   final String Function(T value) textBuilder;
   final ValueChanged<T> onChanged;
 
+  /// Rows below a section break, for what the value alone cannot reach —
+  /// the page that holds the rest of the settings it belongs to.
+  final List<CommonPopupMenuItem> extraItems;
+
   const _OptionsAction({
     required this.options,
     required this.textBuilder,
     required this.value,
     required this.onChanged,
+    this.extraItems = const [],
   });
 }
 
@@ -185,6 +190,7 @@ class ListItem<T> extends StatelessWidget {
     required T value,
     required String Function(T value) textBuilder,
     required ValueChanged<T> onChanged,
+    List<CommonPopupMenuItem> extraItems = const [],
     this.horizontalTitleGap,
     this.color,
     this.minTileHeight,
@@ -195,6 +201,7 @@ class ListItem<T> extends StatelessWidget {
          value: value,
          textBuilder: textBuilder,
          onChanged: onChanged,
+         extraItems: extraItems,
        ),
        trailing = null,
        onTap = null;
@@ -386,6 +393,7 @@ class ListItem<T> extends StatelessWidget {
                     checked: option == optionsDelegate.value,
                     onPressed: () => optionsDelegate.onChanged(option),
                   ),
+                ...optionsDelegate.extraItems,
               ],
             ),
           ),

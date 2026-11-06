@@ -362,6 +362,46 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
   }
 }
 
+/// The reason each failed test gave, kept beside the numbers rather than in
+/// them: the list builds from the numbers and sorts on them, and a row that
+/// only shows "failed" must not rebuild because the core explained itself.
+@Riverpod(keepAlive: true)
+class DelayFailures extends _$DelayFailures with AutoDisposeNotifierMixin {
+  @override
+  DelayFailureMap build() {
+    return const {};
+  }
+
+  void setAll(Iterable<Delay> delays) {
+    var next = const <String, Map<String, String>>{};
+    var changed = false;
+    for (final delay in delays) {
+      final message = delay.message;
+      final current = state[delay.url]?[delay.name];
+      if (message == null ? current == null : current == message) {
+        continue;
+      }
+      if (!changed) {
+        next = {
+          for (final entry in state.entries) entry.key: {...entry.value},
+        };
+        changed = true;
+      }
+      if (message == null) {
+        next[delay.url]?.remove(delay.name);
+        if (next[delay.url]?.isEmpty ?? false) {
+          next.remove(delay.url);
+        }
+      } else {
+        (next[delay.url] ??= {})[delay.name] = message;
+      }
+    }
+    if (changed) {
+      state = next;
+    }
+  }
+}
+
 @Riverpod(keepAlive: true)
 class PendingDelayTests extends _$PendingDelayTests
     with AutoDisposeNotifierMixin {

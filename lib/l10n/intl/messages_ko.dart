@@ -212,9 +212,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage("선택한 앱만 VPN을 거칩니다"),
     "about": MessageLookupByLibrary.simpleMessage("정보"),
     "accessControl": MessageLookupByLibrary.simpleMessage("접근 제어"),
+    "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
+      "선택한 앱만 VPN을 거칩니다",
+    ),
     "accessControlDesc": MessageLookupByLibrary.simpleMessage(
       "접근 제어는 프록시를 사용할 앱을 선택합니다.",
     ),
@@ -237,6 +239,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "actionTun": MessageLookupByLibrary.simpleMessage("TUN"),
     "actionUpdateProfiles": MessageLookupByLibrary.simpleMessage("프로필 업데이트"),
     "actionView": MessageLookupByLibrary.simpleMessage("표시/숨기기"),
+    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
+      "일반적인 광고·추적 도메인을 차단합니다. 규칙은 구독 규칙보다 먼저 적용됩니다.",
+    ),
     "add": MessageLookupByLibrary.simpleMessage("추가"),
     "addCustomProxy": MessageLookupByLibrary.simpleMessage("프록시 추가"),
     "addFilters": MessageLookupByLibrary.simpleMessage("필터 추가"),
@@ -445,6 +450,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "currentOutboundDesc": MessageLookupByLibrary.simpleMessage(
       "시작 버튼이 있어 제거할 수 없습니다",
     ),
+    "currentVersion": MessageLookupByLibrary.simpleMessage("현재 버전"),
     "custom": MessageLookupByLibrary.simpleMessage("사용자 지정"),
     "customColor": MessageLookupByLibrary.simpleMessage("사용자 지정 색상"),
     "customImportDroppedSubRules": m8,
@@ -609,6 +615,41 @@ class MessageLookup extends MessageLookupByLibrary {
       "추가하지 않으면 53번 포트로 가는 모든 DNS 쿼리를 하이재킹합니다(any:53).",
     ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS 하이재킹"),
+    "dnsLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "실패한 항목은 \"고급 설정 → 네트워크\"에서 VPN과 DNS 하이재킹을 켜고, 시스템 설정의 비공개 DNS를 끄세요. DNS 덮어쓰기에서 평문 상위를 DoH로 바꾸세요.",
+    ),
+    "dnsLeakCheck": MessageLookupByLibrary.simpleMessage("DNS 누출 점검"),
+    "dnsLeakDirect": MessageLookupByLibrary.simpleMessage("53번 포트 직접 통과"),
+    "dnsLeakDirectBad": MessageLookupByLibrary.simpleMessage(
+      "223.5.5.5에 직접 질의해 실제 주소를 받았으므로 평문 DNS가 그대로 나갑니다",
+    ),
+    "dnsLeakEncrypted": MessageLookupByLibrary.simpleMessage("암호화된 해석"),
+    "dnsLeakEncryptedBad": MessageLookupByLibrary.simpleMessage(
+      "상위가 평문 DNS라 질의 내용이 그대로 나갑니다",
+    ),
+    "dnsLeakExternal": MessageLookupByLibrary.simpleMessage("브라우저에서 확인"),
+    "dnsLeakFail": MessageLookupByLibrary.simpleMessage("실패"),
+    "dnsLeakFakeIp": MessageLookupByLibrary.simpleMessage("가짜 주소"),
+    "dnsLeakFakeIpBad": MessageLookupByLibrary.simpleMessage(
+      "응답이 198.18.x.x가 아니어서 이 질의는 Fake-IP가 처리하지 않았습니다",
+    ),
+    "dnsLeakHijack": MessageLookupByLibrary.simpleMessage("DNS 하이재킹"),
+    "dnsLeakHijackBad": MessageLookupByLibrary.simpleMessage(
+      "any:53이 없어 다른 리졸버로 가는 질의는 가로채지 않습니다",
+    ),
+    "dnsLeakIpv6": MessageLookupByLibrary.simpleMessage("IPv6"),
+    "dnsLeakIpv6Bad": MessageLookupByLibrary.simpleMessage(
+      "전역 IPv6 주소가 있어 v6 트래픽이 IPv4 전용 차단을 우회할 수 있습니다",
+    ),
+    "dnsLeakPass": MessageLookupByLibrary.simpleMessage("통과"),
+    "dnsLeakRerun": MessageLookupByLibrary.simpleMessage("다시 점검"),
+    "dnsLeakRunning": MessageLookupByLibrary.simpleMessage("점검 중"),
+    "dnsLeakTunnel": MessageLookupByLibrary.simpleMessage("트래픽 가로채기"),
+    "dnsLeakTunnelBad": MessageLookupByLibrary.simpleMessage(
+      "코어가 멈춰 있거나 VPN이 꺼져 있어 앱이 직접 이름을 해석합니다",
+    ),
+    "dnsLeakUnknown": MessageLookupByLibrary.simpleMessage("판단 불가"),
+    "dnsLeakWarn": MessageLookupByLibrary.simpleMessage("주의"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 모드"),
     "dnsOverride": MessageLookupByLibrary.simpleMessage("DNS 덮어쓰기"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
@@ -1022,13 +1063,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkConnectionError": MessageLookupByLibrary.simpleMessage(
       "서버에 연결할 수 없습니다. 네트워크 연결이나 프록시 설정을 확인하세요",
     ),
+    "networkControl": MessageLookupByLibrary.simpleMessage("네트워크 제어"),
     "networkHostLookupError": MessageLookupByLibrary.simpleMessage(
       "서버 주소를 확인할 수 없습니다. URL이 올바른지, DNS가 정상인지 확인하세요",
     ),
-    "networkControl": MessageLookupByLibrary.simpleMessage("네트워크 제어"),
     "networkName": MessageLookupByLibrary.simpleMessage("네트워크 이름"),
-    "networkOverview": MessageLookupByLibrary.simpleMessage("네트워크 개요"),
     "networkNotFoundError": m54,
+    "networkOverview": MessageLookupByLibrary.simpleMessage("네트워크 개요"),
     "networkRateLimitedError": MessageLookupByLibrary.simpleMessage(
       "요청이 너무 많습니다(HTTP 429). 잠시 후 다시 시도하세요",
     ),
@@ -1130,6 +1171,43 @@ class MessageLookup extends MessageLookupByLibrary {
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("키 조합을 누르세요"),
     "preview": MessageLookupByLibrary.simpleMessage("미리보기"),
     "previousMatch": MessageLookupByLibrary.simpleMessage("이전 결과"),
+    "privacyPolicy": MessageLookupByLibrary.simpleMessage("Privacy Policy"),
+    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
+      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
+    ),
+    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
+      "Contact",
+    ),
+    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
+      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
+    ),
+    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Collection",
+    ),
+    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
+      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
+    ),
+    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Retention",
+    ),
+    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
+      "Your configuration and subscription data is stored in the app\'s private storage on your device, protected by the operating system\'s sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
+    ),
+    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Security",
+    ),
+    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
+      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
+    ),
+    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
+      "Data Sharing",
+    ),
+    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
+      "All data stays on your device. We use it solely to provide the app\'s functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
+    ),
+    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
+      "How We Use Data",
+    ),
     "privateKey": MessageLookupByLibrary.simpleMessage("개인 키"),
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage("개인 키 암호"),
     "process": MessageLookupByLibrary.simpleMessage("프로세스"),
@@ -1252,8 +1330,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeBoardDesc": MessageLookupByLibrary.simpleMessage(
       "이 기기에서 목적지까지 가는 경로",
     ),
-    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("라우팅 제외 주소"),
     "routeCarrier": MessageLookupByLibrary.simpleMessage("통신사"),
+    "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("라우팅 제외 주소"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("기기"),
     "routeTo": MessageLookupByLibrary.simpleMessage("목적지"),
     "routeVia": MessageLookupByLibrary.simpleMessage("노드"),
@@ -1355,6 +1433,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleListInvalid": MessageLookupByLibrary.simpleMessage(
       "규칙은 항목마다 규칙 하나인 YAML 목록이어야 합니다. 예: - DOMAIN,example.com,DIRECT",
     ),
+    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage("Block Ads"),
     "rulePresetBittorrentDirect": MessageLookupByLibrary.simpleMessage(
       "BitTorrent 직접 연결",
     ),
@@ -1567,6 +1646,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "앱의 글자가 이렇게 표시됩니다",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("테마"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "preferences": MessageLookupByLibrary.simpleMessage("환경 설정"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("테마 세부 설정"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("색상"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("내비게이션 바"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("모션"),
+    "textSection": MessageLookupByLibrary.simpleMessage("텍스트"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
+
     "themeColor": MessageLookupByLibrary.simpleMessage("테마 색상"),
     "themeMode": MessageLookupByLibrary.simpleMessage("테마 모드"),
     "tight": MessageLookupByLibrary.simpleMessage("좁게"),
@@ -1590,12 +1679,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("전송"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
-    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
-    "tunGsoDesc": MessageLookupByLibrary.simpleMessage("네트워크 속도 향상. 변경 후 VPN 재시작 필요."),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN 권한을 얻지 못해 끄기로 되돌렸습니다.",
     ),
     "tunDesc": MessageLookupByLibrary.simpleMessage("TUN은 관리자 모드에서만 작동합니다."),
+    "tunGso": MessageLookupByLibrary.simpleMessage("TUN GSO"),
+    "tunGsoDesc": MessageLookupByLibrary.simpleMessage(
+      "네트워크 속도 향상. 변경 후 VPN 재시작 필요.",
+    ),
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "여기에 추가한 항목은 모든 프로필의 TUN 설정을 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지합니다. 사용자 지정 프로필이 직접 추가한 항목이 우선합니다.",
     ),
@@ -1630,13 +1721,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "username": MessageLookupByLibrary.simpleMessage("사용자 이름"),
     "value": MessageLookupByLibrary.simpleMessage("값"),
     "version": MessageLookupByLibrary.simpleMessage("버전"),
-    "currentVersion": MessageLookupByLibrary.simpleMessage("현재 버전"),
     "versionUpdate": MessageLookupByLibrary.simpleMessage("버전 업데이트"),
     "versionUpdateChecking": MessageLookupByLibrary.simpleMessage("확인 중…"),
-    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("최신 버전"),
-    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("새 버전 있음"),
     "versionUpdateDownloading": MessageLookupByLibrary.simpleMessage("다운로드 중…"),
     "versionUpdateFailed": MessageLookupByLibrary.simpleMessage("확인 실패"),
+    "versionUpdateFound": MessageLookupByLibrary.simpleMessage("새 버전 있음"),
+    "versionUpdateLatest": MessageLookupByLibrary.simpleMessage("최신 버전"),
     "view": MessageLookupByLibrary.simpleMessage("보기"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("선명"),
@@ -1647,6 +1737,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "VPN은 VpnService를 통해 모든 시스템 트래픽을 자동으로 라우팅합니다.",
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV 구성"),
+    "webrtcGuard": MessageLookupByLibrary.simpleMessage("WebRTC"),
+    "webrtcGuardBlock": MessageLookupByLibrary.simpleMessage("차단"),
+    "webrtcGuardDesc": MessageLookupByLibrary.simpleMessage(
+      "웹 페이지와 통화는 STUN 서버에 이 기기의 공인 주소를 묻습니다. 차단이 가장 안전하지만 P2P 연결은 중계로 떨어지거나 실패합니다. 프록시 경유는 노드의 출구 주소를 넘기며 UDP를 지원하는 노드가 필요합니다. 그대로 두기는 설정의 규칙에 맡깁니다.",
+    ),
+    "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("그대로 두기"),
+    "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("프록시 경유"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
@@ -1656,50 +1753,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
-    "privacyPolicy": MessageLookupByLibrary.simpleMessage(
-      "Privacy Policy",
-    ),
-    "privacyPolicyDataCollectionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Collection",
-    ),
-    "privacyPolicyDataCollectionContent": MessageLookupByLibrary.simpleMessage(
-      "Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).",
-    ),
-    "privacyPolicyDataUseTitle": MessageLookupByLibrary.simpleMessage(
-      "How We Use Data",
-    ),
-    "privacyPolicyDataUseContent": MessageLookupByLibrary.simpleMessage(
-      "All data stays on your device. We use it solely to provide the app's functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.",
-    ),
-    "privacyPolicyDataSharingTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Sharing",
-    ),
-    "privacyPolicyDataSharingContent": MessageLookupByLibrary.simpleMessage(
-      "We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.",
-    ),
-    "privacyPolicyDataSecurityTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Security",
-    ),
-    "privacyPolicyDataSecurityContent": MessageLookupByLibrary.simpleMessage(
-      "Your configuration and subscription data is stored in the app's private storage on your device, protected by the operating system's sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.",
-    ),
-    "privacyPolicyDataRetentionTitle": MessageLookupByLibrary.simpleMessage(
-      "Data Retention",
-    ),
-    "privacyPolicyDataRetentionContent": MessageLookupByLibrary.simpleMessage(
-      "Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.",
-    ),
-    "privacyPolicyContactTitle": MessageLookupByLibrary.simpleMessage(
-      "Contact",
-    ),
-    "privacyPolicyContactContent": MessageLookupByLibrary.simpleMessage(
-      "If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.",
-    ),
-    "rulePresetAdBlock": MessageLookupByLibrary.simpleMessage(
-      "Block Ads",
-    ),
-    "adBlockDescription": MessageLookupByLibrary.simpleMessage(
-      "일반적인 광고·추적 도메인을 차단합니다. 규칙은 구독 규칙보다 먼저 적용됩니다.",
-    ),
   };
 }

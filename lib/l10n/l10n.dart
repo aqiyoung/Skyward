@@ -95,9 +95,9 @@ class AppLocalizations {
     return Intl.message('Profiles', name: 'profiles', desc: '', args: []);
   }
 
-  /// `Tools`
+  /// `More`
   String get tools {
-    return Intl.message('Tools', name: 'tools', desc: '', args: []);
+    return Intl.message('More', name: 'tools', desc: '', args: []);
   }
 
   /// `Logs`
@@ -420,6 +420,66 @@ class AppLocalizations {
     return Intl.message('Theme', name: 'theme', desc: '', args: []);
   }
 
+  /// `Appearance`
+  String get appearance {
+    return Intl.message('Appearance', name: 'appearance', desc: '', args: []);
+  }
+
+  /// `Preferences`
+  String get preferences {
+    return Intl.message(
+      'Preferences',
+      name: 'preferences',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `More theme settings`
+  String get moreThemeSettings {
+    return Intl.message(
+      'More theme settings',
+      name: 'moreThemeSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Colors`
+  String get colorsSection {
+    return Intl.message('Colors', name: 'colorsSection', desc: '', args: []);
+  }
+
+  /// `Navigation`
+  String get navigationSection {
+    return Intl.message(
+      'Navigation',
+      name: 'navigationSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Motion`
+  String get motionSection {
+    return Intl.message('Motion', name: 'motionSection', desc: '', args: []);
+  }
+
+  /// `Text`
+  String get textSection {
+    return Intl.message('Text', name: 'textSection', desc: '', args: []);
+  }
+
+  /// `Data`
+  String get data {
+    return Intl.message('Data', name: 'data', desc: '', args: []);
+  }
+
+  /// `Configuration`
+  String get configuration {
+    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
+  }
+
   /// `Extend`
   String get extend {
     return Intl.message('Extend', name: 'extend', desc: '', args: []);
@@ -450,16 +510,15 @@ class AppLocalizations {
     return Intl.message('TUN GSO', name: 'tunGso', desc: '', args: []);
   }
 
-  /// `Generic Segmentation Offload: higher throughput, needs VPN restart`
+  /// `Boosts network speed. Takes effect after restarting VPN.`
   String get tunGsoDesc {
     return Intl.message(
-      'Generic Segmentation Offload: higher throughput, needs VPN restart',
+      'Boosts network speed. Takes effect after restarting VPN.',
       name: 'tunGsoDesc',
       desc: '',
       args: [],
     );
   }
-
 
   /// `TUN works only in administrator mode.`
   String get tunDesc {
@@ -8105,27 +8164,12 @@ class AppLocalizations {
     );
   }
 
-  /// `Memory the app and the core use`
-  String get memoryInfoDesc {
-    return Intl.message(
-      'Memory the app and the core use',
-      name: 'memoryInfoDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Route`
   String get routeBoard {
-    return Intl.message(
-      'Route',
-      name: 'routeBoard',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Route', name: 'routeBoard', desc: '', args: []);
   }
 
-  /// `The hops this device\'s traffic takes`
+  /// `The hops this device's traffic takes`
   String get routeBoardDesc {
     return Intl.message(
       'The hops this device\'s traffic takes',
@@ -8137,39 +8181,29 @@ class AppLocalizations {
 
   /// `Carrier`
   String get routeCarrier {
-    return Intl.message(
-      'Carrier',
-      name: 'routeCarrier',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Carrier', name: 'routeCarrier', desc: '', args: []);
   }
 
   /// `From`
   String get routeFrom {
-    return Intl.message(
-      'From',
-      name: 'routeFrom',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('From', name: 'routeFrom', desc: '', args: []);
   }
 
   /// `Via`
   String get routeVia {
-    return Intl.message(
-      'Via',
-      name: 'routeVia',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Via', name: 'routeVia', desc: '', args: []);
   }
 
   /// `To`
   String get routeTo {
+    return Intl.message('To', name: 'routeTo', desc: '', args: []);
+  }
+
+  /// `Memory the app and the core use`
+  String get memoryInfoDesc {
     return Intl.message(
-      'To',
-      name: 'routeTo',
+      'Memory the app and the core use',
+      name: 'memoryInfoDesc',
       desc: '',
       args: [],
     );
@@ -8204,8 +8238,7 @@ class AppLocalizations {
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
       count,
-      one:
-          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      one: '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
       other:
           '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
       name: 'customImportDroppedSubRules',
@@ -8358,6 +8391,7 @@ class AppLocalizations {
       args: [],
     );
   }
+
   /// `Privacy Policy`
   String get privacyPolicy {
     return Intl.message(
@@ -8378,7 +8412,7 @@ class AppLocalizations {
     );
   }
 
-  /// `Skyward does not collect or upload your subscription URLs...`
+  /// `Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).`
   String get privacyPolicyDataCollectionContent {
     return Intl.message(
       'Skyward does not collect or upload your subscription URLs, node information, configuration content, visited websites, connection records, traffic content, or logs. All such data is stored only on your device and is never transmitted to the developer.\n\nThe app only accesses the network when you use features that require it, such as updating subscriptions (accessing the subscription URL you provided) or checking for updates (accessing GitHub).',
@@ -8398,7 +8432,7 @@ class AppLocalizations {
     );
   }
 
-  /// `All data stays on your device...`
+  /// `All data stays on your device. We use it solely to provide the app's functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.`
   String get privacyPolicyDataUseContent {
     return Intl.message(
       'All data stays on your device. We use it solely to provide the app\'s functionality: managing your proxy configurations, establishing VPN connections, and displaying network statistics. We do not use your data for advertising, analytics, or any other purpose.',
@@ -8418,7 +8452,7 @@ class AppLocalizations {
     );
   }
 
-  /// `We do not share, sell, or disclose your data...`
+  /// `We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.`
   String get privacyPolicyDataSharingContent {
     return Intl.message(
       'We do not share, sell, or disclose your data to any third party. There are no analytics SDKs, crash reporting services, or advertising frameworks integrated into the app.',
@@ -8438,7 +8472,7 @@ class AppLocalizations {
     );
   }
 
-  /// `Your configuration and subscription data...`
+  /// `Your configuration and subscription data is stored in the app's private storage on your device, protected by the operating system's sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.`
   String get privacyPolicyDataSecurityContent {
     return Intl.message(
       'Your configuration and subscription data is stored in the app\'s private storage on your device, protected by the operating system\'s sandbox. Sensitive items such as the controller secret are stored in the system keystore where available.',
@@ -8458,7 +8492,7 @@ class AppLocalizations {
     );
   }
 
-  /// `Data remains on your device...`
+  /// `Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.`
   String get privacyPolicyDataRetentionContent {
     return Intl.message(
       'Data remains on your device until you delete it. Uninstalling the app removes all app data. We retain nothing on any server because we operate no servers that receive your data.',
@@ -8478,51 +8512,11 @@ class AppLocalizations {
     );
   }
 
-  /// `If you have questions...`
+  /// `If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.`
   String get privacyPolicyContactContent {
     return Intl.message(
       'If you have questions about this privacy policy, please open an issue at https://github.com/aqiyoung/Skyward.',
       name: 'privacyPolicyContactContent',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Data Security`
-  String get privacyPolicySecurityTitle {
-    return Intl.message(
-      'Data Security',
-      name: 'privacyPolicySecurityTitle',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Data Security content`
-  String get privacyPolicySecurityContent {
-    return Intl.message(
-      'We implement appropriate security measures to protect your data.',
-      name: 'privacyPolicySecurityContent',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `User Rights`
-  String get privacyPolicyUserRightsTitle {
-    return Intl.message(
-      'User Rights',
-      name: 'privacyPolicyUserRightsTitle',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `User Rights content`
-  String get privacyPolicyUserRightsContent {
-    return Intl.message(
-      'You have the right to access, correct, or delete your personal data.',
-      name: 'privacyPolicyUserRightsContent',
       desc: '',
       args: [],
     );
@@ -8548,6 +8542,225 @@ class AppLocalizations {
     );
   }
 
+  /// `WebRTC`
+  String get webrtcGuard {
+    return Intl.message('WebRTC', name: 'webrtcGuard', desc: '', args: []);
+  }
+
+  /// `Block`
+  String get webrtcGuardBlock {
+    return Intl.message('Block', name: 'webrtcGuardBlock', desc: '', args: []);
+  }
+
+  /// `Through proxy`
+  String get webrtcGuardProxy {
+    return Intl.message(
+      'Through proxy',
+      name: 'webrtcGuardProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leave alone`
+  String get webrtcGuardOff {
+    return Intl.message(
+      'Leave alone',
+      name: 'webrtcGuardOff',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pages and calls ask a STUN server for this machine's public address. Blocking is safest, but peer-to-peer traffic falls back to a relay or fails. Through proxy hands out the node's exit address instead, which needs a node that carries UDP. Leave alone passes discovery to the profile's rules.`
+  String get webrtcGuardDesc {
+    return Intl.message(
+      'Pages and calls ask a STUN server for this machine\'s public address. Blocking is safest, but peer-to-peer traffic falls back to a relay or fails. Through proxy hands out the node\'s exit address instead, which needs a node that carries UDP. Leave alone passes discovery to the profile\'s rules.',
+      name: 'webrtcGuardDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS leak check`
+  String get dnsLeakCheck {
+    return Intl.message(
+      'DNS leak check',
+      name: 'dnsLeakCheck',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check again`
+  String get dnsLeakRerun {
+    return Intl.message(
+      'Check again',
+      name: 'dnsLeakRerun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Checking`
+  String get dnsLeakRunning {
+    return Intl.message('Checking', name: 'dnsLeakRunning', desc: '', args: []);
+  }
+
+  /// `Pass`
+  String get dnsLeakPass {
+    return Intl.message('Pass', name: 'dnsLeakPass', desc: '', args: []);
+  }
+
+  /// `Warn`
+  String get dnsLeakWarn {
+    return Intl.message('Warn', name: 'dnsLeakWarn', desc: '', args: []);
+  }
+
+  /// `Fail`
+  String get dnsLeakFail {
+    return Intl.message('Fail', name: 'dnsLeakFail', desc: '', args: []);
+  }
+
+  /// `Unknown`
+  String get dnsLeakUnknown {
+    return Intl.message('Unknown', name: 'dnsLeakUnknown', desc: '', args: []);
+  }
+
+  /// `Traffic capture`
+  String get dnsLeakTunnel {
+    return Intl.message(
+      'Traffic capture',
+      name: 'dnsLeakTunnel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The core is stopped or the VPN is off, so apps resolve names themselves`
+  String get dnsLeakTunnelBad {
+    return Intl.message(
+      'The core is stopped or the VPN is off, so apps resolve names themselves',
+      name: 'dnsLeakTunnelBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS hijack`
+  String get dnsLeakHijack {
+    return Intl.message(
+      'DNS hijack',
+      name: 'dnsLeakHijack',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `any:53 is not set, so queries to other resolvers are not captured`
+  String get dnsLeakHijackBad {
+    return Intl.message(
+      'any:53 is not set, so queries to other resolvers are not captured',
+      name: 'dnsLeakHijackBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encrypted resolution`
+  String get dnsLeakEncrypted {
+    return Intl.message(
+      'Encrypted resolution',
+      name: 'dnsLeakEncrypted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The upstream is plain DNS, so every query is readable on the way out`
+  String get dnsLeakEncryptedBad {
+    return Intl.message(
+      'The upstream is plain DNS, so every query is readable on the way out',
+      name: 'dnsLeakEncryptedBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fake address`
+  String get dnsLeakFakeIp {
+    return Intl.message(
+      'Fake address',
+      name: 'dnsLeakFakeIp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The answer is not 198.18.x.x, so fake-IP did not answer this query`
+  String get dnsLeakFakeIpBad {
+    return Intl.message(
+      'The answer is not 198.18.x.x, so fake-IP did not answer this query',
+      name: 'dnsLeakFakeIpBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Port 53 leak`
+  String get dnsLeakDirect {
+    return Intl.message(
+      'Port 53 leak',
+      name: 'dnsLeakDirect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A direct query to 223.5.5.5 returned a real address, so plain DNS still leaves the device`
+  String get dnsLeakDirectBad {
+    return Intl.message(
+      'A direct query to 223.5.5.5 returned a real address, so plain DNS still leaves the device',
+      name: 'dnsLeakDirectBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `IPv6`
+  String get dnsLeakIpv6 {
+    return Intl.message('IPv6', name: 'dnsLeakIpv6', desc: '', args: []);
+  }
+
+  /// `This device holds a global IPv6 address, and v6 traffic can bypass an IPv4-only capture`
+  String get dnsLeakIpv6Bad {
+    return Intl.message(
+      'This device holds a global IPv6 address, and v6 traffic can bypass an IPv4-only capture',
+      name: 'dnsLeakIpv6Bad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `For anything that failed, open VPN and DNS hijacking in Advanced > Network, turn off Private DNS in the system settings, and replace plain upstreams with DoH under DNS overrides.`
+  String get dnsLeakAdvice {
+    return Intl.message(
+      'For anything that failed, open VPN and DNS hijacking in Advanced > Network, turn off Private DNS in the system settings, and replace plain upstreams with DoH under DNS overrides.',
+      name: 'dnsLeakAdvice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify in a browser`
+  String get dnsLeakExternal {
+    return Intl.message(
+      'Verify in a browser',
+      name: 'dnsLeakExternal',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -8580,5 +8793,4 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
     }
     return false;
   }
-
 }

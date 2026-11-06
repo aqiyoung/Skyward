@@ -10,6 +10,10 @@ part 'generated/app.freezed.dart';
 
 typedef DelayMap = Map<String, Map<String, int?>>;
 
+/// Why failed tests failed, in the core's words, keyed like [DelayMap]: test
+/// URL first, then proxy name.
+typedef DelayFailureMap = Map<String, Map<String, String>>;
+
 @Freezed(toStringOverride: false)
 abstract class AppState with _$AppState {
   const factory AppState({

@@ -26,6 +26,11 @@ class ListEditorPage<T, K> extends ConsumerStatefulWidget {
   final List<CommonPopupMenuItem> addMenuItems;
   final String emptyLabel;
   final double? itemExtent;
+
+  /// Shows how many rows the list holds beside the title, and how many of
+  /// them a search matched. Worth it where the list is long enough that its
+  /// size is not obvious from the screen, such as rules.
+  final bool showsCount;
   final K Function(T item) idOf;
   final void Function(Set<K> ids)? onDelete;
   final Iterable<String?> Function(T item)? searchFieldsOf;
@@ -42,6 +47,7 @@ class ListEditorPage<T, K> extends ConsumerStatefulWidget {
     this.addMenuItems = const [],
     required this.emptyLabel,
     this.itemExtent,
+    this.showsCount = false,
     required this.idOf,
     this.onDelete,
     this.searchFieldsOf,
@@ -172,6 +178,14 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
     final loadedItems = widget.itemsOf(ref);
     final items = _visibleItems(loadedItems ?? const []);
     final isSearching = widget.searchFieldsOf != null && _query.isNotEmpty;
+    final total = loadedItems?.length;
+    // A search narrows the list without changing what the page holds, so the
+    // figure reads as a part of the whole rather than a count of its own.
+    final detail = !widget.showsCount || total == null
+        ? null
+        : isSearching
+        ? '${items.length.grouped} / ${total.grouped}'
+        : total.grouped;
     final selected = _liveSelection(loadedItems);
     final visibleSelected = isSearching ? _liveSelection(items) : selected;
     final isSelecting = selected.isNotEmpty;
@@ -201,6 +215,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
           !isSelecting &&
           (loadedItems?.length ?? 0) > 1,
       title: widget.title,
+      titleDetail: detail,
       searchState: widget.searchFieldsOf != null
           ? AppBarSearchState(onSearch: _handleSearch)
           : null,

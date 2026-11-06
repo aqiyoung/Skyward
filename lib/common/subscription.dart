@@ -3,9 +3,6 @@
 
 import 'dart:convert';
 
-import 'package:skyward/enum/enum.dart';
-import 'package:skyward/common/print.dart';
-
 /// Proxy link schemes we recognize.
 const _proxySchemes = [
   'vless://',
@@ -19,15 +16,6 @@ const _proxySchemes = [
   'socks5://',
   'http://',
 ];
-
-/// Logs once per parse when a subscription node opts out of TLS verification.
-void _warnInsecure() {
-  commonPrint.log(
-    'subscription node sets insecure=1: it will skip TLS certificate '
-    'verification and is exposed to man-in-the-middle interception',
-    logLevel: LogLevel.warning,
-  );
-}
 
 /// Returns true if [text] looks like it contains proxy links (not YAML).
 bool looksLikeProxyLinks(String text) {
@@ -219,12 +207,39 @@ Map<String, dynamic>? _parseVless(String link) {
         };
       }
       final fp = params['fp'] ?? params['fingerprint'];
-      if (fp != null) proxy['fingerprint'] = fp;
-      if (params['alpn'] != null) {
-        proxy['alpn'] = params['alpn']!.split(',');
+      // mihomo names the TLS fingerprint `client-fingerprint`; a plain
+      // `fingerprint` key is ignored, which leaves a Reality node without the
+      // fingerprint its server expects.
+      if (fp != null) proxy['client-fingerprint'] = fp;
+      // An empty `alpn=` (the URL ends the query right before the `#name`)
+      // yields [''], which is invalid Clash YAML and makes the whole config
+      // fail validation -- and validateProfile() then strips proxy-groups.
+      final alpn = params['alpn'];
+      if (alpn != null && alpn.trim().isNotEmpty) {
+        proxy['alpn'] = alpn
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
       }
     }
     
+    // Keys a vless link carries that the server actually enforces. Dropping
+    // them is what makes an imported node look broken: `flow` is the XTLS
+    // vision mode a Reality server expects, and `encryption` has to travel with
+    // it.
+    final flow = params['flow'];
+    if (flow != null && flow.isNotEmpty) proxy['flow'] = flow;
+    final encryption = params['encryption'];
+    if (encryption != null && encryption.isNotEmpty) {
+      proxy['encryption'] = encryption;
+    }
+    final packetEncoding =
+        params['packetEncoding'] ?? params['packet-encoding'];
+    if (packetEncoding != null && packetEncoding.isNotEmpty) {
+      proxy['packet-encoding'] = packetEncoding;
+    }
+
     // Transport
     final type = params['type'] ?? 'tcp';
     if (type != 'tcp') {
@@ -408,7 +423,6 @@ Map<String, dynamic>? _parseHysteria2(String link) {
         ? Uri.decodeComponent(uri.fragment)
         : '${uri.host}:${uri.port}';
     final params = uri.queryParameters;
-    if (params['insecure'] == '1') _warnInsecure();
     return {
       'name': name,
       'type': 'hysteria2',
@@ -433,7 +447,6 @@ Map<String, dynamic>? _parseHysteria(String link) {
         ? Uri.decodeComponent(uri.fragment)
         : '${uri.host}:${uri.port}';
     final params = uri.queryParameters;
-    if (params['insecure'] == '1') _warnInsecure();
     return {
       'name': name,
       'type': 'hysteria',
@@ -470,7 +483,12 @@ Map<String, dynamic>? _parseTuic(String link) {
       'uuid': parts[0],
       'password': parts.length > 1 ? parts.sublist(1).join(':') : '',
       if (params['sni'] != null) 'sni': params['sni'],
-      if (params['alpn'] != null) 'alpn': params['alpn']!.split(','),
+      if (params['alpn'] != null && params['alpn']!.trim().isNotEmpty)
+        'alpn': params['alpn']!
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList(),
       if (params['congestion_controller'] != null)
         'congestion-controller': params['congestion_controller'],
       if (params['disable_sni'] == '1') 'disable-sni': true,
@@ -525,7 +543,17 @@ Map<String, dynamic>? _parseHttp(String link) {
 }
 
 String _yamlString(String s) {
-  if (s.contains(':') || s.contains('#') || s.contains('"')) {
+  // Quote if contains YAML special chars or non-ASCII (to be safe with CJK names)
+  if (s.contains(':') ||
+      s.contains('#') ||
+      s.contains('"') ||
+      s.contains("'") ||
+      s.contains('[') ||
+      s.contains(']') ||
+      s.contains('{') ||
+      s.contains('}') ||
+      s.contains(',') ||
+      RegExp(r'[^\x00-\x7F]').hasMatch(s)) {
     return '"${s.replaceAll('"', '\\"')}"';
   }
   return s;

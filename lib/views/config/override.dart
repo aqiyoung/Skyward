@@ -542,6 +542,7 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
     );
     final addEntry = target.addEntry(appLocalizations);
     return CommonScaffold(
+      rowSeparators: false,
       title: spec.title(appLocalizations),
       iconActions: [
         if (!isEmpty)

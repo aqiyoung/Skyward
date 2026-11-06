@@ -160,6 +160,7 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
     );
     final entries = _visibleUserAgents(userAgents, selected);
     return CommonScaffold(
+      rowSeparators: false,
       canSort: entries.length > 1,
       title: appLocalizations.userAgent,
       actions: [

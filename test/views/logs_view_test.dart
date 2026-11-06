@@ -2,9 +2,11 @@ import 'dart:math';
 
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/models/record_filter.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/views/views.dart';
+import 'package:skyward/widgets/record_filter.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,18 +146,20 @@ void main() {
   });
 
   testWidgets('tapping the level reports it for filtering', (tester) async {
-    String? clicked;
+    RecordFilter? captured;
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
-          body: LogItem(
-            log: const Log(
-              logLevel: LogLevel.warning,
-              payload:
-                  '[TCP] dial Proxy 10.0.0.2:1 --> a.example:443 error: EOF',
-              dateTime: '2024-01-01 12:00:00',
+        child: RecordFilterScope(
+          onFilter: (filter) => captured = filter,
+          child: const Scaffold(
+            body: LogItem(
+              log: Log(
+                logLevel: LogLevel.warning,
+                payload:
+                    '[TCP] dial Proxy 10.0.0.2:1 --> a.example:443 error: EOF',
+                dateTime: '2024-01-01 12:00:00',
+              ),
             ),
-            onClick: (value) => clicked = value,
           ),
         ),
       ),
@@ -163,7 +167,8 @@ void main() {
 
     await tester.tap(find.text('warning'));
 
-    expect(clicked, 'warning');
+    expect(captured?.kind, RecordFacetKind.level);
+    expect(captured?.value, 'warning');
   });
 
   group('LogListController', () {

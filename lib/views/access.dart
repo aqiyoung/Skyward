@@ -122,16 +122,17 @@ class _AccessViewState extends ConsumerState<AccessView>
     }
 
     final appLocalizations = context.appLocalizations;
+    final enabled = allValueList.isNotEmpty;
     return isSelectedAll
         ? IconButtonData(
             glyph: AppGlyphs.deselect,
             tooltip: appLocalizations.cancelSelectAll,
-            onPressed: onPressed,
+            onPressed: enabled ? onPressed : null,
           )
         : IconButtonData(
             glyph: AppGlyphs.selectAll,
             tooltip: appLocalizations.selectAll,
-            onPressed: onPressed,
+            onPressed: enabled ? onPressed : null,
           );
   }
 
@@ -341,6 +342,7 @@ class _AccessViewState extends ConsumerState<AccessView>
     required List<Package> packages,
     required Set<String> selected,
     required bool isSearching,
+    required bool awaitingPermission,
   }) {
     return FutureBuilder(
       future: _completer.future,
@@ -350,7 +352,9 @@ class _AccessViewState extends ConsumerState<AccessView>
           return const Center(child: CommonCircleLoading.page());
         }
         return NullStatusSwitcher(
-          isEmpty: packages.isEmpty,
+          // Nothing to list is not the same as nothing found: while the
+          // permission is missing the bar already says what to do.
+          isEmpty: packages.isEmpty && !awaitingPermission,
           isSearching: isSearching,
           nullStatus: NullStatus(
             label: appLocalizations.noData,
@@ -382,21 +386,6 @@ class _AccessViewState extends ConsumerState<AccessView>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildInstalledAppsPermissionStatus() {
-    final appLocalizations = context.appLocalizations;
-    return NullStatus(
-      label: appLocalizations.installedAppsPermissionRequired,
-      description: appLocalizations.installedAppsPermissionDesc,
-      illustration: NullStatusIllustration.permission,
-      action: TonalButton(
-        size: TonalButtonSize.bar,
-        glyph: AppGlyphs.lockOpen,
-        label: appLocalizations.authorize,
-        onPressed: _handleGrantInstalledAppsPermission,
-      ),
     );
   }
 
@@ -449,9 +438,13 @@ class _AccessViewState extends ConsumerState<AccessView>
             }
           : null,
       child: CommonScaffold(
+        rowSeparators: false,
         isLoading: isLoading,
         searchState: AppBarSearchState(onSearch: _onSearch),
         searchActions: [?selectAllAction],
+        // The status bar already lives at the foot; a docked field would sit
+        // on top of it, so keep search a button in the bar like upstream.
+        searchInBar: true,
         title: context.appLocalizations.appAccessControl,
         confirmationAction: hasChanges
             ? IconButtonData(
@@ -462,60 +455,76 @@ class _AccessViewState extends ConsumerState<AccessView>
             : null,
         iconActions: [?selectAllAction],
         menuItems: _buildMenuItems(context, accessControl),
-        body: needsInstalledAppsPermission
-            ? _buildInstalledAppsPermissionStatus()
-            : FloatingFootBar(
-                bar: _AccessStatus(
-                  accessControl: accessControl,
-                  selectedCount: valueList.length,
-                  onEnable: () =>
-                      _update((state) => state.copyWith(enable: true)),
-                ),
-                body: DisabledMask(
-                  status: !accessControl.enable,
-                  child: _buildContent(
-                    packages: viewPackages,
-                    selected: valueList.toSet(),
-                    isSearching: query.isNotEmpty,
-                  ),
-                ),
-              ),
+        body: FloatingFootBar(
+          bar: _AccessStatus(
+            accessControl: accessControl,
+            installedPackageNames: viewPackageNameList.toSet(),
+            onAuthorize: _installedAppsPermissionGranted
+                ? null
+                : _handleGrantInstalledAppsPermission,
+            onEnable: () => _update((state) => state.copyWith(enable: true)),
+          ),
+          body: DisabledMask(
+            status: !accessControl.enable,
+            child: _buildContent(
+              packages: viewPackages,
+              selected: valueList.toSet(),
+              isSearching: query.isNotEmpty,
+              awaitingPermission: needsInstalledAppsPermission,
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _AccessStatus extends StatelessWidget {
+class _AccessStatus extends ConsumerWidget {
   const _AccessStatus({
     required this.accessControl,
-    required this.selectedCount,
+    required this.installedPackageNames,
+    required this.onAuthorize,
     required this.onEnable,
   });
 
   final AccessControlProps accessControl;
-  final int selectedCount;
+  final Set<String> installedPackageNames;
+  final VoidCallback? onAuthorize;
   final VoidCallback onEnable;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCount = ref.watch(
+      accessControlStateProvider.select(
+        (state) => state.currentList.where(installedPackageNames.contains).length,
+      ),
+    );
     final appLocalizations = context.appLocalizations;
     final colorScheme = context.colorScheme;
     final enabled = accessControl.enable;
-    final description = enabled
-        ? switch (accessControl.mode) {
-            AccessControlMode.acceptSelected =>
-              appLocalizations.accessControlAllowDesc,
-            AccessControlMode.rejectSelected =>
-              appLocalizations.accessControlNotAllowDesc,
-          }
-        : appLocalizations.accessControlDisabledDesc;
+    final authorizes = enabled && onAuthorize != null;
+    final description = authorizes
+        ? appLocalizations.installedAppsPermissionRequired
+        : enabled
+            ? switch (accessControl.mode) {
+                AccessControlMode.acceptSelected =>
+                  appLocalizations.accessControlAllowDesc,
+                AccessControlMode.rejectSelected =>
+                  appLocalizations.accessControlNotAllowDesc,
+              }
+            : appLocalizations.accessControlDisabledDesc;
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(16, 6, enabled ? 16 : 8, 6),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        16,
+        6,
+        enabled && !authorizes ? 16 : 8,
+        6,
+      ),
       child: Row(
         spacing: 12,
         children: [
           GlyphIcon(
-            enabled ? AppGlyphs.appsList : AppGlyphs.info,
+            enabled && !authorizes ? AppGlyphs.appsList : AppGlyphs.info,
             size: 20,
             color: colorScheme.onSurfaceVariant,
           ),
@@ -529,7 +538,14 @@ class _AccessStatus extends StatelessWidget {
                   .copyWith(color: colorScheme.onSurface),
             ),
           ),
-          if (enabled)
+          if (authorizes)
+            TonalButton(
+              size: TonalButtonSize.compact,
+              glyph: AppGlyphs.lockOpen,
+              label: appLocalizations.authorize,
+              onPressed: onAuthorize,
+            )
+          else if (enabled)
             TonalChip(
               label: appLocalizations.accessControlSelectedCount(selectedCount),
               color: context.raisedSurfaceLevel.colorOf(colorScheme),

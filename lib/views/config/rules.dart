@@ -96,6 +96,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
     final rulesState = ref.watch(globalRulesProvider);
     final rules = _visibleRules(rulesState.value ?? []);
     final isSearching = _query.isNotEmpty;
+    final total = rulesState.value?.length;
     final selectedRules = ref.watch(itemsProvider(_key));
     final isSelecting = selectedRules.isNotEmpty;
     final selectionActions = [
@@ -118,7 +119,13 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
             }
           : null,
       child: CommonScaffold(
+        rowSeparators: false,
         title: appLocalizations.addedRules,
+        titleDetail: total == null
+            ? null
+            : isSearching
+            ? '${rules.length.grouped} / ${total.grouped}'
+            : total.grouped,
         searchState: AppBarSearchState(onSearch: _handleSearch),
         actions: [
           if (!isSelecting)

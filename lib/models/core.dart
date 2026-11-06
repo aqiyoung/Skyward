@@ -181,8 +181,15 @@ abstract class CoreEvent with _$CoreEvent {
 
 @freezed
 abstract class Delay with _$Delay {
-  const factory Delay({required String name, required String url, int? value}) =
-      _Delay;
+  const factory Delay({
+    required String name,
+    required String url,
+    int? value,
+
+    /// Why the test failed, in the core's own words. Absent when the core had
+    /// nothing to say — a slot that was never granted, or a plain timeout.
+    String? message,
+  }) = _Delay;
 
   factory Delay.fromJson(Map<String, Object?> json) => _$DelayFromJson(json);
 }

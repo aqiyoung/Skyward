@@ -186,6 +186,28 @@ class TunStackItem extends ConsumerWidget {
   }
 }
 
+/// Where the WebRTC discovery traffic goes.
+///
+/// Unlike the rows above it, this one is not a core setting: it decides which
+/// rules are placed ahead of the profile's own, so it is stored with the app
+/// settings rather than in the patch config.
+class WebrtcGuardItem extends ConsumerWidget {
+  const WebrtcGuardItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ConfigOptionsItem<WebrtcGuard>(
+      title: (l) => l.webrtcGuard,
+      options: WebrtcGuard.values,
+      textBuilder: (guard) => guard.label,
+      selector: appSettingProvider.select((state) => state.webrtcGuard),
+      onChanged: (ref, value) => ref
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(webrtcGuard: value)),
+    );
+  }
+}
+
 /// TUN GSO (Generic Segmentation Offload) toggle.
 /// Stored in SharedPreferences (default true), synced to the native side
 /// via Service.setTunGso. Takes effect on next VPN start.
@@ -656,6 +678,11 @@ class NetworkListView extends StatelessWidget {
           isDesktop: system.isDesktop,
           isLinux: system.isLinux,
           isWindows: system.isWindows,
+        ),
+        generateSection(
+          title: context.appLocalizations.webrtcGuard,
+          items: const [WebrtcGuardItem()],
+          footer: context.appLocalizations.webrtcGuardDesc,
         ),
         generateSection(
           title: context.appLocalizations.outbound,

@@ -1542,6 +1542,7 @@ class CommonPopupMenuItem {
     this.onPressed,
     this.danger = false,
     this.checked,
+    this.keepsOpen = false,
     this.section,
     this.subItems = const [],
   });
@@ -1552,6 +1553,10 @@ class CommonPopupMenuItem {
   final VoidCallback? onPressed;
   final bool danger;
   final bool? checked;
+
+  /// Keeps the menu open after this item is picked, so several values of a
+  /// facet can be toggled without reopening it.
+  final bool keepsOpen;
 
   /// Sets this item and those after it apart from the items above, as an
   /// inline section of an iOS menu does.
@@ -1939,8 +1944,10 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     _unfoldTop();
   }
 
-  void _select(VoidCallback onPressed) {
-    Navigator.of(context).pop();
+  void _select(VoidCallback onPressed, {bool keepsOpen = false}) {
+    if (!keepsOpen) {
+      Navigator.of(context).pop();
+    }
     final runPicked = _runPicked;
     if (runPicked == null) {
       onPressed();
@@ -2188,7 +2195,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       item: item,
       index: index,
       pressed: pressed,
-      onTap: onPressed == null ? null : () => _select(onPressed),
+      onTap: onPressed == null ? null : () => _select(onPressed, keepsOpen: item.keepsOpen),
     );
   }
 

@@ -197,6 +197,19 @@ int? delay(Ref ref, {required String proxyName, String? testUrl}) {
 }
 
 @riverpod
+String? delayFailure(Ref ref, {required String proxyName, String? testUrl}) {
+  final currentTestUrl = ref.watch(realTestUrlProvider(testUrl));
+  final proxyState = ref.watch(realSelectedProxyStateProvider(proxyName));
+  final effectiveTestUrl = proxyState.testUrl.takeFirstValid([currentTestUrl]);
+  final effectiveProxyName = proxyState.proxyName;
+  return ref.watch(
+    delayFailuresProvider.select(
+      (state) => state[effectiveTestUrl]?[effectiveProxyName],
+    ),
+  );
+}
+
+@riverpod
 DelayTestPhase? delayTestPhase(
   Ref ref, {
   required String proxyName,

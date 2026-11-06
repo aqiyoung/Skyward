@@ -18,6 +18,7 @@ const (
 	messageMethod                  CoreMethod = "message"
 	initClashMethod                CoreMethod = "initClash"
 	getIsInitMethod                CoreMethod = "getIsInit"
+	coreVersionMethod              CoreMethod = "coreVersion"
 	forceGcMethod                  CoreMethod = "forceGc"
 	shutdownMethod                 CoreMethod = "shutdown"
 	validateConfigMethod           CoreMethod = "validateConfig"
@@ -200,6 +201,11 @@ type Delay struct {
 	Url   string `json:"url"`
 	Name  string `json:"name"`
 	Value int32  `json:"value"`
+	// Why the test failed, in the core's own words. A number alone cannot tell
+	// a wrong password from an unreachable port or a rejected TLS handshake,
+	// and those call for different fixes; the host shows this where it has
+	// room and stays silent when the core gave nothing.
+	Message string `json:"message,omitempty"`
 }
 
 type ProbeParams struct {

@@ -36,6 +36,31 @@ const webrtcGuardRules = <String>[
   'DOMAIN-KEYWORD,stun,REJECT',
 ];
 
+/// The same four rows pointed at wherever the reader wants discovery to go.
+///
+/// `proxyTarget` is the group a profile's own `MATCH` resolves to, so the guard
+/// follows the same exit as the rest of the traffic instead of naming a group
+/// that may not exist. Without one there is nothing to route through, and
+/// falling back to `DIRECT` would hand out the address the guard exists to
+/// withhold, so that case keeps the refusal.
+List<String> webrtcRulesFor(WebrtcGuard guard, {String? proxyTarget}) {
+  switch (guard) {
+    case WebrtcGuard.off:
+      return const [];
+    case WebrtcGuard.block:
+      return webrtcGuardRules;
+    case WebrtcGuard.proxy:
+      final target = proxyTarget?.trim();
+      if (target == null || target.isEmpty) {
+        return webrtcGuardRules;
+      }
+      return [
+        for (final rule in webrtcGuardRules)
+          '${rule.substring(0, rule.lastIndexOf(','))},$target',
+      ];
+  }
+}
+
 Future<T> _decodeJSON<T>(String content) async {
   return json.decode(content);
 }
@@ -400,7 +425,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   // with an empty list and "connect everything directly"; the guards in front
   // make that an explicit terminal rule instead, so the core still loads.
   rawConfig['rules'] = [
-    ...webrtcGuardRules,
+    ...webrtcRulesFor(data.webrtcGuard, proxyTarget: lastMatchTarget(rules)),
     ...rules,
     if (rules.isEmpty) 'MATCH,DIRECT',
   ];

@@ -10,7 +10,6 @@ import 'package:skyward/state.dart';
 import 'package:skyward/ui/paged_sheet.dart';
 import 'package:skyward/ui/popup.dart';
 import 'package:skyward/views/config/advanced.dart';
-import 'package:skyward/views/config/custom_resources.dart';
 import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/config/ntp.dart';
 import 'package:skyward/views/config/sniffer.dart';
@@ -28,7 +27,7 @@ import 'package:skyward/views/profiles/custom/custom_proxies.dart';
 import 'package:skyward/views/profiles/custom/rules.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/views/proxies/tab.dart';
-import 'package:skyward/views/theme.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/views.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,9 +59,7 @@ void main() {
     'tun config': TunView(1),
     'network config': const Scaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
-    'custom profile resources': const CustomResourcesView(),
     'on demand config': const OnDemandView(),
-    'theme': const ThemeView(),
     'backup and restore': const BackupAndRestore(),
     'hotkeys': const HotKeyView(),
     'access control': const AccessView(),
@@ -117,11 +114,10 @@ void main() {
   }
 
   final toolDestinations = <String, Type>{
-    'Theme': ThemeView,
+    'Preferences': AppearanceView,
     'Backup and restore': BackupAndRestore,
     'General': GeneralView,
     'Advanced configuration': AdvancedConfigView,
-    'Custom profile resources': CustomResourcesView,
   };
 
   for (final entry in toolDestinations.entries) {
@@ -161,6 +157,36 @@ void main() {
       expect(tester.takeException(), null);
     });
   }
+
+  testWidgets('appearance switches theme from the row menu', (tester) async {
+    // Theme is no longer a page of its own: the row opens a menu and the
+    // pick lands straight in the settings.
+    final container = ProviderContainer(
+      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: AppearanceView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Theme'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Light'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(themeSettingProvider).themeMode, ThemeMode.dark);
+    expect(tester.takeException(), null);
+  });
 
   testWidgets('user agent item opens the page that applies a preset', (
     tester,

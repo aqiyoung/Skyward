@@ -7,6 +7,15 @@
 // needing the Dart toolchain in the release job.
 //
 // Usage: node tool/release_changelog.mjs <from-ref> <to-ref> <version> [channel]
+//
+// Commit collection strategy:
+//   1. In CI (GITHUB_REPOSITORY set and `gh` available) we pull the commit
+//      range from the GitHub compare API instead of local `git log`. This is
+//      immune to shallow checkouts and to force-pushed/rebased history, which
+//      otherwise corrupt `git log <previous>..HEAD` and silently drop the
+//      whole changelog block.
+//   2. Otherwise (local runs, or `gh` unavailable) we fall back to local
+//      `git log <from>..<to> --no-merges` so the script stays usable offline.
 
 import { execFileSync } from 'node:child_process';
 
@@ -21,17 +30,91 @@ if (!from || !to || !version) {
 const FIELD = '\x1f';
 const RECORD = '\x1e';
 
-const raw = execFileSync(
-  'git',
-  [
-    'log',
-    '--no-merges',
-    '--reverse',
-    `--format=%H${FIELD}%s${FIELD}%b${RECORD}`,
-    `${from}..${to}`,
-  ],
-  { encoding: 'utf8' },
-);
+function ghAvailable() {
+  try {
+    execFileSync('gh', ['--version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function gitRevParseHead() {
+  return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+}
+
+// Local git fallback: produces the same `hash\x1fsubject\x1fbody\x1e` records
+// that the parser below expects.
+function gitLogRaw(fromRef, toRef) {
+  return execFileSync(
+    'git',
+    [
+      'log',
+      '--no-merges',
+      '--reverse',
+      `--format=%H${FIELD}%s${FIELD}%b${RECORD}`,
+      `${fromRef}..${toRef}`,
+    ],
+    { encoding: 'utf8' },
+  );
+}
+
+// CI path: pull the commit range from the GitHub compare API.
+function ghCompareRaw(fromRef, toRef) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo) {
+    throw new Error('GITHUB_REPOSITORY is not set');
+  }
+  const head = toRef === 'HEAD'
+    ? (process.env.GITHUB_SHA || gitRevParseHead())
+    : toRef;
+  const out = execFileSync(
+    'gh',
+    [
+      'api',
+      `repos/${repo}/compare/${encodeURIComponent(fromRef)}...${encodeURIComponent(head)}`,
+      '--jq',
+      '.commits[] | {sha, parents, message: .commit.message}',
+    ],
+    { encoding: 'utf8' },
+  );
+  const commits = out
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  const records = [];
+  for (const c of commits) {
+    if ((c.parents?.length ?? 1) > 1) {
+      continue; // mirror `git log --no-merges`
+    }
+    const message = c.message ?? '';
+    const nl = message.indexOf('\n');
+    const subject = nl === -1 ? message : message.slice(0, nl);
+    const body = nl === -1 ? '' : message.slice(nl + 1).replace(/^\n+/, '');
+    records.push(`${c.sha}${FIELD}${subject}${FIELD}${body}${RECORD}`);
+  }
+  if (records.length === 0) {
+    throw new Error('compare API returned no commits');
+  }
+  return records.join('');
+}
+
+function getCommitsRaw(fromRef, toRef) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (repo && ghAvailable()) {
+    try {
+      return ghCompareRaw(fromRef, toRef);
+    } catch (err) {
+      console.error(
+        `release_changelog: gh compare failed (${err.message}); ` +
+          `falling back to local git log`,
+      );
+    }
+  }
+  return gitLogRaw(fromRef, toRef);
+}
+
+const raw = getCommitsRaw(from, to);
 
 const subjectPattern = /^([a-z]+)(?:\(([^)]*)\))?(!)?:[ \t]+(.+)$/;
 const trailerPattern =

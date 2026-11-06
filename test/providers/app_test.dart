@@ -517,4 +517,52 @@ void main() {
       expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     });
   });
+
+  group('DelayFailures', () {
+    test('keeps what the core said, keyed by test URL and proxy', () {
+      container.read(delayFailuresProvider.notifier).setAll([
+        const Delay(
+          name: 'node',
+          url: 'https://a.test',
+          value: -2,
+          message: 'refused',
+        ),
+      ]);
+
+      expect(container.read(delayFailuresProvider), {
+        'https://a.test': {'node': 'refused'},
+      });
+    });
+
+    test('drops the reason once that node passes', () {
+      final notifier = container.read(delayFailuresProvider.notifier);
+      notifier.setAll([
+        const Delay(
+          name: 'node',
+          url: 'https://a.test',
+          value: -2,
+          message: 'refused',
+        ),
+        const Delay(name: 'other', url: 'https://a.test', value: -1),
+      ]);
+      notifier.setAll([
+        const Delay(name: 'node', url: 'https://a.test', value: 42),
+      ]);
+
+      expect(container.read(delayFailuresProvider), isEmpty);
+    });
+
+    test('keeps the other nodes of the same URL', () {
+      final notifier = container.read(delayFailuresProvider.notifier);
+      notifier.setAll([
+        const Delay(name: 'a', url: 'u', value: -2, message: 'refused'),
+        const Delay(name: 'b', url: 'u', value: -1, message: 'timed out'),
+      ]);
+      notifier.setAll([const Delay(name: 'a', url: 'u', value: 30)]);
+
+      expect(container.read(delayFailuresProvider), {
+        'u': {'b': 'timed out'},
+      });
+    });
+  });
 }

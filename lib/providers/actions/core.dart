@@ -21,6 +21,17 @@ class CoreAction extends _$CoreAction {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
       await ref.read(providersProvider.notifier).syncProviders();
     }
+    await _loadCoreVersion();
+  }
+
+  /// Asked on every init, because a restarted core may be a different build:
+  /// the User-Agent has to name the core that is actually answering.
+  Future<void> _loadCoreVersion() async {
+    try {
+      globalState.coreVersion = await _core.coreVersion();
+    } catch (error) {
+      commonPrint.log('core version unavailable: $error');
+    }
   }
 
   Future<void> startCore() async {

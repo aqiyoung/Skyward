@@ -52,9 +52,19 @@ class GlobalState {
     return _instance!;
   }
 
+  /// What the core reported about its own build, e.g. `v1.19.33-skyward.2`.
+  /// Filled in once the core answers; empty before that, and on hosts that
+  /// never start one.
+  String coreVersion = '';
+
+  /// The tag carries a `v` and this fork's own revision suffix; a provider
+  /// reading the User-Agent expects the bare upstream version it knows.
+  String get coreUaVersion =>
+      coreVersion.replaceFirst(RegExp(r'^v'), '').split('-').first;
+
   String get ua => container
       .read(patchClashConfigProvider.select((state) => state.globalUa))
-      .takeFirstValid([packageInfo.ua]);
+      .takeFirstValid([packageInfo.uaFor(coreUaVersion)]);
 
   Future<T?> loadingRun<T>(
     FutureOr<T> Function() futureFunction, {

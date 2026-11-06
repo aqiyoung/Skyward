@@ -4,6 +4,12 @@ import 'package:intl/intl.dart' show NumberFormat;
 import 'package:material_ui/material_ui.dart';
 
 class DashboardColors {
+  /// The green a running tunnel wears. The theme's success tone is a dark
+  /// forest green; this one is brighter and fully saturated, while still dark
+  /// enough for the white ink on the start button and the running chip. Dark
+  /// mode keeps the theme's success tone, where a filled green would not read.
+  static const runningGreen = Color(0xFF00A94F);
+
   const DashboardColors._({
     required this.page,
     required this.card,
@@ -47,7 +53,7 @@ class DashboardColors {
         colorScheme.primary.withValues(alpha: 0.45),
         card,
       ),
-      ok: colorScheme.success,
+      ok: isLight ? runningGreen : colorScheme.success,
       okContainer: colorScheme.successContainer,
       onOkContainer: colorScheme.onSuccessContainer,
       warn: colorScheme.warning,

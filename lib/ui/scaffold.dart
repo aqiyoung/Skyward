@@ -36,6 +36,7 @@ import 'sheet.dart';
 import 'sheet_header.dart';
 import 'sheet_navigator.dart';
 import 'sortable.dart';
+import 'text_style.dart';
 
 typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 
@@ -51,6 +52,12 @@ class CommonScaffold extends StatefulWidget {
   final Color? backgroundColor;
   final String? title;
   final Widget? titleWidget;
+
+  /// A quiet figure beside the title, such as how many rules the page lists.
+  /// Kept apart from [titleWidget] so a titled page stays a titled page: the
+  /// bar still treats it as one when deciding whether to compact the title or
+  /// dock search at the foot on a phone.
+  final String? titleDetail;
   final List<CommonPopupMenuItem> titleMenuItems;
   final bool isLoading;
   final List<Widget>? actions;
@@ -72,6 +79,10 @@ class CommonScaffold extends StatefulWidget {
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;
 
+  /// Keeps search a button in the bar on a phone page that would dock it at
+  /// its foot, for one whose foot carries a bar of its own.
+  final bool searchInBar;
+
   /// Shown searching or not and never folded; the first two share a button
   /// group and any after them stand alone.
   final List<IconButtonData> selectionActions;
@@ -81,6 +92,11 @@ class CommonScaffold extends StatefulWidget {
 
   /// Puts the toggle of the sort mode in the bar.
   final bool canSort;
+
+  /// Whether the rows in this page draw their bottom hairline. Pages made of
+  /// plain settings entries opt out; long, dense lists keep it. Passed down
+  /// with a [ListRowSeparatorScope] so every list in the body agrees.
+  final bool rowSeparators;
 
   /// Steps the bar's actions aside with the title while the page scrolls
   /// up, and back in while it scrolls down. On by default, so every page
@@ -96,12 +112,14 @@ class CommonScaffold extends StatefulWidget {
     this.backgroundColor,
     this.title,
     this.titleWidget,
+    this.titleDetail,
     this.titleMenuItems = const [],
     this.actions,
     this.backAction,
     this.isLoading = false,
     this.searchState,
     this.searchActions = const [],
+    this.searchInBar = false,
     this.selectionActions = const [],
     this.primaryAction,
     this.iconActions = const [],
@@ -111,6 +129,7 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
+    this.rowSeparators = true,
     this.hideActionsOnScroll = true,
   });
 
@@ -577,7 +596,27 @@ class CommonScaffoldState extends State<CommonScaffold>
                 popupBuilder: (_) =>
                     CommonPopupMenu(items: widget.titleMenuItems),
               ));
-    return _TitleAside(aside: _titleAside, child: title);
+    final detail = widget.titleDetail;
+    final content = detail == null
+        ? title
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(child: title),
+              SizedBox(width: compact ? 6 : 8),
+              Text(
+                detail,
+                maxLines: 1,
+                style: (compact ? AppTextStyle.caption1 : AppTextStyle.footnote)
+                    .of(context)
+                    .toTabular
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          );
+    return _TitleAside(aside: _titleAside, child: content);
   }
 
   List<Widget> _buildActions(
@@ -863,6 +902,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     final form = _SheetForm.of(
       context,
       searchState: widget.searchState,
+      searchInBar: widget.searchInBar,
       hasConfirmationAction: widget.confirmationAction != null,
     );
     final isCompact = form.isCompact;
@@ -875,11 +915,14 @@ class CommonScaffoldState extends State<CommonScaffold>
     // The page's bar floats over its body, which leaves the bar's height at
     // its top through MediaQuery padding, as extendBodyBehindAppBar does.
     final barFloats = !isCompact;
-    final sortableBody = SortModeScope(
-      sorting: _sorting,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrolling,
-        child: widget.body,
+    final sortableBody = ListRowSeparatorScope(
+      separated: widget.rowSeparators,
+      child: SortModeScope(
+        sorting: _sorting,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: _handleScrolling,
+          child: widget.body,
+        ),
       ),
     );
     final body = SafeArea(
@@ -1535,16 +1578,19 @@ class _SheetForm {
   factory _SheetForm.of(
     BuildContext context, {
     required AppBarSearchState? searchState,
+    required bool searchInBar,
     required bool hasConfirmationAction,
   }) {
     final provider = SheetProvider.of(context);
     final isModal = provider != null && provider.type != SheetType.page;
     final isCompact = provider?.type.isCompact ?? false;
     // iOS 27 docks the search of a phone page with no tab bar under it at its
-    // foot, a glass field in sight at rest.
+    // foot, a glass field in sight at rest. A page that keeps a bar of its own
+    // at the foot opts out, so search stays a button in the bar.
     final docksSearch =
         isCompact ||
-        (!isModal &&
+        (!searchInBar &&
+            !isModal &&
             ViewScope.isMobileOf(context) &&
             ModalRoute.of(context)?.impliesAppBarDismissal == true);
     return _SheetForm(
@@ -1753,12 +1799,22 @@ class _WindowControlsClearance extends StatelessWidget {
 class BaseScaffold extends StatelessWidget {
   final String title;
   final Widget body;
+  final bool rowSeparators;
 
-  const BaseScaffold({super.key, required this.title, required this.body});
+  const BaseScaffold({
+    super.key,
+    required this.title,
+    required this.body,
+    this.rowSeparators = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(body: body, title: title);
+    return CommonScaffold(
+      body: body,
+      title: title,
+      rowSeparators: rowSeparators,
+    );
   }
 }
 

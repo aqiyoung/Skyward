@@ -61,6 +61,9 @@ concurrency:
 
 permissions:
   contents: write
+  # Reading back the last preview run that actually finished, so a cancelled
+  # run's orphan tag cannot become the changelog baseline.
+  actions: read
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -87,6 +90,11 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      # Preview builds target this chat when set, keeping phone-only builds out
+      # of the public release channel. When unset the step falls back to
+      # TELEGRAM_CHAT_ID, so the current behaviour is preserved until a value
+      # is added.
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -214,11 +222,30 @@ jobs:
           git fetch --unshallow --tags --quiet 2>/dev/null \
             || git fetch --tags --quiet \
             || true
-          # Preview releases are deleted (Telegram-only policy), so look up
-          # previous preview by git tag instead of the releases API.
-          previous=$(git tag --list "preview-*" --sort=-creatordate \
-            | grep -vx "$TAG" | head -1 || true)
           commit="$(git rev-parse HEAD)"
+          # Preview releases are deleted (Telegram-only policy), so tags were
+          # the only record of a build. But a tag is claimed before anything is
+          # built: when a newer push cancels that run, its tag survives with no
+          # artefact behind it. The next caption then compares against a commit
+          # that never shipped -- either an empty range (falling back to stale
+          # CHANGELOG.zh.md prose) or one that skips the cancelled run's work.
+          #
+          # Anchor the range on the head of the last preview run that actually
+          # finished successfully instead. The runs API is read-only here; if
+          # it is unavailable, keep the old tag lookup as a fallback.
+          jq_filter='[.workflow_runs[] | select(.conclusion == "success" and .head_sha != "'"$commit"'")] | .[0].head_sha // ""'
+          previous_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/preview.yaml/runs?status=completed&per_page=30" \
+            --jq "$jq_filter" 2>/dev/null || true)
+          if [ -n "$previous_sha" ] \
+            && git cat-file -e "${previous_sha}^{commit}" 2>/dev/null; then
+            previous="$previous_sha"
+            echo "changelog baseline: last successful preview run on ${previous_sha:0:12}"
+          else
+            previous=$(git tag --list "preview-*" --sort=-creatordate \
+              | grep -vx "$TAG" | head -1 || true)
+            echo "changelog baseline: newest tag (runs API unavailable)"
+          fi
 
           entries=""
           if [ -n "$previous" ]; then
@@ -522,7 +549,10 @@ jobs:
       # The file itself, not a link: the self-hosted server above takes 2 GB,
       # while the cloud Bot API would answer 413 for this APK.
       - name: Upload the preview to Telegram
-        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        # Send whenever a token is present and at least one target chat is
+        # configured. The preview-specific chat takes priority; the public one
+        # is the fallback, so the step still runs if only that is set.
+        if: env.TELEGRAM_BOT_TOKEN != '' && (env.TELEGRAM_PREVIEW_CHAT_ID != '' || env.TELEGRAM_CHAT_ID != '')
         env:
           VERSION: ${{ steps.version.outputs.version }}
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
@@ -571,8 +601,11 @@ jobs:
           shopt -s nullglob
           for apk in dist/*.apk; do
             echo "uploading $(basename "${apk}") ($(du -h "${apk}" | cut -f1))..."
+            # Prefer the preview-only chat; fall back to the public one when it
+            # is not configured.
+            chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
             response="$(curl -fsS --max-time 900 \
-              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "chat_id=${chat_id}" \
               -F "document=@${apk}" \
               -F "caption=$(cat /tmp/caption.txt)" \
               "${api}/sendDocument")"

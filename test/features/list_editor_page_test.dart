@@ -14,12 +14,14 @@ class _EditorHarness extends StatelessWidget {
   final void Function(Set<String> ids)? onDelete;
   final bool searchable;
   final bool inBottomSheet;
+  final bool showsCount;
 
   const _EditorHarness({
     required this.items,
     this.onDelete,
     this.searchable = false,
     this.inBottomSheet = false,
+    this.showsCount = false,
   });
 
   @override
@@ -40,6 +42,7 @@ class _EditorHarness extends StatelessWidget {
       emptyLabel: 'Empty',
       idOf: (item) => item,
       onDelete: onDelete,
+      showsCount: showsCount,
       searchFieldsOf: searchable ? (item) => [item] : null,
     );
     return TestApp(
@@ -78,6 +81,57 @@ Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
 }
 
 void main() {
+  testWidgets('shows the count beside the title when asked for it', (
+    tester,
+  ) async {
+    final items = ValueNotifier<List<String>>([
+      for (var index = 0; index < 1204; index++) 'item $index',
+    ]);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(_EditorHarness(items: items, showsCount: true));
+    await tester.pump();
+
+    expect(find.text('1,204'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('leaves the title alone without the count', (tester) async {
+    final items = ValueNotifier<List<String>>([
+      for (var index = 0; index < 1204; index++) 'item $index',
+    ]);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(_EditorHarness(items: items));
+    await tester.pump();
+
+    expect(find.text('1,204'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a search reports its matches against the whole list', (
+    tester,
+  ) async {
+    final items = ValueNotifier<List<String>>([
+      for (var index = 0; index < 12; index++) 'item $index',
+    ]);
+    addTearDown(items.dispose);
+    await tester.pumpWidget(
+      _EditorHarness(items: items, searchable: true, showsCount: true),
+    );
+    await tester.pump();
+    expect(find.text('12'), findsOneWidget);
+
+    await _search(tester, '1');
+    expect(find.text('3 / 12'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pump();
+    expect(find.text('12'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('shows the empty label when there are no items', (tester) async {
     final items = ValueNotifier<List<String>>([]);
     addTearDown(items.dispose);
