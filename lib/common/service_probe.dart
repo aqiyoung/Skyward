@@ -376,16 +376,16 @@ final class _TargetSource {
 /// address. `ip-api.com` is plain HTTP — its free tier does not speak TLS —
 /// which is why the address form does not stop at it.
 final _targetSources = <_TargetSource>[
-  _TargetSource(
+  const _TargetSource(
     'http://ip-api.com/json/{}?fields=status,countryCode,regionName,city,lat,lon,query,isp',
     IpLocation.fromIpApiCom,
   ),
-  _TargetSource(
+  const _TargetSource(
     'https://ipwho.is/{}',
     IpLocation.fromIpWhoIs,
     addressesOnly: true,
   ),
-  _TargetSource(
+  const _TargetSource(
     'https://api.ip.sb/geoip/{}',
     IpLocation.fromIpSb,
     addressesOnly: true,

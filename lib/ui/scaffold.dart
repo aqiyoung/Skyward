@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:skyward/common/input_limits.dart';
 import 'package:skyward/common/iterable.dart';
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/icons/icons.dart';

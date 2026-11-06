@@ -808,7 +808,7 @@ class DashboardSwitchRow extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing case final trailing?) trailing,
+          ?trailing,
           DashboardSwitch(
             value: value,
             onChanged: onChanged,
@@ -898,7 +898,7 @@ class DashboardSwitchTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (trailing case final trailing?) trailing,
+                  ?trailing,
                 ],
               ),
             ),
