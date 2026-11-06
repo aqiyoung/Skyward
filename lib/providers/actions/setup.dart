@@ -529,8 +529,13 @@ class SetupAction extends _$SetupAction {
           }
         : profileBase?.base.config ?? await _core.getConfig(profileId);
     final proxyGroups = isCustom ? setupState.proxyGroups : <ProxyGroup>[];
+    final policies = modulePoliciesOf(rawConfig);
     final rules = isCustom
-        ? withModuleRules(modules: modules, rules: setupState.rules)
+        ? withModuleRules(
+            modules: modules,
+            rules: setupState.rules,
+            policies: policies,
+          )
         : <Rule>[];
     if (hasScript) {
       rawConfig = await handleEvaluate(
@@ -564,6 +569,7 @@ class SetupAction extends _$SetupAction {
           rules: adBlock
               ? withAdBlockRules(setupState.addedRules)
               : setupState.addedRules,
+          policies: policies,
         ),
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,

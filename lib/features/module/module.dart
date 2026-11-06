@@ -593,6 +593,7 @@ String? _firstNonEmpty(List<String?> values) {
 List<Rule> withModuleRules({
   required Iterable<Module> modules,
   required List<Rule> rules,
+  Set<String>? policies,
 }) {
   final existing = rules.map((rule) => rule.rawValue).toSet();
   final added = <Rule>[];
@@ -602,10 +603,50 @@ List<Rule> withModuleRules({
     }
     final parsed = parseModule(module.content, fallbackName: module.label);
     for (final raw in parsed.resolveRules(module.policy)) {
+      final rule = Rule.parse(raw);
+      // A target the config does not carry makes the core refuse the whole
+      // file, so a rule that names one is left out instead of taking the
+      // connection down with it.
+      final target = rule.ruleTarget;
+      if (policies != null && target != null && !policies.contains(target)) {
+        continue;
+      }
       if (existing.add(raw)) {
-        added.add(Rule.parse(raw));
+        added.add(rule);
       }
     }
   }
   return [...added, ...rules];
+}
+
+/// Every policy name a config can route to, so a module rule can be checked
+/// against it before it reaches the core.
+///
+/// Null when the config carries neither groups nor proxies: there is nothing
+/// to check against, and a rule should not be dropped on a guess.
+Set<String>? modulePoliciesOf(Map<String, dynamic> config) {
+  final groups = config['proxy-groups'];
+  final proxies = config['proxies'];
+  if (groups is! List && proxies is! List) {
+    return null;
+  }
+  final names = <String>{
+    'DIRECT',
+    'REJECT',
+    'REJECT-DROP',
+    'PASS',
+    'COMPATIBLE',
+    'GLOBAL',
+  };
+  for (final source in [groups, proxies]) {
+    if (source is! List) {
+      continue;
+    }
+    for (final item in source) {
+      if (item is Map && item['name'] is String) {
+        names.add(item['name'] as String);
+      }
+    }
+  }
+  return names;
 }

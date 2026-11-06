@@ -180,5 +180,40 @@ DOMAIN-SUFFIX,a.com,REJECT
         ['DOMAIN,a.com,REJECT'],
       );
     });
+
+    test('drops a rule whose policy the config cannot route to', () {
+      const module = Module(
+        id: 4,
+        label: 'ads',
+        content: '[Rule]\nDOMAIN,a.com,SomeGroup\nDOMAIN,b.com,REJECT\n',
+      );
+
+      final rules = withModuleRules(
+        modules: [module],
+        rules: const [],
+        policies: {'REJECT', 'DIRECT'},
+      );
+
+      expect(rules.map((rule) => rule.rawValue), ['DOMAIN,b.com,REJECT']);
+    });
+  });
+
+  group('modulePoliciesOf', () {
+    test('reads the group and proxy names the config carries', () {
+      final policies = modulePoliciesOf({
+        'proxy-groups': [
+          {'name': 'Proxy'},
+        ],
+        'proxies': [
+          {'name': 'HK-01'},
+        ],
+      });
+
+      expect(policies, containsAll(['Proxy', 'HK-01', 'DIRECT', 'REJECT']));
+    });
+
+    test('has nothing to check when the config has no policies', () {
+      expect(modulePoliciesOf(const {}), isNull);
+    });
   });
 }
