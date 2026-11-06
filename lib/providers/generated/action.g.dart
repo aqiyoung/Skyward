@@ -91,7 +91,7 @@ final class SetupActionProvider extends $NotifierProvider<SetupAction, void> {
   }
 }
 
-String _$setupActionHash() => r'5bdfd269b4e247fd7a9ddeadbe3e0eaa1d337a99';
+String _$setupActionHash() => r'942287520d2a7cbc85664fec2c306464c0038bcd';
 
 abstract class _$SetupAction extends $Notifier<void> {
   void build();
@@ -558,6 +558,80 @@ String _$clashProvidersActionHash() =>
     r'9c70e4201bd4cf1a788f860bdfb15b5d1ab71c6d';
 
 abstract class _$ClashProvidersAction extends $Notifier<void> {
+  void build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<void, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<void, void>,
+              void,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Imports, updates and switches modules.
+///
+/// The rules a module carries ride inside the generated config, so every write
+/// here re-applies the current profile -- a switch that only changed a row in
+/// the database would look like it did nothing.
+
+@ProviderFor(ModulesAction)
+final modulesActionProvider = ModulesActionProvider._();
+
+/// Imports, updates and switches modules.
+///
+/// The rules a module carries ride inside the generated config, so every write
+/// here re-applies the current profile -- a switch that only changed a row in
+/// the database would look like it did nothing.
+final class ModulesActionProvider
+    extends $NotifierProvider<ModulesAction, void> {
+  /// Imports, updates and switches modules.
+  ///
+  /// The rules a module carries ride inside the generated config, so every write
+  /// here re-applies the current profile -- a switch that only changed a row in
+  /// the database would look like it did nothing.
+  ModulesActionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'modulesActionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$modulesActionHash();
+
+  @$internal
+  @override
+  ModulesAction create() => ModulesAction();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void>(value),
+    );
+  }
+}
+
+String _$modulesActionHash() => r'8c0a1be72d0f445995e27687b37b0062f9f205c2';
+
+/// Imports, updates and switches modules.
+///
+/// The rules a module carries ride inside the generated config, so every write
+/// here re-applies the current profile -- a switch that only changed a row in
+/// the database would look like it did nothing.
+
+abstract class _$ModulesAction extends $Notifier<void> {
   void build();
   @$mustCallSuper
   @override

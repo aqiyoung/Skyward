@@ -18,6 +18,7 @@ part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
 part 'ip_qualities.dart';
+part 'modules.dart';
 part 'profiles.dart';
 part 'rules.dart';
 part 'scripts.dart';
@@ -35,6 +36,7 @@ part 'scripts.dart';
     CustomProxies,
     ProxyDialers,
     IpQualities,
+    Modules,
   ],
   daos: [
     ProfilesDao,
@@ -47,13 +49,14 @@ part 'scripts.dart';
     CustomProxiesDao,
     ProxyDialersDao,
     IpQualitiesDao,
+    ModulesDao,
   ],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -116,6 +119,9 @@ class Database extends _$Database {
         }
         if (from < 21) {
           await _createTableIfMissing(m, ipQualities);
+        }
+        if (from < 22) {
+          await _createTableIfMissing(m, modules);
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

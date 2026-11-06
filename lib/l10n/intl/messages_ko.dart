@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ko';
 
+  static String m87(label) => "'$label' 업데이트됨";
+
+  static String m88(count) => "총 $count개, 앞부분만 표시";
+
   static String m0(count) => "${count}개 선택됨";
 
   static String m1(name) => "${name}을(를) 로컬 프록시에 추가했습니다";
@@ -1753,5 +1757,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
+    "modules": MessageLookupByLibrary.simpleMessage("모듈"),
+    "author": MessageLookupByLibrary.simpleMessage("작성자"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("건너뜀"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("정책"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "PROXY를 가리키는 규칙은 이 정책을 사용합니다. 비워 두면 건너뜁니다.",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      ".sgmodule, .module, .plugin, .stoverride, .conf 내용을 붙여넣으세요.",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("모듈이 비어 있습니다."),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "이 모듈에는 업데이트할 원본 URL이 없습니다.",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 복호화가 필요하지만 코어는 하지 않습니다",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "스크립트 실행 환경이 필요하지만 코어에는 없습니다",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage(
+      "코어에 해당 규칙 유형이 없습니다",
+    ),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "원격 규칙 세트는 별도 다운로드가 필요합니다",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "PROXY를 가리키지만 정책이 없습니다",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "코어에 대응하는 항목이 없습니다",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

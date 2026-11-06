@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ja';
 
+  static String m87(label) => "「$label」を更新しました";
+
+  static String m88(count) => "全 $count 件、先頭のみ表示";
+
   static String m0(count) => "${count} 件選択済み";
 
   static String m1(name) => "${name} をローカルプロキシに追加しました";
@@ -1778,5 +1782,37 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
+    "modules": MessageLookupByLibrary.simpleMessage("モジュール"),
+    "author": MessageLookupByLibrary.simpleMessage("作者"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("スキップ"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("ポリシー"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "PROXY を指すルールはこのポリシーを使います。空欄ならスキップします。",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      ".sgmodule、.module、.plugin、.stoverride、.conf の内容を貼り付けてください。",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("モジュールが空です。"),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "このモジュールには更新元の URL がありません。",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 復号が必要ですが、コアは行いません",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "スクリプト実行環境が必要ですが、コアにはありません",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage("コアにこのルール種別はありません"),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "リモートルールセットは別途ダウンロードが必要です",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "PROXY を指していますが、ポリシーが未設定です",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "コアに対応する項目がありません",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

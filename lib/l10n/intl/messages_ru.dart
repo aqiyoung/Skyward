@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ru';
 
+  static String m87(label) => "Обновлено: $label";
+
+  static String m88(count) => "Всего $count, показаны первые";
+
   static String m0(count) => "Выбрано: ${count}";
 
   static String m1(name) => "«${name}» добавлен в локальные прокси";
@@ -2158,5 +2162,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
+    "modules": MessageLookupByLibrary.simpleMessage("Модули"),
+    "author": MessageLookupByLibrary.simpleMessage("Автор"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("Пропущено"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("Политика"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "Правила с PROXY используют эту политику; пусто — пропустить их.",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      "Вставьте текст файла .sgmodule, .module, .plugin, .stoverride или .conf.",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("Модуль пуст."),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "У этого модуля нет исходного URL для обновления.",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "Нужно расшифрование HTTPS, ядро этого не делает",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "Нужна среда выполнения скриптов, у ядра её нет",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage(
+      "Ядро не знает такого типа правила",
+    ),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "Удалённый набор правил требует отдельной загрузки",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "Указывает на PROXY, политика не задана",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "В ядре нет такого поля",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

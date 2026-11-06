@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'es';
 
+  static String m87(label) => "Se actualizó $label";
+
+  static String m88(count) => "$count reglas, solo se muestran las primeras";
+
   static String m0(count) =>
       "${Intl.plural(count, one: '${count} seleccionada', other: '${count} seleccionadas')}";
 
@@ -2223,5 +2227,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Sí"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chino simplificado"),
+    "modules": MessageLookupByLibrary.simpleMessage("Módulos"),
+    "author": MessageLookupByLibrary.simpleMessage("Autor"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("Omitido"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("Política"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "Las reglas con PROXY usan esta política; déjalo vacío para omitirlas.",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      "Pega el contenido de un archivo .sgmodule, .module, .plugin, .stoverride o .conf.",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage(
+      "El módulo está vacío.",
+    ),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "Este módulo no tiene URL de origen para actualizar.",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "Requiere descifrado HTTPS, que el núcleo no hace",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "Requiere un entorno de scripts, que el núcleo no tiene",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage(
+      "El núcleo no tiene ese tipo de regla",
+    ),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "Un conjunto de reglas remoto requiere su propia descarga",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "Apunta a PROXY y no hay política definida",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "El núcleo no tiene ese campo",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

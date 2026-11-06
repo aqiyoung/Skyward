@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
+  static String m87(label) => "Updated $label";
+
+  static String m88(count) => "$count rules, showing the first part only";
+
   static String m0(count) =>
       "${Intl.plural(count, other: '${count} selected')}";
 
@@ -2054,5 +2058,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
+    "modules": MessageLookupByLibrary.simpleMessage("Modules"),
+    "author": MessageLookupByLibrary.simpleMessage("Author"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("Skipped"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("Policy"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "Rules that name PROXY use this policy; leave it empty to skip them.",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      "Paste the text of a .sgmodule, .module, .plugin, .stoverride or .conf file.",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("The module is empty."),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "This module has no source URL to update from.",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "Needs HTTPS decryption, which the core does not do.",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "Needs a script runtime, which the core does not have.",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage(
+      "The core has no such rule type.",
+    ),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "A remote rule set needs its own download.",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "Points at PROXY, and no policy is set.",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "The core has no matching field.",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

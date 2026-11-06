@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'fr';
 
+  static String m87(label) => "$label mis à jour";
+
+  static String m88(count) => "$count règles, seules les premières sont affichées";
+
   static String m0(count) =>
       "${Intl.plural(count, one: '${count} sélectionnée', other: '${count} sélectionnées')}";
 
@@ -2224,5 +2228,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Oui"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chinois simplifié"),
+    "modules": MessageLookupByLibrary.simpleMessage("Modules"),
+    "author": MessageLookupByLibrary.simpleMessage("Auteur"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("Ignoré"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("Politique"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "Les règles visant PROXY utilisent cette politique ; laissez vide pour les ignorer.",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      "Collez le contenu d'un fichier .sgmodule, .module, .plugin, .stoverride ou .conf.",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("Le module est vide."),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage(
+      "Ce module n'a pas d'URL source pour la mise à jour.",
+    ),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage(
+      "Nécessite un déchiffrement HTTPS, que le noyau ne fait pas",
+    ),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage(
+      "Nécessite un moteur de script, absent du noyau",
+    ),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage(
+      "Le noyau ne connaît pas ce type de règle",
+    ),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage(
+      "Un ensemble de règles distant doit être téléchargé séparément",
+    ),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage(
+      "Vise PROXY, sans politique définie",
+    ),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage(
+      "Le noyau n'a pas de champ correspondant",
+    ),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }

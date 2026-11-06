@@ -507,6 +507,9 @@ class SetupAction extends _$SetupAction {
     final adBlock = ref.read(
       appSettingProvider.select((state) => state.adBlock),
     );
+    // Modules sit in front of the ad block: both are the reader's own rules,
+    // and a module is the more specific one.
+    final modules = ref.read(importedModulesProvider).value ?? const <Module>[];
     final isCustom = setupState.profileType == ProfileType.custom;
     final scriptContent =
         !isCustom && setupState.extendType == ExtendType.script
@@ -526,7 +529,9 @@ class SetupAction extends _$SetupAction {
           }
         : profileBase?.base.config ?? await _core.getConfig(profileId);
     final proxyGroups = isCustom ? setupState.proxyGroups : <ProxyGroup>[];
-    final rules = isCustom ? setupState.rules : <Rule>[];
+    final rules = isCustom
+        ? withModuleRules(modules: modules, rules: setupState.rules)
+        : <Rule>[];
     if (hasScript) {
       rawConfig = await handleEvaluate(
         scriptContent!,
@@ -554,9 +559,12 @@ class SetupAction extends _$SetupAction {
         bypassPrivateRoute: networkSetting.bypassPrivateRoute,
         keepEmptyDnsOverrides: setupState.profileType != ProfileType.custom,
         appendSystemDns: appendSystemDns,
-        addedRules: adBlock
-            ? withAdBlockRules(setupState.addedRules)
-            : setupState.addedRules,
+        addedRules: withModuleRules(
+          modules: modules,
+          rules: adBlock
+              ? withAdBlockRules(setupState.addedRules)
+              : setupState.addedRules,
+        ),
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
         matchTarget:

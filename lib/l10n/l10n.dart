@@ -8761,6 +8761,149 @@ class AppLocalizations {
       args: [],
     );
   }
+  String get modules {
+    return Intl.message(
+      'Modules',
+      name: 'modules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get author {
+    return Intl.message(
+      'Author',
+      name: 'author',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipped {
+    return Intl.message(
+      'Skipped',
+      name: 'moduleSkipped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get modulePolicy {
+    return Intl.message(
+      'Policy',
+      name: 'modulePolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get modulePolicyTip {
+    return Intl.message(
+      'Rules that name PROXY use this policy; leave it empty to skip them.',
+      name: 'modulePolicyTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get modulePasteTip {
+    return Intl.message(
+      'Paste the text of a .sgmodule, .module, .plugin, .stoverride or .conf file.',
+      name: 'modulePasteTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleEmpty {
+    return Intl.message(
+      'The module is empty.',
+      name: 'moduleEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleNoUrl {
+    return Intl.message(
+      'This module has no source URL to update from.',
+      name: 'moduleNoUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipHttps {
+    return Intl.message(
+      'Needs HTTPS decryption, which the core does not do.',
+      name: 'moduleSkipHttps',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipScript {
+    return Intl.message(
+      'Needs a script runtime, which the core does not have.',
+      name: 'moduleSkipScript',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipRule {
+    return Intl.message(
+      'The core has no such rule type.',
+      name: 'moduleSkipRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipRuleSet {
+    return Intl.message(
+      'A remote rule set needs its own download.',
+      name: 'moduleSkipRuleSet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipPolicy {
+    return Intl.message(
+      'Points at PROXY, and no policy is set.',
+      name: 'moduleSkipPolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get moduleSkipGeneral {
+    return Intl.message(
+      'The core has no matching field.',
+      name: 'moduleSkipGeneral',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String moduleUpdated(Object label) {
+    return Intl.message(
+      'Updated $label',
+      name: 'moduleUpdated',
+      desc: '',
+      args: [label],
+    );
+  }
+
+  String moduleRulesTruncated(Object count) {
+    return Intl.message(
+      '$count rules, showing the first part only',
+      name: 'moduleRulesTruncated',
+      desc: '',
+      args: [count],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

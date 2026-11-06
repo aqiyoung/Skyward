@@ -20,6 +20,10 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_CN';
 
+  static String m87(label) => "已更新「$label」";
+
+  static String m88(count) => "共 $count 条，仅显示前一部分";
+
   static String m0(count) => "已选 ${count}";
 
   static String m1(name) => "已将 ${name} 添加到本地代理";
@@ -1621,5 +1625,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
+    "modules": MessageLookupByLibrary.simpleMessage("模块"),
+    "author": MessageLookupByLibrary.simpleMessage("作者"),
+    "moduleSkipped": MessageLookupByLibrary.simpleMessage("已跳过"),
+    "modulePolicy": MessageLookupByLibrary.simpleMessage("策略"),
+    "modulePolicyTip": MessageLookupByLibrary.simpleMessage(
+      "指向 PROXY 的规则使用这个策略；留空则跳过这些规则。",
+    ),
+    "modulePasteTip": MessageLookupByLibrary.simpleMessage(
+      "粘贴 .sgmodule、.module、.plugin、.stoverride 或 .conf 文件的内容。",
+    ),
+    "moduleEmpty": MessageLookupByLibrary.simpleMessage("模块内容为空。"),
+    "moduleNoUrl": MessageLookupByLibrary.simpleMessage("该模块没有来源链接，无法更新。"),
+    "moduleSkipHttps": MessageLookupByLibrary.simpleMessage("需要 HTTPS 解密，内核不做"),
+    "moduleSkipScript": MessageLookupByLibrary.simpleMessage("需要脚本运行时，内核不执行脚本"),
+    "moduleSkipRule": MessageLookupByLibrary.simpleMessage("内核没有这种规则"),
+    "moduleSkipRuleSet": MessageLookupByLibrary.simpleMessage("远程规则集需要单独下载"),
+    "moduleSkipPolicy": MessageLookupByLibrary.simpleMessage("指向 PROXY，尚未指定策略"),
+    "moduleSkipGeneral": MessageLookupByLibrary.simpleMessage("内核没有对应配置项"),
+    "moduleUpdated": m87,
+    "moduleRulesTruncated": m88,
   };
 }
