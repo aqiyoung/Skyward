@@ -7,6 +7,7 @@ import 'package:skyward/views/config/scripts.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'ad_block.dart';
+import 'modules.dart';
 import 'rules.dart';
 import 'filters.dart';
 import 'icon_sets.dart';
@@ -38,6 +39,11 @@ class AdvancedConfigView extends StatelessWidget {
         title: Text(appLocalizations.rulePresetAdBlock),
         leading: const IconWell(AppGlyphs.block),
         widget: const AdBlockView(),
+      ),
+      ListItem.open(
+        title: Text(appLocalizations.modules),
+        leading: const IconWell(AppGlyphs.puzzle),
+        widget: const ModulesView(),
       ),
       ListItem.open(
         title: Text(appLocalizations.addedRules),

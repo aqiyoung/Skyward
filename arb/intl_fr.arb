@@ -1049,5 +1049,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "Cet appareil détient une adresse IPv6 globale, et le trafic v6 peut contourner une capture IPv4 seule",
   "dnsLeakAdvice": "Pour les points en échec, activez le VPN et le détournement DNS dans « Avancé → Réseau », désactivez le DNS privé dans les réglages système et remplacez les amonts en clair par DoH dans les substitutions DNS.",
-  "dnsLeakExternal": "Vérifier dans un navigateur"
+  "dnsLeakExternal": "Vérifier dans un navigateur",
+  "modules": "Modules",
+  "author": "Auteur",
+  "moduleSkipped": "Ignoré",
+  "modulePolicy": "Politique",
+  "modulePolicyTip": "Les règles visant PROXY utilisent cette politique ; laissez vide pour les ignorer.",
+  "modulePasteTip": "Collez le contenu d'un fichier .sgmodule, .module, .plugin, .stoverride ou .conf.",
+  "moduleEmpty": "Le module est vide.",
+  "moduleNoUrl": "Ce module n'a pas d'URL source pour la mise à jour.",
+  "moduleSkipHttps": "Nécessite un déchiffrement HTTPS, que le noyau ne fait pas",
+  "moduleSkipScript": "Nécessite un moteur de script, absent du noyau",
+  "moduleSkipRule": "Le noyau ne connaît pas ce type de règle",
+  "moduleSkipRuleSet": "Un ensemble de règles distant doit être téléchargé séparément",
+  "moduleSkipPolicy": "Vise PROXY, sans politique définie",
+  "moduleSkipGeneral": "Le noyau n'a pas de champ correspondant",
+  "moduleGeneralTip": "Ces entrées ne sont pas encore appliquées ; le noyau n'a pas d'interrupteur correspondant.",
+  "moduleUpdated": "{label} mis à jour",
+  "moduleRulesTruncated": "{count} règles, seules les premières sont affichées"
 }

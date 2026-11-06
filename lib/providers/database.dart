@@ -1049,3 +1049,70 @@ class ProfileDisabledRuleIds extends _$ProfileDisabledRuleIds
     optimistic(next, () => database.rulesDao.putDisabled(profileId, ruleId));
   }
 }
+
+/// The modules a reader imported, in the order they were dropped in.
+///
+/// A module sits outside every profile: its switch is global and its rules
+/// ride in front of whatever profile is applied, so there is no family
+/// argument here.
+@riverpod
+class ImportedModules extends _$ImportedModules
+    with AsyncNotifierMixin, OptimisticMixin {
+  @override
+  List<Module> get value => state.value ?? const [];
+
+  @override
+  Stream<List<Module>> build() {
+    final query = database.modulesDao.queryAll();
+    return settled(query.watch(), query.get);
+  }
+
+  void put(Module module) {
+    final previous = value;
+    final index = previous.indexWhere((item) => item.id == module.id);
+    final placed = (module.order?.isNotEmpty ?? false)
+        ? module
+        : module.copyWith(
+            order: index == -1
+                ? indexing.generateKeyBetween(previous.lastOrNull?.order, null)
+                : previous[index].order,
+          );
+    final next = [...previous];
+    if (index == -1) {
+      next.add(placed);
+    } else {
+      next[index] = placed;
+    }
+    optimistic(next, () => database.modulesDao.putModule(placed));
+  }
+
+  void delAll(Iterable<int> ids) {
+    final removed = ids.toSet();
+    optimistic(
+      value.where((item) => !removed.contains(item.id)).toList(),
+      () => database.modulesDao.delModules(removed),
+    );
+  }
+
+  void setEnabled(int id, bool enabled) {
+    final module = value.getModule(id);
+    if (module == null || module.enabled == enabled) {
+      return;
+    }
+    put(module.copyWith(enabled: enabled));
+  }
+
+  void order(int oldIndex, int newIndex) {
+    final item = value[oldIndex];
+    final nextItems = value.copyAndReorder(oldIndex, newIndex);
+    final newOrder = indexing.generateKeyBetween(
+      nextItems.safeGet(newIndex - 1)?.order,
+      nextItems.safeGet(newIndex + 1)?.order,
+    )!;
+    nextItems[newIndex] = item.copyWith(order: newOrder);
+    optimistic(
+      nextItems,
+      () => database.modulesDao.order(id: item.id, order: newOrder),
+    );
+  }
+}

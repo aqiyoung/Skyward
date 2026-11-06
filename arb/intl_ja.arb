@@ -1049,5 +1049,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "グローバル IPv6 アドレスがあり、v6 通信が IPv4 のみの取り込みを迂回できます",
   "dnsLeakAdvice": "不合格の項目は「詳細設定 → ネットワーク」で VPN と DNS ハイジャックを有効にし、システム設定のプライベート DNS を無効にしてください。DNS 上書きでは平文の上流を DoH に置き換えてください。",
-  "dnsLeakExternal": "ブラウザーで確認"
+  "dnsLeakExternal": "ブラウザーで確認",
+  "modules": "モジュール",
+  "author": "作者",
+  "moduleSkipped": "スキップ",
+  "modulePolicy": "ポリシー",
+  "modulePolicyTip": "PROXY を指すルールはこのポリシーを使います。空欄ならスキップします。",
+  "modulePasteTip": ".sgmodule、.module、.plugin、.stoverride、.conf の内容を貼り付けてください。",
+  "moduleEmpty": "モジュールが空です。",
+  "moduleNoUrl": "このモジュールには更新元の URL がありません。",
+  "moduleSkipHttps": "HTTPS 復号が必要ですが、コアは行いません",
+  "moduleSkipScript": "スクリプト実行環境が必要ですが、コアにはありません",
+  "moduleSkipRule": "コアにこのルール種別はありません",
+  "moduleSkipRuleSet": "リモートルールセットは別途ダウンロードが必要です",
+  "moduleSkipPolicy": "PROXY を指していますが、ポリシーが未設定です",
+  "moduleSkipGeneral": "コアに対応する項目がありません",
+  "moduleGeneralTip": "これらはまだ設定に反映されていません。コアに対応するスイッチがありません。",
+  "moduleUpdated": "「{label}」を更新しました",
+  "moduleRulesTruncated": "全 {count} 件、先頭のみ表示"
 }
