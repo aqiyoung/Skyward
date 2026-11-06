@@ -189,14 +189,20 @@ class _PureBlackItem extends ConsumerWidget {
     final pureBlack = ref.watch(
       themeSettingProvider.select((state) => state.pureBlack),
     );
+    final isDark = ref.watch(currentBrightnessProvider) == Brightness.dark;
     return ListItem.toggle(
       leading: const IconWell(AppGlyphs.pureBlack),
       title: Text(context.appLocalizations.pureBlackMode),
       value: pureBlack,
       onChanged: (value) {
-        ref
-            .read(themeSettingProvider.notifier)
-            .update((state) => state.copyWith(pureBlack: value));
+        ref.read(themeSettingProvider.notifier).update(
+          (state) => state.copyWith(
+            pureBlack: value,
+            // Pure black only paints a dark theme; switching it on from a
+            // light one would otherwise change nothing on screen.
+            themeMode: value && !isDark ? ThemeMode.dark : state.themeMode,
+          ),
+        );
       },
     );
   }
