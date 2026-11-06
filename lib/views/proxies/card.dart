@@ -306,6 +306,16 @@ class _DelayTextState extends ConsumerState<_DelayText> {
         .proxyDelayTest(widget.proxy, widget.testUrl);
   }
 
+  /// Why a failed test failed, where the row has no room to print it: a
+  /// long press on touch, a hover with a pointer. A null message leaves the
+  /// label alone, so a test that has not run yet shows no empty tip.
+  Widget _withFailureTip({required String? message, required Widget child}) {
+    if (message == null || message.isEmpty) {
+      return child;
+    }
+    return Tooltip(message: message, child: child);
+  }
+
   Widget _withFocusRing(BuildContext context, Widget child) {
     if (!_isFocused) {
       return child;
@@ -341,6 +351,12 @@ class _DelayTextState extends ConsumerState<_DelayText> {
     );
     final phase = ref.watch(
       delayTestPhaseProvider(
+        proxyName: widget.proxy.name,
+        testUrl: widget.testUrl,
+      ),
+    );
+    final failure = ref.watch(
+      delayFailureProvider(
         proxyName: widget.proxy.name,
         testUrl: widget.testUrl,
       ),
@@ -390,17 +406,23 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                     onTap: _handleTestCurrentDelay,
                     child: _withFocusRing(
                       context,
-                      Text(
-                        delay > 0
-                            ? '$delay ms'
-                            : delayFailureText(delay, context.appLocalizations),
-                        maxLines: 1,
-                        style: AppTextStyle.caption2
-                            .of(context, emphasized: true)
-                            .copyWith(
-                              overflow: TextOverflow.ellipsis,
-                              color: context.colorScheme.delayColor(delay),
-                            ),
+                      _withFailureTip(
+                        message: delay > 0 ? null : failure,
+                        child: Text(
+                          delay > 0
+                              ? '$delay ms'
+                              : delayFailureText(
+                                  delay,
+                                  context.appLocalizations,
+                                ),
+                          maxLines: 1,
+                          style: AppTextStyle.caption2
+                              .of(context, emphasized: true)
+                              .copyWith(
+                                overflow: TextOverflow.ellipsis,
+                                color: context.colorScheme.delayColor(delay),
+                              ),
+                        ),
                       ),
                     ),
                   ),

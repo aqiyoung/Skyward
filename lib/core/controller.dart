@@ -91,6 +91,8 @@ class CoreController {
 
   FutureOr<bool> get isInit => _interface.isInit;
 
+  Future<String> coreVersion() => _interface.coreVersion();
+
   Future<String> validateConfig(String path) async {
     final res = await _interface.validateConfig(path);
     return res;

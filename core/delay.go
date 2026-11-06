@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -94,7 +95,28 @@ func handleTestDelay(params *TestDelayParams) *Delay {
 	delay, err := proxy.URLTest(ctx, url, anyDelayTestStatus)
 	if err != nil {
 		delay = 0
+		result.Message = shortDelayFailure(err, ctx.Err())
 	}
 	result.Value = delayValue(delay, ctx.Err() != nil)
 	return result
+}
+
+// A dial error can run to several lines -- the address, the resolver, the
+// whole chain behind it -- and the host has a single line for it. Keep the
+// first line, cut it to a width a tooltip can carry, and count runes so a
+// message in Chinese is trimmed by what is shown, not by bytes.
+func shortDelayFailure(err error, ctxErr error) string {
+	message := err.Error()
+	if index := strings.IndexByte(message, '\n'); index >= 0 {
+		message = message[:index]
+	}
+	message = strings.TrimSpace(message)
+	if message == "" && ctxErr != nil {
+		message = ctxErr.Error()
+	}
+	const limit = 200
+	if runes := []rune(message); len(runes) > limit {
+		message = string(runes[:limit]) + "…"
+	}
+	return message
 }

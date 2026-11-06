@@ -75,6 +75,7 @@ class ProxiesAction extends _$ProxiesAction {
       final delays = List.of(_bufferedDelays);
       _bufferedDelays.clear();
       ref.read(delayDataSourceProvider.notifier).setDelays(delays);
+      ref.read(delayFailuresProvider.notifier).setAll(delays);
     }
     if (_bufferedStarts.isNotEmpty || _bufferedFinishes.isNotEmpty) {
       final started = List.of(_bufferedStarts);
