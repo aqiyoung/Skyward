@@ -303,6 +303,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(readTheme().pureBlack, isFalse);
     });
+
+    testWidgets('turns a light theme dark, so the switch shows something', (
+      tester,
+    ) async {
+      await pumpThemeView(tester);
+      expect(readTheme().themeMode, ThemeMode.system);
+
+      await tester.tap(find.text('Pure black mode'));
+      await tester.pumpAndSettle();
+
+      expect(readTheme().pureBlack, isTrue);
+      expect(readTheme().themeMode, ThemeMode.dark);
+    });
   });
 
   group('home navigation', () {
