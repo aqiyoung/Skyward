@@ -307,6 +307,9 @@ void main() {
     testWidgets('turns a light theme dark, so the switch shows something', (
       tester,
     ) async {
+      container
+          .read(systemBrightnessProvider.notifier)
+          .value = Brightness.light;
       await pumpThemeView(tester);
       expect(readTheme().themeMode, ThemeMode.system);
 
