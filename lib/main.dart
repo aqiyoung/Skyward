@@ -19,9 +19,10 @@ void main(List<String> args) {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      // Icons decode to 192 px, roughly 150 KB a piece. The 100 MB default lets
-      // a pass through the icon picker leave hundreds of bitmaps behind, and on
-      // Android those bytes come out of the same process the Core lives in.
+      // Icons decode to 192 physical pixels, roughly 150 KB a piece. The 100 MB
+      // default lets a pass through the icon picker leave hundreds of bitmaps
+      // behind, and on Android those bytes come out of the same process the
+      // Core lives in.
       PaintingBinding.instance.imageCache
         ..maximumSize = 300
         ..maximumSizeBytes = 32 << 20;
