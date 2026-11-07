@@ -1,6 +1,5 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/ui/surface.dart';
 import 'package:skyward/views/config/settings_index.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';

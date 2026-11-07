@@ -30,22 +30,28 @@ bool looksLikeProxyLinks(String text) {
   return _proxySchemes.any((s) => lower.contains(s));
 }
 
+/// Decodes unpadded base64 [value] as UTF-8, or null when it is not valid.
+String? _decodeBase64(String value) {
+  var padded = value;
+  while (padded.length % 4 != 0) {
+    padded += '=';
+  }
+  try {
+    return utf8.decode(base64.decode(padded));
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Tries to base64-decode [text]. Returns null if not valid base64
 /// or if decoded content doesn't look like proxy links.
 String? tryBase64Decode(String text) {
   final trimmed = text.trim().replaceAll(RegExp(r'\s+'), '');
   if (trimmed.isEmpty) return null;
-  try {
-    // Add padding if needed
-    var padded = trimmed;
-    while (padded.length % 4 != 0) {
-      padded += '=';
-    }
-    final decoded = utf8.decode(base64.decode(padded));
-    if (looksLikeProxyLinks(decoded)) {
-      return decoded;
-    }
-  } catch (_) {}
+  final decoded = _decodeBase64(trimmed);
+  if (decoded != null && looksLikeProxyLinks(decoded)) {
+    return decoded;
+  }
   return null;
 }
 
@@ -71,7 +77,7 @@ String convertToClashConfig(String content) {
   // Parse proxy links
   final proxies = <Map<String, dynamic>>[];
   final names = <String>[];
-  
+
   for (final line in text.split('\n')) {
     final trimmed = line.trim();
     if (trimmed.isEmpty) continue;
@@ -99,7 +105,7 @@ String convertToClashConfig(String content) {
   }
   buffer.writeln('rules:');
   buffer.writeln('  - MATCH,PROXY');
-  
+
   return buffer.toString();
 }
 
@@ -124,38 +130,34 @@ Map<String, dynamic>? _parseVless(String link) {
   try {
     final uri = Uri.parse(link);
     final params = uri.queryParameters;
-    
+
     // userInfo may be base64-encoded "uuid@host:port" or "method:uuid@host:port"
     // or plain "uuid". Try to decode.
     String userInfo = Uri.decodeComponent(uri.userInfo);
     String host = uri.host;
     int port = uri.port;
-    try {
-      // Try base64 decode (for links like vless://base64(uuid@host:port)?...)
-      var padded = userInfo;
-      // Only try if it looks like base64 (no @ : . characters typical in plain)
-      if (!userInfo.contains('@') && RegExp(r'^[A-Za-z0-9+/=_-]+$').hasMatch(userInfo)) {
-        while (padded.length % 4 != 0) padded += '=';
-        final decoded = utf8.decode(base64.decode(padded));
-        if (decoded.contains('@')) {
-          // Format: [method:]uuid@host:port
-          final atIdx = decoded.lastIndexOf('@');
-          final uuidPart = decoded.substring(0, atIdx);
-          final hostPort = decoded.substring(atIdx + 1);
-          // uuidPart may be "uuid" or "method:uuid"
-          final colonIdx = uuidPart.indexOf(':');
-          userInfo = colonIdx != -1 ? uuidPart.substring(colonIdx + 1) : uuidPart;
-          final hpColon = hostPort.lastIndexOf(':');
-          if (hpColon != -1) {
-            host = hostPort.substring(0, hpColon);
-            port = int.tryParse(hostPort.substring(hpColon + 1)) ?? port;
-          } else {
-            host = hostPort;
-          }
+    // Only try if it looks like base64 (no @ : . characters typical in plain).
+    if (!userInfo.contains('@') &&
+        RegExp(r'^[A-Za-z0-9+/=_-]+$').hasMatch(userInfo)) {
+      final decoded = _decodeBase64(userInfo);
+      if (decoded != null && decoded.contains('@')) {
+        // Format: [method:]uuid@host:port
+        final atIdx = decoded.lastIndexOf('@');
+        final uuidPart = decoded.substring(0, atIdx);
+        final hostPort = decoded.substring(atIdx + 1);
+        // uuidPart may be "uuid" or "method:uuid"
+        final colonIdx = uuidPart.indexOf(':');
+        userInfo = colonIdx != -1
+            ? uuidPart.substring(colonIdx + 1)
+            : uuidPart;
+        final hpColon = hostPort.lastIndexOf(':');
+        if (hpColon != -1) {
+          host = hostPort.substring(0, hpColon);
+          port = int.tryParse(hostPort.substring(hpColon + 1)) ?? port;
+        } else {
+          host = hostPort;
         }
       }
-    } catch (_) {
-      // Not base64, use as-is
     }
     // userInfo may still be "method:uuid", extract uuid
     String uuid = userInfo;
@@ -167,7 +169,7 @@ Map<String, dynamic>? _parseVless(String link) {
         uuid = possibleUuid;
       }
     }
-    
+
     // Name from remarks param or fragment
     String name;
     if (params['remarks'] != null) {
@@ -177,7 +179,7 @@ Map<String, dynamic>? _parseVless(String link) {
     } else {
       name = '$host:$port';
     }
-    
+
     final proxy = <String, dynamic>{
       'name': name,
       'type': 'vless',
@@ -185,16 +187,16 @@ Map<String, dynamic>? _parseVless(String link) {
       'port': port,
       'uuid': uuid,
     };
-    
+
     // Security: support security=tls/reality, tls=1, and xtls/pbk indicators
     final security = params['security'] ?? 'none';
     final tlsParam = params['tls'];
     final hasTls = security == 'tls' || tlsParam == '1' || tlsParam == 'true';
     // Reality indicated by security=reality, or pbk (public key), or xtls param
-    final isReality = security == 'reality' || 
-        params['pbk'] != null || 
+    final isReality = security == 'reality' ||
+        params['pbk'] != null ||
         params['xtls'] != null;
-    
+
     if (hasTls || isReality) {
       proxy['tls'] = true;
       // servername from sni or peer param
@@ -223,7 +225,7 @@ Map<String, dynamic>? _parseVless(String link) {
             .toList();
       }
     }
-    
+
     // Keys a vless link carries that the server actually enforces. Dropping
     // them is what makes an imported node look broken: `flow` is the XTLS
     // vision mode a Reality server expects, and `encryption` has to travel with
@@ -257,7 +259,7 @@ Map<String, dynamic>? _parseVless(String link) {
         };
       }
     }
-    
+
     // UDP and TFO
     if (params['udp'] == '1' || params['udp'] == 'true') {
       proxy['udp'] = true;
@@ -265,7 +267,7 @@ Map<String, dynamic>? _parseVless(String link) {
     if (params['tfo'] == '1' || params['tfo'] == 'true') {
       proxy['tfo'] = true;
     }
-    
+
     return proxy;
   } catch (_) {
     return null;
@@ -275,11 +277,10 @@ Map<String, dynamic>? _parseVless(String link) {
 Map<String, dynamic>? _parseVmess(String link) {
   try {
     // vmess:// is base64-encoded JSON
-    final b64 = link.substring('vmess://'.length);
-    var padded = b64;
-    while (padded.length % 4 != 0) padded += '=';
-    final json = jsonDecode(utf8.decode(base64.decode(padded)));
-    
+    final decoded = _decodeBase64(link.substring('vmess://'.length));
+    if (decoded == null) return null;
+    final json = jsonDecode(decoded);
+
     return {
       'name': json['ps'] ?? '${json['add']}:${json['port']}',
       'type': 'vmess',
@@ -304,7 +305,7 @@ Map<String, dynamic>? _parseTrojan(String link) {
         ? Uri.decodeComponent(uri.fragment)
         : '${uri.host}:${uri.port}';
     final params = uri.queryParameters;
-    
+
     return {
       'name': name,
       'type': 'trojan',
@@ -352,9 +353,8 @@ Map<String, dynamic>? _parseSsr(String link) {
     // Remove fragment if present
     final hashIdx = b64.indexOf('#');
     if (hashIdx != -1) b64 = b64.substring(0, hashIdx);
-    var padded = b64;
-    while (padded.length % 4 != 0) padded += '=';
-    final decoded = utf8.decode(base64.decode(padded));
+    final decoded = _decodeBase64(b64);
+    if (decoded == null) return null;
     // format: host:port:protocol:method:obfs:base64pass/?params
     final mainParts = decoded.split('/?');
     final parts = mainParts[0].split(':');
@@ -364,38 +364,21 @@ Map<String, dynamic>? _parseSsr(String link) {
     final protocol = parts[2];
     final method = parts[3];
     final obfs = parts[4];
-    var password = parts[5];
-    try {
-      var pp = password;
-      while (pp.length % 4 != 0) pp += '=';
-      password = utf8.decode(base64.decode(pp));
-    } catch (_) {}
+    final password = _decodeBase64(parts[5]) ?? parts[5];
     String name = '$host:$port';
     String? obfsParam;
     String? protocolParam;
     String? group;
     if (mainParts.length > 1) {
       final params = Uri.splitQueryString(mainParts[1]);
-      if (params['remarks'] != null) {
-        var r = params['remarks']!;
-        while (r.length % 4 != 0) r += '=';
-        try { name = utf8.decode(base64.decode(r)); } catch (_) {}
-      }
-      if (params['obfsparam'] != null) {
-        var o = params['obfsparam']!;
-        while (o.length % 4 != 0) o += '=';
-        try { obfsParam = utf8.decode(base64.decode(o)); } catch (_) {}
-      }
-      if (params['protoparam'] != null) {
-        var p = params['protoparam']!;
-        while (p.length % 4 != 0) p += '=';
-        try { protocolParam = utf8.decode(base64.decode(p)); } catch (_) {}
-      }
-      if (params['group'] != null) {
-        var g = params['group']!;
-        while (g.length % 4 != 0) g += '=';
-        try { group = utf8.decode(base64.decode(g)); } catch (_) {}
-      }
+      final remarks = params['remarks'];
+      if (remarks != null) name = _decodeBase64(remarks) ?? name;
+      final obfs = params['obfsparam'];
+      if (obfs != null) obfsParam = _decodeBase64(obfs);
+      final proto = params['protoparam'];
+      if (proto != null) protocolParam = _decodeBase64(proto);
+      final grp = params['group'];
+      if (grp != null) group = _decodeBase64(grp);
     }
     return {
       'name': name,

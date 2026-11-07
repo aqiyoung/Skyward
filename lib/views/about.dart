@@ -152,7 +152,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
               // The terms are a page of their own, reached from this row: read
               // here in full, they were a scroll few ever finished.
               ListItem.open(
-                leading: IconWell(
+                leading: const IconWell(
                   AppGlyphs.rules,
                   side: 40,
                   glyphSize: 20,
@@ -162,7 +162,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 widget: const DisclaimerView(),
               ),
               ListItem.open(
-                leading: IconWell(
+                leading: const IconWell(
                   AppGlyphs.info,
                   side: 40,
                   glyphSize: 20,

@@ -550,7 +550,7 @@ enum DashboardWidget {
 
   final List<SupportPlatform> platforms;
 
-  const DashboardWidget({this.platforms = SupportPlatform.values});
+  const DashboardWidget() : platforms = SupportPlatform.values;
 }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
