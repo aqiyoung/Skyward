@@ -330,6 +330,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Ответы"),
     "app": MessageLookupByLibrary.simpleMessage("Приложение"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешить приложениям поднимать собственный VPN в обход этого.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Контроль доступа приложений",
     ),
@@ -1214,10 +1217,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Загрузка…"),
     "local": MessageLookupByLibrary.simpleMessage("Локально"),
     "localImage": MessageLookupByLibrary.simpleMessage("Локальное изображение"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage(
+      "Локальная сеть через прокси",
+    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "Если выключено, адреса локальной сети, loopback и multicast не проходят через виртуальный интерфейс.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Разрешение на геолокацию",
     ),
@@ -1427,6 +1436,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Пиры"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Выбрать из галереи"),
+    "perApp": MessageLookupByLibrary.simpleMessage("По приложениям"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Выберите, какие приложения используют прокси.",
+    ),
     "pinWindow": MessageLookupByLibrary.simpleMessage(
       "Закрепить поверх всех окон",
     ),
@@ -2023,6 +2036,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
     "tab": MessageLookupByLibrary.simpleMessage("Вкладки"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Анимация вкладок"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Охват трафика"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
+      "Всегда включено",
+    ),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "После подключения VPN система сама направляет 0.0.0.0/0 через туннель — отдельный переключатель не нужен.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Нажмите на значок, чтобы повторить",
     ),
@@ -2084,6 +2104,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "turnOff": MessageLookupByLibrary.simpleMessage("Выключить"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Включить"),
     "type": MessageLookupByLibrary.simpleMessage("Тип"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Пустой адрес маршрута забирает весь трафик; исключённые подсети не проходят через виртуальный интерфейс.",
+    ),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage(
       "Режим ретрансляции UDP",
     ),
@@ -2133,6 +2156,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("Просмотр"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Виртуальный IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Яркий"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("Поведение VPN"),
+    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
+      "VpnService в Android даёт только перечисленные пункты. Параметров iOS «Включая APNs», «Включая сотовые службы» и «Скрыть значок VPN» здесь нет, поэтому они не предлагаются.",
+    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Обнаружено изменение настроек VPN",
     ),

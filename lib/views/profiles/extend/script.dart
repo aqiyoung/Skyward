@@ -80,7 +80,7 @@ class _ScriptOption extends StatelessWidget {
     return DecorationListItem(
       isSelected: isSelected,
       title: Text(label),
-      trailing: isSelected ? const SelectionCheck() : null,
+      trailing: isSelected ? const SelectionBadge() : null,
       onPressed: onSelected,
     );
   }

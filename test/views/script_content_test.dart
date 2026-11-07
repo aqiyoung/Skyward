@@ -138,7 +138,7 @@ void main() {
 
     Finder checkIn(String label) => find.descendant(
       of: find.widgetWithText(DecorationListItem, label),
-      matching: find.byType(SelectionCheck),
+      matching: find.byType(SelectionBadge),
     );
     expect(checkIn('beta'), findsOneWidget);
     expect(checkIn('alpha'), findsNothing);

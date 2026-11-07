@@ -283,6 +283,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("外观"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),
     "authentication": MessageLookupByLibrary.simpleMessage("认证"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "允许应用建立自己的 VPN 并绕开这一条。",
+    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "认证开启后，使用本地代理端口需要账号密码。",
     ),
@@ -921,11 +924,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("加载中…"),
     "local": MessageLookupByLibrary.simpleMessage("本地"),
     "localImage": MessageLookupByLibrary.simpleMessage("本地图片"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("局域网也经代理"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("本地代理"),
     "locationPermission": MessageLookupByLibrary.simpleMessage("位置权限"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "关闭后，局域网、回环与组播地址不进入虚拟网卡。",
+    ),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "位置权限已被拒绝，无法获取当前 Wi-Fi 名称。请前往系统设置手动开启位置权限。",
     ),
@@ -1075,6 +1082,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pinWindow": MessageLookupByLibrary.simpleMessage("窗口置顶"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("请绑定WebDAV"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage("请输入脚本名称"),
+    "perApp": MessageLookupByLibrary.simpleMessage("分应用"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("决定哪些应用使用代理。"),
     "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
       "请上传有效的二维码",
     ),
@@ -1553,6 +1562,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("传输协议"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("接管范围"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("始终开启"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN 建立后由系统接管全部路由（0.0.0.0/0），不需要单独开关。",
+    ),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),
@@ -1567,6 +1581,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("类型"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 中继模式"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP 超时"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "路由地址留空时接管全部流量；排除地址中的网段不进入虚拟网卡。",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP 超时以秒为单位，仅在 gvisor、system 和 mixed 栈生效。",
     ),
@@ -1600,6 +1617,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("查看"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("鲜明"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN 行为"),
+    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
+      "Android 的 VpnService 只提供上面这些开关。iOS 的「包括 APNs」「包括蜂窝服务」「隐藏 VPN 图标」在这里没有对应通道，所以不提供。",
+    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "检测到VPN相关配置改动",
     ),

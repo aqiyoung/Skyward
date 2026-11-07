@@ -181,6 +181,26 @@ final _networkEntries = <SettingsEntry>[
     view: _networkView,
   ),
   SettingsEntry(
+    title: (l) => l.vpnBehavior,
+    page: (l) => l.network,
+    view: _networkView,
+  ),
+  SettingsEntry(
+    title: (l) => l.takeoverScope,
+    page: (l) => l.network,
+    view: _networkView,
+  ),
+  SettingsEntry(
+    title: (l) => l.localNetwork,
+    page: (l) => l.network,
+    view: _networkView,
+  ),
+  SettingsEntry(
+    title: (l) => l.perApp,
+    page: (l) => l.network,
+    view: _networkView,
+  ),
+  SettingsEntry(
     title: (l) => l.tun,
     page: (l) => l.network,
     view: _networkView,
@@ -322,7 +342,7 @@ final _maintenanceEntries = <SettingsEntry>[
     view: _diagnosticsView,
   ),
   SettingsEntry(
-    title: (l) => l.leakCheck,
+    title: (l) => l.dnsLeakCheck,
     page: (l) => l.settings,
     view: _dnsLeakView,
   ),

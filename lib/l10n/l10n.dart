@@ -8891,6 +8891,105 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  String get allowBypassDesc {
+    return Intl.message(
+      'Apps may bring up their own VPN and leave this one.',
+      name: 'allowBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get localNetwork {
+    return Intl.message(
+      'Proxy local network',
+      name: 'localNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get localNetworkDesc {
+    return Intl.message(
+      'When off, LAN, loopback and multicast addresses bypass the virtual interface.',
+      name: 'localNetworkDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get perApp {
+    return Intl.message(
+      'Per app',
+      name: 'perApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get perAppDesc {
+    return Intl.message(
+      'Choose which apps use the proxy.',
+      name: 'perAppDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScope {
+    return Intl.message(
+      'Traffic scope',
+      name: 'takeoverScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScopeAlways {
+    return Intl.message(
+      'Always on',
+      name: 'takeoverScopeAlways',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScopeDesc {
+    return Intl.message(
+      'Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.',
+      name: 'takeoverScopeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get tunRouteDesc {
+    return Intl.message(
+      'An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.',
+      name: 'tunRouteDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get vpnBehavior {
+    return Intl.message(
+      'VPN behaviour',
+      name: 'vpnBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get vpnBehaviorDesc {
+    return Intl.message(
+      'Android\'s VpnService only exposes the rows above. iOS options such as Include APNs, Include Cellular Services and Hide VPN icon have no equivalent here, so they are not offered.',
+      name: 'vpnBehaviorDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

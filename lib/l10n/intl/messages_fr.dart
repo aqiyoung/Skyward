@@ -342,6 +342,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Réponses"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Autoriser les applications à monter leur propre VPN et à contourner celui-ci.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Contrôle d’accès des apps",
     ),
@@ -1260,10 +1263,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Chargement…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Image locale"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage(
+      "Réseau local via le proxy",
+    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Proxys locaux"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "Désactivé, les adresses du réseau local, de bouclage et de multidiffusion ne passent pas par l'interface virtuelle.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Autorisation de localisation",
     ),
@@ -1474,6 +1483,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Coller un lien d\'abonnement depuis le presse-papiers",
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Pairs"),
+    "perApp": MessageLookupByLibrary.simpleMessage("Par application"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Choisissez les applications qui utilisent le proxy.",
+    ),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage(
       "Choisir dans l’album",
     ),
@@ -2091,6 +2104,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimation": MessageLookupByLibrary.simpleMessage(
       "Animation des onglets",
     ),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Portée du trafic"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
+      "Toujours actif",
+    ),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "Une fois le VPN établi, Android achemine 0.0.0.0/0 par le tunnel ; aucun interrupteur séparé n'est nécessaire.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Appuyez sur l’icône pour réessayer",
     ),
@@ -2152,6 +2172,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("Mode de relais UDP"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("Délai UDP"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Une adresse de route vide prend en charge tout le trafic ; les sous-réseaux exclus restent hors de l'interface virtuelle.",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "Le délai UDP est en secondes et ne fonctionne qu’avec les piles gvisor, system et mixed.",
     ),
@@ -2203,6 +2226,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("Afficher"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtuelle"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vif"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("Comportement du VPN"),
+    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
+      "Le VpnService d'Android n'expose que les réglages ci-dessus. Les options iOS « Inclure les APNs », « Inclure les services cellulaires » et « Masquer l'icône VPN » n'ont pas d'équivalent ici, elles ne sont donc pas proposées.",
+    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Modification de la configuration liée au VPN détectée",
     ),

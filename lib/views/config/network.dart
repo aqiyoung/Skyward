@@ -6,6 +6,7 @@ import 'package:skyward/features/form/form.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/providers/action.dart';
+import 'package:skyward/views/access.dart';
 import 'package:skyward/views/config/override.dart';
 import 'package:skyward/views/config/tun.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -40,11 +41,13 @@ ConfigWriter<T> _tunWriter<T>(_TunUpdate<T> update) {
 
 ConfigToggleItem _vpnToggle({
   required ConfigLabel title,
+  ConfigLabel? subtitle,
   required bool Function(VpnProps state) select,
   required _VpnUpdate<bool> update,
 }) {
   return ConfigToggleItem(
     title: title,
+    subtitle: subtitle,
     selector: vpnSettingProvider.select(select),
     onChanged: _vpnWriter(update),
   );
@@ -97,8 +100,69 @@ class AllowBypassItem extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return _vpnToggle(
       title: (l) => l.allowBypass,
+      subtitle: (l) => l.allowBypassDesc,
       select: (state) => state.allowBypass,
       update: (state, value) => state.copyWith(allowBypass: value),
+    );
+  }
+}
+
+class TakeoverScopeItem extends StatelessWidget {
+  const TakeoverScopeItem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: Text(appLocalizations.takeoverScope),
+      subtitle: Text(appLocalizations.takeoverScopeDesc),
+      trailing: Text(
+        appLocalizations.takeoverScopeAlways,
+        style: AppTextStyle.footnote
+            .of(context)
+            .copyWith(color: context.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
+class LocalNetworkItem extends ConsumerWidget {
+  const LocalNetworkItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ConfigToggleItem(
+      title: (l) => l.localNetwork,
+      subtitle: (l) => l.localNetworkDesc,
+      selector: networkSettingProvider.select(
+        (state) => !state.bypassPrivateRoute,
+      ),
+      onChanged: (r, value) => r
+          .read(networkSettingProvider.notifier)
+          .update((state) => state.copyWith(bypassPrivateRoute: !value)),
+    );
+  }
+}
+
+class PerAppItem extends ConsumerWidget {
+  const PerAppItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final accessControl = ref.watch(
+      vpnSettingProvider.select((state) => state.accessControlProps),
+    );
+    return ListItem.open(
+      title: Text(appLocalizations.perApp),
+      subtitle: Text(
+        accessControl.enable
+            ? appLocalizations.accessControlSelectedCount(
+                accessControl.currentList.length,
+              )
+            : appLocalizations.perAppDesc,
+      ),
+      widget: const AccessView(),
     );
   }
 }
@@ -389,7 +453,6 @@ List<Widget> tunItems({required bool isMipsStack}) {
           (state, value) => state.copyWith.tun(congestionController: value),
         ),
       ),
-    const BypassPrivateRouteItem(),
     const RouteAddressItem(),
     ConfigListEditItem(
       title: (l) => l.routeExcludeAddress,
@@ -429,7 +492,7 @@ class TunSection extends ConsumerWidget {
       return generateSection(
         title: appLocalizations.tun,
         items: tunItems(isMipsStack: isMipsStack),
-        footer: appLocalizations.bypassPrivateRouteDesc,
+        footer: appLocalizations.tunRouteDesc,
       );
     }
     final spec = appTunOverrideSpec(isLinux: isLinux, isWindows: isWindows);
@@ -536,11 +599,20 @@ class VpnSections extends ConsumerWidget {
           footer: appLocalizations.vpnEnableDesc,
         ),
         generateSection(
+          title: appLocalizations.vpnBehavior,
+          items: const [
+            TakeoverScopeItem(),
+            LocalNetworkItem(),
+            AllowBypassItem(),
+            PerAppItem(),
+          ],
+          footer: appLocalizations.vpnBehaviorDesc,
+        ),
+        generateSection(
           title: 'VPN',
           items: const [
             VpnSystemProxyItem(),
             BypassDomainItem(),
-            AllowBypassItem(),
             Ipv6Item(),
             DNSHijackingItem(),
           ],
