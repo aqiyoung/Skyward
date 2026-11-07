@@ -1050,5 +1050,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "Este equipo tiene una dirección IPv6 global y el tráfico v6 puede saltarse una captura solo IPv4",
   "dnsLeakAdvice": "Para lo que falle, active la VPN y el secuestro de DNS en «Avanzado → Red», desactive el DNS privado en los ajustes del sistema y sustituya los servidores en claro por DoH en las sustituciones de DNS.",
-  "dnsLeakExternal": "Verificar en el navegador"
+  "dnsLeakExternal": "Verificar en el navegador",
+  "modules": "Módulos",
+  "author": "Autor",
+  "moduleSkipped": "Omitido",
+  "modulePolicy": "Política",
+  "modulePolicyTip": "Las reglas con PROXY usan esta política; déjalo vacío para omitirlas.",
+  "modulePasteTip": "Pega el contenido de un archivo .sgmodule, .module, .plugin, .stoverride o .conf.",
+  "moduleEmpty": "El módulo está vacío.",
+  "moduleNoUrl": "Este módulo no tiene URL de origen para actualizar.",
+  "moduleSkipHttps": "Requiere descifrado HTTPS, que el núcleo no hace",
+  "moduleSkipScript": "Requiere un entorno de scripts, que el núcleo no tiene",
+  "moduleSkipRule": "El núcleo no tiene ese tipo de regla",
+  "moduleSkipRuleSet": "Un conjunto de reglas remoto requiere su propia descarga",
+  "moduleSkipPolicy": "Apunta a PROXY y no hay política definida",
+  "moduleSkipGeneral": "El núcleo no tiene ese campo",
+  "moduleGeneralTip": "Estos elementos aún no se aplican; el núcleo no tiene ese interruptor.",
+  "moduleUpdated": "Se actualizó {label}",
+  "moduleRulesTruncated": "{count} reglas, solo se muestran las primeras"
 }

@@ -4597,6 +4597,643 @@ class IpQualitiesCompanion extends UpdateCompanion<IpQualityRecord> {
   }
 }
 
+class $ModulesTable extends Modules with TableInfo<$ModulesTable, RawModule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ModulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<String> order = GeneratedColumn<String>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _authorMeta = const VerificationMeta('author');
+  @override
+  late final GeneratedColumn<String> author = GeneratedColumn<String>(
+    'author',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<String> version = GeneratedColumn<String>(
+    'version',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _homepageMeta = const VerificationMeta(
+    'homepage',
+  );
+  @override
+  late final GeneratedColumn<String> homepage = GeneratedColumn<String>(
+    'homepage',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _policyMeta = const VerificationMeta('policy');
+  @override
+  late final GeneratedColumn<String> policy = GeneratedColumn<String>(
+    'policy',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    label,
+    url,
+    content,
+    enabled,
+    order,
+    author,
+    version,
+    homepage,
+    policy,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'modules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawModule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    if (data.containsKey('author')) {
+      context.handle(
+        _authorMeta,
+        author.isAcceptableOrUnknown(data['author']!, _authorMeta),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    if (data.containsKey('homepage')) {
+      context.handle(
+        _homepageMeta,
+        homepage.isAcceptableOrUnknown(data['homepage']!, _homepageMeta),
+      );
+    }
+    if (data.containsKey('policy')) {
+      context.handle(
+        _policyMeta,
+        policy.isAcceptableOrUnknown(data['policy']!, _policyMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawModule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawModule(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      ),
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order'],
+      ),
+      author: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author'],
+      ),
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version'],
+      ),
+      homepage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}homepage'],
+      ),
+      policy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}policy'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
+    );
+  }
+
+  @override
+  $ModulesTable createAlias(String alias) {
+    return $ModulesTable(attachedDatabase, alias);
+  }
+}
+
+class RawModule extends DataClass implements Insertable<RawModule> {
+  final int id;
+  final String label;
+  final String? url;
+  final String content;
+  final bool enabled;
+  final String? order;
+  final String? author;
+  final String? version;
+  final String? homepage;
+  final String? policy;
+  final DateTime? updatedAt;
+  const RawModule({
+    required this.id,
+    required this.label,
+    this.url,
+    required this.content,
+    required this.enabled,
+    this.order,
+    this.author,
+    this.version,
+    this.homepage,
+    this.policy,
+    this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['label'] = Variable<String>(label);
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
+    map['content'] = Variable<String>(content);
+    map['enabled'] = Variable<bool>(enabled);
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<String>(order);
+    }
+    if (!nullToAbsent || author != null) {
+      map['author'] = Variable<String>(author);
+    }
+    if (!nullToAbsent || version != null) {
+      map['version'] = Variable<String>(version);
+    }
+    if (!nullToAbsent || homepage != null) {
+      map['homepage'] = Variable<String>(homepage);
+    }
+    if (!nullToAbsent || policy != null) {
+      map['policy'] = Variable<String>(policy);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    return map;
+  }
+
+  ModulesCompanion toCompanion(bool nullToAbsent) {
+    return ModulesCompanion(
+      id: Value(id),
+      label: Value(label),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+      content: Value(content),
+      enabled: Value(enabled),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+      author: author == null && nullToAbsent
+          ? const Value.absent()
+          : Value(author),
+      version: version == null && nullToAbsent
+          ? const Value.absent()
+          : Value(version),
+      homepage: homepage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(homepage),
+      policy: policy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(policy),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+    );
+  }
+
+  factory RawModule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawModule(
+      id: serializer.fromJson<int>(json['id']),
+      label: serializer.fromJson<String>(json['label']),
+      url: serializer.fromJson<String?>(json['url']),
+      content: serializer.fromJson<String>(json['content']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      order: serializer.fromJson<String?>(json['order']),
+      author: serializer.fromJson<String?>(json['author']),
+      version: serializer.fromJson<String?>(json['version']),
+      homepage: serializer.fromJson<String?>(json['homepage']),
+      policy: serializer.fromJson<String?>(json['policy']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'label': serializer.toJson<String>(label),
+      'url': serializer.toJson<String?>(url),
+      'content': serializer.toJson<String>(content),
+      'enabled': serializer.toJson<bool>(enabled),
+      'order': serializer.toJson<String?>(order),
+      'author': serializer.toJson<String?>(author),
+      'version': serializer.toJson<String?>(version),
+      'homepage': serializer.toJson<String?>(homepage),
+      'policy': serializer.toJson<String?>(policy),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+    };
+  }
+
+  RawModule copyWith({
+    int? id,
+    String? label,
+    Value<String?> url = const Value.absent(),
+    String? content,
+    bool? enabled,
+    Value<String?> order = const Value.absent(),
+    Value<String?> author = const Value.absent(),
+    Value<String?> version = const Value.absent(),
+    Value<String?> homepage = const Value.absent(),
+    Value<String?> policy = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
+  }) => RawModule(
+    id: id ?? this.id,
+    label: label ?? this.label,
+    url: url.present ? url.value : this.url,
+    content: content ?? this.content,
+    enabled: enabled ?? this.enabled,
+    order: order.present ? order.value : this.order,
+    author: author.present ? author.value : this.author,
+    version: version.present ? version.value : this.version,
+    homepage: homepage.present ? homepage.value : this.homepage,
+    policy: policy.present ? policy.value : this.policy,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+  );
+  RawModule copyWithCompanion(ModulesCompanion data) {
+    return RawModule(
+      id: data.id.present ? data.id.value : this.id,
+      label: data.label.present ? data.label.value : this.label,
+      url: data.url.present ? data.url.value : this.url,
+      content: data.content.present ? data.content.value : this.content,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      order: data.order.present ? data.order.value : this.order,
+      author: data.author.present ? data.author.value : this.author,
+      version: data.version.present ? data.version.value : this.version,
+      homepage: data.homepage.present ? data.homepage.value : this.homepage,
+      policy: data.policy.present ? data.policy.value : this.policy,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawModule(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('content: $content, ')
+          ..write('enabled: $enabled, ')
+          ..write('order: $order, ')
+          ..write('author: $author, ')
+          ..write('version: $version, ')
+          ..write('homepage: $homepage, ')
+          ..write('policy: $policy, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    label,
+    url,
+    content,
+    enabled,
+    order,
+    author,
+    version,
+    homepage,
+    policy,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawModule &&
+          other.id == this.id &&
+          other.label == this.label &&
+          other.url == this.url &&
+          other.content == this.content &&
+          other.enabled == this.enabled &&
+          other.order == this.order &&
+          other.author == this.author &&
+          other.version == this.version &&
+          other.homepage == this.homepage &&
+          other.policy == this.policy &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ModulesCompanion extends UpdateCompanion<RawModule> {
+  final Value<int> id;
+  final Value<String> label;
+  final Value<String?> url;
+  final Value<String> content;
+  final Value<bool> enabled;
+  final Value<String?> order;
+  final Value<String?> author;
+  final Value<String?> version;
+  final Value<String?> homepage;
+  final Value<String?> policy;
+  final Value<DateTime?> updatedAt;
+  const ModulesCompanion({
+    this.id = const Value.absent(),
+    this.label = const Value.absent(),
+    this.url = const Value.absent(),
+    this.content = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.order = const Value.absent(),
+    this.author = const Value.absent(),
+    this.version = const Value.absent(),
+    this.homepage = const Value.absent(),
+    this.policy = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ModulesCompanion.insert({
+    this.id = const Value.absent(),
+    required String label,
+    this.url = const Value.absent(),
+    required String content,
+    this.enabled = const Value.absent(),
+    this.order = const Value.absent(),
+    this.author = const Value.absent(),
+    this.version = const Value.absent(),
+    this.homepage = const Value.absent(),
+    this.policy = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : label = Value(label),
+       content = Value(content);
+  static Insertable<RawModule> custom({
+    Expression<int>? id,
+    Expression<String>? label,
+    Expression<String>? url,
+    Expression<String>? content,
+    Expression<bool>? enabled,
+    Expression<String>? order,
+    Expression<String>? author,
+    Expression<String>? version,
+    Expression<String>? homepage,
+    Expression<String>? policy,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (label != null) 'label': label,
+      if (url != null) 'url': url,
+      if (content != null) 'content': content,
+      if (enabled != null) 'enabled': enabled,
+      if (order != null) 'order': order,
+      if (author != null) 'author': author,
+      if (version != null) 'version': version,
+      if (homepage != null) 'homepage': homepage,
+      if (policy != null) 'policy': policy,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ModulesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? label,
+    Value<String?>? url,
+    Value<String>? content,
+    Value<bool>? enabled,
+    Value<String?>? order,
+    Value<String?>? author,
+    Value<String?>? version,
+    Value<String?>? homepage,
+    Value<String?>? policy,
+    Value<DateTime?>? updatedAt,
+  }) {
+    return ModulesCompanion(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      url: url ?? this.url,
+      content: content ?? this.content,
+      enabled: enabled ?? this.enabled,
+      order: order ?? this.order,
+      author: author ?? this.author,
+      version: version ?? this.version,
+      homepage: homepage ?? this.homepage,
+      policy: policy ?? this.policy,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (order.present) {
+      map['order'] = Variable<String>(order.value);
+    }
+    if (author.present) {
+      map['author'] = Variable<String>(author.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<String>(version.value);
+    }
+    if (homepage.present) {
+      map['homepage'] = Variable<String>(homepage.value);
+    }
+    if (policy.present) {
+      map['policy'] = Variable<String>(policy.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ModulesCompanion(')
+          ..write('id: $id, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('content: $content, ')
+          ..write('enabled: $enabled, ')
+          ..write('order: $order, ')
+          ..write('author: $author, ')
+          ..write('version: $version, ')
+          ..write('homepage: $homepage, ')
+          ..write('policy: $policy, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4611,6 +5248,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
+  late final $ModulesTable modules = $ModulesTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4643,6 +5281,7 @@ abstract class _$Database extends GeneratedDatabase {
     this as Database,
   );
   late final IpQualitiesDao ipQualitiesDao = IpQualitiesDao(this as Database);
+  late final ModulesDao modulesDao = ModulesDao(this as Database);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4659,6 +5298,7 @@ abstract class _$Database extends GeneratedDatabase {
     customProxies,
     proxyDialers,
     ipQualities,
+    modules,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
@@ -8434,6 +9074,316 @@ typedef $$IpQualitiesTableProcessedTableManager =
       IpQualityRecord,
       PrefetchHooks Function()
     >;
+typedef $$ModulesTableCreateCompanionBuilder =
+    ModulesCompanion Function({
+      Value<int> id,
+      required String label,
+      Value<String?> url,
+      required String content,
+      Value<bool> enabled,
+      Value<String?> order,
+      Value<String?> author,
+      Value<String?> version,
+      Value<String?> homepage,
+      Value<String?> policy,
+      Value<DateTime?> updatedAt,
+    });
+typedef $$ModulesTableUpdateCompanionBuilder =
+    ModulesCompanion Function({
+      Value<int> id,
+      Value<String> label,
+      Value<String?> url,
+      Value<String> content,
+      Value<bool> enabled,
+      Value<String?> order,
+      Value<String?> author,
+      Value<String?> version,
+      Value<String?> homepage,
+      Value<String?> policy,
+      Value<DateTime?> updatedAt,
+    });
+
+class $$ModulesTableFilterComposer extends Composer<_$Database, $ModulesTable> {
+  $$ModulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get author => $composableBuilder(
+    column: $table.author,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get homepage => $composableBuilder(
+    column: $table.homepage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get policy => $composableBuilder(
+    column: $table.policy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ModulesTableOrderingComposer
+    extends Composer<_$Database, $ModulesTable> {
+  $$ModulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get author => $composableBuilder(
+    column: $table.author,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get homepage => $composableBuilder(
+    column: $table.homepage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get policy => $composableBuilder(
+    column: $table.policy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ModulesTableAnnotationComposer
+    extends Composer<_$Database, $ModulesTable> {
+  $$ModulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+
+  GeneratedColumn<String> get author =>
+      $composableBuilder(column: $table.author, builder: (column) => column);
+
+  GeneratedColumn<String> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get homepage =>
+      $composableBuilder(column: $table.homepage, builder: (column) => column);
+
+  GeneratedColumn<String> get policy =>
+      $composableBuilder(column: $table.policy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ModulesTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $ModulesTable,
+          RawModule,
+          $$ModulesTableFilterComposer,
+          $$ModulesTableOrderingComposer,
+          $$ModulesTableAnnotationComposer,
+          $$ModulesTableCreateCompanionBuilder,
+          $$ModulesTableUpdateCompanionBuilder,
+          (RawModule, BaseReferences<_$Database, $ModulesTable, RawModule>),
+          RawModule,
+          PrefetchHooks Function()
+        > {
+  $$ModulesTableTableManager(_$Database db, $ModulesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ModulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ModulesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ModulesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+                Value<String?> author = const Value.absent(),
+                Value<String?> version = const Value.absent(),
+                Value<String?> homepage = const Value.absent(),
+                Value<String?> policy = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+              }) => ModulesCompanion(
+                id: id,
+                label: label,
+                url: url,
+                content: content,
+                enabled: enabled,
+                order: order,
+                author: author,
+                version: version,
+                homepage: homepage,
+                policy: policy,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String label,
+                Value<String?> url = const Value.absent(),
+                required String content,
+                Value<bool> enabled = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+                Value<String?> author = const Value.absent(),
+                Value<String?> version = const Value.absent(),
+                Value<String?> homepage = const Value.absent(),
+                Value<String?> policy = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
+              }) => ModulesCompanion.insert(
+                id: id,
+                label: label,
+                url: url,
+                content: content,
+                enabled: enabled,
+                order: order,
+                author: author,
+                version: version,
+                homepage: homepage,
+                policy: policy,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ModulesTable, RawModule>(table),
+                  BaseReferences<_$Database, $ModulesTable, RawModule>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ModulesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $ModulesTable,
+      RawModule,
+      $$ModulesTableFilterComposer,
+      $$ModulesTableOrderingComposer,
+      $$ModulesTableAnnotationComposer,
+      $$ModulesTableCreateCompanionBuilder,
+      $$ModulesTableUpdateCompanionBuilder,
+      (RawModule, BaseReferences<_$Database, $ModulesTable, RawModule>),
+      RawModule,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -8460,6 +9410,8 @@ class $DatabaseManager {
       $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db, _db.ipQualities);
+  $$ModulesTableTableManager get modules =>
+      $$ModulesTableTableManager(_db, _db.modules);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -8598,4 +9550,16 @@ class IpQualitiesDaoManager {
   IpQualitiesDaoManager(this._db);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db.attachedDatabase, _db.ipQualities);
+}
+
+mixin _$ModulesDaoMixin on DatabaseAccessor<Database> {
+  $ModulesTable get modules => attachedDatabase.modules;
+  ModulesDaoManager get managers => ModulesDaoManager(this);
+}
+
+class ModulesDaoManager {
+  final _$ModulesDaoMixin _db;
+  ModulesDaoManager(this._db);
+  $$ModulesTableTableManager get modules =>
+      $$ModulesTableTableManager(_db.attachedDatabase, _db.modules);
 }

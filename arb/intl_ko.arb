@@ -1050,5 +1050,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "전역 IPv6 주소가 있어 v6 트래픽이 IPv4 전용 차단을 우회할 수 있습니다",
   "dnsLeakAdvice": "실패한 항목은 \"고급 설정 → 네트워크\"에서 VPN과 DNS 하이재킹을 켜고, 시스템 설정의 비공개 DNS를 끄세요. DNS 덮어쓰기에서 평문 상위를 DoH로 바꾸세요.",
-  "dnsLeakExternal": "브라우저에서 확인"
+  "dnsLeakExternal": "브라우저에서 확인",
+  "modules": "모듈",
+  "author": "작성자",
+  "moduleSkipped": "건너뜀",
+  "modulePolicy": "정책",
+  "modulePolicyTip": "PROXY를 가리키는 규칙은 이 정책을 사용합니다. 비워 두면 건너뜁니다.",
+  "modulePasteTip": ".sgmodule, .module, .plugin, .stoverride, .conf 내용을 붙여넣으세요.",
+  "moduleEmpty": "모듈이 비어 있습니다.",
+  "moduleNoUrl": "이 모듈에는 업데이트할 원본 URL이 없습니다.",
+  "moduleSkipHttps": "HTTPS 복호화가 필요하지만 코어는 하지 않습니다",
+  "moduleSkipScript": "스크립트 실행 환경이 필요하지만 코어에는 없습니다",
+  "moduleSkipRule": "코어에 해당 규칙 유형이 없습니다",
+  "moduleSkipRuleSet": "원격 규칙 세트는 별도 다운로드가 필요합니다",
+  "moduleSkipPolicy": "PROXY를 가리키지만 정책이 없습니다",
+  "moduleSkipGeneral": "코어에 대응하는 항목이 없습니다",
+  "moduleGeneralTip": "이 항목은 아직 설정에 반영되지 않았습니다. 코어에 해당 스위치가 없습니다.",
+  "moduleUpdated": "'{label}' 업데이트됨",
+  "moduleRulesTruncated": "총 {count}개, 앞부분만 표시"
 }

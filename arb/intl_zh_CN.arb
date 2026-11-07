@@ -1050,5 +1050,22 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "本机有全局 IPv6 地址，v6 流量可能绕过 IPv4 接管",
   "dnsLeakAdvice": "未通过的项：到「进阶配置 → 网络」打开 VPN 与 DNS 劫持，在系统设置里关闭私人 DNS；DNS 覆写里把明文上游换成 DoH。",
-  "dnsLeakExternal": "在浏览器中验证"
+  "dnsLeakExternal": "在浏览器中验证",
+  "modules": "模块",
+  "author": "作者",
+  "moduleSkipped": "已跳过",
+  "modulePolicy": "策略",
+  "modulePolicyTip": "指向 PROXY 的规则使用这个策略；留空则跳过这些规则。",
+  "modulePasteTip": "粘贴 .sgmodule、.module、.plugin、.stoverride 或 .conf 文件的内容。",
+  "moduleEmpty": "模块内容为空。",
+  "moduleNoUrl": "该模块没有来源链接，无法更新。",
+  "moduleSkipHttps": "需要 HTTPS 解密，内核不做",
+  "moduleSkipScript": "需要脚本运行时，内核不执行脚本",
+  "moduleSkipRule": "内核没有这种规则",
+  "moduleSkipRuleSet": "远程规则集需要单独下载",
+  "moduleSkipPolicy": "指向 PROXY，尚未指定策略",
+  "moduleSkipGeneral": "内核没有对应配置项",
+  "moduleGeneralTip": "这些项还没有接入配置，内核没有对应的开关。",
+  "moduleUpdated": "已更新「{label}」",
+  "moduleRulesTruncated": "共 {count} 条，仅显示前一部分"
 }

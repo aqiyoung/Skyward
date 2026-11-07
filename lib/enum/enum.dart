@@ -948,6 +948,7 @@ enum LoadingTag {
   proxies,
   checkUpdate,
   updateDownload,
+  modules,
 }
 
 enum CoreStatus { connecting, connected, disconnected }
