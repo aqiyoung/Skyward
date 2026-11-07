@@ -8,12 +8,17 @@ import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _height = 66;
+const double _height = 72;
 const double _edgeMargin = 16;
 const double _bottomMargin = 20;
-const double _iconSize = 27;
-const double _chipSize = 54;
-const double _dotSize = 9;
+
+/// The bar hugs its tabs instead of spanning the screen: every destination
+/// gets this much room and the capsule stops growing past that.
+const double _slotWidth = 66;
+const double _iconSize = 28;
+const double _chipSize = 58;
+const double _dotSize = 10;
+const double _borderWidth = 1.6;
 
 /// How far a finger has to travel across the bar before it starts scrubbing
 /// the selection, so a tap that wobbles still counts as a tap.
@@ -24,9 +29,9 @@ const double _stepTravel = 36;
 const Duration _morph = Duration(milliseconds: 420);
 const Duration _fade = Duration(milliseconds: 220);
 
-/// A single rounded bar that hovers over the page, with the selected glyph in
-/// a chip and a dot in the theme colour. On a long scroll it folds down to a
-/// ball holding only the selected glyph.
+/// A short, centred rounded bar that hugs its tabs, with the selected glyph
+/// in a chip and a dot in the theme colour. On a long scroll it folds down to
+/// a ball holding only the selected glyph.
 ///
 /// A finger dragged across the bar takes the selection with it, the way a
 /// segmented control does, so the tabs can be changed without aiming at one.
@@ -133,27 +138,31 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
         bottom,
       ),
       child: Align(
-        alignment: Alignment.bottomLeft,
+        alignment: Alignment.bottomCenter,
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // A short bar centred over the page: the tabs set the width, and
+            // only a crowd of them is allowed to reach the screen edges.
             final full = constraints.maxWidth;
+            final barWidth = math.min(full, _slotWidth * s * _count);
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onHorizontalDragStart: _dragStart,
-              onHorizontalDragUpdate: (details) => _dragUpdate(details, full),
+              onHorizontalDragUpdate: (details) =>
+                  _dragUpdate(details, barWidth),
               onHorizontalDragEnd: (_) => _travel = 0,
               child: AnimatedContainer(
                 duration: _morph,
                 curve: Curves.easeOutCubic,
-                width: widget.collapsed ? height : full,
+                width: widget.collapsed ? height : barWidth,
                 height: height,
                 decoration: ShapeDecoration(
                   shape: AppShape.full,
                   shadows: [
                     BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.18),
-                      blurRadius: 24 * s,
-                      offset: Offset(0, 8 * s),
+                      color: colorScheme.shadow.withValues(alpha: 0.22),
+                      blurRadius: 26 * s,
+                      offset: Offset(0, 10 * s),
                     ),
                   ],
                 ),
@@ -164,12 +173,13 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                     filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                     child: DecoratedBox(
                       decoration: ShapeDecoration(
-                        color: floating.withValues(alpha: dark ? 0.78 : 0.86),
+                        color: floating.withValues(alpha: dark ? 0.80 : 0.90),
                         shape: AppShape.full.copyWith(
                           side: BorderSide(
                             color: colorScheme.outlineVariant.withValues(
-                              alpha: dark ? 0.22 : 0.55,
+                              alpha: dark ? 0.30 : 0.72,
                             ),
+                            width: _borderWidth * s,
                           ),
                         ),
                       ),
@@ -184,7 +194,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                             child: IgnorePointer(
                               ignoring: widget.collapsed,
                               child: SizedBox(
-                                width: full,
+                                width: barWidth,
                                 child: Row(
                                   children: [
                                     for (var i = 0; i < _count; i++)
@@ -318,7 +328,7 @@ class _Destination extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: selected && showChip
-                        ? colorScheme.onSurface.withValues(alpha: 0.10)
+                        ? colorScheme.onSurface.withValues(alpha: 0.14)
                         : Colors.transparent,
                   ),
                 ),
@@ -344,7 +354,7 @@ class _Destination extends StatelessWidget {
                           color: SurfaceLevel.floatingOf(
                             colorScheme,
                           ).colorOf(colorScheme),
-                          width: 2 * s,
+                          width: 2.4 * s,
                         ),
                       ),
                     ),

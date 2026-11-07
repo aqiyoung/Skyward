@@ -1634,14 +1634,15 @@ void main() {
     expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
 
     // Start on the first tab and drag to the foot of the second, the way a
-    // finger would scrub a segmented control.
+    // finger would scrub a segmented control. The capsule is centred now, so
+    // the pointer starts near the middle of the screen rather than the edge.
     final dock = tester.getRect(find.byType(CapsuleNavigationDock));
     final gesture = await tester.startGesture(
-      dock.centerLeft + const Offset(40, 0),
+      dock.center - const Offset(30, 0),
     );
     await tester.pump();
-    for (var i = 0; i < 8; i++) {
-      await gesture.moveBy(const Offset(30, 0));
+    for (var i = 0; i < 5; i++) {
+      await gesture.moveBy(const Offset(20, 0));
       await tester.pump();
     }
     await gesture.up();
