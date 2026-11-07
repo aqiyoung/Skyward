@@ -610,17 +610,6 @@ class _MiniScreenPainter extends CustomPainter {
         AppShape.circle,
       );
       if (capsule) {
-        if (isSelected) {
-          _fill(
-            canvas,
-            Rect.fromCircle(
-              center: center.translate(unit * 0.75, -unit * 0.75),
-              radius: unit * 0.18,
-            ),
-            colorScheme.primary,
-            AppShape.circle,
-          );
-        }
         continue;
       }
       _fill(

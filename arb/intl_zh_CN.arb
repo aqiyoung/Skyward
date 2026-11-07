@@ -1050,5 +1050,17 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "本机有全局 IPv6 地址，v6 流量可能绕过 IPv4 接管",
   "dnsLeakAdvice": "未通过的项：到「进阶配置 → 网络」打开 VPN 与 DNS 劫持，在系统设置里关闭私人 DNS；DNS 覆写里把明文上游换成 DoH。",
-  "dnsLeakExternal": "在浏览器中验证"
+  "dnsLeakExternal": "在浏览器中验证",
+  "leakCheck": "泄露自检",
+  "webrtcLeakGuard": "防护模式",
+  "webrtcLeakStun": "STUN 探测",
+  "webrtcLeakReflected": "反射地址",
+  "webrtcLeakGuardOffBad": "当前为「不处理」，网页可读取本机公网地址",
+  "webrtcLeakGuardProxyBad": "经代理转发，需要节点支持 UDP",
+  "webrtcLeakStunBlocked": "未收到 STUN 响应，拦截已生效",
+  "webrtcLeakStunOpen": "STUN 服务器返回了响应",
+  "webrtcLeakStunSilent": "未收到 STUN 响应，无法判断",
+  "webrtcLeakStunUnresolved": "无法解析 STUN 服务，网络不可用",
+  "webrtcLeakAdvice": "默认「拦截」下看不到反射地址属于正常。要验证真实泄露，请先到「进阶配置 → 网络」把 WebRTC 临时改成「不处理」，检测后再切回。",
+  "webrtcLeakExternal": "在浏览器中验证 WebRTC"
 }

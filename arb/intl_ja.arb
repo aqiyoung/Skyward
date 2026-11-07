@@ -1050,5 +1050,17 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "グローバル IPv6 アドレスがあり、v6 通信が IPv4 のみの取り込みを迂回できます",
   "dnsLeakAdvice": "不合格の項目は「詳細設定 → ネットワーク」で VPN と DNS ハイジャックを有効にし、システム設定のプライベート DNS を無効にしてください。DNS 上書きでは平文の上流を DoH に置き換えてください。",
-  "dnsLeakExternal": "ブラウザーで確認"
+  "dnsLeakExternal": "ブラウザーで確認",
+  "leakCheck": "リークチェック",
+  "webrtcLeakGuard": "保護モード",
+  "webrtcLeakStun": "STUN プローブ",
+  "webrtcLeakReflected": "反射アドレス",
+  "webrtcLeakGuardOffBad": "保護がオフなので、ページから本体のグローバルアドレスを読めます",
+  "webrtcLeakGuardProxyBad": "検出はプロキシ経由です。ノードが UDP に対応している必要があります",
+  "webrtcLeakStunBlocked": "STUN 応答がないため、ブロックは機能しています",
+  "webrtcLeakStunOpen": "STUN サーバーから応答がありました",
+  "webrtcLeakStunSilent": "STUN 応答がなく、判定できません",
+  "webrtcLeakStunUnresolved": "STUN ホストを解決できません。ネットワークが利用できません",
+  "webrtcLeakAdvice": "「遮断」では反射アドレスが表示されないのが正常です。実際の漏れを調べるには、「詳細設定 → ネットワーク」で WebRTC を一時的に「そのまま」にし、確認後に戻してください。",
+  "webrtcLeakExternal": "ブラウザーで WebRTC を確認"
 }

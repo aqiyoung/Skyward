@@ -140,7 +140,9 @@ class _AboutViewState extends ConsumerState<AboutView> {
               _buildLinkItem(
                 glyph: AppGlyphs.cpu,
                 title: appLocalizations.core,
-                url: 'https://github.com/aqiyoung/skyward-core/tree/FlClash',
+                // Link the repository root so this follows the default branch
+                // instead of naming a branch that can be renamed or removed.
+                url: 'https://github.com/aqiyoung/skyward-core',
                 label: 'github.com/aqiyoung/skyward-core',
               ),
               _buildLinkItem(

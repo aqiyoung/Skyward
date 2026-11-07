@@ -1050,5 +1050,17 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "This device holds a global IPv6 address, and v6 traffic can bypass an IPv4-only capture",
   "dnsLeakAdvice": "For anything that failed, open VPN and DNS hijacking in Advanced > Network, turn off Private DNS in the system settings, and replace plain upstreams with DoH under DNS overrides.",
-  "dnsLeakExternal": "Verify in a browser"
+  "dnsLeakExternal": "Verify in a browser",
+  "leakCheck": "Leak check",
+  "webrtcLeakGuard": "Guard mode",
+  "webrtcLeakStun": "STUN probe",
+  "webrtcLeakReflected": "Reflected address",
+  "webrtcLeakGuardOffBad": "Guard is off, so a page can read this device's public address",
+  "webrtcLeakGuardProxyBad": "Discovery goes through the proxy; the node must carry UDP",
+  "webrtcLeakStunBlocked": "No STUN answer came back, so the block is in force",
+  "webrtcLeakStunOpen": "A STUN server answered",
+  "webrtcLeakStunSilent": "No STUN answer came back, so the result is inconclusive",
+  "webrtcLeakStunUnresolved": "No STUN host could be resolved; the network is unavailable",
+  "webrtcLeakAdvice": "With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.",
+  "webrtcLeakExternal": "Verify WebRTC in a browser"
 }

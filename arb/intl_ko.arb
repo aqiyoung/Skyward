@@ -1050,5 +1050,17 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "전역 IPv6 주소가 있어 v6 트래픽이 IPv4 전용 차단을 우회할 수 있습니다",
   "dnsLeakAdvice": "실패한 항목은 \"고급 설정 → 네트워크\"에서 VPN과 DNS 하이재킹을 켜고, 시스템 설정의 비공개 DNS를 끄세요. DNS 덮어쓰기에서 평문 상위를 DoH로 바꾸세요.",
-  "dnsLeakExternal": "브라우저에서 확인"
+  "dnsLeakExternal": "브라우저에서 확인",
+  "leakCheck": "유출 점검",
+  "webrtcLeakGuard": "보호 모드",
+  "webrtcLeakStun": "STUN 프로브",
+  "webrtcLeakReflected": "반사 주소",
+  "webrtcLeakGuardOffBad": "보호가 꺼져 있어 웹 페이지가 기기의 공인 주소를 읽을 수 있습니다",
+  "webrtcLeakGuardProxyBad": "탐색이 프록시를 거칩니다. 노드가 UDP를 지원해야 합니다",
+  "webrtcLeakStunBlocked": "STUN 응답이 없어 차단이 작동 중입니다",
+  "webrtcLeakStunOpen": "STUN 서버가 응답했습니다",
+  "webrtcLeakStunSilent": "STUN 응답이 없어 판단할 수 없습니다",
+  "webrtcLeakStunUnresolved": "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
+  "webrtcLeakAdvice": "「차단」에서는 반사 주소가 보이지 않는 것이 정상입니다. 실제 유출을 확인하려면 「고급 설정 → 네트워크」에서 WebRTC를 잠시 「처리하지 않음」으로 바꾼 뒤 확인하고 다시 되돌리세요.",
+  "webrtcLeakExternal": "브라우저에서 WebRTC 확인"
 }

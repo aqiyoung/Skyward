@@ -1153,6 +1153,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The app exited unexpectedly while it was starting up last time. Automatic setup was skipped for this launch; you can start it manually to retry.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("Leak check"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Word wrap"),
@@ -2048,6 +2049,35 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Leave alone"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Through proxy"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Verify WebRTC in a browser",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("Guard mode"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "Guard is off, so a page can read this device\'s public address",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "Discovery goes through the proxy; the node must carry UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage(
+      "Reflected address",
+    ),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN probe"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "No STUN answer came back, so the block is in force",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "A STUN server answered",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "No STUN answer came back, so the result is inconclusive",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "No STUN host could be resolved; the network is unavailable",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("Write to system"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

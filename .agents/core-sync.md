@@ -6,15 +6,17 @@ move when upstream ships a release.
 
 ## What the submodule is
 
-`core/Clash.Meta` points at `git@github.com:aqiyoung/skyward-core.git`, branch `FlClash`. `skyward-core`
-is this project's mirror of `chen08209/Clash.Meta` — upstream FlClash's own core fork — renamed because
-mihomo's README forbids a downstream that is not MetaCubeX's from carrying "mihomo" in its name, and
-Skyward publishes the core it builds.
+`core/Clash.Meta` points at `git@github.com:aqiyoung/skyward-core.git` and follows its default
+branch, `skyward` — `.gitmodules` names no `branch`, so `--remote` follows the default. `skyward-core`
+is mihomo upstream plus the patch layer Skyward's Go core builds against, renamed because mihomo's
+README forbids a downstream that is not MetaCubeX's from carrying "mihomo" in its name, and Skyward
+publishes the core it builds.
 
-The mirror adds nothing of its own: its `FlClash` head is the same commit as `chen08209/Clash.Meta`'s,
-which is an upstream release tag plus the patches upstream FlClash carries (four as of v1.19.33, the
-oldest being `support FlClash`). No code under `lib/` depends on a core patch of our own, so bumping the
-core is a mirror move plus a version string, not a rebase of our work.
+`skyward` carries our own commits on top of the upstream release tag (TUN naming, config/structure
+trims, size work), so `core_version` carries a `-skyward.N` suffix rather than a bare upstream tag.
+The `FlClash` branch was the original unmodified mirror of upstream FlClash's `chen08209/Clash.Meta`
+fork; it is history now and has been deleted. Bumping the core means replaying this patch layer, not
+fast-forwarding a mirror.
 
 The Go module path inside stays `github.com/metacubex/mihomo`, even though the repository does not.
 `core/go.mod` replaces it with `./Clash.Meta`, and both builders inject the version through that path:
@@ -46,8 +48,8 @@ grep core_version build_config.yaml                            # the string we s
 gh release view -R MetaCubeX/mihomo --json tagName -q .tagName  # the newest release
 ```
 
-The pin's parents say which tag it sits on: walk down from our head until a commit is no longer one of
-the FlClash patches, and that commit is the release the mirror was taken from.
+The pin's parents say which tag it sits on: walk down past the `-skyward.*` patch commits until you
+reach the upstream release commit.
 
 
 A scheduled job on the default branch does the comparison for you: `core-watch.yaml` reads `beta`'s
@@ -57,18 +59,13 @@ repeat every morning; delete that tag to be told again.
 
 ## Bumping
 
-1. Mirror the new branch head. `aqiyoung` carries no patches of its own, so this is a fast-forward:
+1. Replay the patch layer onto the new upstream release. `skyward` is not a bare mirror, so a
+   fast-forward is not possible: rebase our `-skyward.*` commits onto the new `MetaCubeX/mihomo`
+   tag in `aqiyoung/skyward-core`, then push `skyward`. Upstream here is `MetaCubeX/mihomo`, not
+   `chen08209/Clash.Meta`. Check that every patch still applies and that the core builds in CI.
 
-   ```bash
-   git clone --branch FlClash git@github.com:aqiyoung/skyward-core.git
-   cd skyward-core
-   git remote add upstream git@github.com:chen08209/Clash.Meta.git
-   git fetch upstream FlClash
-   git merge --ff-only upstream/FlClash
-   git push origin FlClash
-   ```
-
-2. Move the pin and the string. `.gitmodules` names `FlClash`, so `--remote` follows that branch:
+2. Move the pin and the string. `.gitmodules` names no `branch`, so `--remote` follows the default
+   `skyward` branch:
 
    ```bash
    git submodule update --remote core/Clash.Meta
@@ -89,10 +86,11 @@ repeat every morning; delete that tag to be told again.
 
 ## Traps
 
-- Do not track `main`. Upstream's `main` is a stale branch (head `008b91b`, February 2025) sharing no
-  history with `FlClash`; development lands on `Alpha`, and `Alpha` is the tagged release between
-  releases.
-- Do not pin an untagged `Alpha` commit: `core_version` would then name a release the binary is not.
+- Do not track `main` in `skyward-core`: it is a stale branch (head `008b91bf`, February 2025) with
+  no history in common with `skyward`.
+- Do not pin an untagged upstream commit: `core_version` would then name a release the binary is not.
+- The `FlClash` branch was the original unmodified mirror and has been deleted. Nothing should point
+  at it; links to the core go to the repository root, which follows the default branch.
 - `.gitmodules` uses an SSH URL, while CI checks the submodule out with `submodules: recursive` and no
   credentials of its own. Keep `skyward-core` public, or the workflow needs a token or a key.
 - `git submodule update` keeps the recorded pin; only `--remote` moves it to the branch head.

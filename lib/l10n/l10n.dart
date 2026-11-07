@@ -8776,6 +8776,121 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Leak check`
+  String get leakCheck {
+    return Intl.message('Leak check', name: 'leakCheck', desc: '', args: []);
+  }
+
+  /// `Guard mode`
+  String get webrtcLeakGuard {
+    return Intl.message(
+      'Guard mode',
+      name: 'webrtcLeakGuard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `STUN probe`
+  String get webrtcLeakStun {
+    return Intl.message(
+      'STUN probe',
+      name: 'webrtcLeakStun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reflected address`
+  String get webrtcLeakReflected {
+    return Intl.message(
+      'Reflected address',
+      name: 'webrtcLeakReflected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Guard is off, so a page can read this device's public address`
+  String get webrtcLeakGuardOffBad {
+    return Intl.message(
+      'Guard is off, so a page can read this device\'s public address',
+      name: 'webrtcLeakGuardOffBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discovery goes through the proxy; the node must carry UDP`
+  String get webrtcLeakGuardProxyBad {
+    return Intl.message(
+      'Discovery goes through the proxy; the node must carry UDP',
+      name: 'webrtcLeakGuardProxyBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN answer came back, so the block is in force`
+  String get webrtcLeakStunBlocked {
+    return Intl.message(
+      'No STUN answer came back, so the block is in force',
+      name: 'webrtcLeakStunBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A STUN server answered`
+  String get webrtcLeakStunOpen {
+    return Intl.message(
+      'A STUN server answered',
+      name: 'webrtcLeakStunOpen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN answer came back, so the result is inconclusive`
+  String get webrtcLeakStunSilent {
+    return Intl.message(
+      'No STUN answer came back, so the result is inconclusive',
+      name: 'webrtcLeakStunSilent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN host could be resolved; the network is unavailable`
+  String get webrtcLeakStunUnresolved {
+    return Intl.message(
+      'No STUN host could be resolved; the network is unavailable',
+      name: 'webrtcLeakStunUnresolved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.`
+  String get webrtcLeakAdvice {
+    return Intl.message(
+      'With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.',
+      name: 'webrtcLeakAdvice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify WebRTC in a browser`
+  String get webrtcLeakExternal {
+    return Intl.message(
+      'Verify WebRTC in a browser',
+      name: 'webrtcLeakExternal',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

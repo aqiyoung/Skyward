@@ -1050,5 +1050,17 @@
   "dnsLeakIpv6": "IPv6",
   "dnsLeakIpv6Bad": "Cet appareil détient une adresse IPv6 globale, et le trafic v6 peut contourner une capture IPv4 seule",
   "dnsLeakAdvice": "Pour les points en échec, activez le VPN et le détournement DNS dans « Avancé → Réseau », désactivez le DNS privé dans les réglages système et remplacez les amonts en clair par DoH dans les substitutions DNS.",
-  "dnsLeakExternal": "Vérifier dans un navigateur"
+  "dnsLeakExternal": "Vérifier dans un navigateur",
+  "leakCheck": "Vérification des fuites",
+  "webrtcLeakGuard": "Mode de protection",
+  "webrtcLeakStun": "Sonde STUN",
+  "webrtcLeakReflected": "Adresse réfléchie",
+  "webrtcLeakGuardOffBad": "Protection désactivée : une page peut lire l'adresse publique de l'appareil",
+  "webrtcLeakGuardProxyBad": "La découverte passe par le proxy ; le nœud doit prendre en charge UDP",
+  "webrtcLeakStunBlocked": "Aucune réponse STUN, le blocage est actif",
+  "webrtcLeakStunOpen": "Un serveur STUN a répondu",
+  "webrtcLeakStunSilent": "Aucune réponse STUN, résultat indéterminé",
+  "webrtcLeakStunUnresolved": "Hôte STUN introuvable : réseau indisponible",
+  "webrtcLeakAdvice": "En mode « Bloquer », l’absence d’adresse réfléchie est normale. Pour tester une fuite réelle, passez temporairement WebRTC sur « Laisser passer » dans « Avancé → Réseau », vérifiez, puis rétablissez le réglage.",
+  "webrtcLeakExternal": "Vérifier WebRTC dans un navigateur"
 }
