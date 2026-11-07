@@ -341,6 +341,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Respuestas"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Permite que las aplicaciones levanten su propia VPN y eviten esta.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Control de acceso de apps",
     ),
@@ -1261,10 +1264,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Cargando…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Imagen local"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage(
+      "Red local por el proxy",
+    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Permiso de red local denegado: con la pila gvisor, la LAN no es accesible.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Proxies locales"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "Si se desactiva, las direcciones de red local, bucle y multidifusión no pasan por la interfaz virtual.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Permiso de ubicación",
     ),
@@ -1480,6 +1489,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Elegir del álbum"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("Fijar ventana"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("Vincula WebDAV"),
+    "perApp": MessageLookupByLibrary.simpleMessage("Por aplicación"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Elige qué aplicaciones usan el proxy.",
+    ),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "Introduce un nombre para el script",
     ),
@@ -2092,6 +2105,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimation": MessageLookupByLibrary.simpleMessage(
       "Animación de pestañas",
     ),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage(
+      "Alcance del tráfico",
+    ),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
+      "Siempre activo",
+    ),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "Con la VPN activa, Android enruta 0.0.0.0/0 por el túnel; no hace falta un interruptor aparte.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Toca el icono para reintentar",
     ),
@@ -2149,6 +2171,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "turnOff": MessageLookupByLibrary.simpleMessage("Desactivar"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Activar"),
     "type": MessageLookupByLibrary.simpleMessage("Tipo"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Una dirección de ruta vacía toma todo el tráfico; las subredes excluidas quedan fuera de la interfaz virtual.",
+    ),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage(
       "Modo de retransmisión UDP",
     ),
@@ -2202,6 +2227,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("Ver"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtual"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vivo"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage(
+      "Comportamiento de la VPN",
+    ),
+    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
+      "El VpnService de Android solo ofrece los ajustes anteriores. Las opciones de iOS «Incluir APNs», «Incluir servicios celulares» y «Ocultar el icono de VPN» no tienen equivalente aquí, por eso no se ofrecen.",
+    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Se detectó un cambio en la configuración relacionada con la VPN",
     ),

@@ -326,6 +326,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Answers"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Apps may bring up their own VPN and leave this one.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "App access control",
     ),
@@ -1174,10 +1177,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Loading…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Local image"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("Proxy local network"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Local proxies"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "When off, LAN, loopback and multicast addresses bypass the virtual interface.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location permission",
     ),
@@ -1370,6 +1377,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "peers": MessageLookupByLibrary.simpleMessage("Peers"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Choose from album"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("Pin window"),
+    "perApp": MessageLookupByLibrary.simpleMessage("Per app"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Choose which apps use the proxy.",
+    ),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),
@@ -1937,6 +1948,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Traffic scope"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("Always on"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Tap the icon to retry",
     ),
@@ -1994,6 +2010,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP relay mode"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP timeout"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.",
     ),
@@ -2033,6 +2052,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("View"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Virtual IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vivid"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN behaviour"),
+    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
+      "Android's VpnService only exposes the rows above. iOS options such as Include APNs, Include Cellular Services and Hide VPN icon have no equivalent here, so they are not offered.",
+    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN-related configuration change detected",
     ),
