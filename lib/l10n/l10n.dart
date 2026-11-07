@@ -427,12 +427,7 @@ class AppLocalizations {
 
   /// `Preferences`
   String get preferences {
-    return Intl.message(
-      'Preferences',
-      name: 'preferences',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Preferences', name: 'preferences', desc: '', args: []);
   }
 
   /// `More theme settings`
@@ -470,14 +465,19 @@ class AppLocalizations {
     return Intl.message('Text', name: 'textSection', desc: '', args: []);
   }
 
+  /// `Configuration`
+  String get configuration {
+    return Intl.message(
+      'Configuration',
+      name: 'configuration',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);
-  }
-
-  /// `Configuration`
-  String get configuration {
-    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
   }
 
   /// `Extend`
@@ -3326,6 +3326,16 @@ class AppLocalizations {
     return Intl.message(
       'Core is not running',
       name: 'memoryCoreNotRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core budget`
+  String get memoryCoreBudget {
+    return Intl.message(
+      'Core budget',
+      name: 'memoryCoreBudget',
       desc: '',
       args: [],
     );

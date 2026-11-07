@@ -247,6 +247,12 @@ type MemoryStats struct {
 	HeapIdle     uint64 `json:"heapIdle"`
 	StackInuse   uint64 `json:"stackInuse"`
 	RuntimeOther uint64 `json:"runtimeOther"`
+	// Budget is the soft heap limit the collector works against, DeviceTotal the
+	// physical RAM it was derived from. Both are 0 when the runtime default is
+	// still in place, so the client can tell "no budget" from "small budget".
+	Budget      int64  `json:"budget"`
+	GCPercent   int32  `json:"gcPercent"`
+	DeviceTotal uint64 `json:"deviceTotal"`
 }
 
 type ExternalProvider struct {

@@ -29,6 +29,9 @@ func handleInitClash(params *InitParams) bool {
 	configMu.Lock()
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))
+	// Set the budget before anything allocates: a heap that grew under the
+	// defaults already costs more than the limit it is later squeezed into.
+	applyMemoryBudget()
 	constant.SetHomeDir(params.HomeDir)
 	initOwnership(params.HomeDir)
 	clearSpilledResponses()
@@ -139,5 +142,8 @@ func handleGetMemoryStats() MemoryStats {
 		HeapIdle:     stats.HeapIdle - stats.HeapReleased,
 		StackInuse:   stats.StackInuse,
 		RuntimeOther: stats.MSpanInuse + stats.MCacheInuse + stats.BuckHashSys + stats.GCSys + stats.OtherSys,
+		Budget:       currentMemoryLimit(),
+		GCPercent:    gcPercent.Load(),
+		DeviceTotal:  deviceMemoryTotal.Load(),
 	}
 }

@@ -412,6 +412,7 @@
   "memoryCoreStack": "Piles de goroutines",
   "memoryCoreRuntime": "Surcharge du runtime",
   "memoryCoreNotRunning": "Le cœur n’est pas en cours d’exécution",
+  "memoryCoreBudget": "Plafond du cœur",
   "memoryAppResident": "Mémoire résidente",
   "memoryAppShared": "App et partagée",
   "memoryEstimateDesc": "Estimation d’après la mémoire résidente du processus ; elle peut différer de ce qu’indique le système.",
