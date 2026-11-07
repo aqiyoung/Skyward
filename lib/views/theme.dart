@@ -500,7 +500,11 @@ class FontFamilyRow extends ConsumerWidget {
 }
 
 final _floatingBarProvider = appSettingProvider.select(
-  (state) => state.floatingNavigationBar,
+  (state) => state.navigationBarStyle != NavigationBarStyle.docked,
+);
+
+final _capsuleBarProvider = appSettingProvider.select(
+  (state) => state.navigationBarStyle == NavigationBarStyle.capsule,
 );
 
 final _liquidGlassProvider = themeSettingProvider.select(
@@ -607,6 +611,7 @@ class _CustomColorPreview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final floatingBar = ref.watch(_floatingBarProvider);
+    final capsuleBar = ref.watch(_capsuleBarProvider);
     final liquidGlass = ref.watch(_liquidGlassProvider);
     final level = context.raisedSurfaceLevel;
     Widget screen(Brightness brightness) => ExcludeSemantics(
@@ -622,6 +627,7 @@ class _CustomColorPreview extends ConsumerWidget {
                   genColorSchemeProvider(brightness, color: color),
                 ),
                 floatingBar: floatingBar,
+                capsule: capsuleBar,
                 liquidGlass: liquidGlass,
               ),
             ),

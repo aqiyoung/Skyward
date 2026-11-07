@@ -172,9 +172,11 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
       ThemeMode.system => MediaQuery.platformBrightnessOf(context),
     };
     final colorScheme = ref.watch(genColorSchemeProvider(brightness));
-    final floatingBar = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final barStyle = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
+    final floatingBar = barStyle != NavigationBarStyle.docked;
+    final capsuleBar = barStyle == NavigationBarStyle.capsule;
     final tabAnimation = ref.watch(
       appSettingProvider.select((state) => state.tabAnimation),
     );
@@ -204,11 +206,12 @@ class _ThemeLivePreviewState extends ConsumerState<ThemeLivePreview>
               builder: (_, colorScheme, _) => AnimatedSwitcher(
                 duration: _duration,
                 child: AnimatedBuilder(
-                  key: ValueKey((floatingBar, liquidGlass)),
+                  key: ValueKey((barStyle, liquidGlass)),
                   animation: _slideCurve,
                   builder: (_, _) => MiniScreen(
                     colorScheme: colorScheme,
                     floatingBar: floatingBar,
+                    capsule: capsuleBar,
                     liquidGlass: liquidGlass,
                     selected: _selected,
                     previous: _previous,
@@ -237,6 +240,7 @@ class MiniScreen extends StatelessWidget {
     super.key,
     required this.colorScheme,
     required this.floatingBar,
+    this.capsule = false,
     this.liquidGlass = false,
     this.selected = 0,
     this.previous,
@@ -249,6 +253,9 @@ class MiniScreen extends StatelessWidget {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+
+  /// Draws the hovering bar as the narrow capsule rather than a full-width dock.
+  final bool capsule;
 
   /// Draws a floating bar as glass; a docked one stays a fill, as the app's
   /// does.
@@ -267,6 +274,7 @@ class MiniScreen extends StatelessWidget {
         painter: _MiniScreenPainter(
           colorScheme: colorScheme,
           floatingBar: floatingBar,
+          capsule: capsule,
           liquidGlass: liquidGlass,
           selected: selected,
           previous: previous,
@@ -284,6 +292,7 @@ class MiniScreen extends StatelessWidget {
         final geometry = _MiniGeometry(
           constraints.biggest,
           floatingBar: floatingBar,
+          capsule: capsule,
         );
         return Stack(
           children: [
@@ -347,10 +356,14 @@ class _DiagonalClipper extends CustomClipper<Path> {
 }
 
 class _MiniGeometry {
-  _MiniGeometry(this.size, {required bool floatingBar})
+  _MiniGeometry(this.size, {required this.floatingBar, this.capsule = false})
     : unit = size.width / 20 {
-    margin = unit * 1.5;
-    final barHeight = floatingBar ? unit * 3.2 : unit * 3.6;
+    margin = unit * (capsule ? 2.2 : 1.5);
+    final barHeight = capsule
+        ? unit * 3.1
+        : floatingBar
+        ? unit * 3.2
+        : unit * 3.6;
     pageBottom = floatingBar ? 0 : barHeight;
     bar = floatingBar
         ? Rect.fromLTWH(
@@ -363,6 +376,8 @@ class _MiniGeometry {
   }
 
   final Size size;
+  final bool floatingBar;
+  final bool capsule;
   final double unit;
   late final double margin;
   late final double pageBottom;
@@ -373,6 +388,7 @@ class _MiniScreenPainter extends CustomPainter {
   const _MiniScreenPainter({
     required this.colorScheme,
     required this.floatingBar,
+    this.capsule = false,
     required this.liquidGlass,
     required this.selected,
     required this.previous,
@@ -382,6 +398,7 @@ class _MiniScreenPainter extends CustomPainter {
 
   final ColorScheme colorScheme;
   final bool floatingBar;
+  final bool capsule;
   final bool liquidGlass;
   final int selected;
   final int? previous;
@@ -407,7 +424,11 @@ class _MiniScreenPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final geometry = _MiniGeometry(size, floatingBar: floatingBar);
+    final geometry = _MiniGeometry(
+      size,
+      floatingBar: floatingBar,
+      capsule: capsule,
+    );
     _paintPages(canvas, geometry);
     final unit = geometry.unit;
     final dock = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
@@ -416,7 +437,9 @@ class _MiniScreenPainter extends CustomPainter {
       blurRadius: unit,
       offset: Offset(0, unit * 0.3),
     );
-    if (_glass) {
+    if (capsule) {
+      _fill(canvas, geometry.bar, dock, AppShape.full, shadows: [shadow]);
+    } else if (_glass) {
       _paintGlassBar(canvas, geometry, shadow);
     } else if (floatingBar) {
       _fill(canvas, geometry.bar, dock, AppShape.full, shadows: [shadow]);
@@ -552,12 +575,17 @@ class _MiniScreenPainter extends CustomPainter {
         : SurfaceLevel.floatingOf(colorScheme).next.colorOf(colorScheme);
     for (var i = 0; i < MiniScreen.destinationCount; i++) {
       final center = Offset(bar.left + cell * i + cell / 2, bar.center.dy);
-      final icon = center.translate(0, -unit * 0.4);
+      final icon = capsule ? center : center.translate(0, -unit * 0.4);
       final isSelected = i == selected;
       if (isSelected) {
         _fill(
           canvas,
-          floatingBar
+          capsule
+              ? Rect.fromCircle(
+                  center: center,
+                  radius: (bar.height - unit * 0.5) / 2,
+                )
+              : floatingBar
               ? Rect.fromCenter(
                   center: center,
                   width: cell - unit * 0.5,
@@ -569,7 +597,7 @@ class _MiniScreenPainter extends CustomPainter {
                   height: unit * 1.5,
                 ),
           indicator,
-          AppShape.full,
+          capsule ? AppShape.circle : AppShape.full,
         );
       }
       final ink = isSelected
@@ -581,6 +609,20 @@ class _MiniScreenPainter extends CustomPainter {
         ink,
         AppShape.circle,
       );
+      if (capsule) {
+        if (isSelected) {
+          _fill(
+            canvas,
+            Rect.fromCircle(
+              center: center.translate(unit * 0.75, -unit * 0.75),
+              radius: unit * 0.18,
+            ),
+            colorScheme.primary,
+            AppShape.circle,
+          );
+        }
+        continue;
+      }
       _fill(
         canvas,
         Rect.fromCenter(
@@ -598,6 +640,7 @@ class _MiniScreenPainter extends CustomPainter {
   bool shouldRepaint(_MiniScreenPainter oldDelegate) {
     return oldDelegate.colorScheme != colorScheme ||
         oldDelegate.floatingBar != floatingBar ||
+        oldDelegate.capsule != capsule ||
         oldDelegate.liquidGlass != liquidGlass ||
         oldDelegate.selected != selected ||
         oldDelegate.previous != previous ||

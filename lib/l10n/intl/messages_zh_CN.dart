@@ -353,6 +353,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("无法保存"),
+    "capsule": MessageLookupByLibrary.simpleMessage("胶囊"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "切换代理失败，已恢复上一次的选择",
     ),

@@ -451,6 +451,7 @@
   "hideLabelOnScrollDesc": "Al desplazarse por la página, la barra inferior conserva solo sus iconos",
   "floating": "Flotante",
   "docked": "Fija",
+  "capsule": "Cápsula",
   "slide": "Deslizar",
   "fade": "Fundido",
   "pureBlack": "Negro puro",

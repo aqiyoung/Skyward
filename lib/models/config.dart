@@ -309,6 +309,19 @@ Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   };
 }
 
+// Older configs carry a bool; the capsule style had no equivalent then.
+Object? _readNavigationBarStyle(Map<dynamic, dynamic> json, String key) {
+  final value = json[key];
+  if (value != null) {
+    return value;
+  }
+  return switch (json['floatingNavigationBar']) {
+    true => NavigationBarStyle.floating.name,
+    false => NavigationBarStyle.docked.name,
+    _ => null,
+  };
+}
+
 Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];
@@ -351,7 +364,9 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(true) bool floatingNavigationBar,
+    @Default(NavigationBarStyle.floating)
+    @JsonKey(readValue: _readNavigationBarStyle)
+    NavigationBarStyle navigationBarStyle,
     @Default(true) bool autoCheckUpdate,
     @Default(true)
     @JsonKey(readValue: _readSidebarExpanded)
@@ -374,9 +389,11 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default([]) List<String> serviceOrder,
     @Default([]) List<String> disabledServices,
     @Default({}) Map<String, Map<String, double>> tableColumnWidths,
+
     /// Blocks the ad and tracker names in `features/ad_block` unless the
     /// reader turns the module off.
     @Default(true) bool adBlock,
+
     /// What the generated config does with WebRTC's own address discovery.
     @Default(WebrtcGuard.block) WebrtcGuard webrtcGuard,
   }) = _AppSettingProps;

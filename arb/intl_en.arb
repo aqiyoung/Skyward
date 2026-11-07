@@ -451,6 +451,7 @@
   "hideLabelOnScrollDesc": "The dock keeps its icons while the page moves",
   "floating": "Floating",
   "docked": "Docked",
+  "capsule": "Capsule",
   "slide": "Slide",
   "fade": "Fade",
   "pureBlack": "Pure black",

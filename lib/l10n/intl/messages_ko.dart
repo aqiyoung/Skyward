@@ -367,6 +367,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("취소"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("모두 선택 해제"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("저장할 수 없음"),
+    "capsule": MessageLookupByLibrary.simpleMessage("캡슐"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "프록시를 전환하지 못해 이전 선택을 복원했습니다",
     ),

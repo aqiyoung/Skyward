@@ -3641,6 +3641,11 @@ class AppLocalizations {
     return Intl.message('Docked', name: 'docked', desc: '', args: []);
   }
 
+  /// `Capsule`
+  String get capsule {
+    return Intl.message('Capsule', name: 'capsule', desc: '', args: []);
+  }
+
   /// `Slide`
   String get slide {
     return Intl.message('Slide', name: 'slide', desc: '', args: []);
