@@ -29,9 +29,9 @@ const double _stepTravel = 36;
 const Duration _morph = Duration(milliseconds: 420);
 const Duration _fade = Duration(milliseconds: 220);
 
-/// A short, centred rounded bar that hugs its tabs, with the selected glyph
-/// in a chip and a dot in the theme colour. On a long scroll it folds down to
-/// a ball holding only the selected glyph.
+/// A short rounded bar that hugs its tabs and sits against the leading edge,
+/// with the selected glyph in a chip and a dot in the theme colour. On a long
+/// scroll it folds down to a ball holding only the selected glyph.
 ///
 /// A finger dragged across the bar takes the selection with it, the way a
 /// segmented control does, so the tabs can be changed without aiming at one.
@@ -138,11 +138,11 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
         bottom,
       ),
       child: Align(
-        alignment: Alignment.bottomCenter,
+        alignment: Alignment.bottomLeft,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // A short bar centred over the page: the tabs set the width, and
-            // only a crowd of them is allowed to reach the screen edges.
+            // A short bar against the leading edge: the tabs set the width,
+            // and only a crowd of them is allowed to reach the far edge.
             final full = constraints.maxWidth;
             final barWidth = math.min(full, _slotWidth * s * _count);
             return GestureDetector(
