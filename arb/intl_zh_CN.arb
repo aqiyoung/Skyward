@@ -450,6 +450,7 @@
   "hideLabelOnScrollDesc": "页面滚动时，底栏只留图标",
   "floating": "悬浮",
   "docked": "固定",
+  "capsule": "胶囊",
   "slide": "滑动",
   "fade": "淡入",
   "pureBlack": "纯黑",

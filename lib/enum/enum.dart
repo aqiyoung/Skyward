@@ -926,6 +926,10 @@ enum WebrtcGuard {
 
 enum TabAnimation { slide, fade }
 
+/// The floating and capsule styles both hover over the page; only the docked
+/// one takes a row of its own at the foot of the screen.
+enum NavigationBarStyle { docked, floating, capsule }
+
 enum LiquidGlassMode { none, standard, ultra }
 
 enum Language { yaml, javaScript, json }

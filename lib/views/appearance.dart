@@ -214,20 +214,23 @@ class _NavigationBarItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final floating = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final style = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
-    return ListItem<bool>.options(
+    return ListItem<NavigationBarStyle>.options(
       leading: const IconWell(AppGlyphs.layers),
       title: Text(appLocalizations.navigationBarStyle),
-      options: const [true, false],
-      value: floating,
-      textBuilder: (floating) =>
-          floating ? appLocalizations.floating : appLocalizations.docked,
+      options: NavigationBarStyle.values,
+      value: style,
+      textBuilder: (value) => switch (value) {
+        NavigationBarStyle.docked => appLocalizations.docked,
+        NavigationBarStyle.floating => appLocalizations.floating,
+        NavigationBarStyle.capsule => appLocalizations.capsule,
+      },
       onChanged: (value) {
         ref
             .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(floatingNavigationBar: value));
+            .update((state) => state.copyWith(navigationBarStyle: value));
       },
     );
   }

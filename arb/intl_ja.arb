@@ -450,6 +450,7 @@
   "hideLabelOnScrollDesc": "ページをスクロールしている間、ボトムバーはアイコンだけを表示します",
   "floating": "フローティング",
   "docked": "固定",
+  "capsule": "カプセル",
   "slide": "スライド",
   "fade": "フェード",
   "pureBlack": "ピュアブラック",

@@ -427,12 +427,7 @@ class AppLocalizations {
 
   /// `Preferences`
   String get preferences {
-    return Intl.message(
-      'Preferences',
-      name: 'preferences',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Preferences', name: 'preferences', desc: '', args: []);
   }
 
   /// `More theme settings`
@@ -470,14 +465,19 @@ class AppLocalizations {
     return Intl.message('Text', name: 'textSection', desc: '', args: []);
   }
 
+  /// `Configuration`
+  String get configuration {
+    return Intl.message(
+      'Configuration',
+      name: 'configuration',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);
-  }
-
-  /// `Configuration`
-  String get configuration {
-    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
   }
 
   /// `Extend`
@@ -3629,6 +3629,11 @@ class AppLocalizations {
   /// `Docked`
   String get docked {
     return Intl.message('Docked', name: 'docked', desc: '', args: []);
+  }
+
+  /// `Capsule`
+  String get capsule {
+    return Intl.message('Capsule', name: 'capsule', desc: '', args: []);
   }
 
   /// `Slide`

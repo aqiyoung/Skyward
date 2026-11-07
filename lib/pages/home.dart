@@ -166,8 +166,8 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
     final navigationItems = state.navigationItems;
-    final floating = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final style = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
     final dockScale = ref.watch(
       themeSettingProvider.select((state) => state.dockScale),
@@ -175,9 +175,13 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final hideLabelOnScroll = ref.watch(
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
-    // A floating dock follows the page; only the labels answer to the setting.
-    final dockFollows = isMobile && floating;
+    // Both hovering styles follow the page; only the labels answer to the setting.
+    final dockFollows = isMobile && style != NavigationBarStyle.docked;
     final dockFoldsLabels = dockFollows && hideLabelOnScroll;
+    final dockDestinations = [
+      for (final item in navigationItems)
+        NavigationDockDestination(glyph: item.glyph, label: item.label.label),
+    ];
     return Material(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
@@ -189,8 +193,13 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                   child: FocusTraversalGroup(
                     policy: PageTraversalPolicy(),
                     child: BottomInsetScope(
-                      inset: isMobile && floating
-                          ? NavigationDock.insetOf(context, dockScale)
+                      inset: dockFollows
+                          ? style == NavigationBarStyle.capsule
+                                ? CapsuleNavigationDock.insetOf(
+                                    context,
+                                    dockScale,
+                                  )
+                                : NavigationDock.insetOf(context, dockScale)
                           : 0,
                       child: _BodyPadding(
                         isMobile: isMobile,
@@ -223,21 +232,25 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                         // leaves, so the page under it never moves.
                         visible: dockFollows && !hidden,
                         child: _NavigationPadding(
-                          child: NavigationDock(
-                            destinations: [
-                              for (final item in navigationItems)
-                                NavigationDockDestination(
-                                  glyph: item.glyph,
-                                  label: item.label.label,
+                          child: style == NavigationBarStyle.capsule
+                              ? CapsuleNavigationDock(
+                                  destinations: dockDestinations,
+                                  selectedIndex: state.currentIndex,
+                                  onSelected: (index) {
+                                    _handleToPage(navigationItems[index].label);
+                                  },
+                                  scale: dockScale,
+                                  collapsed: dockFoldsLabels && compact,
+                                )
+                              : NavigationDock(
+                                  destinations: dockDestinations,
+                                  selectedIndex: state.currentIndex,
+                                  onSelected: (index) {
+                                    _handleToPage(navigationItems[index].label);
+                                  },
+                                  scale: dockScale,
+                                  showLabel: !(dockFoldsLabels && compact),
                                 ),
-                            ],
-                            selectedIndex: state.currentIndex,
-                            onSelected: (index) {
-                              _handleToPage(navigationItems[index].label);
-                            },
-                            scale: dockScale,
-                            showLabel: !(dockFoldsLabels && compact),
-                          ),
                         ),
                       );
                     },
@@ -247,7 +260,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
             ),
           ),
           AnimatedVisibility.bottomNavigation(
-            visible: isMobile && !floating,
+            visible: isMobile && style == NavigationBarStyle.docked,
             child: _NavigationPadding(
               child: NavigationBar(
                 destinations: [

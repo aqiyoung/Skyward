@@ -450,6 +450,7 @@
   "hideLabelOnScrollDesc": "Pendant le défilement de la page, la barre inférieure ne garde que ses icônes",
   "floating": "Flottante",
   "docked": "Ancrée",
+  "capsule": "Capsule",
   "slide": "Glissement",
   "fade": "Fondu",
   "pureBlack": "Noir pur",

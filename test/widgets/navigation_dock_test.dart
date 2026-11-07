@@ -475,7 +475,13 @@ void main() {
       final container = await _pumpHome(tester);
       container
           .read(appSettingProvider.notifier)
-          .update((state) => state.copyWith(floatingNavigationBar: floating));
+          .update(
+            (state) => state.copyWith(
+              navigationBarStyle: floating
+                  ? NavigationBarStyle.floating
+                  : NavigationBarStyle.docked,
+            ),
+          );
       container
           .read(currentPageLabelProvider.notifier)
           .toPage(PageLabel.profiles);
