@@ -57,6 +57,11 @@ Future<ProviderContainer> _pumpHome(
         const Profile(id: 1, autoUpdateDuration: Duration.zero),
       ]),
       suspendProvider.overrideWithValue(false),
+      appSettingProvider.overrideWithBuild(
+        (_, _) => const AppSettingProps(
+          navigationBarStyle: NavigationBarStyle.floating,
+        ),
+      ),
       ...overrides,
       navigationItemsStateProvider.overrideWithValue(
         NavigationItemsState(
@@ -316,7 +321,10 @@ void main() {
           child: NavigationDock(
             destinations: const [
               NavigationDockDestination(glyph: AppGlyphs.dashboard, label: 'a'),
-              NavigationDockDestination(glyph: AppGlyphs.moreHorizontal, label: 'b'),
+              NavigationDockDestination(
+                glyph: AppGlyphs.moreHorizontal,
+                label: 'b',
+              ),
             ],
             selectedIndex: 0,
             onSelected: (_) {},

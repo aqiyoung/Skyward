@@ -309,7 +309,9 @@ Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   };
 }
 
-// Older configs carry a bool; the capsule style had no equivalent then.
+// Older configs carry a bool; the capsule style had no equivalent then. A
+// fresh install now falls through to the capsule default, while an upgrade
+// keeps the floating or docked bar the old bool described.
 Object? _readNavigationBarStyle(Map<dynamic, dynamic> json, String key) {
   final value = json[key];
   if (value != null) {
@@ -364,7 +366,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(NavigationBarStyle.floating)
+    @Default(NavigationBarStyle.capsule)
     @JsonKey(readValue: _readNavigationBarStyle)
     NavigationBarStyle navigationBarStyle,
     @Default(true) bool autoCheckUpdate,

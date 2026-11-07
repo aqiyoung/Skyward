@@ -43,7 +43,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
         _$NavigationBarStyleEnumMap,
         _readNavigationBarStyle(json, 'navigationBarStyle'),
       ) ??
-      NavigationBarStyle.floating,
+      NavigationBarStyle.capsule,
   autoCheckUpdate: json['autoCheckUpdate'] as bool? ?? true,
   sidebarExpanded:
       _readSidebarExpanded(json, 'sidebarExpanded') as bool? ?? true,

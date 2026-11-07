@@ -16,6 +16,7 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:skyward/views/navigation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,6 +24,13 @@ import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 Finder _glyph(Glyph glyph) => find.byGlyph(glyph);
+
+/// These home tests exercise the floating dock's scroll and geometry
+/// behaviour. Pin it explicitly: the app-wide default is now the capsule.
+Override floatingBarOverride() => appSettingProvider.overrideWithBuild(
+  (_, _) =>
+      const AppSettingProps(navigationBarStyle: NavigationBarStyle.floating),
+);
 
 void main() {
   setUp(() {
@@ -94,6 +102,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          floatingBarOverride(),
           navigationItemsStateProvider.overrideWithValue(
             NavigationItemsState(
               value: [
@@ -340,6 +349,7 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          floatingBarOverride(),
           navigationItemsStateProvider.overrideWithValue(
             NavigationItemsState(
               value: [
@@ -654,6 +664,7 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
+        floatingBarOverride(),
         navigationItemsStateProvider.overrideWithValue(
           NavigationItemsState(
             value: [
@@ -769,6 +780,7 @@ void main() {
     final profiles = item(AppGlyphs.profiles, PageLabel.profiles);
     final container = ProviderContainer(
       overrides: [
+        floatingBarOverride(),
         navigationItemsStateProvider.overrideWith(
           (ref) =>
               NavigationItemsState(value: ref.watch(_navigationItemsProvider)),
@@ -1457,6 +1469,7 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
+        floatingBarOverride(),
         navigationItemsStateProvider.overrideWithValue(
           NavigationItemsState(
             value: [
@@ -1709,6 +1722,7 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
+        floatingBarOverride(),
         navigationItemsStateProvider.overrideWithValue(
           NavigationItemsState(
             value: [

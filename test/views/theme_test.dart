@@ -307,9 +307,8 @@ void main() {
     testWidgets('turns a light theme dark, so the switch shows something', (
       tester,
     ) async {
-      container
-          .read(systemBrightnessProvider.notifier)
-          .value = Brightness.light;
+      container.read(systemBrightnessProvider.notifier).value =
+          Brightness.light;
       await pumpThemeView(tester);
       expect(readTheme().themeMode, ThemeMode.system);
 
@@ -324,10 +323,10 @@ void main() {
   group('home navigation', () {
     AppSettingProps readSetting() => container.read(appSettingProvider);
 
-    testWidgets('picks a floating or docked bottom bar', (tester) async {
+    testWidgets('picks among the three bottom bar styles', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readSetting().navigationBarStyle, NavigationBarStyle.floating);
+      expect(readSetting().navigationBarStyle, NavigationBarStyle.capsule);
 
       await pick(tester, 'Bottom bar', 'Docked');
       expect(readSetting().navigationBarStyle, NavigationBarStyle.docked);
@@ -596,10 +595,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(readTheme().textScale.scale, 1);
-      expect(
-        tester.widget<Slider>(_textScaleSlider()).value,
-        1,
-      );
+      expect(tester.widget<Slider>(_textScaleSlider()).value, 1);
     });
   });
 }
