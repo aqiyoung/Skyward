@@ -1551,14 +1551,16 @@ Windows helper integrity/version check:
 Build configuration defaults live in `plugins/setup/setup_hooks/lib/src/options.dart` and can be overridden via the root
 `build_config.yaml`.
 
-`core_version` in `build_config.yaml` is the mihomo release tag the `core/Clash.Meta` fork is based on. Upstream injects
+`core_version` in `build_config.yaml` is the mihomo release tag the `core/Clash.Meta` fork is based on, plus a
+`-skyward.N` suffix for our own patch layer on top of it. Upstream injects
 its version only from its own CI, so the fork alone reports the placeholder `1.10.0` in `/version` and in protocol
 user agents; `GoBuilder` passes the value as `-X github.com/metacubex/mihomo/constant.Version=...` for every build,
 local and CI alike. Bump it whenever the submodule moves onto a new upstream release.
 
-The fork the submodule points at is `aqiyoung/skyward-core`, branch `FlClash`: the patches the app needs live in that
-branch, and the owner of this repository keeps it in step with upstream mihomo releases. The name leaves `mihomo` out
-because upstream's README forbids downstream projects that are not MetaCubeX's from carrying it. The Go module path
+The fork the submodule points at is `aqiyoung/skyward-core`, default branch `skyward`: our patch layer lives there on
+top of an upstream mihomo release tag, and `.gitmodules` names no branch so `--remote` follows the default. The old
+`FlClash` branch was an unmodified mirror of upstream FlClash's core fork and has been deleted. The name leaves
+`mihomo` out because upstream's README forbids downstream projects that are not MetaCubeX's from carrying it. The Go module path
 stays `github.com/metacubex/mihomo` and the directory stays `core/Clash.Meta`, because the vendored core imports itself
 under that path and every upstream rebase would turn a rename into a conflict on every file.
 
