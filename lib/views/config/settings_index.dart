@@ -8,6 +8,7 @@ import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/config/network.dart';
+import 'package:skyward/views/config/modules.dart';
 import 'package:skyward/views/config/rules.dart';
 import 'package:skyward/views/config/scripts.dart';
 import 'package:skyward/views/config/storage.dart';
@@ -293,6 +294,11 @@ final _advancedEntries = <SettingsEntry>[
     view: _adBlockView,
   ),
   SettingsEntry(
+    title: (l) => l.modules,
+    page: (l) => l.advancedConfig,
+    view: _modulesView,
+  ),
+  SettingsEntry(
     title: (l) => l.addedRules,
     page: (l) => l.advancedConfig,
     view: _rulesView,
@@ -342,6 +348,8 @@ Widget _dnsView(BuildContext context) => const DnsView();
 Widget _advancedView(BuildContext context) => const AdvancedConfigView();
 
 Widget _adBlockView(BuildContext context) => const AdBlockView();
+
+Widget _modulesView(BuildContext context) => const ModulesView();
 
 Widget _rulesView(BuildContext context) => const AddedRulesView();
 

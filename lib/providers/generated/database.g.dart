@@ -800,3 +800,69 @@ abstract class _$ProfileDisabledRuleIds extends $StreamNotifier<List<int>> {
     return element.handleCreate(ref, () => build(_$args));
   }
 }
+
+/// The modules a reader imported, in the order they were dropped in.
+///
+/// A module sits outside every profile: its switch is global and its rules
+/// ride in front of whatever profile is applied, so there is no family
+/// argument here.
+
+@ProviderFor(ImportedModules)
+final importedModulesProvider = ImportedModulesProvider._();
+
+/// The modules a reader imported, in the order they were dropped in.
+///
+/// A module sits outside every profile: its switch is global and its rules
+/// ride in front of whatever profile is applied, so there is no family
+/// argument here.
+final class ImportedModulesProvider
+    extends $StreamNotifierProvider<ImportedModules, List<Module>> {
+  /// The modules a reader imported, in the order they were dropped in.
+  ///
+  /// A module sits outside every profile: its switch is global and its rules
+  /// ride in front of whatever profile is applied, so there is no family
+  /// argument here.
+  ImportedModulesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'importedModulesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$importedModulesHash();
+
+  @$internal
+  @override
+  ImportedModules create() => ImportedModules();
+}
+
+String _$importedModulesHash() => r'e21fa51a2a81c60d0a9c9ded486e7c1f31a4d2ca';
+
+/// The modules a reader imported, in the order they were dropped in.
+///
+/// A module sits outside every profile: its switch is global and its rules
+/// ride in front of whatever profile is applied, so there is no family
+/// argument here.
+
+abstract class _$ImportedModules extends $StreamNotifier<List<Module>> {
+  Stream<List<Module>> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<Module>>, List<Module>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Module>>, List<Module>>,
+              AsyncValue<List<Module>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
