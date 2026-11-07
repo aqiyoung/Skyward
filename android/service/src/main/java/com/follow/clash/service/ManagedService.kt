@@ -24,10 +24,13 @@ internal fun Service.notifyVpnRevoked() {
 }
 
 // UI_HIDDEN reaches the services too, since they share the activity's process,
-// and Android 14 stopped delivering the running levels this answers to.
+// and Android 14 stopped delivering the running levels this answers to. That
+// leaves the moment the app goes to the background as the one signal a modern
+// Android still sends, and it is also the moment the process is judged.
 @Suppress("DEPRECATION")
 internal fun trimCoreMemory(level: Int) {
-    if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW ||
+    if (level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN ||
+        level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW ||
         level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
     ) {
         Core.forceGC()
