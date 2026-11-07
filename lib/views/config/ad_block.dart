@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/features/features.dart';
-import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';

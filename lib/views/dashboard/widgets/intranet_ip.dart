@@ -66,7 +66,7 @@ class LanSwitchRow extends ConsumerWidget {
     final copyable = showAddress && allowLan && address != null;
     final title = appLocalizations.allowLan;
     final subtitle = allowLan
-        ? (copyable ? address! : appLocalizations.portValue(port))
+        ? (copyable ? address : appLocalizations.portValue(port))
         : appLocalizations.disabled;
     void change(bool value) => ref
         .read(patchClashConfigProvider.notifier)
@@ -76,7 +76,7 @@ class LanSwitchRow extends ConsumerWidget {
         title: title,
         subtitle: subtitle,
         value: allowLan,
-        trailing: copyable ? CopyAddressButton(address!) : null,
+        trailing: copyable ? CopyAddressButton(address) : null,
         onTap: () => change(!allowLan),
         onChanged: change,
       );
@@ -105,7 +105,7 @@ class LanSwitchRow extends ConsumerWidget {
               ? DashboardIconButton(
                   glyph: AppGlyphs.copy,
                   tooltip: appLocalizations.copy,
-                  onPressed: () => copyToClipboard(context, address!),
+                  onPressed: () => copyToClipboard(context, address),
                 )
               : null,
           onTap: () => change(!allowLan),

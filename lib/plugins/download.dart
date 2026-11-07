@@ -69,7 +69,7 @@ class SystemDownloader {
     return _methodChannel.invokeMethod<int>('download', {
       'url': url,
       'fileName': fileName,
-      if (expectedSha256 != null) 'expectedSha256': expectedSha256,
+      'expectedSha256': ?expectedSha256,
     });
   }
 

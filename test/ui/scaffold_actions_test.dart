@@ -28,7 +28,7 @@ Future<void> _pumpPage(
         title: 'Reports',
         hideActionsOnScroll: hideActionsOnScroll,
         iconActions: [
-          IconButtonData(
+          const IconButtonData(
             glyph: AppGlyphs.edit,
             tooltip: 'Edit',
             onPressed: _noop,
@@ -91,7 +91,7 @@ void main() {
     await _pumpPage(
       tester,
       _rows(),
-      confirmationAction: IconButtonData(
+      confirmationAction: const IconButtonData(
         glyph: AppGlyphs.check,
         tooltip: 'Done',
         onPressed: _noop,
