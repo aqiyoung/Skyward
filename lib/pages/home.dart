@@ -78,6 +78,10 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
   double _scrollSign = 0;
   double _scrollTravel = 0;
 
+  /// Whether a long scroll may take the bar off the page. The capsule keeps a
+  /// ball on screen instead, so it folds rather than leaves.
+  bool _dockHides = true;
+
   /// The bar follows the finger, never a list that restores its position
   /// on its own, nor a page that is not the active one.
   bool _handleScroll(ScrollNotification notification) {
@@ -121,7 +125,9 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
       // go used to call the bar in halfway through a scroll still going up,
       // which read as the bar flashing.
       if (_scrollTravel >= _scrollTravelToLeave) {
-        _setPhase(_DockPhase.hidden);
+        // A capsule never leaves the page: it folds down to a ball and stays
+        // in reach, so the way back to the tabs is never a scroll away.
+        _setPhase(_dockHides ? _DockPhase.hidden : _DockPhase.compact);
       } else if (_scrollTravel >= _scrollTravelToCollapse &&
           _dockPhase.value == _DockPhase.expanded) {
         // Folding the labels is one step out of a bar that is still there.
@@ -178,6 +184,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     // Both hovering styles follow the page; only the labels answer to the setting.
     final dockFollows = isMobile && style != NavigationBarStyle.docked;
     final dockFoldsLabels = dockFollows && hideLabelOnScroll;
+    _dockHides = style != NavigationBarStyle.capsule;
     final dockDestinations = [
       for (final item in navigationItems)
         NavigationDockDestination(glyph: item.glyph, label: item.label.label),
@@ -239,6 +246,8 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                                   onSelected: (index) {
                                     _handleToPage(navigationItems[index].label);
                                   },
+                                  onExpand: () =>
+                                      _setPhase(_DockPhase.expanded),
                                   scale: dockScale,
                                   collapsed: dockFoldsLabels && compact,
                                 )

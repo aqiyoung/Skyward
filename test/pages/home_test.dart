@@ -1267,7 +1267,10 @@ void main() {
 
     final navigationRail = find.byType(NavigationSidebar);
     await tester.tap(
-      find.descendant(of: navigationRail, matching: _glyph(AppGlyphs.moreHorizontal)),
+      find.descendant(
+        of: navigationRail,
+        matching: _glyph(AppGlyphs.moreHorizontal),
+      ),
     );
     await tester.pumpAndSettle();
     expect(query, isEmpty);
@@ -1503,6 +1506,148 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, 60));
     await tester.pumpAndSettle();
     expect(find.byType(FloatingNavigationBar), findsOneWidget);
+  });
+
+  testWidgets('the capsule folds to a ball instead of leaving the page', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => ListView.builder(
+                  itemCount: 40,
+                  itemBuilder: (_, index) {
+                    return SizedBox(height: 48, child: Text('row $index'));
+                  },
+                ),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) => const Text('page:profiles'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) =>
+              state.copyWith(navigationBarStyle: NavigationBarStyle.capsule),
+        );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<CapsuleNavigationDock>(find.byType(CapsuleNavigationDock))
+          .collapsed,
+      isFalse,
+    );
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, -160));
+    await tester.pumpAndSettle();
+    final dock = find.byType(CapsuleNavigationDock);
+    expect(dock, findsOneWidget, reason: 'the capsule left the page');
+    expect(
+      tester.widget<CapsuleNavigationDock>(dock).collapsed,
+      isTrue,
+      reason:
+          'the capsule stayed whole over a scroll it should have folded for',
+    );
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, 60));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<CapsuleNavigationDock>(find.byType(CapsuleNavigationDock))
+          .collapsed,
+      isFalse,
+    );
+  });
+
+  testWidgets('a drag across the capsule takes the selection with it', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => const Text('page:dashboard'),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.profiles,
+                label: PageLabel.profiles,
+                builder: (_) => const Text('page:profiles'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+    container
+        .read(appSettingProvider.notifier)
+        .update(
+          (state) =>
+              state.copyWith(navigationBarStyle: NavigationBarStyle.capsule),
+        );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    expect(container.read(currentPageLabelProvider), PageLabel.dashboard);
+
+    // Start on the first tab and drag to the foot of the second, the way a
+    // finger would scrub a segmented control.
+    final dock = tester.getRect(find.byType(CapsuleNavigationDock));
+    final gesture = await tester.startGesture(
+      dock.centerLeft + const Offset(40, 0),
+    );
+    await tester.pump();
+    for (var i = 0; i < 8; i++) {
+      await gesture.moveBy(const Offset(30, 0));
+      await tester.pump();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(container.read(currentPageLabelProvider), PageLabel.profiles);
   });
 
   testWidgets('a drag across the page turns to the page beside it', (

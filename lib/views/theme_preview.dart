@@ -358,9 +358,9 @@ class _DiagonalClipper extends CustomClipper<Path> {
 class _MiniGeometry {
   _MiniGeometry(this.size, {required this.floatingBar, this.capsule = false})
     : unit = size.width / 20 {
-    margin = unit * (capsule ? 2.4 : 1.5);
+    margin = unit * (capsule ? 2.2 : 1.5);
     final barHeight = capsule
-        ? unit * 2.8
+        ? unit * 3.1
         : floatingBar
         ? unit * 3.2
         : unit * 3.6;
