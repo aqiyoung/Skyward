@@ -412,6 +412,7 @@
   "memoryCoreStack": "ゴルーチンスタック",
   "memoryCoreRuntime": "ランタイムのオーバーヘッド",
   "memoryCoreNotRunning": "コアは実行されていません",
+  "memoryCoreBudget": "コアの上限",
   "memoryAppResident": "常駐メモリ",
   "memoryAppShared": "アプリと共有",
   "memoryEstimateDesc": "プロセスの常駐メモリからの推定値で、システムの表示とは異なる場合があります。",

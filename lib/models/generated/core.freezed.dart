@@ -4973,7 +4973,7 @@ as int,
 /// @nodoc
 mixin _$CoreMemoryStats {
 
- int get rss; int get heapInuse; int get heapIdle; int get stackInuse; int get runtimeOther;
+ int get rss; int get heapInuse; int get heapIdle; int get stackInuse; int get runtimeOther; int get budget; int get gcPercent; int get deviceTotal;
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4987,20 +4987,20 @@ $CoreMemoryStatsCopyWith<CoreMemoryStats> get copyWith => _$CoreMemoryStatsCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as CoreMemoryStats;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CoreMemoryStats&&(identical(other.rss, _this.rss) || other.rss == _this.rss)&&(identical(other.heapInuse, _this.heapInuse) || other.heapInuse == _this.heapInuse)&&(identical(other.heapIdle, _this.heapIdle) || other.heapIdle == _this.heapIdle)&&(identical(other.stackInuse, _this.stackInuse) || other.stackInuse == _this.stackInuse)&&(identical(other.runtimeOther, _this.runtimeOther) || other.runtimeOther == _this.runtimeOther));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CoreMemoryStats&&(identical(other.rss, _this.rss) || other.rss == _this.rss)&&(identical(other.heapInuse, _this.heapInuse) || other.heapInuse == _this.heapInuse)&&(identical(other.heapIdle, _this.heapIdle) || other.heapIdle == _this.heapIdle)&&(identical(other.stackInuse, _this.stackInuse) || other.stackInuse == _this.stackInuse)&&(identical(other.runtimeOther, _this.runtimeOther) || other.runtimeOther == _this.runtimeOther)&&(identical(other.budget, _this.budget) || other.budget == _this.budget)&&(identical(other.gcPercent, _this.gcPercent) || other.gcPercent == _this.gcPercent)&&(identical(other.deviceTotal, _this.deviceTotal) || other.deviceTotal == _this.deviceTotal));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as CoreMemoryStats;
-  return Object.hash(runtimeType,_this.rss,_this.heapInuse,_this.heapIdle,_this.stackInuse,_this.runtimeOther);
+  return Object.hash(runtimeType,_this.rss,_this.heapInuse,_this.heapIdle,_this.stackInuse,_this.runtimeOther,_this.budget,_this.gcPercent,_this.deviceTotal);
 }
 
 @override
 String toString() {
   final _this = this as CoreMemoryStats;
-  return 'CoreMemoryStats(rss: ${_this.rss}, heapInuse: ${_this.heapInuse}, heapIdle: ${_this.heapIdle}, stackInuse: ${_this.stackInuse}, runtimeOther: ${_this.runtimeOther})';
+  return 'CoreMemoryStats(rss: ${_this.rss}, heapInuse: ${_this.heapInuse}, heapIdle: ${_this.heapIdle}, stackInuse: ${_this.stackInuse}, runtimeOther: ${_this.runtimeOther}, budget: ${_this.budget}, gcPercent: ${_this.gcPercent}, deviceTotal: ${_this.deviceTotal})';
 }
 
 
@@ -5011,7 +5011,7 @@ abstract mixin class $CoreMemoryStatsCopyWith<$Res>  {
   factory $CoreMemoryStatsCopyWith(CoreMemoryStats value, $Res Function(CoreMemoryStats) _then) = _$CoreMemoryStatsCopyWithImpl;
 @useResult
 $Res call({
- int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther
+ int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther, int budget, int gcPercent, int deviceTotal
 });
 
 
@@ -5028,13 +5028,16 @@ class _$CoreMemoryStatsCopyWithImpl<$Res>
 
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? rss = null,Object? heapInuse = null,Object? heapIdle = null,Object? stackInuse = null,Object? runtimeOther = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? rss = null,Object? heapInuse = null,Object? heapIdle = null,Object? stackInuse = null,Object? runtimeOther = null,Object? budget = null,Object? gcPercent = null,Object? deviceTotal = null,}) {
   return _then(CoreMemoryStats(
 rss: null == rss ? _self.rss : rss // ignore: cast_nullable_to_non_nullable
 as int,heapInuse: null == heapInuse ? _self.heapInuse : heapInuse // ignore: cast_nullable_to_non_nullable
 as int,heapIdle: null == heapIdle ? _self.heapIdle : heapIdle // ignore: cast_nullable_to_non_nullable
 as int,stackInuse: null == stackInuse ? _self.stackInuse : stackInuse // ignore: cast_nullable_to_non_nullable
 as int,runtimeOther: null == runtimeOther ? _self.runtimeOther : runtimeOther // ignore: cast_nullable_to_non_nullable
+as int,budget: null == budget ? _self.budget : budget // ignore: cast_nullable_to_non_nullable
+as int,gcPercent: null == gcPercent ? _self.gcPercent : gcPercent // ignore: cast_nullable_to_non_nullable
+as int,deviceTotal: null == deviceTotal ? _self.deviceTotal : deviceTotal // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -5120,10 +5123,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther,  int budget,  int gcPercent,  int deviceTotal)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats() when $default != null:
-return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
+return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther,_that.budget,_that.gcPercent,_that.deviceTotal);case _:
   return orElse();
 
 }
@@ -5141,10 +5144,10 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther,  int budget,  int gcPercent,  int deviceTotal)  $default,) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats():
-return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
+return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther,_that.budget,_that.gcPercent,_that.deviceTotal);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5161,10 +5164,10 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int rss,  int heapInuse,  int heapIdle,  int stackInuse,  int runtimeOther,  int budget,  int gcPercent,  int deviceTotal)?  $default,) {final _that = this;
 switch (_that) {
 case _CoreMemoryStats() when $default != null:
-return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther);case _:
+return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.runtimeOther,_that.budget,_that.gcPercent,_that.deviceTotal);case _:
   return null;
 
 }
@@ -5176,7 +5179,7 @@ return $default(_that.rss,_that.heapInuse,_that.heapIdle,_that.stackInuse,_that.
 @JsonSerializable()
 
 class _CoreMemoryStats implements CoreMemoryStats {
-  const _CoreMemoryStats({this.rss = 0, this.heapInuse = 0, this.heapIdle = 0, this.stackInuse = 0, this.runtimeOther = 0});
+  const _CoreMemoryStats({this.rss = 0, this.heapInuse = 0, this.heapIdle = 0, this.stackInuse = 0, this.runtimeOther = 0, this.budget = 0, this.gcPercent = 0, this.deviceTotal = 0});
   factory _CoreMemoryStats.fromJson(Map<String, dynamic> json) => _$CoreMemoryStatsFromJson(json);
 
 @override@JsonKey() final  int rss;
@@ -5184,6 +5187,9 @@ class _CoreMemoryStats implements CoreMemoryStats {
 @override@JsonKey() final  int heapIdle;
 @override@JsonKey() final  int stackInuse;
 @override@JsonKey() final  int runtimeOther;
+@override@JsonKey() final  int budget;
+@override@JsonKey() final  int gcPercent;
+@override@JsonKey() final  int deviceTotal;
 
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
@@ -5198,18 +5204,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CoreMemoryStats&&(identical(other.rss, rss) || other.rss == rss)&&(identical(other.heapInuse, heapInuse) || other.heapInuse == heapInuse)&&(identical(other.heapIdle, heapIdle) || other.heapIdle == heapIdle)&&(identical(other.stackInuse, stackInuse) || other.stackInuse == stackInuse)&&(identical(other.runtimeOther, runtimeOther) || other.runtimeOther == runtimeOther));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CoreMemoryStats&&(identical(other.rss, rss) || other.rss == rss)&&(identical(other.heapInuse, heapInuse) || other.heapInuse == heapInuse)&&(identical(other.heapIdle, heapIdle) || other.heapIdle == heapIdle)&&(identical(other.stackInuse, stackInuse) || other.stackInuse == stackInuse)&&(identical(other.runtimeOther, runtimeOther) || other.runtimeOther == runtimeOther)&&(identical(other.budget, budget) || other.budget == budget)&&(identical(other.gcPercent, gcPercent) || other.gcPercent == gcPercent)&&(identical(other.deviceTotal, deviceTotal) || other.deviceTotal == deviceTotal));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,rss,heapInuse,heapIdle,stackInuse,runtimeOther);
+    return Object.hash(runtimeType,rss,heapInuse,heapIdle,stackInuse,runtimeOther,budget,gcPercent,deviceTotal);
 }
 
 @override
 String toString() {
-    return 'CoreMemoryStats(rss: $rss, heapInuse: $heapInuse, heapIdle: $heapIdle, stackInuse: $stackInuse, runtimeOther: $runtimeOther)';
+    return 'CoreMemoryStats(rss: $rss, heapInuse: $heapInuse, heapIdle: $heapIdle, stackInuse: $stackInuse, runtimeOther: $runtimeOther, budget: $budget, gcPercent: $gcPercent, deviceTotal: $deviceTotal)';
 }
 
 
@@ -5220,7 +5226,7 @@ abstract mixin class _$CoreMemoryStatsCopyWith<$Res> implements $CoreMemoryStats
   factory _$CoreMemoryStatsCopyWith(_CoreMemoryStats value, $Res Function(_CoreMemoryStats) _then) = __$CoreMemoryStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther
+ int rss, int heapInuse, int heapIdle, int stackInuse, int runtimeOther, int budget, int gcPercent, int deviceTotal
 });
 
 
@@ -5237,13 +5243,16 @@ class __$CoreMemoryStatsCopyWithImpl<$Res>
 
 /// Create a copy of CoreMemoryStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? rss = null,Object? heapInuse = null,Object? heapIdle = null,Object? stackInuse = null,Object? runtimeOther = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? rss = null,Object? heapInuse = null,Object? heapIdle = null,Object? stackInuse = null,Object? runtimeOther = null,Object? budget = null,Object? gcPercent = null,Object? deviceTotal = null,}) {
   return _then(_CoreMemoryStats(
 rss: null == rss ? _self.rss : rss // ignore: cast_nullable_to_non_nullable
 as int,heapInuse: null == heapInuse ? _self.heapInuse : heapInuse // ignore: cast_nullable_to_non_nullable
 as int,heapIdle: null == heapIdle ? _self.heapIdle : heapIdle // ignore: cast_nullable_to_non_nullable
 as int,stackInuse: null == stackInuse ? _self.stackInuse : stackInuse // ignore: cast_nullable_to_non_nullable
 as int,runtimeOther: null == runtimeOther ? _self.runtimeOther : runtimeOther // ignore: cast_nullable_to_non_nullable
+as int,budget: null == budget ? _self.budget : budget // ignore: cast_nullable_to_non_nullable
+as int,gcPercent: null == gcPercent ? _self.gcPercent : gcPercent // ignore: cast_nullable_to_non_nullable
+as int,deviceTotal: null == deviceTotal ? _self.deviceTotal : deviceTotal // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

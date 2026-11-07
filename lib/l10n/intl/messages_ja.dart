@@ -1045,6 +1045,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("常駐メモリ"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("アプリと共有"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("コアの上限"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("未使用のヒープ"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("使用中のヒープ"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(

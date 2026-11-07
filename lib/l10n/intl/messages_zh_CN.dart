@@ -956,6 +956,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("常驻内存"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("应用及共享"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("内核上限"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("堆内存空闲"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("堆内存使用中"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage("内核未运行"),

@@ -1265,6 +1265,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryAppShared": MessageLookupByLibrary.simpleMessage(
       "Приложение и общая",
     ),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Лимит ядра"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage(
       "Свободная куча",
     ),

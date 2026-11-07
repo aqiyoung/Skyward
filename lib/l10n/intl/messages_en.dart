@@ -1217,6 +1217,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Resident memory",
     ),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("App & shared"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Core budget"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("Heap idle"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("Heap in use"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(

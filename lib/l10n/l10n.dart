@@ -3331,6 +3331,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Core budget`
+  String get memoryCoreBudget {
+    return Intl.message(
+      'Core budget',
+      name: 'memoryCoreBudget',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Resident memory`
   String get memoryAppResident {
     return Intl.message(

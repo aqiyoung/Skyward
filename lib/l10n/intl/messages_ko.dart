@@ -1030,6 +1030,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("최대화"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("상주 메모리"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("앱 및 공유"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("코어 상한"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("유휴 힙"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("사용 중인 힙"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(

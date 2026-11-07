@@ -412,6 +412,7 @@
   "memoryCoreStack": "Стеки горутин",
   "memoryCoreRuntime": "Накладные расходы среды",
   "memoryCoreNotRunning": "Ядро не запущено",
+  "memoryCoreBudget": "Лимит ядра",
   "memoryAppResident": "Резидентная память",
   "memoryAppShared": "Приложение и общая",
   "memoryEstimateDesc": "Оценка по резидентной памяти процессов; может отличаться от данных системы.",
