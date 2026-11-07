@@ -463,6 +463,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cannotSave": MessageLookupByLibrary.simpleMessage(
       "Enregistrement impossible",
     ),
+    "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Échec du changement de proxy ; la sélection précédente a été rétablie",
     ),

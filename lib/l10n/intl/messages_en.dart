@@ -429,6 +429,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Deselect all"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("Can\'t save"),
+    "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to switch proxy; the previous selection has been restored",
     ),

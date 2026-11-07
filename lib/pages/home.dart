@@ -78,6 +78,10 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
   double _scrollSign = 0;
   double _scrollTravel = 0;
 
+  /// Whether a long scroll may take the bar off the page. The capsule keeps a
+  /// ball on screen instead, so it folds rather than leaves.
+  bool _dockHides = true;
+
   /// The bar follows the finger, never a list that restores its position
   /// on its own, nor a page that is not the active one.
   bool _handleScroll(ScrollNotification notification) {
@@ -121,7 +125,9 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
       // go used to call the bar in halfway through a scroll still going up,
       // which read as the bar flashing.
       if (_scrollTravel >= _scrollTravelToLeave) {
-        _setPhase(_DockPhase.hidden);
+        // A capsule never leaves the page: it folds down to a ball and stays
+        // in reach, so the way back to the tabs is never a scroll away.
+        _setPhase(_dockHides ? _DockPhase.hidden : _DockPhase.compact);
       } else if (_scrollTravel >= _scrollTravelToCollapse &&
           _dockPhase.value == _DockPhase.expanded) {
         // Folding the labels is one step out of a bar that is still there.
@@ -166,8 +172,8 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final state = ref.watch(navigationStateProvider);
     final isMobile = state.viewMode == ViewMode.mobile;
     final navigationItems = state.navigationItems;
-    final floating = ref.watch(
-      appSettingProvider.select((state) => state.floatingNavigationBar),
+    final style = ref.watch(
+      appSettingProvider.select((state) => state.navigationBarStyle),
     );
     final dockScale = ref.watch(
       themeSettingProvider.select((state) => state.dockScale),
@@ -175,9 +181,14 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     final hideLabelOnScroll = ref.watch(
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
-    // A floating dock follows the page; only the labels answer to the setting.
-    final dockFollows = isMobile && floating;
+    // Both hovering styles follow the page; only the labels answer to the setting.
+    final dockFollows = isMobile && style != NavigationBarStyle.docked;
     final dockFoldsLabels = dockFollows && hideLabelOnScroll;
+    _dockHides = style != NavigationBarStyle.capsule;
+    final dockDestinations = [
+      for (final item in navigationItems)
+        NavigationDockDestination(glyph: item.glyph, label: item.label.label),
+    ];
     return Material(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
@@ -189,8 +200,13 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                   child: FocusTraversalGroup(
                     policy: PageTraversalPolicy(),
                     child: BottomInsetScope(
-                      inset: isMobile && floating
-                          ? NavigationDock.insetOf(context, dockScale)
+                      inset: dockFollows
+                          ? style == NavigationBarStyle.capsule
+                                ? CapsuleNavigationDock.insetOf(
+                                    context,
+                                    dockScale,
+                                  )
+                                : NavigationDock.insetOf(context, dockScale)
                           : 0,
                       child: _BodyPadding(
                         isMobile: isMobile,
@@ -223,21 +239,27 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                         // leaves, so the page under it never moves.
                         visible: dockFollows && !hidden,
                         child: _NavigationPadding(
-                          child: NavigationDock(
-                            destinations: [
-                              for (final item in navigationItems)
-                                NavigationDockDestination(
-                                  glyph: item.glyph,
-                                  label: item.label.label,
+                          child: style == NavigationBarStyle.capsule
+                              ? CapsuleNavigationDock(
+                                  destinations: dockDestinations,
+                                  selectedIndex: state.currentIndex,
+                                  onSelected: (index) {
+                                    _handleToPage(navigationItems[index].label);
+                                  },
+                                  onExpand: () =>
+                                      _setPhase(_DockPhase.expanded),
+                                  scale: dockScale,
+                                  collapsed: dockFoldsLabels && compact,
+                                )
+                              : NavigationDock(
+                                  destinations: dockDestinations,
+                                  selectedIndex: state.currentIndex,
+                                  onSelected: (index) {
+                                    _handleToPage(navigationItems[index].label);
+                                  },
+                                  scale: dockScale,
+                                  showLabel: !(dockFoldsLabels && compact),
                                 ),
-                            ],
-                            selectedIndex: state.currentIndex,
-                            onSelected: (index) {
-                              _handleToPage(navigationItems[index].label);
-                            },
-                            scale: dockScale,
-                            showLabel: !(dockFoldsLabels && compact),
-                          ),
                         ),
                       );
                     },
@@ -247,7 +269,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
             ),
           ),
           AnimatedVisibility.bottomNavigation(
-            visible: isMobile && !floating,
+            visible: isMobile && style == NavigationBarStyle.docked,
             child: _NavigationPadding(
               child: NavigationBar(
                 destinations: [
