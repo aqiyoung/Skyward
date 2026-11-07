@@ -93,6 +93,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('row separators are off on this page', (tester) async {
+    container = buildContainer();
+
+    await pumpExtend(tester);
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is ListRowSeparatorScope && !widget.separated,
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('both section headers use the same list caption', (tester) async {
+    container = buildContainer(type: ExtendType.script);
+
+    await pumpExtend(tester);
+
+    expect(
+      find.widgetWithText(ListHeader, currentAppLocalizations.extendMode),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ListHeader, currentAppLocalizations.extendScript),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('only the selected mode carries the check badge', (tester) async {
     container = buildContainer();
 
