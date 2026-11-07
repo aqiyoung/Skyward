@@ -19,7 +19,6 @@ const double _bottomMargin = 20;
 const double _collapsedSize = 50;
 const double _iconSize = 30;
 const double _chipSize = 66;
-const double _dotSize = 10;
 const double _borderWidth = 1.6;
 
 /// How far a finger has to travel across the bar before it starts scrubbing
@@ -32,8 +31,8 @@ const Duration _morph = Duration(milliseconds: 420);
 const Duration _fade = Duration(milliseconds: 220);
 
 /// A wide, hefty rounded bar that spans the page with the selected glyph in a
-/// chip and a dot in the theme colour. On a long scroll the whole bar shrinks
-/// down to a small ball holding only the selected glyph, then grows back.
+/// chip. On a long scroll the whole bar shrinks down to a small ball holding
+/// only the selected glyph, then grows back.
 ///
 /// A finger dragged across the bar takes the selection with it, the way a
 /// segmented control does, so the tabs can be changed without aiming at one.
@@ -230,7 +229,6 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                                   scale: s * 0.8,
                                   colorScheme: colorScheme,
                                   showChip: false,
-                                  showDot: false,
                                 ),
                               ),
                             ),
@@ -293,7 +291,6 @@ class _Destination extends StatelessWidget {
     required this.scale,
     required this.colorScheme,
     this.showChip = true,
-    this.showDot = true,
   });
 
   final Glyph glyph;
@@ -303,7 +300,6 @@ class _Destination extends StatelessWidget {
   final double scale;
   final ColorScheme colorScheme;
   final bool showChip;
-  final bool showDot;
 
   @override
   Widget build(BuildContext context) {
@@ -344,24 +340,6 @@ class _Destination extends StatelessWidget {
                   ),
                   child: AnimatedGlyph(glyph: glyph, filled: selected),
                 ),
-                if (selected && showDot)
-                  Align(
-                    alignment: const Alignment(0.72, -0.72),
-                    child: Container(
-                      width: _dotSize * s,
-                      height: _dotSize * s,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.primary,
-                        border: Border.all(
-                          color: SurfaceLevel.floatingOf(
-                            colorScheme,
-                          ).colorOf(colorScheme),
-                          width: 2.4 * s,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),

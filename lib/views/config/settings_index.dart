@@ -322,7 +322,7 @@ final _maintenanceEntries = <SettingsEntry>[
     view: _diagnosticsView,
   ),
   SettingsEntry(
-    title: (l) => l.dnsLeakCheck,
+    title: (l) => l.leakCheck,
     page: (l) => l.settings,
     view: _dnsLeakView,
   ),

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
@@ -53,11 +52,13 @@ const _probeName = 'www.bing.com';
 const _probeResolver = '223.5.5.5';
 
 const _dnsLeakUrl = 'https://browserleaks.com/dns';
+const _webrtcLeakUrl = 'https://browserleaks.com/webrtc';
 
 class DnsLeakCheck extends ConsumerStatefulWidget {
-  const DnsLeakCheck({super.key, this.probe});
+  const DnsLeakCheck({super.key, this.probe, this.stunProbe});
 
   final DnsProbe? probe;
+  final StunProbe? stunProbe;
 
   @override
   ConsumerState<DnsLeakCheck> createState() => _DnsLeakCheckState();
@@ -65,6 +66,7 @@ class DnsLeakCheck extends ConsumerStatefulWidget {
 
 class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
   DnsProbeResult? _result;
+  StunProbeResult? _stun;
   var _running = false;
 
   @override
@@ -78,19 +80,34 @@ class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
       return;
     }
     setState(() => _running = true);
-    DnsProbeResult? result;
-    try {
-      result = await (widget.probe ?? probeDns)();
-    } catch (_) {
-      result = null;
-    }
+    final dnsFuture = _guard<DnsProbeResult>(widget.probe ?? probeDns);
+    final stunFuture = _guard<StunProbeResult>(widget.stunProbe ?? probeStun);
+    final dnsBounded = dnsFuture.timeout(
+      leakProbeOverallTimeout,
+      onTimeout: () => null,
+    );
+    final stunBounded = stunFuture.timeout(
+      leakProbeOverallTimeout,
+      onTimeout: () => null,
+    );
+    final dns = await dnsBounded;
+    final stun = await stunBounded;
     if (!mounted) {
       return;
     }
     setState(() {
-      _result = result;
+      _result = dns;
+      _stun = stun;
       _running = false;
     });
+  }
+
+  Future<T?> _guard<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } catch (_) {
+      return null;
+    }
   }
 
   String _statusText(AppLocalizations l, _Level level) {
@@ -120,7 +137,7 @@ class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
     };
   }
 
-  List<_Finding> _findings(
+  List<_Finding> _dnsFindings(
     AppLocalizations l,
     PatchClashConfig config,
     CoreStatus status,
@@ -204,33 +221,105 @@ class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
     ];
   }
 
+  List<_Finding> _stunFindings(AppLocalizations l, WebrtcGuard guard) {
+    final stun = _stun;
+    final resolved = stun?.resolved ?? false;
+    final answered = stun?.answered ?? false;
+    final reflected = stun?.reflected;
+
+    final guardLevel = switch (guard) {
+      WebrtcGuard.block => _Level.pass,
+      WebrtcGuard.proxy => _Level.warn,
+      WebrtcGuard.off => _Level.warn,
+    };
+    final guardDetail = switch (guard) {
+      WebrtcGuard.block => null,
+      WebrtcGuard.proxy => l.webrtcLeakGuardProxyBad,
+      WebrtcGuard.off => l.webrtcLeakGuardOffBad,
+    };
+
+    final _Level stunLevel;
+    final String? stunDetail;
+    if (stun == null || !resolved) {
+      stunLevel = _Level.unknown;
+      stunDetail = l.webrtcLeakStunUnresolved;
+    } else if (!answered) {
+      stunLevel = guard == WebrtcGuard.block ? _Level.pass : _Level.unknown;
+      stunDetail = guard == WebrtcGuard.block
+          ? l.webrtcLeakStunBlocked
+          : l.webrtcLeakStunSilent;
+    } else {
+      stunLevel = guard == WebrtcGuard.block ? _Level.fail : _Level.warn;
+      stunDetail = l.webrtcLeakStunOpen;
+    }
+
+    final _Level reflectedLevel;
+    if (reflected == null) {
+      reflectedLevel = _Level.unknown;
+    } else if (guard == WebrtcGuard.block) {
+      reflectedLevel = _Level.fail;
+    } else if (guard == WebrtcGuard.off) {
+      reflectedLevel = _Level.warn;
+    } else {
+      reflectedLevel = _Level.pass;
+    }
+
+    return [
+      (
+        title: l.webrtcLeakGuard,
+        detail: guardDetail ?? guard.label,
+        level: guardLevel,
+      ),
+      (title: l.webrtcLeakStun, detail: stunDetail, level: stunLevel),
+      (
+        title: l.webrtcLeakReflected,
+        detail: reflected ?? l.dnsLeakUnknown,
+        level: reflectedLevel,
+      ),
+    ];
+  }
+
+  Widget _row(BuildContext context, _Finding finding) {
+    return ListItem(
+      leading: IconWell(_statusGlyph(finding.level), side: 24),
+      title: Text(finding.title),
+      subtitle: finding.detail == null ? null : Text(finding.detail!),
+      trailing: Text(
+        _statusText(context.appLocalizations, finding.level),
+        style: context.listSubtitleStyle.copyWith(
+          color: _statusColor(context.colorScheme, finding.level),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final config = ref.watch(patchClashConfigProvider);
     final status = ref.watch(coreStatusProvider);
-    final findings = _findings(l, config, status);
+    final guard = ref.watch(
+      appSettingProvider.select((state) => state.webrtcGuard),
+    );
     return Column(
       children: [
         generateSection(
           leadingGap: false,
+          title: 'DNS',
           items: [
-            for (final finding in findings)
-              ListItem(
-                leading: IconWell(_statusGlyph(finding.level), side: 24),
-                title: Text(finding.title),
-                subtitle: finding.detail == null
-                    ? null
-                    : Text(finding.detail!),
-                trailing: Text(
-                  _statusText(l, finding.level),
-                  style: context.listSubtitleStyle.copyWith(
-                    color: _statusColor(context.colorScheme, finding.level),
-                  ),
-                ),
-              ),
+            for (final finding in _dnsFindings(l, config, status))
+              _row(context, finding),
           ],
           footer: l.dnsLeakAdvice,
+        ),
+        const SizedBox(height: 16),
+        generateSection(
+          title: 'WebRTC',
+          items: [
+            for (final finding in _stunFindings(l, guard))
+              _row(context, finding),
+          ],
+          footer: l.webrtcLeakAdvice,
         ),
         const SizedBox(height: 16),
         Row(
@@ -247,13 +336,30 @@ class _DnsLeakCheckState extends ConsumerState<DnsLeakCheck> {
               child: TonalButton(
                 label: l.dnsLeakExternal,
                 glyph: AppGlyphs.link,
-                onPressed: () => unawaited(launchUrl(Uri.parse(_dnsLeakUrl))),
+                onPressed: () => unawaited(_openExternal(_dnsLeakUrl)),
               ),
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: TonalButton(
+            label: l.webrtcLeakExternal,
+            glyph: AppGlyphs.link,
+            onPressed: () => unawaited(_openExternal(_webrtcLeakUrl)),
+          ),
+        ),
       ],
     );
+  }
+}
+
+Future<void> _openExternal(String url) async {
+  try {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } catch (_) {
+    return;
   }
 }
 
@@ -271,10 +377,14 @@ bool isFakeIp(String? address) {
 
 /// Runs both probes against the running system.
 Future<DnsProbeResult> probeDns() async {
-  final lookup = await _lookupAddress();
-  final direct = await _queryPlainResolver();
-  final ipv6 = await _globalIpv6();
-  return DnsProbeResult(lookup: lookup, direct: direct, globalIpv6: ipv6);
+  final lookup = _lookupAddress();
+  final direct = _queryPlainResolver();
+  final ipv6 = _globalIpv6();
+  return DnsProbeResult(
+    lookup: await lookup,
+    direct: await direct,
+    globalIpv6: await ipv6,
+  );
 }
 
 Future<String?> _lookupAddress() async {
@@ -282,7 +392,7 @@ Future<String?> _lookupAddress() async {
     final addresses = await InternetAddress.lookup(
       _probeName,
       type: InternetAddressType.IPv4,
-    );
+    ).timeout(dnsProbeTimeout, onTimeout: () => <InternetAddress>[]);
     return addresses.isEmpty ? null : addresses.first.address;
   } catch (_) {
     return null;
@@ -292,28 +402,50 @@ Future<String?> _lookupAddress() async {
 /// Asks a plain resolver on port 53 through a socket of our own, which is the
 /// path the TUN hijack has to intercept for the answer to come back fake.
 Future<String?> _queryPlainResolver() async {
+  for (var attempt = 0; attempt < dnsProbeAttempts; attempt++) {
+    final answer = await _plainResolverAttempt(
+      name: _probeName,
+      resolver: _probeResolver,
+      timeout: dnsProbeTimeout ~/ dnsProbeAttempts,
+    );
+    if (answer != null) {
+      return answer;
+    }
+  }
+  return null;
+}
+
+Future<String?> _plainResolverAttempt({
+  required String name,
+  required String resolver,
+  required Duration timeout,
+}) async {
   RawDatagramSocket? socket;
   StreamSubscription<RawSocketEvent>? subscription;
   try {
     socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     final bound = socket;
-    final query = _buildQuery(_probeName);
+    final transactionId = randomDnsTransactionId();
+    final query = buildDnsQuery(name, transactionId);
     final completer = Completer<String?>();
     subscription = bound.listen((event) {
-      if (event != RawSocketEvent.read) {
+      if (event != RawSocketEvent.read || completer.isCompleted) {
         return;
       }
-      final datagram = bound.receive();
-      if (datagram == null || completer.isCompleted) {
-        return;
+      for (
+        var datagram = bound.receive();
+        datagram != null;
+        datagram = bound.receive()
+      ) {
+        final address = firstDnsAddress(datagram.data, transactionId);
+        if (address != null) {
+          completer.complete(address);
+          break;
+        }
       }
-      completer.complete(_firstAddress(datagram.data));
     });
-    bound.send(query, InternetAddress(_probeResolver), 53);
-    return await completer.future.timeout(
-      const Duration(seconds: 3),
-      onTimeout: () => null,
-    );
+    bound.send(query, InternetAddress(resolver), 53);
+    return await completer.future.timeout(timeout, onTimeout: () => null);
   } catch (_) {
     return null;
   } finally {
@@ -322,73 +454,19 @@ Future<String?> _queryPlainResolver() async {
   }
 }
 
-Uint8List _buildQuery(String name) {
-  final builder = BytesBuilder();
-  // One question, recursion desired, no answers or authority expected.
-  builder.add([0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-  for (final label in name.split('.')) {
-    builder.addByte(label.length);
-    builder.add(label.codeUnits);
-  }
-  builder.addByte(0);
-  builder.add([0x00, 0x01, 0x00, 0x01]);
-  return builder.toBytes();
-}
-
-/// Walks to the first A record. Enough of the format to read an answer, not a
-/// resolver: no caching, no follow-up queries.
-String? _firstAddress(Uint8List data) {
-  if (data.length < 12) {
-    return null;
-  }
-  final questions = (data[4] << 8) | data[5];
-  final answers = (data[6] << 8) | data[7];
-  var offset = 12;
-  for (var i = 0; i < questions; i++) {
-    offset = _skipName(data, offset);
-    offset += 4;
-  }
-  for (var i = 0; i < answers; i++) {
-    offset = _skipName(data, offset);
-    if (offset + 10 > data.length) {
-      return null;
-    }
-    final type = (data[offset] << 8) | data[offset + 1];
-    final length = (data[offset + 8] << 8) | data[offset + 9];
-    offset += 10;
-    if (type == 1 && length == 4 && offset + 4 <= data.length) {
-      return '${data[offset]}.${data[offset + 1]}.'
-          '${data[offset + 2]}.${data[offset + 3]}';
-    }
-    offset += length;
-  }
-  return null;
-}
-
-int _skipName(Uint8List data, int offset) {
-  while (offset < data.length) {
-    final length = data[offset];
-    if (length == 0) {
-      return offset + 1;
-    }
-    if ((length & 0xC0) == 0xC0) {
-      return offset + 2;
-    }
-    offset += length + 1;
-  }
-  return offset;
-}
-
 Future<List<String>> _globalIpv6() async {
   try {
     final interfaces = await NetworkInterface.list(
       type: InternetAddressType.IPv6,
-    );
+    ).timeout(dnsProbeTimeout, onTimeout: () => <NetworkInterface>[]);
     final global = <String>[];
     for (final interface in interfaces) {
       for (final address in interface.addresses) {
         final raw = address.rawAddress;
-        if (raw.length != 16 || address.isLoopback || address.isLinkLocal) {
+        if (raw.length != 16 ||
+            address.isLoopback ||
+            address.isLinkLocal ||
+            address.isMulticast) {
           continue;
         }
         // fc00::/7 is the unique-local block, which never leaves the LAN.
@@ -407,21 +485,22 @@ Future<List<String>> _globalIpv6() async {
 /// Page wrapper around [DnsLeakCheck], kept so the standalone entry and
 /// the widget test can still open it as a full screen.
 class DnsLeakView extends StatelessWidget {
-  const DnsLeakView({super.key, this.probe});
+  const DnsLeakView({super.key, this.probe, this.stunProbe});
 
   final DnsProbe? probe;
+  final StunProbe? stunProbe;
 
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     return BaseScaffold(
       rowSeparators: false,
-      title: l.dnsLeakCheck,
+      title: l.leakCheck,
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
         ).copyWith(top: context.cardTopPadding, bottom: 16),
-        children: [DnsLeakCheck(probe: probe)],
+        children: [DnsLeakCheck(probe: probe, stunProbe: stunProbe)],
       ),
     );
   }

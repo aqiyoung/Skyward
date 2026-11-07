@@ -974,6 +974,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "지난번 시작하는 중에 앱이 예기치 않게 종료되었습니다. 이번 실행에서는 자동 설정을 건너뛰었으니 직접 시작하여 다시 시도하세요.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("레이아웃"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("유출 점검"),
     "light": MessageLookupByLibrary.simpleMessage("라이트"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("자동 줄 바꿈"),
@@ -1745,6 +1746,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("그대로 두기"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("프록시 경유"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "「차단」에서는 반사 주소가 보이지 않는 것이 정상입니다. 실제 유출을 확인하려면 「고급 설정 → 네트워크」에서 WebRTC를 잠시 「처리하지 않음」으로 바꾼 뒤 확인하고 다시 되돌리세요.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "브라우저에서 WebRTC 확인",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("보호 모드"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "보호가 꺼져 있어 웹 페이지가 기기의 공인 주소를 읽을 수 있습니다",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "탐색이 프록시를 거칩니다. 노드가 UDP를 지원해야 합니다",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("반사 주소"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN 프로브"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "STUN 응답이 없어 차단이 작동 중입니다",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "STUN 서버가 응답했습니다",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "STUN 응답이 없어 판단할 수 없습니다",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

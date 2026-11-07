@@ -1191,6 +1191,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "В прошлый раз приложение неожиданно завершилось во время запуска. Автоматическая настройка для этого запуска пропущена; вы можете запустить её вручную.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Макет"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("Проверка утечек"),
     "light": MessageLookupByLibrary.simpleMessage("Светлая"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Перенос строк"),
@@ -2148,6 +2149,35 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Не трогать"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Через прокси"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "При «Блокировать» отсутствие отражённого адреса — норма. Чтобы проверить реальную утечку, временно включите «Не трогать» в «Дополнительно → Сеть», проверьте и верните назад.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Проверить WebRTC в браузере",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("Режим защиты"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "Защита выключена: страница может узнать публичный адрес устройства",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "Обнаружение идёт через прокси; узел должен поддерживать UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage(
+      "Отражённый адрес",
+    ),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN-проверка"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "Ответа STUN нет, блокировка работает",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "Сервер STUN ответил",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "Ответа STUN нет, результат неопределён",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "Не удалось разрешить адрес STUN: сеть недоступна",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),

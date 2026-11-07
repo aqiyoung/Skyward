@@ -989,6 +989,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "前回、アプリは起動中に予期せず終了しました。今回の自動セットアップはスキップしました。手動で起動して再試行できます。",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("レイアウト"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("リークチェック"),
     "light": MessageLookupByLibrary.simpleMessage("ライト"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("折り返し"),
@@ -1770,6 +1771,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("未処理"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("プロキシ経由"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "「遮断」では反射アドレスが表示されないのが正常です。実際の漏れを調べるには、「詳細設定 → ネットワーク」で WebRTC を一時的に「そのまま」にし、確認後に戻してください。",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "ブラウザーで WebRTC を確認",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("保護モード"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "保護がオフなので、ページから本体のグローバルアドレスを読めます",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "検出はプロキシ経由です。ノードが UDP に対応している必要があります",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("反射アドレス"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN プローブ"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "STUN 応答がないため、ブロックは機能しています",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "STUN サーバーから応答がありました",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "STUN 応答がなく、判定できません",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "STUN ホストを解決できません。ネットワークが利用できません",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

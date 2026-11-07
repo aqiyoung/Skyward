@@ -904,6 +904,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "应用上次在启动过程中意外退出。已跳过本次自动配置，你可以手动启动重试。",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("布局"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("泄露自检"),
     "light": MessageLookupByLibrary.simpleMessage("浅色"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("自动换行"),
@@ -1613,6 +1614,31 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("不处理"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("经代理"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "默认「拦截」下看不到反射地址属于正常。要验证真实泄露，请先到「进阶配置 → 网络」把 WebRTC 临时改成「不处理」，检测后再切回。",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "在浏览器中验证 WebRTC",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("防护模式"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "当前为「不处理」，网页可读取本机公网地址",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "经代理转发，需要节点支持 UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("反射地址"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN 探测"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "未收到 STUN 响应，拦截已生效",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage("STUN 服务器返回了响应"),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "未收到 STUN 响应，无法判断",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "无法解析 STUN 服务，网络不可用",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
