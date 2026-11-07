@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/navigation_dock.dart' show NavigationDockDestination;
+import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -45,7 +46,7 @@ class CapsuleNavigationDock extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final s = scale;
     final height = _height * s;
-    final radius = BorderRadius.circular(height / 2);
+    final radius = AppRadius.all(height / 2);
     final bottom = math.max(
       _bottomMargin * s,
       MediaQuery.paddingOf(context).bottom,
@@ -71,9 +72,9 @@ class CapsuleNavigationDock extends StatelessWidget {
               curve: Curves.easeOutCubic,
               width: collapsed ? _collapsedSize * s : full,
               height: height,
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                boxShadow: [
+              decoration: ShapeDecoration(
+                shape: AppShape.full,
+                shadows: [
                   BoxShadow(
                     color: colorScheme.shadow.withValues(alpha: 0.16),
                     blurRadius: 20 * s,
@@ -82,17 +83,18 @@ class CapsuleNavigationDock extends StatelessWidget {
                 ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: ClipRRect(
+              child: ClipRSuperellipse(
                 borderRadius: radius,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: DecoratedBox(
-                    decoration: BoxDecoration(
+                    decoration: ShapeDecoration(
                       color: floating.withValues(alpha: dark ? 0.78 : 0.84),
-                      borderRadius: radius,
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: dark ? 0.22 : 0.55,
+                      shape: AppShape.full.copyWith(
+                        side: BorderSide(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: dark ? 0.22 : 0.55,
+                          ),
                         ),
                       ),
                     ),
@@ -146,8 +148,8 @@ class CapsuleNavigationDock extends StatelessWidget {
                         ),
                         IgnorePointer(
                           child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: radius,
+                            decoration: ShapeDecoration(
+                              shape: AppShape.full,
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
@@ -164,8 +166,8 @@ class CapsuleNavigationDock extends StatelessWidget {
                         ),
                         IgnorePointer(
                           child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: radius,
+                            decoration: ShapeDecoration(
+                              shape: AppShape.full,
                               gradient: LinearGradient(
                                 colors: [
                                   colorScheme.primary.withValues(alpha: 0.07),
