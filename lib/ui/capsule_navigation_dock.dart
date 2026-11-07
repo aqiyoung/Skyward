@@ -8,15 +8,17 @@ import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _height = 72;
+/// The open bar: wide and hefty, spanning the page with a small margin either
+/// side. This is the normal state, the way X shows its dock.
+const double _height = 76;
 const double _edgeMargin = 16;
 const double _bottomMargin = 20;
 
-/// The bar hugs its tabs instead of spanning the screen: every destination
-/// gets this much room and the capsule stops growing past that.
-const double _slotWidth = 66;
-const double _iconSize = 28;
-const double _chipSize = 58;
+/// The folded ball: deliberately shorter than the open bar, so folding reads
+/// as the whole bar shrinking rather than just the ends coming in.
+const double _collapsedSize = 50;
+const double _iconSize = 30;
+const double _chipSize = 66;
 const double _dotSize = 10;
 const double _borderWidth = 1.6;
 
@@ -29,9 +31,9 @@ const double _stepTravel = 36;
 const Duration _morph = Duration(milliseconds: 420);
 const Duration _fade = Duration(milliseconds: 220);
 
-/// A short rounded bar that hugs its tabs and sits against the leading edge,
-/// with the selected glyph in a chip and a dot in the theme colour. On a long
-/// scroll it folds down to a ball holding only the selected glyph.
+/// A wide, hefty rounded bar that spans the page with the selected glyph in a
+/// chip and a dot in the theme colour. On a long scroll the whole bar shrinks
+/// down to a small ball holding only the selected glyph, then grows back.
 ///
 /// A finger dragged across the bar takes the selection with it, the way a
 /// segmented control does, so the tabs can be changed without aiming at one.
@@ -121,7 +123,10 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
     final colorScheme = context.colorScheme;
     final s = widget.scale;
     final height = _height * s;
-    final radius = AppRadius.all(height / 2);
+    final ball = _collapsedSize * s;
+    // A stadium radius clamps to half the short side, so the corners stay
+    // round through the whole width/height animation, not just at its ends.
+    const radius = AppRadius.full;
     final bottom = math.max(
       _bottomMargin * s,
       MediaQuery.paddingOf(context).bottom,
@@ -141,21 +146,19 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
         alignment: Alignment.bottomLeft,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // A short bar against the leading edge: the tabs set the width,
-            // and only a crowd of them is allowed to reach the far edge.
+            // Open, the bar spans the page with just a margin either side;
+            // folded, it shrinks into a ball against the leading edge.
             final full = constraints.maxWidth;
-            final barWidth = math.min(full, _slotWidth * s * _count);
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onHorizontalDragStart: _dragStart,
-              onHorizontalDragUpdate: (details) =>
-                  _dragUpdate(details, barWidth),
+              onHorizontalDragUpdate: (details) => _dragUpdate(details, full),
               onHorizontalDragEnd: (_) => _travel = 0,
               child: AnimatedContainer(
                 duration: _morph,
                 curve: Curves.easeOutCubic,
-                width: widget.collapsed ? height : barWidth,
-                height: height,
+                width: widget.collapsed ? ball : full,
+                height: widget.collapsed ? ball : height,
                 decoration: ShapeDecoration(
                   shape: AppShape.full,
                   shadows: [
@@ -194,7 +197,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                             child: IgnorePointer(
                               ignoring: widget.collapsed,
                               child: SizedBox(
-                                width: barWidth,
+                                width: full,
                                 child: Row(
                                   children: [
                                     for (var i = 0; i < _count; i++)
@@ -224,7 +227,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                                   label: selected.label,
                                   selected: true,
                                   onTap: () => widget.onExpand?.call(),
-                                  scale: s,
+                                  scale: s * 0.8,
                                   colorScheme: colorScheme,
                                   showChip: false,
                                   showDot: false,
