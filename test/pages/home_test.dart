@@ -926,6 +926,7 @@ void main() {
     double? inset;
     final container = ProviderContainer(
       overrides: [
+        floatingBarOverride(),
         navigationItemsStateProvider.overrideWithValue(
           NavigationItemsState(
             value: [
