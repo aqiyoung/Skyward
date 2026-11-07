@@ -333,7 +333,7 @@ class _Destination extends StatelessWidget {
                 ),
                 if (selected && showDot)
                   Align(
-                    alignment: const Alignment(0.8, -0.8),
+                    alignment: const Alignment(0.72, -0.72),
                     child: Container(
                       width: _dotSize * s,
                       height: _dotSize * s,
