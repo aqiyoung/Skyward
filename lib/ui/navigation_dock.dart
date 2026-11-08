@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:skyward/ui/context.dart';
+import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
@@ -10,7 +11,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:material_color_utilities/material_color_utilities.dart'
     show Hct;
 import 'package:material_ui/material_ui.dart';
@@ -1266,7 +1266,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     _lens.springTo(position, _followSpring);
     final index = _indexAt(position);
     if (index != _pressedIndex) {
-      HapticFeedback.selectionClick();
+      hapticSelection(context);
       _pressedIndex = index;
     }
   }
@@ -1291,7 +1291,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
         .clamp(pressed - 1, pressed + 1)
         .clamp(0, _lastIndex);
     if (index != pressed) {
-      HapticFeedback.selectionClick();
+      hapticSelection(context);
       _pressedIndex = index;
     }
   }
@@ -1301,12 +1301,16 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     if (index == null) {
       return;
     }
+    final wasDragging = _dragging;
     _pressedIndex = null;
     _dragging = false;
     _dropping = true;
     _lens.springTo((commit ? index : _selectedIndex).toDouble(), _travelSpring);
     _dropLift();
     if (commit && index != widget.selectedIndex) {
+      if (!wasDragging) {
+        hapticTap(context);
+      }
       widget.onSelected(index);
     }
   }

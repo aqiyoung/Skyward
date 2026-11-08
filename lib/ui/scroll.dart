@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:skyward/ui/context.dart';
+import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/scroll_behavior.dart';
 import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
@@ -339,7 +340,7 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     _scrubRate = 1.0;
     _syncEmphasis();
     if (isTouchPlatform(_platform)) {
-      HapticFeedback.selectionClick();
+      hapticSelection(context);
     }
     widget.onScrub?.call(_scrubRate);
   }

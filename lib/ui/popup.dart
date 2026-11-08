@@ -5,6 +5,7 @@ import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:skyward/ui/color.dart';
 import 'package:skyward/ui/context.dart';
+import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/metrics.dart';
 import 'package:skyward/ui/motion.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/foundation.dart' show ValueListenable, listEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart' show SpringSimulation;
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:material_ui/material_ui.dart';
 
 import 'liquid_glass.dart';
@@ -1996,7 +1996,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       return;
     }
     if (index != null) {
-      HapticFeedback.selectionClick();
+      hapticSelection(context);
     }
     _hold(row);
   }
@@ -2015,7 +2015,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         return;
       }
       onTap();
-      HapticFeedback.selectionClick();
+      hapticSelection(context);
       setState(() {
         _pressed = _headerIndex;
         _landed = true;
@@ -2195,7 +2195,9 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       item: item,
       index: index,
       pressed: pressed,
-      onTap: onPressed == null ? null : () => _select(onPressed, keepsOpen: item.keepsOpen),
+      onTap: onPressed == null
+          ? null
+          : () => _select(onPressed, keepsOpen: item.keepsOpen),
     );
   }
 

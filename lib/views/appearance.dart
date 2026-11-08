@@ -24,13 +24,15 @@ class AppearanceView extends ConsumerWidget {
     if (res != true || !context.mounted) {
       return;
     }
-    ref.read(themeSettingProvider.notifier).update(
-      (state) => state.copyWith(
-        primaryColors: defaultPrimaryColors,
-        primaryColor: defaultPrimaryColor,
-        colorStyle: ColorStyle.vivid,
-      ),
-    );
+    ref
+        .read(themeSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            primaryColors: defaultPrimaryColors,
+            primaryColor: defaultPrimaryColor,
+            colorStyle: ColorStyle.vivid,
+          ),
+        );
   }
 
   @override
@@ -48,11 +50,7 @@ class AppearanceView extends ConsumerWidget {
         children: [
           const ThemeLivePreview(),
           const _Section(
-            items: [
-              _LanguageItem(),
-              _ThemeModeItem(),
-              _PureBlackItem(),
-            ],
+            items: [_LanguageItem(), _ThemeModeItem(), _PureBlackItem()],
           ),
           _Section(
             title: appLocalizations.colorsSection,
@@ -85,6 +83,7 @@ class AppearanceView extends ConsumerWidget {
             items: [
               const _TabAnimationItem(),
               const _LiquidGlassItem(),
+              const _HapticFeedbackItem(),
               if (system.isMacOS || system.isWindows) const _SidebarBlurItem(),
             ],
           ),
@@ -141,13 +140,10 @@ class _LanguageItem extends ConsumerWidget {
       onChanged: (Locale? locale) {
         ref
             .read(appSettingProvider.notifier)
-            .update(
-              (state) => state.copyWith(locale: locale?.toString()),
-            );
+            .update((state) => state.copyWith(locale: locale?.toString()));
       },
-      textBuilder: (Locale? locale) => locale == null
-          ? appLocalizations.defaultText
-          : locale.label,
+      textBuilder: (Locale? locale) =>
+          locale == null ? appLocalizations.defaultText : locale.label,
       value: currentLocale,
     );
   }
@@ -195,14 +191,16 @@ class _PureBlackItem extends ConsumerWidget {
       title: Text(context.appLocalizations.pureBlackMode),
       value: pureBlack,
       onChanged: (value) {
-        ref.read(themeSettingProvider.notifier).update(
-          (state) => state.copyWith(
-            pureBlack: value,
-            // Pure black only paints a dark theme; switching it on from a
-            // light one would otherwise change nothing on screen.
-            themeMode: value && !isDark ? ThemeMode.dark : state.themeMode,
-          ),
-        );
+        ref
+            .read(themeSettingProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                pureBlack: value,
+                // Pure black only paints a dark theme; switching it on from a
+                // light one would otherwise change nothing on screen.
+                themeMode: value && !isDark ? ThemeMode.dark : state.themeMode,
+              ),
+            );
       },
     );
   }
@@ -404,6 +402,28 @@ class _SidebarBlurItem extends ConsumerWidget {
         ref
             .read(themeSettingProvider.notifier)
             .update((state) => state.copyWith(sidebarBlur: value));
+      },
+    );
+  }
+}
+
+class _HapticFeedbackItem extends ConsumerWidget {
+  const _HapticFeedbackItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(
+      appSettingProvider.select((state) => state.hapticFeedback),
+    );
+    return ListItem.toggle(
+      leading: const IconWell(AppGlyphs.devices),
+      title: Text(context.appLocalizations.hapticFeedback),
+      subtitle: Text(context.appLocalizations.hapticFeedbackDesc),
+      value: enabled,
+      onChanged: (value) {
+        ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(hapticFeedback: value));
       },
     );
   }

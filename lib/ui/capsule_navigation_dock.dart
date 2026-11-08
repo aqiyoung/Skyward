@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:skyward/ui/context.dart';
+import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/navigation_dock.dart' show NavigationDockDestination;
 import 'package:skyward/ui/shape.dart';
@@ -102,6 +103,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
       _count - 1,
     );
     if (index != widget.selectedIndex) {
+      hapticSelection(context);
       widget.onSelected(index);
     }
   }
@@ -112,6 +114,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
       _count - 1,
     );
     if (next != widget.selectedIndex) {
+      hapticSelection(context);
       widget.onSelected(next);
     }
     _travel = 0;
@@ -205,7 +208,10 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                                           glyph: widget.destinations[i].glyph,
                                           label: widget.destinations[i].label,
                                           selected: i == widget.selectedIndex,
-                                          onTap: () => widget.onSelected(i),
+                                          onTap: () {
+                                            hapticTap(context);
+                                            widget.onSelected(i);
+                                          },
                                           scale: s,
                                           colorScheme: colorScheme,
                                         ),

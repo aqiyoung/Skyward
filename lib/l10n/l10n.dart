@@ -497,12 +497,7 @@ class AppLocalizations {
 
   /// `Allow LAN`
   String get allowLan {
-    return Intl.message(
-      'Allow LAN',
-      name: 'allowLan',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Allow LAN', name: 'allowLan', desc: '', args: []);
   }
 
   /// `TUN`
@@ -2006,6 +2001,96 @@ class AppLocalizations {
     );
   }
 
+  /// `VPN behaviour`
+  String get vpnBehavior {
+    return Intl.message(
+      'VPN behaviour',
+      name: 'vpnBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic scope`
+  String get takeoverScope {
+    return Intl.message(
+      'Traffic scope',
+      name: 'takeoverScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.`
+  String get takeoverScopeDesc {
+    return Intl.message(
+      'Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.',
+      name: 'takeoverScopeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Always on`
+  String get takeoverScopeAlways {
+    return Intl.message(
+      'Always on',
+      name: 'takeoverScopeAlways',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `LAN proxy`
+  String get localNetwork {
+    return Intl.message('LAN proxy', name: 'localNetwork', desc: '', args: []);
+  }
+
+  /// `When off, LAN, loopback and multicast addresses bypass the virtual interface.`
+  String get localNetworkDesc {
+    return Intl.message(
+      'When off, LAN, loopback and multicast addresses bypass the virtual interface.',
+      name: 'localNetworkDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps may bring up their own VPN and leave this one.`
+  String get allowBypassDesc {
+    return Intl.message(
+      'Apps may bring up their own VPN and leave this one.',
+      name: 'allowBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Per app`
+  String get perApp {
+    return Intl.message('Per app', name: 'perApp', desc: '', args: []);
+  }
+
+  /// `Choose which apps use the proxy.`
+  String get perAppDesc {
+    return Intl.message(
+      'Choose which apps use the proxy.',
+      name: 'perAppDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.`
+  String get tunRouteDesc {
+    return Intl.message(
+      'An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.',
+      name: 'tunRouteDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Options`
   String get options {
     return Intl.message('Options', name: 'options', desc: '', args: []);
@@ -3116,37 +3201,41 @@ class AppLocalizations {
     return Intl.message('Stack mode', name: 'stackMode', desc: '', args: []);
   }
 
+  /// `Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.`
   String get stackMipsDesc {
     return Intl.message(
-      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
-      name: "stackMipsDesc",
+      'Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.',
+      name: 'stackMipsDesc',
       desc: '',
       args: [],
     );
   }
 
+  /// `The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.`
   String get stackGvisorDesc {
     return Intl.message(
-      "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
-      name: "stackGvisorDesc",
+      'The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.',
+      name: 'stackGvisorDesc',
       desc: '',
       args: [],
     );
   }
 
+  /// `TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.`
   String get stackSystemDesc {
     return Intl.message(
-      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
-      name: "stackSystemDesc",
+      'TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.',
+      name: 'stackSystemDesc',
       desc: '',
       args: [],
     );
   }
 
+  /// `A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.`
   String get stackMixedDesc {
     return Intl.message(
-      "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
-      name: "stackMixedDesc",
+      'A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.',
+      name: 'stackMixedDesc',
       desc: '',
       args: [],
     );
@@ -8933,96 +9022,25 @@ class AppLocalizations {
     );
   }
 
-  String get allowBypassDesc {
+  /// `Haptic feedback`
+  String get hapticFeedback {
     return Intl.message(
-      'Apps may bring up their own VPN and leave this one.',
-      name: 'allowBypassDesc',
+      'Haptic feedback',
+      name: 'hapticFeedback',
       desc: '',
       args: [],
     );
   }
 
-  String get localNetwork {
+  /// `A light vibration on taps across the app.`
+  String get hapticFeedbackDesc {
     return Intl.message(
-      'LAN proxy',
-      name: 'localNetwork',
+      'A light vibration on taps across the app.',
+      name: 'hapticFeedbackDesc',
       desc: '',
       args: [],
     );
   }
-
-  String get localNetworkDesc {
-    return Intl.message(
-      'When off, LAN, loopback and multicast addresses bypass the virtual interface.',
-      name: 'localNetworkDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get perApp {
-    return Intl.message(
-      'Per app',
-      name: 'perApp',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get perAppDesc {
-    return Intl.message(
-      'Choose which apps use the proxy.',
-      name: 'perAppDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get takeoverScope {
-    return Intl.message(
-      'Traffic scope',
-      name: 'takeoverScope',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get takeoverScopeAlways {
-    return Intl.message(
-      'Always on',
-      name: 'takeoverScopeAlways',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get takeoverScopeDesc {
-    return Intl.message(
-      'Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.',
-      name: 'takeoverScopeDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get tunRouteDesc {
-    return Intl.message(
-      'An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.',
-      name: 'tunRouteDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
-  String get vpnBehavior {
-    return Intl.message(
-      'VPN behaviour',
-      name: 'vpnBehavior',
-      desc: '',
-      args: [],
-    );
-  }
-
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

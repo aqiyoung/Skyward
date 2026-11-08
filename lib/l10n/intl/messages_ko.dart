@@ -276,6 +276,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "참조된 모든 프록시 공급자",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("앱의 VPN 우회 허용"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "앱이 자체 VPN을 연결해 이 VPN을 우회할 수 있습니다.",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("LAN 접속 허용"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("허용 IP"),
     "alreadyInLocalProxies": m2,
@@ -287,9 +290,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("시스템 DNS 추가"),
     "authentication": MessageLookupByLibrary.simpleMessage("인증"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "앱이 자체 VPN을 연결해 이 VPN을 우회할 수 있습니다.",
-    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "인증을 켜면 로컬 프록시 포트에서 사용자 이름과 비밀번호를 요구합니다.",
     ),
@@ -787,6 +787,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("개"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("햅틱 피드백"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "앱에서 탭할 때 가볍게 진동합니다.",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("변경 사항을 캐시하시겠습니까?"),
     "hashByInUser": MessageLookupByLibrary.simpleMessage("인바운드 사용자별 해시"),
     "healthCheck": MessageLookupByLibrary.simpleMessage("상태 확인"),
@@ -1000,11 +1004,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("로컬 프록시"),
-    "locationPermission": MessageLookupByLibrary.simpleMessage("위치 권한"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "끄면 LAN, 루프백, 멀티캐스트 주소가 가상 인터페이스를 거치지 않습니다.",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("로컬 프록시"),
+    "locationPermission": MessageLookupByLibrary.simpleMessage("위치 권한"),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "위치 권한이 거부되어 현재 Wi-Fi 이름을 읽을 수 없습니다. 시스템 설정에서 위치 권한을 직접 켜 주세요.",
     ),
@@ -1160,11 +1164,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "paste": MessageLookupByLibrary.simpleMessage("붙여넣기"),
     "pasteDesc": MessageLookupByLibrary.simpleMessage("클립보드에서 구독 링크 붙여넣기"),
     "peers": MessageLookupByLibrary.simpleMessage("피어"),
+    "perApp": MessageLookupByLibrary.simpleMessage("앱별"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("어떤 앱이 프록시를 사용할지 정합니다."),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("앨범에서 선택"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("창 고정"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("WebDAV를 연결하세요"),
-    "perApp": MessageLookupByLibrary.simpleMessage("앱별"),
-    "perAppDesc": MessageLookupByLibrary.simpleMessage("어떤 앱이 프록시를 사용할지 정합니다."),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "스크립트 이름을 입력하세요",
     ),
@@ -1617,18 +1621,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "분할 전략을 입력하세요",
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSID가 비어 있습니다"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "기본값. sing-tun 내장 경량 사용자 공간 스택이며, TCP 혼잡 제어를 지원하는 유일한 스택입니다. 변경 후 VPN을 다시 시작해야 합니다.",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "gVisor 사용자 공간 스택. 기능과 호환성이 가장 완전하고 메모리 사용량이 상대적으로 큽니다. 변경 후 VPN을 다시 시작해야 합니다.",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP는 시스템 커널 스택이 처리하고 UDP는 커널이 전달합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "기본값. sing-tun 내장 경량 사용자 공간 스택이며, TCP 혼잡 제어를 지원하는 유일한 스택입니다. 변경 후 VPN을 다시 시작해야 합니다.",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "혼합 스택. TCP는 시스템 커널 스택, UDP는 gVisor가 처리합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP는 시스템 커널 스택이 처리하고 UDP는 커널이 전달합니다. 변경 후 VPN을 다시 시작해야 합니다.",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("스택 트레이스"),
     "standard": MessageLookupByLibrary.simpleMessage("표준"),
@@ -1665,6 +1669,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("시스템 프록시"),
     "tab": MessageLookupByLibrary.simpleMessage("탭"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("탭 애니메이션"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("적용 범위"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("항상 켜짐"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN이 연결되면 0.0.0.0/0 경로를 시스템이 처리하므로 별도 스위치가 없습니다.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage("아이콘을 눌러 다시 시도"),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("눌러서 허용"),
     "target": MessageLookupByLibrary.simpleMessage("대상"),
@@ -1674,11 +1683,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "testUrl": MessageLookupByLibrary.simpleMessage("테스트 URL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("사용할 때 테스트"),
     "textScale": MessageLookupByLibrary.simpleMessage("글자 크기 조절"),
-    "takeoverScope": MessageLookupByLibrary.simpleMessage("적용 범위"),
-    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("항상 켜짐"),
-    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
-      "VPN이 연결되면 0.0.0.0/0 경로를 시스템이 처리하므로 별도 스위치가 없습니다.",
-    ),
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "앱의 글자가 이렇게 표시됩니다",
     ),
@@ -1718,14 +1722,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "여기에 추가한 항목은 모든 프로필의 TUN 설정을 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지합니다. 사용자 지정 프로필이 직접 추가한 항목이 우선합니다.",
     ),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "라우트 주소가 비어 있으면 모든 트래픽을 처리합니다. 제외 주소의 서브넷은 가상 인터페이스를 거치지 않습니다.",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("끄기"),
     "turnOn": MessageLookupByLibrary.simpleMessage("켜기"),
     "type": MessageLookupByLibrary.simpleMessage("유형"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 릴레이 모드"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP 시간 제한"),
-    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "라우트 주소가 비어 있으면 모든 트래픽을 처리합니다. 제외 주소의 서브넷은 가상 인터페이스를 거치지 않습니다.",
-    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP 시간 제한은 초 단위이며 gvisor, system, mixed 스택에서만 작동합니다.",
     ),

@@ -1,6 +1,7 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
+import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/config/ad_block.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/dns.dart';
@@ -39,6 +40,7 @@ class SettingsEntry {
 /// Rows of the lists that carry enough of them to be worth searching.
 final settingsEntries = <SettingsEntry>[
   ..._generalEntries,
+  ..._preferencesEntries,
   ..._networkEntries,
   ..._dnsEntries,
   ..._advancedEntries,
@@ -170,6 +172,14 @@ final _generalEntries = <SettingsEntry>[
     title: (l) => 'Hosts',
     page: (l) => l.general,
     view: _generalView,
+  ),
+];
+
+final _preferencesEntries = <SettingsEntry>[
+  SettingsEntry(
+    title: (l) => l.hapticFeedback,
+    page: (l) => l.preferences,
+    view: _appearanceView,
   ),
 ];
 
@@ -350,6 +360,8 @@ final _maintenanceEntries = <SettingsEntry>[
 
 /// Kept as tear-offs so the entries stay const.
 Widget _generalView(BuildContext context) => const GeneralView();
+
+Widget _appearanceView(BuildContext context) => const AppearanceView();
 
 Widget _networkView(BuildContext context) => BaseScaffold(
   rowSeparators: false,
