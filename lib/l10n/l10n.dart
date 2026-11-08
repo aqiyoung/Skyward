@@ -495,10 +495,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Allow LAN access`
+  /// `Allow LAN`
   String get allowLan {
     return Intl.message(
-      'Allow LAN access',
+      'Allow LAN',
       name: 'allowLan',
       desc: '',
       args: [],

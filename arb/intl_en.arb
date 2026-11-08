@@ -62,7 +62,7 @@
 
   "extend": "Extend",
   "runtimeConfig": "Runtime config",
-  "allowLan": "Allow LAN access",
+  "allowLan": "Allow LAN",
   "tun": "TUN",
   "tunGso": "TUN GSO",
   "tunGsoDesc": "Boosts network speed. Takes effect after restarting VPN.",
