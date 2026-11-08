@@ -30,15 +30,25 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 
 - **One app for Android, Windows, macOS and Linux**, with x64 and ARM64 builds on the desktop.
 - **mihomo (Clash.Meta) core** with rule routing, proxy groups, latency tests, system proxy and TUN mode.
+  It is based on v1.19.33, synced with upstream Alpha, plus a small patch layer (a UDP fast path and deeper
+  queues). These are data-plane correctness fixes, not a claim of higher throughput on Android.
 - **Profiles** from a subscription link or a file, with a built-in editor, override scripts, and custom rules,
   proxies and proxy groups.
 - **Live views** of connections, requests, DNS queries and logs.
+- **Leak self-check**: DNS leak detection against multiple resolvers and a built-in WebRTC (STUN) leak test,
+  each with its own timeout and isolated failure handling.
+- **VPN behaviour controls** on Android: takeover scope, private-network bypass and per-app proxy.
+- **TUN stack selection**: gVisor, System, Mixed and the default Mips stack, with an in-app description of
+  each option; switching stacks requires restarting the VPN.
 - **Material You design with Apple-style interaction**: dynamic color, light and dark themes, continuous corners,
   sheets that snap between heights, and layouts that adapt from phones to desktops.
 - **Backup and restore** through WebDAV or a local file.
 - **Platform touches**: a Quick Settings tile, per-app proxy and Android TV support on Android; a tray menu and
   global hotkeys on the desktop.
 - **Open source and ad-free**, licensed under GPL-3.0.
+
+> New additions above first land in the [beta / preview channel](FORK.md) and reach the default `main`
+> branch at the next promotion. See [FORK.md](FORK.md) for the three release channels.
 
 ## Download
 
