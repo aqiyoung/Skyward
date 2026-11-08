@@ -30,6 +30,9 @@ const _separatorFreePages = {
   'lib/views/config/dns_leak.dart',
   'lib/views/config/on_demand.dart',
   'lib/views/config/user_agents.dart',
+  // The "Allow LAN" detail page behind the dashboard's network-control card:
+  // a short settings sheet, so it opts out of the hairline like the others.
+  'lib/views/config/lan_access.dart',
 };
 
 const _optOut = 'rowSeparators: false';
