@@ -11,6 +11,10 @@ hooks:
       build_assets: true
     rust_api:
       build_assets: true
+    sqlite3:
+      source:
+        linux: system
+        default: sqlite3
 
 dependencies:
   flutter:
