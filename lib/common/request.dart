@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:path/path.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/state.dart';
@@ -93,8 +94,16 @@ class Request {
   /// release, so a newer beta or preview is found just as a newer stable
   /// is -- the latest-release endpoint only ever answers with a stable.
   /// A preview is Android-only, so it is skipped on desktop, where it has
-  /// no package to install. When the list cannot be read (the API quota is
-  /// spent, for example), this falls back to the latest stable alone.
+  /// no package to install.
+  ///
+  /// The list carries each release's notes, where the shared build number
+  /// lives, and that number is what lets a preview learn that a newer beta or
+  /// stable exists. When the list cannot be read (the API quota is spent, the
+  /// device is offline), this falls back first to the last list it cached while
+  /// the API was reachable -- which still carries the numbers -- and only then
+  /// to the latest stable alone. Without the cache a preview would be told
+  /// there is no update, because the release-page redirect the last fallback
+  /// follows names a tag and nothing more.
   Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
       final response = await HttpOverrides.runWithHttpOverrides(
@@ -104,18 +113,10 @@ class Request {
         ),
         DirectOverrides(),
       );
-      var candidates =
-          (response.data ?? []).whereType<Map<String, dynamic>>().toList();
-      if (system.isDesktop) {
-        candidates = candidates
-            .where((release) {
-              final tag = release['tag_name'];
-              return tag is! String || !tag.startsWith('preview-');
-            })
-            .toList();
-      }
+      final releases = response.data ?? const <dynamic>[];
+      await _cacheReleases(releases);
       return newestOfferableRelease(
-        candidates,
+        _platformCandidates(releases),
         installedVersion: globalState.packageInfo.displayVersion,
       );
     } on DioException catch (error) {
@@ -123,6 +124,17 @@ class Request {
         'releases list failed: ${compactError(error)}',
         logLevel: LogLevel.warning,
       );
+    }
+    // The list could not be read. Reuse the last list we cached while the API
+    // was reachable so a preview can still be offered a newer beta or stable by
+    // build number, instead of being told there is nothing.
+    final cached = await _readCachedReleases();
+    if (cached.isNotEmpty) {
+      final offer = newestOfferableRelease(
+        _platformCandidates(cached),
+        installedVersion: globalState.packageInfo.displayVersion,
+      );
+      if (offer != null) return offer;
     }
     final release = await latestRelease();
     final remoteVersion = release['tag_name'] as String;
@@ -170,6 +182,57 @@ class Request {
       throw FormatException('No release tag in the redirect', location);
     }
     return {'tag_name': segments[tagIndex]};
+  }
+
+  /// The release list most recently fetched while the GitHub API was reachable.
+  /// When the list cannot be read -- the hourly anonymous quota spent, or the
+  /// device offline -- [checkForUpdate] reads this so a preview build can still
+  /// find the shared build number in each release's notes and learn that a
+  /// newer beta or stable exists. Without it the only fallback is the
+  /// release-page redirect, which names a tag and nothing more, so a preview
+  /// would wrongly hear that it has no update to take.
+  static const _releasesCacheFileName = 'releases_cache.json';
+
+  Future<File> _releasesCacheFile() async {
+    return File(join(await appPath.homeDirPath, _releasesCacheFileName));
+  }
+
+  Future<void> _cacheReleases(List<dynamic> releases) async {
+    try {
+      await (await _releasesCacheFile()).safeWriteAsString(jsonEncode(releases));
+    } catch (error) {
+      commonPrint.log(
+        'cache releases failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
+  Future<List<dynamic>> _readCachedReleases() async {
+    try {
+      final file = await _releasesCacheFile();
+      if (!await file.exists()) return const [];
+      final content = await file.readAsString();
+      if (content.isEmpty) return const [];
+      final data = jsonDecode(content);
+      return data is List ? data : const [];
+    } catch (error) {
+      commonPrint.log(
+        'read cached releases failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return const [];
+    }
+  }
+
+  /// Drops the Android-only preview releases where they have no package to
+  /// install -- on desktop -- and keeps everything else across every channel.
+  List<dynamic> _platformCandidates(List<dynamic> releases) {
+    if (!system.isDesktop) return releases;
+    return releases.where((release) {
+      final tag = release is Map ? release['tag_name'] : null;
+      return tag is! String || !tag.startsWith('preview-');
+    }).toList();
   }
 }
 

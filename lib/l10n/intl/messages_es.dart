@@ -336,14 +336,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Permitir que las apps eludan la VPN",
     ),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Permite que las aplicaciones levanten su propia VPN y eviten esta.",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("Permitir acceso LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("IP permitidas"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Respuestas"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "Permite que las aplicaciones levanten su propia VPN y eviten esta.",
-    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Control de acceso de apps",
     ),
@@ -1005,6 +1005,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("grupos"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("Respuesta háptica"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "Vibración leve al pulsar en la aplicación.",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "¿Guardar los cambios en la caché?",
     ),
@@ -1264,16 +1268,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Cargando…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Imagen local"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage(
-      "Proxy LAN",
-    ),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("Proxy LAN"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Permiso de red local denegado: con la pila gvisor, la LAN no es accesible.",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("Proxies locales"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "Si se desactiva, las direcciones de red local, bucle y multidifusión no pasan por la interfaz virtual.",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("Proxies locales"),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Permiso de ubicación",
     ),
@@ -1486,13 +1488,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Pegar un enlace de suscripción del portapapeles",
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Pares"),
-    "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Elegir del álbum"),
-    "pinWindow": MessageLookupByLibrary.simpleMessage("Fijar ventana"),
-    "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("Vincula WebDAV"),
     "perApp": MessageLookupByLibrary.simpleMessage("Por aplicación"),
     "perAppDesc": MessageLookupByLibrary.simpleMessage(
       "Elige qué aplicaciones usan el proxy.",
     ),
+    "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Elegir del álbum"),
+    "pinWindow": MessageLookupByLibrary.simpleMessage("Fijar ventana"),
+    "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("Vincula WebDAV"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "Introduce un nombre para el script",
     ),
@@ -2061,18 +2063,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "La estrategia de división no puede estar vacía",
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("No hay SSID"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("Modo de pila"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "Predeterminado. Pila de espacio de usuario ligera integrada en sing-tun; solo ella admite el control de congestión TCP. Reinicia la VPN tras el cambio.",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "Pila de espacio de usuario gVisor: la más completa y compatible, con mayor uso de memoria. Reinicia la VPN tras el cambio.",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP lo gestiona la pila del núcleo del sistema y el núcleo reenvía UDP. Reinicia la VPN tras el cambio.",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Predeterminado. Pila de espacio de usuario ligera integrada en sing-tun; solo ella admite el control de congestión TCP. Reinicia la VPN tras el cambio.",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "Híbrida: TCP por la pila del núcleo del sistema y UDP por gVisor. Reinicia la VPN tras el cambio.",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("Modo de pila"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP lo gestiona la pila del núcleo del sistema y el núcleo reenvía UDP. Reinicia la VPN tras el cambio.",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Seguimiento de pila"),
     "standard": MessageLookupByLibrary.simpleMessage("Estándar"),
@@ -2180,12 +2182,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Las entradas añadidas aquí sustituyen los ajustes de TUN de todos los perfiles; lo que no añadas conserva el ajuste del propio perfil. Las entradas que añade un perfil personalizado tienen prioridad.",
     ),
-    "turnOff": MessageLookupByLibrary.simpleMessage("Desactivar"),
-    "turnOn": MessageLookupByLibrary.simpleMessage("Activar"),
-    "type": MessageLookupByLibrary.simpleMessage("Tipo"),
     "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
       "Una dirección de ruta vacía toma todo el tráfico; las subredes excluidas quedan fuera de la interfaz virtual.",
     ),
+    "turnOff": MessageLookupByLibrary.simpleMessage("Desactivar"),
+    "turnOn": MessageLookupByLibrary.simpleMessage("Activar"),
+    "type": MessageLookupByLibrary.simpleMessage("Tipo"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage(
       "Modo de retransmisión UDP",
     ),

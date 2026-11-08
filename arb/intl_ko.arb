@@ -1076,5 +1076,7 @@
   "webrtcLeakStunSilent": "STUN 응답이 없어 판단할 수 없습니다",
   "webrtcLeakStunUnresolved": "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
   "webrtcLeakAdvice": "「차단」에서는 반사 주소가 보이지 않는 것이 정상입니다. 실제 유출을 확인하려면 「고급 설정 → 네트워크」에서 WebRTC를 잠시 「처리하지 않음」으로 바꾼 뒤 확인하고 다시 되돌리세요.",
-  "webrtcLeakExternal": "브라우저에서 WebRTC 확인"
+  "webrtcLeakExternal": "브라우저에서 WebRTC 확인",
+  "hapticFeedback": "햅틱 피드백",
+  "hapticFeedbackDesc": "앱에서 탭할 때 가볍게 진동합니다."
 }

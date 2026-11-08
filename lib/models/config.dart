@@ -398,6 +398,7 @@ abstract class AppSettingProps with _$AppSettingProps {
 
     /// What the generated config does with WebRTC's own address discovery.
     @Default(WebrtcGuard.block) WebrtcGuard webrtcGuard,
+    @Default(true) bool hapticFeedback,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

@@ -97,6 +97,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
   webrtcGuard:
       $enumDecodeNullable(_$WebrtcGuardEnumMap, json['webrtcGuard']) ??
       WebrtcGuard.block,
+  hapticFeedback: json['hapticFeedback'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
@@ -137,6 +138,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'tableColumnWidths': instance.tableColumnWidths,
       'adBlock': instance.adBlock,
       'webrtcGuard': _$WebrtcGuardEnumMap[instance.webrtcGuard]!,
+      'hapticFeedback': instance.hapticFeedback,
     };
 
 const _$TabAnimationEnumMap = {
