@@ -306,7 +306,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Расширенная конфигурация",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "Расширенная конфигурация включает сеть, DNS, добавленные правила и скрипты.",
+      "Расширенная конфигурация включает DNS, добавленные правила и скрипты.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Зашифрованный профиль",
@@ -325,7 +325,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Разрешить приложениям обходить VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Разрешить LAN"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Разрешить доступ из LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("Разрешённые IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Ответы"),
@@ -1218,7 +1218,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "local": MessageLookupByLibrary.simpleMessage("Локально"),
     "localImage": MessageLookupByLibrary.simpleMessage("Локальное изображение"),
     "localNetwork": MessageLookupByLibrary.simpleMessage(
-      "Локальная сеть через прокси",
+      "LAN-прокси",
     ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.",

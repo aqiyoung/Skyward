@@ -318,7 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Configuration avancée",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "La configuration avancée regroupe le réseau, le DNS, les règles ajoutées et les scripts.",
+      "La configuration avancée regroupe le DNS, les règles ajoutées et les scripts.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Profil chiffré",
@@ -337,7 +337,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Autoriser les apps à contourner le VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser le LAN"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser l'accès LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("IP autorisées"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Réponses"),
@@ -1264,7 +1264,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Image locale"),
     "localNetwork": MessageLookupByLibrary.simpleMessage(
-      "Réseau local via le proxy",
+      "Proxy LAN",
     ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.",

@@ -259,7 +259,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addressTip": MessageLookupByLibrary.simpleMessage("请输入有效的WebDAV地址"),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("进阶配置"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "进阶配置包含网络、DNS、附加规则与脚本。",
+      "进阶配置包含 DNS、附加规则与脚本。",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("配置已加密"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 私钥"),
@@ -272,7 +272,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "全部被引用的代理集",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过VPN"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("局域网代理"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("允许局域网接入"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("允许的 IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("应答"),
@@ -924,7 +924,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("加载中…"),
     "local": MessageLookupByLibrary.simpleMessage("本地"),
     "localImage": MessageLookupByLibrary.simpleMessage("本地图片"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage("局域网也经代理"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("局域网代理"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
     ),

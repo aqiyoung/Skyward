@@ -2,7 +2,6 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/config/dns.dart';
-import 'package:skyward/views/config/network.dart';
 import 'package:skyward/views/config/scripts.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -20,15 +19,6 @@ class AdvancedConfigView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final items = [
-      ListItem.open(
-        title: Text(appLocalizations.network),
-        leading: const IconWell(AppGlyphs.key),
-        widget: BaseScaffold(
-          rowSeparators: false,
-          title: appLocalizations.network,
-          body: const NetworkListView(),
-        ),
-      ),
       ListItem.open(
         title: const Text('DNS'),
         leading: const IconWell(AppGlyphs.dns),

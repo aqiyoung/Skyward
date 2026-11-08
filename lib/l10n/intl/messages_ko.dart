@@ -263,7 +263,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addressTip": MessageLookupByLibrary.simpleMessage("올바른 WebDAV 주소를 입력하세요"),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("고급 구성"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "고급 구성에는 네트워크, DNS, 추가한 규칙, 스크립트가 포함됩니다.",
+      "고급 구성에는 DNS, 추가한 규칙, 스크립트가 포함됩니다.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("암호화된 프로필"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 비밀 키"),
@@ -276,7 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "참조된 모든 프록시 공급자",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("앱의 VPN 우회 허용"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 허용"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 접속 허용"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("허용 IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("응답"),
@@ -996,7 +996,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("로드 중…"),
     "local": MessageLookupByLibrary.simpleMessage("로컬"),
     "localImage": MessageLookupByLibrary.simpleMessage("로컬 이미지"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN도 프록시 경유"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN 프록시"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.",
     ),

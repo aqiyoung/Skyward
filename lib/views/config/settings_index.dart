@@ -2,7 +2,6 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/views/config/ad_block.dart';
-import 'package:skyward/views/config/advanced.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/dns.dart';
 import 'package:skyward/views/config/dns_leak.dart';
@@ -175,6 +174,12 @@ final _generalEntries = <SettingsEntry>[
 ];
 
 final _networkEntries = <SettingsEntry>[
+  // 网络入口已移到「更多」页一级，搜索命中后直接打开网络页。
+  SettingsEntry(
+    title: (l) => l.network,
+    page: (l) => l.settings,
+    view: _networkView,
+  ),
   SettingsEntry(
     title: (l) => 'VPN',
     page: (l) => l.network,
@@ -298,11 +303,6 @@ final _dnsEntries = <SettingsEntry>[
 /// they are still settings a reader looks for by name.
 final _advancedEntries = <SettingsEntry>[
   SettingsEntry(
-    title: (l) => l.network,
-    page: (l) => l.advancedConfig,
-    view: _advancedView,
-  ),
-  SettingsEntry(
     title: (l) => 'DNS',
     page: (l) => l.advancedConfig,
     view: _dnsView,
@@ -358,8 +358,6 @@ Widget _networkView(BuildContext context) => BaseScaffold(
 );
 
 Widget _dnsView(BuildContext context) => const DnsView();
-
-Widget _advancedView(BuildContext context) => const AdvancedConfigView();
 
 Widget _adBlockView(BuildContext context) => const AdBlockView();
 
