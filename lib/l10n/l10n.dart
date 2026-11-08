@@ -495,9 +495,14 @@ class AppLocalizations {
     );
   }
 
-  /// `Allow LAN`
+  /// `Allow LAN access`
   String get allowLan {
-    return Intl.message('Allow LAN', name: 'allowLan', desc: '', args: []);
+    return Intl.message(
+      'Allow LAN access',
+      name: 'allowLan',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `TUN`
@@ -3557,10 +3562,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Advanced configuration holds network, DNS, added rules, and scripts.`
+  /// `Advanced configuration holds DNS, added rules, and scripts.`
   String get advancedConfigDesc {
     return Intl.message(
-      'Advanced configuration holds network, DNS, added rules, and scripts.',
+      'Advanced configuration holds DNS, added rules, and scripts.',
       name: 'advancedConfigDesc',
       desc: '',
       args: [],
@@ -8939,7 +8944,7 @@ class AppLocalizations {
 
   String get localNetwork {
     return Intl.message(
-      'Proxy local network',
+      'LAN proxy',
       name: 'localNetwork',
       desc: '',
       args: [],

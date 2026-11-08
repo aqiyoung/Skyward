@@ -264,7 +264,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("詳細設定"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "詳細設定には、ネットワーク、DNS、追加ルール、スクリプトがあります。",
+      "詳細設定には、DNS、追加ルール、スクリプトがあります。",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("暗号化されたプロファイル"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 秘密鍵"),
@@ -279,7 +279,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "参照されているすべてのプロキシプロバイダー",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("アプリによるVPNバイパスを許可"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("LANプロキシ"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 接続を許可"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("許可する IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("応答"),
@@ -1011,7 +1011,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("読み込み中…"),
     "local": MessageLookupByLibrary.simpleMessage("ローカル"),
     "localImage": MessageLookupByLibrary.simpleMessage("ローカル画像"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN もプロキシ経由"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN プロキシ"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。",
     ),

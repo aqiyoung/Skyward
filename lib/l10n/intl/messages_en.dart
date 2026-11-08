@@ -302,7 +302,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Advanced configuration",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "Advanced configuration holds network, DNS, added rules, and scripts.",
+      "Advanced configuration holds DNS, added rules, and scripts.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Encrypted profile",
@@ -321,7 +321,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow apps to bypass VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Allow LAN"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Allow LAN access"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("Allowed IPs"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Answers"),
@@ -1177,7 +1177,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Loading…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Local image"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage("Proxy local network"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN proxy"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     ),
