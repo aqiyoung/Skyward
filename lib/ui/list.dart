@@ -5,6 +5,7 @@ import 'package:skyward/common/input_limits.dart';
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/dialog.dart';
 import 'package:skyward/ui/focus.dart';
+import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/inherited.dart';
 import 'package:skyward/ui/input.dart';
@@ -279,6 +280,13 @@ class ListItem<T> extends StatelessWidget {
     Widget? trailing,
     Widget? leading,
   }) {
+    final tap = onTap;
+    final effectiveOnTap = tap == null
+        ? null
+        : () {
+            hapticTap(context);
+            tap();
+          };
     if (position != null) {
       // OpenContainer reparents the closed tile out of the section's provider.
       return ItemPositionProvider(
@@ -290,7 +298,7 @@ class ListItem<T> extends StatelessWidget {
           trailing: trailing ?? this.trailing,
           contentPadding: padding,
           horizontalTitleGap: horizontalTitleGap,
-          onPressed: onTap,
+          onPressed: effectiveOnTap,
         ),
       );
     }
@@ -306,7 +314,7 @@ class ListItem<T> extends StatelessWidget {
       minVerticalPadding: minVerticalPadding,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
-      onTap: onTap,
+      onTap: effectiveOnTap,
       trailing: trailing ?? this.trailing,
       contentPadding: padding,
     );
@@ -432,7 +440,12 @@ class ListItem<T> extends StatelessWidget {
                   },
             trailing: CommonCheckBox(
               value: checkboxDelegate.value,
-              onChanged: checkboxDelegate.onChanged,
+              onChanged: checkboxDelegate.onChanged == null
+                  ? null
+                  : (value) {
+                      hapticTap(context);
+                      checkboxDelegate.onChanged!(value);
+                    },
             ),
           ),
         );
@@ -450,7 +463,12 @@ class ListItem<T> extends StatelessWidget {
                   },
             trailing: CommonSwitch(
               value: toggleAction.value,
-              onChanged: toggleAction.onChanged,
+              onChanged: toggleAction.onChanged == null
+                  ? null
+                  : (value) {
+                      hapticTap(context);
+                      toggleAction.onChanged!(value);
+                    },
             ),
           ),
         );
@@ -629,11 +647,7 @@ Widget generateSection({
     children: [
       if (items.isNotEmpty)
         if (title != null)
-          ListHeader(
-            title: title,
-            actions: actions,
-            padding: headerPadding,
-          )
+          ListHeader(title: title, actions: actions, padding: headerPadding)
         else if (leadingGap)
           const ListSectionGap(),
       generateGroup(items),

@@ -337,14 +337,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Autoriser les apps à contourner le VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser l'accès LAN"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Autoriser les applications à monter leur propre VPN et à contourner celui-ci.",
+    ),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser l\'accès LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("IP autorisées"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Réponses"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "Autoriser les applications à monter leur propre VPN et à contourner celui-ci.",
-    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Contrôle d’accès des apps",
     ),
@@ -1000,6 +1000,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("groupes"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("Retour haptique"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "Légère vibration lors des appuis dans l\'application.",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Mettre les modifications en cache ?",
     ),
@@ -1263,16 +1267,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Chargement…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Image locale"),
-    "localNetwork": MessageLookupByLibrary.simpleMessage(
-      "Proxy LAN",
-    ),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("Proxy LAN"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("Proxys locaux"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
-      "Désactivé, les adresses du réseau local, de bouclage et de multidiffusion ne passent pas par l'interface virtuelle.",
+      "Désactivé, les adresses du réseau local, de bouclage et de multidiffusion ne passent pas par l\'interface virtuelle.",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("Proxys locaux"),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Autorisation de localisation",
     ),
@@ -2062,18 +2064,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "La stratégie de répartition ne peut pas être vide",
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Les SSID sont vides"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("Mode de pile"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "Par défaut. Pile userspace légère intégrée à sing-tun ; seule cette pile prend en charge le contrôle de congestion TCP. Redémarrez le VPN après le changement.",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "Pile userspace gVisor : la plus complète et compatible, avec une empreinte mémoire plus élevée. Redémarrez le VPN après le changement.",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP est traité par la pile noyau du système, UDP est transféré par le noyau. Redémarrez le VPN après le changement.",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Par défaut. Pile userspace légère intégrée à sing-tun ; seule cette pile prend en charge le contrôle de congestion TCP. Redémarrez le VPN après le changement.",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "Hybride : TCP via la pile noyau du système, UDP via gVisor. Redémarrez le VPN après le changement.",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("Mode de pile"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP est traité par la pile noyau du système, UDP est transféré par le noyau. Redémarrez le VPN après le changement.",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Trace de pile"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
@@ -2121,7 +2123,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Toujours actif",
     ),
     "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
-      "Une fois le VPN établi, Android achemine 0.0.0.0/0 par le tunnel ; aucun interrupteur séparé n'est nécessaire.",
+      "Une fois le VPN établi, Android achemine 0.0.0.0/0 par le tunnel ; aucun interrupteur séparé n\'est nécessaire.",
     ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Appuyez sur l’icône pour réessayer",
@@ -2179,14 +2181,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Les entrées ajoutées ici remplacent les réglages TUN de tous les profils ; tout ce qui n’est pas ajouté garde le réglage du profil. Les entrées qu’un profil personnalisé ajoute lui-même priment.",
     ),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Une adresse de route vide prend en charge tout le trafic ; les sous-réseaux exclus restent hors de l\'interface virtuelle.",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("Désactiver"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Activer"),
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("Mode de relais UDP"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("Délai UDP"),
-    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "Une adresse de route vide prend en charge tout le trafic ; les sous-réseaux exclus restent hors de l'interface virtuelle.",
-    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "Le délai UDP est en secondes et ne fonctionne qu’avec les piles gvisor, system et mixed.",
     ),

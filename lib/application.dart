@@ -176,6 +176,9 @@ class ApplicationState extends ConsumerState<Application>
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final hapticFeedback = ref.watch(
+          appSettingProvider.select((state) => state.hapticFeedback),
+        );
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
@@ -186,15 +189,18 @@ class ApplicationState extends ConsumerState<Application>
             ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (context, child) {
-            return ThemeCrossFade(
-              child: buildManagerStack(
-                isDesktop: system.isDesktop,
-                onConnectivityChanged: _handleConnectivityChanged,
-                terminateSignals: _terminateSignals,
-                child: RemoteFocusAdapter(
-                  enabled: system.isTV,
-                  floatingKeyboard: app?.floatingKeyboard,
-                  child: child!,
+            return HapticFeedbackScope(
+              enabled: hapticFeedback,
+              child: ThemeCrossFade(
+                child: buildManagerStack(
+                  isDesktop: system.isDesktop,
+                  onConnectivityChanged: _handleConnectivityChanged,
+                  terminateSignals: _terminateSignals,
+                  child: RemoteFocusAdapter(
+                    enabled: system.isTV,
+                    floatingKeyboard: app?.floatingKeyboard,
+                    child: child!,
+                  ),
                 ),
               ),
             );

@@ -279,6 +279,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "参照されているすべてのプロキシプロバイダー",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("アプリによるVPNバイパスを許可"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "アプリが独自の VPN を確立して、この VPN を迂回できるようにします。",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("LAN 接続を許可"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("許可する IP"),
     "alreadyInLocalProxies": m2,
@@ -290,9 +293,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),
     "authentication": MessageLookupByLibrary.simpleMessage("認証"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "アプリが独自の VPN を確立して、この VPN を迂回できるようにします。",
-    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "認証を有効にすると、ローカルプロキシポートの利用にユーザー名とパスワードが必要になります。",
     ),
@@ -798,6 +798,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("個"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("触覚フィードバック"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "アプリ内のタップで軽く振動します。",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("変更をキャッシュしますか？"),
     "hashByInUser": MessageLookupByLibrary.simpleMessage("インバウンドユーザーでハッシュ"),
     "healthCheck": MessageLookupByLibrary.simpleMessage("ヘルスチェック"),
@@ -1015,11 +1019,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("ローカルプロキシ"),
-    "locationPermission": MessageLookupByLibrary.simpleMessage("位置情報の権限"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "オフにすると、LAN・ループバック・マルチキャストのアドレスは仮想インターフェースを通りません。",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("ローカルプロキシ"),
+    "locationPermission": MessageLookupByLibrary.simpleMessage("位置情報の権限"),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "位置情報の権限が拒否されたため、現在の Wi-Fi 名を取得できません。システム設定で位置情報の権限を手動で有効にしてください。",
     ),
@@ -1179,11 +1183,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "paste": MessageLookupByLibrary.simpleMessage("貼り付け"),
     "pasteDesc": MessageLookupByLibrary.simpleMessage("クリップボードから購読リンクを貼り付け"),
     "peers": MessageLookupByLibrary.simpleMessage("ピア"),
+    "perApp": MessageLookupByLibrary.simpleMessage("アプリごと"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("どのアプリをプロキシ経由にするか選びます。"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("アルバムから選択"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("最前面に固定"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("WebDAVを連携してください"),
-    "perApp": MessageLookupByLibrary.simpleMessage("アプリごと"),
-    "perAppDesc": MessageLookupByLibrary.simpleMessage("どのアプリをプロキシ経由にするか選びます。"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "スクリプト名を入力してください",
     ),
@@ -1644,18 +1648,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "振り分け戦略は空にできません",
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDが空です"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "既定値。sing-tun 内蔵の軽量ユーザースペーススタック。TCP 輻輳制御を使えるのはこのスタックだけです。切り替え後は VPN の再起動が必要です。",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "gVisor のユーザースペーススタック。機能と互換性が最も充実しており、メモリ使用量は比較的多めです。切り替え後は VPN の再起動が必要です。",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP はシステムのカーネルスタック、UDP はカーネル転送で処理します。切り替え後は VPN の再起動が必要です。",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "既定値。sing-tun 内蔵の軽量ユーザースペーススタック。TCP 輻輳制御を使えるのはこのスタックだけです。切り替え後は VPN の再起動が必要です。",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "複合スタック。TCP はシステムのカーネルスタック、UDP は gVisor で処理します。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP はシステムのカーネルスタック、UDP はカーネル転送で処理します。切り替え後は VPN の再起動が必要です。",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("スタックトレース"),
     "standard": MessageLookupByLibrary.simpleMessage("標準"),
@@ -1690,6 +1694,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("システムプロキシ"),
     "tab": MessageLookupByLibrary.simpleMessage("タブ"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("タブアニメーション"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("適用範囲"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("常に有効"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN 接続後は 0.0.0.0/0 の経路がシステムに引き継がれるため、専用のスイッチはありません。",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage("アイコンをタップして再試行"),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("タップして許可"),
     "target": MessageLookupByLibrary.simpleMessage("宛先"),
@@ -1699,11 +1708,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "testUrl": MessageLookupByLibrary.simpleMessage("テストURL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("使用時にテスト"),
     "textScale": MessageLookupByLibrary.simpleMessage("テキストの拡大縮小"),
-    "takeoverScope": MessageLookupByLibrary.simpleMessage("適用範囲"),
-    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("常に有効"),
-    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
-      "VPN 接続後は 0.0.0.0/0 の経路がシステムに引き継がれるため、専用のスイッチはありません。",
-    ),
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "アプリ内の文字はこの大きさで表示されます",
     ),
@@ -1743,14 +1747,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "ここで追加した項目は、すべてのプロファイルの TUN 設定を上書きします。追加していない項目はプロファイル自身の設定のままです。カスタムプロファイル自身が追加した項目が優先されます。",
     ),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "ルートアドレスが空のときは全トラフィックを引き継ぎます。除外アドレスのサブネットは仮想インターフェースを通りません。",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("オフにする"),
     "turnOn": MessageLookupByLibrary.simpleMessage("オンにする"),
     "type": MessageLookupByLibrary.simpleMessage("タイプ"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP リレーモード"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP タイムアウト"),
-    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "ルートアドレスが空のときは全トラフィックを引き継ぎます。除外アドレスのサブネットは仮想インターフェースを通りません。",
-    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP タイムアウトは秒単位で、gvisor・system・mixed スタックでのみ有効です。",
     ),

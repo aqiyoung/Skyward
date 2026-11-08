@@ -1076,5 +1076,7 @@
   "webrtcLeakStunSilent": "STUN 応答がなく、判定できません",
   "webrtcLeakStunUnresolved": "STUN ホストを解決できません。ネットワークが利用できません",
   "webrtcLeakAdvice": "「遮断」では反射アドレスが表示されないのが正常です。実際の漏れを調べるには、「詳細設定 → ネットワーク」で WebRTC を一時的に「そのまま」にし、確認後に戻してください。",
-  "webrtcLeakExternal": "ブラウザーで WebRTC を確認"
+  "webrtcLeakExternal": "ブラウザーで WebRTC を確認",
+  "hapticFeedback": "触覚フィードバック",
+  "hapticFeedbackDesc": "アプリ内のタップで軽く振動します。"
 }

@@ -321,14 +321,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow apps to bypass VPN",
     ),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Apps may bring up their own VPN and leave this one.",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("Allow LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("Allowed IPs"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Answers"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "Apps may bring up their own VPN and leave this one.",
-    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "App access control",
     ),
@@ -938,6 +938,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("groups"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("Haptic feedback"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "A light vibration on taps across the app.",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Cache the changes?",
     ),
@@ -1181,10 +1185,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("Local proxies"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "When off, LAN, loopback and multicast addresses bypass the virtual interface.",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("Local proxies"),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location permission",
     ),
@@ -1375,12 +1379,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Paste a subscription link from the clipboard",
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Peers"),
-    "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Choose from album"),
-    "pinWindow": MessageLookupByLibrary.simpleMessage("Pin window"),
     "perApp": MessageLookupByLibrary.simpleMessage("Per app"),
     "perAppDesc": MessageLookupByLibrary.simpleMessage(
       "Choose which apps use the proxy.",
     ),
+    "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Choose from album"),
+    "pinWindow": MessageLookupByLibrary.simpleMessage("Pin window"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),
@@ -1906,18 +1910,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "Split strategy cannot be empty",
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs are empty"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Stack trace"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
@@ -2017,14 +2021,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Entries added here replace the TUN settings of every profile; anything not added keeps the profile\'s own setting. Entries a custom profile adds itself take precedence.",
     ),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("Turn off"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Turn on"),
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP relay mode"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP timeout"),
-    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.",
-    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.",
     ),

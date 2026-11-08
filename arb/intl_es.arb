@@ -1076,5 +1076,7 @@
   "webrtcLeakStunSilent": "Sin respuesta STUN, resultado indeterminado",
   "webrtcLeakStunUnresolved": "No se pudo resolver el host STUN: red no disponible",
   "webrtcLeakAdvice": "Con «Bloquear» es normal no ver una dirección reflejada. Para comprobar una fuga real, cambia temporalmente WebRTC a «Dejar pasar» en «Avanzado → Red», comprueba y vuelve a cambiarlo.",
-  "webrtcLeakExternal": "Verificar WebRTC en un navegador"
+  "webrtcLeakExternal": "Verificar WebRTC en un navegador",
+  "hapticFeedback": "Respuesta háptica",
+  "hapticFeedbackDesc": "Vibración leve al pulsar en la aplicación."
 }

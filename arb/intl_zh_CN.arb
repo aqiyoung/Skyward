@@ -1076,5 +1076,7 @@
   "webrtcLeakStunSilent": "未收到 STUN 响应，无法判断",
   "webrtcLeakStunUnresolved": "无法解析 STUN 服务，网络不可用",
   "webrtcLeakAdvice": "默认「拦截」下看不到反射地址属于正常。要验证真实泄露，请先到「进阶配置 → 网络」把 WebRTC 临时改成「不处理」，检测后再切回。",
-  "webrtcLeakExternal": "在浏览器中验证 WebRTC"
+  "webrtcLeakExternal": "在浏览器中验证 WebRTC",
+  "hapticFeedback": "震动反馈",
+  "hapticFeedbackDesc": "在应用内点击时给予轻微震动。"
 }

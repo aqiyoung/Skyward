@@ -272,6 +272,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "全部被引用的代理集",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过VPN"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "允许应用建立自己的 VPN 并绕开这一条。",
+    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("允许局域网接入"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("允许的 IP"),
     "alreadyInLocalProxies": m2,
@@ -283,9 +286,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "appearance": MessageLookupByLibrary.simpleMessage("外观"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),
     "authentication": MessageLookupByLibrary.simpleMessage("认证"),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "允许应用建立自己的 VPN 并绕开这一条。",
-    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "认证开启后，使用本地代理端口需要账号密码。",
     ),
@@ -735,6 +735,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "groupCount": m32,
     "groupCountUnit": MessageLookupByLibrary.simpleMessage("个"),
     "groupTimeoutCount": m33,
+    "hapticFeedback": MessageLookupByLibrary.simpleMessage("震动反馈"),
+    "hapticFeedbackDesc": MessageLookupByLibrary.simpleMessage(
+      "在应用内点击时给予轻微震动。",
+    ),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage("是否缓存修改"),
     "hashByInUser": MessageLookupByLibrary.simpleMessage("按入站用户哈希"),
     "healthCheck": MessageLookupByLibrary.simpleMessage("健康检查"),
@@ -928,11 +932,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
     ),
-    "localProxies": MessageLookupByLibrary.simpleMessage("本地代理"),
-    "locationPermission": MessageLookupByLibrary.simpleMessage("位置权限"),
     "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
       "关闭后，局域网、回环与组播地址不进入虚拟网卡。",
     ),
+    "localProxies": MessageLookupByLibrary.simpleMessage("本地代理"),
+    "locationPermission": MessageLookupByLibrary.simpleMessage("位置权限"),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "位置权限已被拒绝，无法获取当前 Wi-Fi 名称。请前往系统设置手动开启位置权限。",
     ),
@@ -1078,12 +1082,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "paste": MessageLookupByLibrary.simpleMessage("粘贴"),
     "pasteDesc": MessageLookupByLibrary.simpleMessage("从剪贴板粘贴订阅链接"),
     "peers": MessageLookupByLibrary.simpleMessage("初始节点"),
+    "perApp": MessageLookupByLibrary.simpleMessage("分应用"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("决定哪些应用使用代理。"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("从相册选择"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("窗口置顶"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("请绑定WebDAV"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage("请输入脚本名称"),
-    "perApp": MessageLookupByLibrary.simpleMessage("分应用"),
-    "perAppDesc": MessageLookupByLibrary.simpleMessage("决定哪些应用使用代理。"),
     "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
       "请上传有效的二维码",
     ),
@@ -1495,18 +1499,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategy": MessageLookupByLibrary.simpleMessage("分流策略"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage("分流策略不能为空"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs为空"),
-    "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
-    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
-      "默认。sing-tun 自研的轻量用户态协议栈；四档中只有它支持 TCP 拥塞控制。切换后需重启 VPN 生效。",
-    ),
     "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
       "gVisor 用户态协议栈，功能与兼容性最完整，内存占用相对更高。切换后需重启 VPN 生效。",
     ),
-    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
-      "TCP 交给系统内核协议栈处理，UDP 由内核转发。切换后需重启 VPN 生效。",
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "默认。sing-tun 自研的轻量用户态协议栈；四档中只有它支持 TCP 拥塞控制。切换后需重启 VPN 生效。",
     ),
     "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
       "混合档：TCP 交给系统内核协议栈，UDP 交给 gVisor 用户态栈。切换后需重启 VPN 生效。",
+    ),
+    "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP 交给系统内核协议栈处理，UDP 由内核转发。切换后需重启 VPN 生效。",
     ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("堆栈信息"),
     "standard": MessageLookupByLibrary.simpleMessage("标准"),
@@ -1539,6 +1543,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
     "tab": MessageLookupByLibrary.simpleMessage("标签页"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("选项卡动画"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("接管范围"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("始终开启"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN 建立后由系统接管全部路由（0.0.0.0/0），不需要单独开关。",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage("点击图标重试"),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("点击授权"),
     "target": MessageLookupByLibrary.simpleMessage("目标"),
@@ -1574,11 +1583,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("传输协议"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
-    "takeoverScope": MessageLookupByLibrary.simpleMessage("接管范围"),
-    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("始终开启"),
-    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
-      "VPN 建立后由系统接管全部路由（0.0.0.0/0），不需要单独开关。",
-    ),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),
@@ -1588,14 +1592,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tunOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "添加的项会覆写所有配置的虚拟网卡设置，未添加的项沿用配置自身的设置。自定义配置自己添加的项优先。",
     ),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "路由地址留空时接管全部流量；排除地址中的网段不进入虚拟网卡。",
+    ),
     "turnOff": MessageLookupByLibrary.simpleMessage("关闭"),
     "turnOn": MessageLookupByLibrary.simpleMessage("开启"),
     "type": MessageLookupByLibrary.simpleMessage("类型"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 中继模式"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP 超时"),
-    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
-      "路由地址留空时接管全部流量；排除地址中的网段不进入虚拟网卡。",
-    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP 超时以秒为单位，仅在 gvisor、system 和 mixed 栈生效。",
     ),
