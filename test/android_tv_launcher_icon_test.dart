@@ -97,4 +97,54 @@ void main() {
     expect(bounds.right, lessThanOrEqualTo(safeZone.right));
     expect(bounds.bottom, lessThanOrEqualTo(safeZone.bottom));
   });
+
+  test('themed launcher icon is a dedicated pure-white drawable', () async {
+    // Android 13 tints the monochrome layer; pointing it at the coloured
+    // foreground would render a flat disc instead of the S mark.
+    for (final path in const [
+      'android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml',
+      'android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml',
+    ]) {
+      final adaptiveIcon = File(path).readAsStringSync();
+      expect(
+        _androidAttribute(adaptiveIcon, 'monochrome', 'drawable'),
+        '@drawable/ic_launcher_monochrome',
+        reason: path,
+      );
+    }
+
+    final file = File(
+      'android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png',
+    );
+    expect(file.existsSync(), isTrue, reason: 'missing ${file.path}');
+    final codec = await ui.instantiateImageCodec(await file.readAsBytes());
+    final image = (await codec.getNextFrame()).image;
+    final pixels =
+        (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+    var opaque = 0;
+    var tinted = 0;
+    for (var i = 0; i < pixels.lengthInBytes; i += 4) {
+      final alpha = pixels.getUint8(i + 3);
+      if (alpha == 0) continue;
+      final r = pixels.getUint8(i);
+      final g = pixels.getUint8(i + 1);
+      final b = pixels.getUint8(i + 2);
+      final lo = r < g ? (r < b ? r : b) : (g < b ? g : b);
+      final hi = r > g ? (r > b ? r : b) : (g > b ? g : b);
+      // The shape is pure white, but its anti-aliased edge is translucent:
+      // Skia rounds straight-alpha RGB for those pixels a few levels below
+      // 255, so only fully opaque pixels can demand exact white. A colour
+      // tint still fails, because it separates the RGB channels.
+      if (hi - lo > 1 || (alpha == 255 && lo != 255)) {
+        tinted++;
+      }
+      if (alpha == 255) opaque++;
+    }
+    image.dispose();
+    codec.dispose();
+    expect(opaque, greaterThan(0), reason: 'themed icon is empty');
+    expect(tinted, 0,
+        reason: 'themed icon must be pure white; the system applies the tint');
+  });
+
 }
