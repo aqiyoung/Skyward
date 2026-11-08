@@ -2062,6 +2062,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("No hay SSID"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Modo de pila"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Predeterminado. Pila de espacio de usuario ligera integrada en sing-tun; solo ella admite el control de congestión TCP. Reinicia la VPN tras el cambio.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "Pila de espacio de usuario gVisor: la más completa y compatible, con mayor uso de memoria. Reinicia la VPN tras el cambio.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP lo gestiona la pila del núcleo del sistema y el núcleo reenvía UDP. Reinicia la VPN tras el cambio.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "Híbrida: TCP por la pila del núcleo del sistema y UDP por gVisor. Reinicia la VPN tras el cambio.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Seguimiento de pila"),
     "standard": MessageLookupByLibrary.simpleMessage("Estándar"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

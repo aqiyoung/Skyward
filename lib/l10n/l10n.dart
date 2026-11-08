@@ -3111,6 +3111,42 @@ class AppLocalizations {
     return Intl.message('Stack mode', name: 'stackMode', desc: '', args: []);
   }
 
+  String get stackMipsDesc {
+    return Intl.message(
+      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
+      name: "stackMipsDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackGvisorDesc {
+    return Intl.message(
+      "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
+      name: "stackGvisorDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackSystemDesc {
+    return Intl.message(
+      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
+      name: "stackSystemDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackMixedDesc {
+    return Intl.message(
+      "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
+      name: "stackMixedDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Network`
   String get network {
     return Intl.message('Network', name: 'network', desc: '', args: []);
