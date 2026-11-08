@@ -2,6 +2,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/views/config/lan_access.dart';
 import 'package:skyward/views/dashboard/layout.dart';
 import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/views/dashboard/widgets/network_control.dart';
@@ -85,7 +86,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tapping the LAN block toggles it without an address', (
+  testWidgets('tapping the LAN block opens its detail page', (
     tester,
   ) async {
     await pump(tester, SupportPlatform.Android);
@@ -95,14 +96,14 @@ void main() {
     expect(find.text('Disabled'), findsNWidgets(2));
 
     await tester.tap(find.text('Allow LAN'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(container.read(patchClashConfigProvider).allowLan, isTrue);
-    expect(find.text('Enabled'), findsOneWidget);
-    // Reference layout: the phone LAN block is a status block only, so
-    // it shows no address and offers no copy button.
-    expect(find.text('192.168.1.23:7890'), findsNothing);
-    expect(find.byTooltip('Copy'), findsNothing);
+    // The block is a door, not a bare toggle: the switch did not flip and
+    // the detail page now shows the address, the LAN IP and the port.
+    expect(container.read(patchClashConfigProvider).allowLan, isFalse);
+    expect(find.byType(LanAccessView), findsOneWidget);
+    expect(find.text('192.168.1.23:7890'), findsOneWidget);
+    expect(find.byTooltip('Copy'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

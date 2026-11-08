@@ -5,6 +5,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
+import 'package:skyward/views/config/lan_access.dart';
 import 'package:skyward/views/dashboard/style.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -159,6 +160,10 @@ class _VpnStatusTile extends ConsumerWidget {
   }
 }
 
+/// The phone's LAN block is a door to the detail page, not a bare toggle:
+/// the switch moved into that page so the address, the LAN IP and the port
+/// it is built from can be shown and copied. The subtitle still reports the
+/// state, so the block reads the same as before.
 class _LanStatusTile extends ConsumerWidget {
   const _LanStatusTile();
 
@@ -171,9 +176,9 @@ class _LanStatusTile extends ConsumerWidget {
     return _StatusTile(
       title: appLocalizations.allowLan,
       subtitle: allowLan ? appLocalizations.enabled : appLocalizations.disabled,
-      onTap: () => ref
-          .read(patchClashConfigProvider.notifier)
-          .update((state) => state.copyWith(allowLan: !allowLan)),
+      onTap: () => unawaited(
+        BaseNavigator.push(context, const LanAccessView()),
+      ),
     );
   }
 }
