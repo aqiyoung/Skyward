@@ -189,6 +189,20 @@ class _AboutViewState extends ConsumerState<AboutView> {
               _buildContributors(appLocalizations.appIconDesign),
             ],
           ),
+          generateSection(
+            title: 'Acknowledgments',
+            items: [
+              _buildLinkItem(
+                glyph: AppGlyphs.cpu,
+                title: 'mihomo (Clash.Meta)',
+                url: 'https://github.com/MetaCubeX/mihomo',
+                label: 'github.com/MetaCubeX/mihomo',
+              ),
+            ],
+            footer: 'Skyward began as a fork of FlClash by chen08209 and is built '
+                'on the mihomo (Clash.Meta) core by MetaCubeX. Both are released '
+                'under GPL-3.0.',
+          ),
         ],
       ),
     );
