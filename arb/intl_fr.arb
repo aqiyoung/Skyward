@@ -260,7 +260,6 @@
   "value": "Valeur",
   "vpnEnableDesc": "Le VPN fait passer automatiquement tout le trafic du système par VpnService.",
   "vpnBehavior": "Comportement du VPN",
-  "vpnBehaviorDesc": "Le VpnService d'Android n'expose que les réglages ci-dessus. Les options iOS « Inclure les APNs », « Inclure les services cellulaires » et « Masquer l'icône VPN » n'ont pas d'équivalent ici, elles ne sont donc pas proposées.",
   "takeoverScope": "Portée du trafic",
   "takeoverScopeDesc": "Une fois le VPN établi, Android achemine 0.0.0.0/0 par le tunnel ; aucun interrupteur séparé n'est nécessaire.",
   "takeoverScopeAlways": "Toujours actif",

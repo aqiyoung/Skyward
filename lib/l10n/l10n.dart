@@ -9018,14 +9018,6 @@ class AppLocalizations {
     );
   }
 
-  String get vpnBehaviorDesc {
-    return Intl.message(
-      'Android\'s VpnService only exposes the rows above. iOS options such as Include APNs, Include Cellular Services and Hide VPN icon have no equivalent here, so they are not offered.',
-      name: 'vpnBehaviorDesc',
-      desc: '',
-      args: [],
-    );
-  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -220,6 +220,7 @@ void main() {
       expect(find.text(l.allowBypass), findsOneWidget);
       expect(find.text(l.perApp), findsOneWidget);
       expect(find.text(l.bypassPrivateRoute), findsNothing);
+      expect(find.textContaining('iOS'), findsNothing);
     });
 
     Widget desktopSection({bool isWindows = false}) =>

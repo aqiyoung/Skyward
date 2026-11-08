@@ -606,6 +606,7 @@ class VpnSections extends ConsumerWidget {
         generateSection(
           items: const [VPNItem()],
           footer: appLocalizations.vpnEnableDesc,
+          leadingGap: false,
         ),
         generateSection(
           title: appLocalizations.vpnBehavior,
@@ -615,7 +616,6 @@ class VpnSections extends ConsumerWidget {
             AllowBypassItem(),
             PerAppItem(),
           ],
-          footer: appLocalizations.vpnBehaviorDesc,
         ),
         generateSection(
           title: 'VPN',
