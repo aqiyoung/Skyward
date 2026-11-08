@@ -260,7 +260,6 @@
   "value": "Value",
   "vpnEnableDesc": "VPN routes all system traffic through VpnService automatically.",
   "vpnBehavior": "VPN behaviour",
-  "vpnBehaviorDesc": "Android's VpnService only exposes the rows above. iOS options such as Include APNs, Include Cellular Services and Hide VPN icon have no equivalent here, so they are not offered.",
   "takeoverScope": "Traffic scope",
   "takeoverScopeDesc": "Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.",
   "takeoverScopeAlways": "Always on",

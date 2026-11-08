@@ -2239,9 +2239,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtuelle"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vif"),
     "vpnBehavior": MessageLookupByLibrary.simpleMessage("Comportement du VPN"),
-    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
-      "Le VpnService d'Android n'expose que les réglages ci-dessus. Les options iOS « Inclure les APNs », « Inclure les services cellulaires » et « Masquer l'icône VPN » n'ont pas d'équivalent ici, elles ne sont donc pas proposées.",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Modification de la configuration liée au VPN détectée",
     ),

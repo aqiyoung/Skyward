@@ -1630,9 +1630,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("鲜明"),
     "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN 行为"),
-    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
-      "Android 的 VpnService 只提供上面这些开关。iOS 的「包括 APNs」「包括蜂窝服务」「隐藏 VPN 图标」在这里没有对应通道，所以不提供。",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "检测到VPN相关配置改动",
     ),

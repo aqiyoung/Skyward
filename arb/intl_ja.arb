@@ -260,7 +260,6 @@
   "value": "値",
   "vpnEnableDesc": "VPN は VpnService でシステムの全トラフィックを自動的にルーティングします。",
   "vpnBehavior": "VPN の動作",
-  "vpnBehaviorDesc": "Android の VpnService が提供するのは上記の項目だけです。iOS の「APNs を含める」「モバイル通信サービスを含める」「VPN アイコンを隠す」に相当する経路はないため、提供していません。",
   "takeoverScope": "適用範囲",
   "takeoverScopeDesc": "VPN 接続後は 0.0.0.0/0 の経路がシステムに引き継がれるため、専用のスイッチはありません。",
   "takeoverScopeAlways": "常に有効",

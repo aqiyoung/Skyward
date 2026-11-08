@@ -1762,9 +1762,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("선명"),
     "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN 동작"),
-    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
-      "Android VpnService가 제공하는 항목은 위와 같습니다. iOS의 'APNs 포함', '셀룰러 서비스 포함', 'VPN 아이콘 숨기기'에 해당하는 경로가 없어 제공하지 않습니다.",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN 관련 구성 변경이 감지되었습니다",
     ),

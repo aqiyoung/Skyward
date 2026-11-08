@@ -2242,9 +2242,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnBehavior": MessageLookupByLibrary.simpleMessage(
       "Comportamiento de la VPN",
     ),
-    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
-      "El VpnService de Android solo ofrece los ajustes anteriores. Las opciones de iOS «Incluir APNs», «Incluir servicios celulares» y «Ocultar el icono de VPN» no tienen equivalente aquí, por eso no se ofrecen.",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Se detectó un cambio en la configuración relacionada con la VPN",
     ),

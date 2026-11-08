@@ -1787,9 +1787,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("仮想 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("ビビッド"),
     "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN の動作"),
-    "vpnBehaviorDesc": MessageLookupByLibrary.simpleMessage(
-      "Android の VpnService が提供するのは上記の項目だけです。iOS の「APNs を含める」「モバイル通信サービスを含める」「VPN アイコンを隠す」に相当する経路はないため、提供していません。",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN関連の設定変更を検出しました",
     ),

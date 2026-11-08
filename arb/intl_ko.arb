@@ -260,7 +260,6 @@
   "value": "값",
   "vpnEnableDesc": "VPN은 VpnService를 통해 모든 시스템 트래픽을 자동으로 라우팅합니다.",
   "vpnBehavior": "VPN 동작",
-  "vpnBehaviorDesc": "Android VpnService가 제공하는 항목은 위와 같습니다. iOS의 'APNs 포함', '셀룰러 서비스 포함', 'VPN 아이콘 숨기기'에 해당하는 경로가 없어 제공하지 않습니다.",
   "takeoverScope": "적용 범위",
   "takeoverScopeDesc": "VPN이 연결되면 0.0.0.0/0 경로를 시스템이 처리하므로 별도 스위치가 없습니다.",
   "takeoverScopeAlways": "항상 켜짐",
