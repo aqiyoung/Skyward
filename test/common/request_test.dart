@@ -4,11 +4,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:path/path.dart';
 import 'package:skyward/common/constant.dart';
+import 'package:skyward/common/path.dart';
 import 'package:skyward/common/request.dart';
 import 'package:skyward/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
+import '../helpers/app_paths.dart';
 
 class _StalledHttpClient extends Fake implements HttpClient {
   @override
@@ -76,13 +80,15 @@ void main() {
       return Request()..dio.httpClientAdapter = _HostAdapter(byHost);
     }
 
-    setUpAll(() {
+    setUpAll(() async {
       globalState.packageInfo = PackageInfo(
         appName: 'Skyward',
         packageName: 'com.threely.skyward',
         version: '1.0.0.23',
         buildNumber: '2090029901',
       );
+      final root = await Directory.systemTemp.createTemp('skyward-req-');
+      await useAppPaths(root);
     });
 
     test('reads the newest beta from the releases list, not only stable', () async {
@@ -117,6 +123,103 @@ void main() {
 
       expect(await request.checkForUpdate(), isNull);
     });
+
+    test('caches the release list on a successful fetch', () async {
+      final request = requestAnswering({
+        'api.github.com': () => ResponseBody.fromString(
+          '[{"tag_name":"v1.0.0.24","name":"Skyward 1.0.0.24（beta）","body":"- 构建号：`2090029902`","draft":false}]',
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        ),
+      });
+
+      await request.checkForUpdate();
+
+      final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
+      expect(await cache.exists(), isTrue);
+      final stored =
+          (jsonDecode(await cache.readAsString()) as List).cast<Map>();
+      expect(stored.any((r) => r['tag_name'] == 'v1.0.0.24'), isTrue);
+    });
+
+    test(
+      'offers a cached newer beta to a preview when the API is rate limited',
+      () async {
+        // A preview build: the fourth slot is the day's build number.
+        globalState.packageInfo = PackageInfo(
+          appName: 'Skyward',
+          packageName: 'com.threely.skyward',
+          version: '1.0.0.2090029901',
+          buildNumber: '2090029901',
+        );
+        final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
+        await cache.writeAsString(jsonEncode([
+          {
+            'tag_name': 'preview-2090029901',
+            'name': 'Skyward 1.0.0.2090029901（预览版）',
+            'body': '- 构建号：`2090029901`',
+            'draft': false,
+          },
+          {
+            'tag_name': 'v1.0.0.2090029902',
+            'name': 'Skyward 1.0.0.2090029902（beta）',
+            'body': '- 构建号：`2090029902`',
+            'draft': false,
+          },
+        ]));
+
+        // The list endpoint is rate limited, so the live check cannot read it.
+        final request = requestAnswering({
+          'api.github.com': () => ResponseBody.fromString('{}', 403),
+        });
+
+        // The cached beta outranks the installed preview on the shared build
+        // counter, so the preview is offered it instead of being told nothing.
+        final update = await request.checkForUpdate();
+        expect(update?['tag_name'], 'v1.0.0.2090029902');
+      },
+    );
+
+    test(
+      'returns null when the API is rate limited and the cache has no update',
+      () async {
+        globalState.packageInfo = PackageInfo(
+          appName: 'Skyward',
+          packageName: 'com.threely.skyward',
+          version: '1.0.0.2090029901',
+          buildNumber: '2090029901',
+        );
+        final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
+        await cache.writeAsString(jsonEncode([
+          {
+            'tag_name': 'preview-2090029901',
+            'name': 'Skyward 1.0.0.2090029901（预览版）',
+            'body': '- 构建号：`2090029901`',
+            'draft': false,
+          },
+        ]));
+
+        final request = requestAnswering({
+          'api.github.com': () => ResponseBody.fromString('{}', 403),
+          'github.com': () => ResponseBody.fromString(
+            '',
+            302,
+            headers: {
+              HttpHeaders.locationHeader: [
+                'https://github.com/$repository/releases/tag/preview-2090029901',
+              ],
+            },
+          ),
+        });
+
+        // The cache holds only the installed build, and the release-page
+        // redirect names only a tag with no body, so a preview -- which cannot
+        // be placed on the counter without a number -- correctly hears nothing.
+        expect(await request.checkForUpdate(), isNull);
+      },
+    );
   });
 
   group('latestRelease', () {
