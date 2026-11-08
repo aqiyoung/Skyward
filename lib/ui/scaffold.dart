@@ -128,7 +128,7 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
-    this.rowSeparators = true,
+    this.rowSeparators = false,
     this.hideActionsOnScroll = true,
   });
 
@@ -1804,7 +1804,7 @@ class BaseScaffold extends StatelessWidget {
     super.key,
     required this.title,
     required this.body,
-    this.rowSeparators = true,
+    this.rowSeparators = false,
   });
 
   @override

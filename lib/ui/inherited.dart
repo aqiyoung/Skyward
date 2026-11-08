@@ -108,7 +108,7 @@ class ListRowSeparatorScope extends InheritedWidget {
     return context
             .dependOnInheritedWidgetOfExactType<ListRowSeparatorScope>()
             ?.separated ??
-        true;
+        false;
   }
 
   @override
