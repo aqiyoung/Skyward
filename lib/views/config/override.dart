@@ -288,6 +288,7 @@ class NumberOverrideField<M> extends ValueOverrideField<M, int> {
       normalize: (value) => value.trim(),
       validator: (value, _) => _validate(value, title),
       allowEmpty: model.emptyCancels,
+      arrow: true,
     );
   }
 }
@@ -318,6 +319,7 @@ class TextOverrideField<M> extends ValueOverrideField<M, String> {
       normalize: (value) => value.trim(),
       validator: validator,
       allowEmpty: true,
+      arrow: true,
     );
   }
 }

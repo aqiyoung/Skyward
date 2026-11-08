@@ -189,6 +189,7 @@ class ConfigTextItem extends _ConfigItem<String> {
     this.validator,
     this.normalize,
     this.allowEmpty = false,
+    this.arrow = false,
     super.leading,
   });
 
@@ -197,6 +198,7 @@ class ConfigTextItem extends _ConfigItem<String> {
   final ConfigValidator? validator;
   final String Function(String value)? normalize;
   final bool allowEmpty;
+  final bool arrow;
 
   String? _normalize(String? value) {
     if (value == null) {
@@ -220,6 +222,7 @@ class ConfigTextItem extends _ConfigItem<String> {
       subtitle: value.isEmpty ? null : Text(value),
       dialogTitle: label,
       value: value,
+      arrow: arrow,
       maxLength: maxLength,
       keyboardType: keyboardType,
       validator: (text) {
