@@ -124,13 +124,21 @@ void main() {
     var opaque = 0;
     var tinted = 0;
     for (var i = 0; i < pixels.lengthInBytes; i += 4) {
-      if (pixels.getUint8(i + 3) < 200) continue;
-      opaque++;
-      if (pixels.getUint8(i) != 255 ||
-          pixels.getUint8(i + 1) != 255 ||
-          pixels.getUint8(i + 2) != 255) {
+      final alpha = pixels.getUint8(i + 3);
+      if (alpha == 0) continue;
+      final r = pixels.getUint8(i);
+      final g = pixels.getUint8(i + 1);
+      final b = pixels.getUint8(i + 2);
+      final lo = r < g ? (r < b ? r : b) : (g < b ? g : b);
+      final hi = r > g ? (r > b ? r : b) : (g > b ? g : b);
+      // The shape is pure white, but its anti-aliased edge is translucent:
+      // Skia rounds straight-alpha RGB for those pixels a few levels below
+      // 255, so only fully opaque pixels can demand exact white. A colour
+      // tint still fails, because it separates the RGB channels.
+      if (hi - lo > 1 || (alpha == 255 && lo != 255)) {
         tinted++;
       }
+      if (alpha == 255) opaque++;
     }
     image.dispose();
     codec.dispose();
