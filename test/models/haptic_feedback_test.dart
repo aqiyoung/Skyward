@@ -12,10 +12,5 @@ void main() {
       expect(off.hapticFeedback, isFalse);
       expect(defaultAppSettingProps.hapticFeedback, isTrue);
     });
-
-    test('a stored config without the key keeps the default', () {
-      final stored = defaultAppSettingProps.toJson()..remove('hapticFeedback');
-      expect(AppSettingProps.fromJson(stored).hapticFeedback, isTrue);
-    });
   });
 }

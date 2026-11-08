@@ -13,9 +13,11 @@ class HapticFeedbackScope extends InheritedWidget {
   final bool enabled;
 
   /// Read from a tap callback, so it must not register a build dependency.
+  /// A tree without a scope keeps the feedback on, matching the setting's
+  /// default; the app root always installs a scope so the switch governs it.
   static bool enabledOf(BuildContext context) =>
       context.getInheritedWidgetOfExactType<HapticFeedbackScope>()?.enabled ??
-      false;
+      true;
 
   @override
   bool updateShouldNotify(HapticFeedbackScope oldWidget) =>
