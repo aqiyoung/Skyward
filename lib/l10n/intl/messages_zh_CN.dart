@@ -259,7 +259,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addressTip": MessageLookupByLibrary.simpleMessage("请输入有效的WebDAV地址"),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("进阶配置"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "进阶配置包含网络、DNS、附加规则与脚本。",
+      "进阶配置包含 DNS、附加规则与脚本。",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("配置已加密"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 私钥"),
@@ -272,7 +272,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "全部被引用的代理集",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过VPN"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("局域网代理"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("允许局域网接入"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("允许的 IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("应答"),
@@ -280,8 +280,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage("应用访问控制"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("应用图标设计"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("暂无本地代理"),
+    "appearance": MessageLookupByLibrary.simpleMessage("外观"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("追加系统DNS"),
     "authentication": MessageLookupByLibrary.simpleMessage("认证"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "允许应用建立自己的 VPN 并绕开这一条。",
+    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "认证开启后，使用本地代理端口需要账号密码。",
     ),
@@ -347,6 +351,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("无法保存"),
+    "capsule": MessageLookupByLibrary.simpleMessage("胶囊"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "切换代理失败，已恢复上一次的选择",
     ),
@@ -381,9 +386,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "closeConnections": MessageLookupByLibrary.simpleMessage("关闭连接"),
     "color": MessageLookupByLibrary.simpleMessage("颜色"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("配色风格"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
     "columns": MessageLookupByLibrary.simpleMessage("列数"),
     "compact": MessageLookupByLibrary.simpleMessage("紧凑"),
     "compatible": MessageLookupByLibrary.simpleMessage("兼容模式"),
+    "configuration": MessageLookupByLibrary.simpleMessage("配置"),
     "confirm": MessageLookupByLibrary.simpleMessage("确定"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage("确定要清除所有数据？"),
     "confirmDeleteProxyGroup": MessageLookupByLibrary.simpleMessage(
@@ -457,6 +464,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("深色"),
     "dashboard": MessageLookupByLibrary.simpleMessage("仪表盘"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("可添加"),
+    "data": MessageLookupByLibrary.simpleMessage("数据"),
     "database": MessageLookupByLibrary.simpleMessage("数据库"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "保存更改失败，已回滚",
@@ -899,6 +907,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "应用上次在启动过程中意外退出。已跳过本次自动配置，你可以手动启动重试。",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("布局"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("泄露自检"),
     "light": MessageLookupByLibrary.simpleMessage("浅色"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("自动换行"),
@@ -915,11 +924,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("加载中…"),
     "local": MessageLookupByLibrary.simpleMessage("本地"),
     "localImage": MessageLookupByLibrary.simpleMessage("本地图片"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("局域网代理"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("本地代理"),
     "locationPermission": MessageLookupByLibrary.simpleMessage("位置权限"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "关闭后，局域网、回环与组播地址不进入虚拟网卡。",
+    ),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "位置权限已被拒绝，无法获取当前 Wi-Fi 名称。请前往系统设置手动开启位置权限。",
     ),
@@ -947,6 +960,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("常驻内存"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("应用及共享"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("内核上限"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("堆内存空闲"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("堆内存使用中"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage("内核未运行"),
@@ -976,8 +990,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("更多"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("更多主题设置"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("动效"),
     "name": MessageLookupByLibrary.simpleMessage("名称"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("底栏"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("导航栏"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1065,6 +1082,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pinWindow": MessageLookupByLibrary.simpleMessage("窗口置顶"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("请绑定WebDAV"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage("请输入脚本名称"),
+    "perApp": MessageLookupByLibrary.simpleMessage("分应用"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("决定哪些应用使用代理。"),
     "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
       "请上传有效的二维码",
     ),
@@ -1082,6 +1101,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("端口"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("预共享密钥"),
+    "preferences": MessageLookupByLibrary.simpleMessage("偏好设置"),
     "preferred": MessageLookupByLibrary.simpleMessage("首选"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("前置条件"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("请按下组合键"),
@@ -1476,6 +1496,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage("分流策略不能为空"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs为空"),
     "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "默认。sing-tun 自研的轻量用户态协议栈；四档中只有它支持 TCP 拥塞控制。切换后需重启 VPN 生效。",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor 用户态协议栈，功能与兼容性最完整，内存占用相对更高。切换后需重启 VPN 生效。",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP 交给系统内核协议栈处理，UDP 由内核转发。切换后需重启 VPN 生效。",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "混合档：TCP 交给系统内核协议栈，UDP 交给 gVisor 用户态栈。切换后需重启 VPN 生效。",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("堆栈信息"),
     "standard": MessageLookupByLibrary.simpleMessage("标准"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -1517,17 +1549,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("使用时测试"),
     "textScale": MessageLookupByLibrary.simpleMessage("文本缩放"),
     "textScalePreview": MessageLookupByLibrary.simpleMessage("应用内的文字将以这个大小显示"),
-    "theme": MessageLookupByLibrary.simpleMessage("主题"),
-    "appearance": MessageLookupByLibrary.simpleMessage("外观"),
-    "preferences": MessageLookupByLibrary.simpleMessage("偏好设置"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("更多主题设置"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("导航栏"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("动效"),
     "textSection": MessageLookupByLibrary.simpleMessage("文字"),
-    "configuration": MessageLookupByLibrary.simpleMessage("配置"),
-    "data": MessageLookupByLibrary.simpleMessage("数据"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("主题"),
     "themeColor": MessageLookupByLibrary.simpleMessage("主题色彩"),
     "themeMode": MessageLookupByLibrary.simpleMessage("主题模式"),
     "tight": MessageLookupByLibrary.simpleMessage("紧凑"),
@@ -1551,6 +1574,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "transport": MessageLookupByLibrary.simpleMessage("传输协议"),
     "transportHeaders": m83,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("接管范围"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("始终开启"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN 建立后由系统接管全部路由（0.0.0.0/0），不需要单独开关。",
+    ),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
     ),
@@ -1565,6 +1593,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("类型"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 中继模式"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP 超时"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "路由地址留空时接管全部流量；排除地址中的网段不进入虚拟网卡。",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP 超时以秒为单位，仅在 gvisor、system 和 mixed 栈生效。",
     ),
@@ -1598,6 +1629,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("查看"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("虚拟 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("鲜明"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN 行为"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "检测到VPN相关配置改动",
     ),
@@ -1612,6 +1644,31 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("不处理"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("经代理"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "默认「拦截」下看不到反射地址属于正常。要验证真实泄露，请先到「进阶配置 → 网络」把 WebRTC 临时改成「不处理」，检测后再切回。",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "在浏览器中验证 WebRTC",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("防护模式"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "当前为「不处理」，网页可读取本机公网地址",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "经代理转发，需要节点支持 UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("反射地址"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN 探测"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "未收到 STUN 响应，拦截已生效",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage("STUN 服务器返回了响应"),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "未收到 STUN 响应，无法判断",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "无法解析 STUN 服务，网络不可用",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

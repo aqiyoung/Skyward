@@ -250,12 +250,14 @@ _Delay _$DelayFromJson(Map<String, dynamic> json) => _Delay(
   name: json['name'] as String,
   url: json['url'] as String,
   value: (json['value'] as num?)?.toInt(),
+  message: json['message'] as String?,
 );
 
 Map<String, dynamic> _$DelayToJson(_Delay instance) => <String, dynamic>{
   'name': instance.name,
   'url': instance.url,
   'value': instance.value,
+  'message': instance.message,
 };
 
 _ProbeParams _$ProbeParamsFromJson(Map<String, dynamic> json) => _ProbeParams(
@@ -399,6 +401,9 @@ _CoreMemoryStats _$CoreMemoryStatsFromJson(Map<String, dynamic> json) =>
       heapIdle: (json['heapIdle'] as num?)?.toInt() ?? 0,
       stackInuse: (json['stackInuse'] as num?)?.toInt() ?? 0,
       runtimeOther: (json['runtimeOther'] as num?)?.toInt() ?? 0,
+      budget: (json['budget'] as num?)?.toInt() ?? 0,
+      gcPercent: (json['gcPercent'] as num?)?.toInt() ?? 0,
+      deviceTotal: (json['deviceTotal'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$CoreMemoryStatsToJson(_CoreMemoryStats instance) =>
@@ -408,6 +413,9 @@ Map<String, dynamic> _$CoreMemoryStatsToJson(_CoreMemoryStats instance) =>
       'heapIdle': instance.heapIdle,
       'stackInuse': instance.stackInuse,
       'runtimeOther': instance.runtimeOther,
+      'budget': instance.budget,
+      'gcPercent': instance.gcPercent,
+      'deviceTotal': instance.deviceTotal,
     };
 
 _ExternalProvider _$ExternalProviderFromJson(Map<String, dynamic> json) =>

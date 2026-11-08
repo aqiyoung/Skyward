@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:skyward/common/input_limits.dart';
 import 'package:skyward/common/iterable.dart';
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/icons/icons.dart';
@@ -36,6 +35,7 @@ import 'sheet.dart';
 import 'sheet_header.dart';
 import 'sheet_navigator.dart';
 import 'sortable.dart';
+import 'text_style.dart';
 
 typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 
@@ -51,6 +51,12 @@ class CommonScaffold extends StatefulWidget {
   final Color? backgroundColor;
   final String? title;
   final Widget? titleWidget;
+
+  /// A quiet figure beside the title, such as how many rules the page lists.
+  /// Kept apart from [titleWidget] so a titled page stays a titled page: the
+  /// bar still treats it as one when deciding whether to compact the title or
+  /// dock search at the foot on a phone.
+  final String? titleDetail;
   final List<CommonPopupMenuItem> titleMenuItems;
   final bool isLoading;
   final List<Widget>? actions;
@@ -105,6 +111,7 @@ class CommonScaffold extends StatefulWidget {
     this.backgroundColor,
     this.title,
     this.titleWidget,
+    this.titleDetail,
     this.titleMenuItems = const [],
     this.actions,
     this.backAction,
@@ -588,7 +595,27 @@ class CommonScaffoldState extends State<CommonScaffold>
                 popupBuilder: (_) =>
                     CommonPopupMenu(items: widget.titleMenuItems),
               ));
-    return _TitleAside(aside: _titleAside, child: title);
+    final detail = widget.titleDetail;
+    final content = detail == null
+        ? title
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(child: title),
+              SizedBox(width: compact ? 6 : 8),
+              Text(
+                detail,
+                maxLines: 1,
+                style: (compact ? AppTextStyle.caption1 : AppTextStyle.footnote)
+                    .of(context)
+                    .toTabular
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          );
+    return _TitleAside(aside: _titleAside, child: content);
   }
 
   List<Widget> _buildActions(

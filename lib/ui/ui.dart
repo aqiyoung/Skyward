@@ -5,6 +5,7 @@ export 'builder.dart';
 export 'button.dart';
 export 'card.dart';
 export 'caret_popup.dart';
+export 'capsule_navigation_dock.dart';
 export 'chip.dart';
 export 'collapsible_section.dart';
 export 'color.dart';

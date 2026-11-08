@@ -24,6 +24,18 @@ void main() {
     });
   });
 
+  group('num.grouped', () {
+    test('leaves a small count alone', () {
+      expect(4.grouped, '4');
+      expect(999.grouped, '999');
+    });
+
+    test('groups thousands', () {
+      expect(1204.grouped, '1,204');
+      expect(1204000.grouped, '1,204,000');
+    });
+  });
+
   group('num.traffic', () {
     test('bytes for small values', () {
       final result = 500.traffic;

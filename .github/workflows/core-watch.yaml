@@ -93,10 +93,10 @@ jobs:
             echo "发布：https://github.com/MetaCubeX/mihomo/releases/tag/${UPSTREAM}"
             echo "时间：${PUBLISHED}"
             echo
-            echo "升法（镜像快进，不用重放补丁）："
-            echo "1. \`skyward-core\` 里 \`git merge --ff-only upstream/FlClash\` 后推 \`FlClash\`"
+            echo "升法（skyward 分支带自有补丁，不能直接快进）："
+            echo "1. \`skyward-core\` 里把补丁层 rebase 到 mihomo 的 \`${UPSTREAM}\` 上，推 \`skyward\`"
             echo "2. 本体里 \`git submodule update --remote core/Clash.Meta\`"
-            echo "3. \`build_config.yaml\` 的 \`core_version\` 改成 \`${UPSTREAM}\`，推 \`beta\` 出预览"
+            echo "3. \`build_config.yaml\` 的 \`core_version\` 改成 \`${UPSTREAM}-skyward.N\`，推 \`beta\` 出预览"
             echo
             echo "细节：https://github.com/${GITHUB_REPOSITORY}/blob/beta/.agents/core-sync.md"
             echo

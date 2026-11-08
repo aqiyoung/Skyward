@@ -140,7 +140,9 @@ class _AboutViewState extends ConsumerState<AboutView> {
               _buildLinkItem(
                 glyph: AppGlyphs.cpu,
                 title: appLocalizations.core,
-                url: 'https://github.com/aqiyoung/skyward-core/tree/FlClash',
+                // Link the repository root so this follows the default branch
+                // instead of naming a branch that can be renamed or removed.
+                url: 'https://github.com/aqiyoung/skyward-core',
                 label: 'github.com/aqiyoung/skyward-core',
               ),
               _buildLinkItem(
@@ -152,7 +154,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
               // The terms are a page of their own, reached from this row: read
               // here in full, they were a scroll few ever finished.
               ListItem.open(
-                leading: IconWell(
+                leading: const IconWell(
                   AppGlyphs.rules,
                   side: 40,
                   glyphSize: 20,
@@ -162,7 +164,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 widget: const DisclaimerView(),
               ),
               ListItem.open(
-                leading: IconWell(
+                leading: const IconWell(
                   AppGlyphs.info,
                   side: 40,
                   glyphSize: 20,

@@ -144,6 +144,7 @@ class _CustomRulesViewState extends ConsumerState<CustomRulesView> {
     final profileData = ref.watch(customProfileDataProvider(_profileId));
     return ListEditorPage<Rule, int>(
       title: appLocalizations.rule,
+      showsCount: true,
       idOf: (rule) => rule.id,
       itemsOf: (ref) {
         return ref.watch(profileRulesProvider(_profileId)).value;

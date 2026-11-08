@@ -306,7 +306,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Расширенная конфигурация",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "Расширенная конфигурация включает сеть, DNS, добавленные правила и скрипты.",
+      "Расширенная конфигурация включает DNS, добавленные правила и скрипты.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Зашифрованный профиль",
@@ -325,11 +325,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Разрешить приложениям обходить VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Разрешить LAN"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Разрешить доступ из LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("Разрешённые IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Ответы"),
     "app": MessageLookupByLibrary.simpleMessage("Приложение"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешить приложениям поднимать собственный VPN в обход этого.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Контроль доступа приложений",
     ),
@@ -339,6 +342,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Нет локальных прокси",
     ),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Добавлять системный DNS",
     ),
@@ -444,6 +448,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Снять выделение"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("Не удалось сохранить"),
+    "capsule": MessageLookupByLibrary.simpleMessage("Капсула"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Не удалось переключить прокси; восстановлен предыдущий выбор",
     ),
@@ -496,9 +501,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "color": MessageLookupByLibrary.simpleMessage("Цвет"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("Стиль палитры"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Цвета"),
     "columns": MessageLookupByLibrary.simpleMessage("Столбцы"),
     "compact": MessageLookupByLibrary.simpleMessage("Компактный"),
     "compatible": MessageLookupByLibrary.simpleMessage("Режим совместимости"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "Вы уверены, что хотите удалить все данные?",
@@ -598,6 +605,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Можно добавить",
     ),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("База данных"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "Не удалось сохранить изменение; оно отменено",
@@ -1186,6 +1194,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "В прошлый раз приложение неожиданно завершилось во время запуска. Автоматическая настройка для этого запуска пропущена; вы можете запустить её вручную.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Макет"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("Проверка утечек"),
     "light": MessageLookupByLibrary.simpleMessage("Светлая"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Перенос строк"),
@@ -1208,10 +1217,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Загрузка…"),
     "local": MessageLookupByLibrary.simpleMessage("Локально"),
     "localImage": MessageLookupByLibrary.simpleMessage("Локальное изображение"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage(
+      "LAN-прокси",
+    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "Если выключено, адреса локальной сети, loopback и multicast не проходят через виртуальный интерфейс.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Разрешение на геолокацию",
     ),
@@ -1256,6 +1271,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryAppShared": MessageLookupByLibrary.simpleMessage(
       "Приложение и общая",
     ),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Лимит ядра"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage(
       "Свободная куча",
     ),
@@ -1301,8 +1317,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные настройки темы",
+    ),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Анимация"),
     "name": MessageLookupByLibrary.simpleMessage("Название"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Нижняя панель"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Навигация"),
     "network": MessageLookupByLibrary.simpleMessage("Сеть"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1415,6 +1436,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Пиры"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Выбрать из галереи"),
+    "perApp": MessageLookupByLibrary.simpleMessage("По приложениям"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Выберите, какие приложения используют прокси.",
+    ),
     "pinWindow": MessageLookupByLibrary.simpleMessage(
       "Закрепить поверх всех окон",
     ),
@@ -1445,6 +1470,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("Порты"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("Общий ключ"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Настройки"),
     "preferred": MessageLookupByLibrary.simpleMessage("Предпочтительный"),
     "prerequisites": MessageLookupByLibrary.simpleMessage(
       "Предварительные условия",
@@ -1969,6 +1995,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Список SSID пуст"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Режим стека"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию. Лёгкий пользовательский стек sing-tun; только он поддерживает управление перегрузкой TCP. После смены перезапустите VPN.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "Пользовательский стек gVisor: самый полный и совместимый, с более высоким расходом памяти. После смены перезапустите VPN.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP обрабатывает системный стек ядра, UDP пересылает ядро. После смены перезапустите VPN.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "Гибрид: TCP через системный стек ядра, UDP через gVisor. После смены перезапустите VPN.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Трассировка стека"),
     "standard": MessageLookupByLibrary.simpleMessage("Стандартный"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -2010,6 +2048,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
     "tab": MessageLookupByLibrary.simpleMessage("Вкладки"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Анимация вкладок"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Охват трафика"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
+      "Всегда включено",
+    ),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "После подключения VPN система сама направляет 0.0.0.0/0 через туннель — отдельный переключатель не нужен.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Нажмите на значок, чтобы повторить",
     ),
@@ -2030,17 +2075,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "Так будет выглядеть текст в приложении",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("Тема"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("Настройки"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("Дополнительные настройки темы"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("Цвета"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("Навигация"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("Анимация"),
     "textSection": MessageLookupByLibrary.simpleMessage("Текст"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Режим темы"),
     "tight": MessageLookupByLibrary.simpleMessage("Плотный"),
@@ -2080,6 +2116,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "turnOff": MessageLookupByLibrary.simpleMessage("Выключить"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Включить"),
     "type": MessageLookupByLibrary.simpleMessage("Тип"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Пустой адрес маршрута забирает весь трафик; исключённые подсети не проходят через виртуальный интерфейс.",
+    ),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage(
       "Режим ретрансляции UDP",
     ),
@@ -2129,6 +2168,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("Просмотр"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Виртуальный IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Яркий"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("Поведение VPN"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Обнаружено изменение настроек VPN",
     ),
@@ -2145,6 +2185,35 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Не трогать"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Через прокси"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "При «Блокировать» отсутствие отражённого адреса — норма. Чтобы проверить реальную утечку, временно включите «Не трогать» в «Дополнительно → Сеть», проверьте и верните назад.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Проверить WebRTC в браузере",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("Режим защиты"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "Защита выключена: страница может узнать публичный адрес устройства",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "Обнаружение идёт через прокси; узел должен поддерживать UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage(
+      "Отражённый адрес",
+    ),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN-проверка"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "Ответа STUN нет, блокировка работает",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "Сервер STUN ответил",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "Ответа STUN нет, результат неопределён",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "Не удалось разрешить адрес STUN: сеть недоступна",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),

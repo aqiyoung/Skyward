@@ -550,7 +550,7 @@ enum DashboardWidget {
 
   final List<SupportPlatform> platforms;
 
-  const DashboardWidget({this.platforms = SupportPlatform.values});
+  const DashboardWidget() : platforms = SupportPlatform.values;
 }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
@@ -925,6 +925,10 @@ enum WebrtcGuard {
 }
 
 enum TabAnimation { slide, fade }
+
+/// The floating and capsule styles both hover over the page; only the docked
+/// one takes a row of its own at the foot of the screen.
+enum NavigationBarStyle { docked, floating, capsule }
 
 enum LiquidGlassMode { none, standard, ultra }
 

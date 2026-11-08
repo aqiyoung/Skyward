@@ -72,6 +72,11 @@ final _toggleCases = <_ToggleCase>[
     (c) => c.read(networkSettingProvider).bypassPrivateRoute,
     initial: true,
   ),
+  _ToggleCase(
+    'local network through the proxy',
+    const LocalNetworkItem(),
+    (c) => !c.read(networkSettingProvider).bypassPrivateRoute,
+  ),
 ];
 
 void main() {
@@ -197,10 +202,25 @@ void main() {
 
     test('Android sets the routes its VPN service starts with', () {
       final types = items().map((item) => item.runtimeType);
-      expect(types, contains(BypassPrivateRouteItem));
       expect(types, contains(RouteAddressItem));
-      expect(items(), hasLength(5));
-      expect(items(isMipsStack: false), hasLength(4));
+      expect(items(), hasLength(4));
+      expect(items(isMipsStack: false), hasLength(3));
+    });
+
+    testWidgets('the private route bypass lives in the behaviour section', (
+      tester,
+    ) async {
+      await pumpItem(tester, const VpnSections());
+      final l = currentAppLocalizations;
+
+      expect(find.text(l.vpnBehavior), findsOneWidget);
+      expect(find.text(l.takeoverScope), findsOneWidget);
+      expect(find.text(l.takeoverScopeAlways), findsOneWidget);
+      expect(find.text(l.localNetwork), findsOneWidget);
+      expect(find.text(l.allowBypass), findsOneWidget);
+      expect(find.text(l.perApp), findsOneWidget);
+      expect(find.text(l.bypassPrivateRoute), findsNothing);
+      expect(find.textContaining('iOS'), findsNothing);
     });
 
     Widget desktopSection({bool isWindows = false}) =>

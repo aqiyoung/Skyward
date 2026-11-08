@@ -263,7 +263,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "addressTip": MessageLookupByLibrary.simpleMessage("올바른 WebDAV 주소를 입력하세요"),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("고급 구성"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "고급 구성에는 네트워크, DNS, 추가한 규칙, 스크립트가 포함됩니다.",
+      "고급 구성에는 DNS, 추가한 규칙, 스크립트가 포함됩니다.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("암호화된 프로필"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 비밀 키"),
@@ -276,7 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "참조된 모든 프록시 공급자",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("앱의 VPN 우회 허용"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 허용"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 접속 허용"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("허용 IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("응답"),
@@ -284,8 +284,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage("앱 접근 제어"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("앱 아이콘 디자인"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("로컬 프록시 없음"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("시스템 DNS 추가"),
     "authentication": MessageLookupByLibrary.simpleMessage("인증"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "앱이 자체 VPN을 연결해 이 VPN을 우회할 수 있습니다.",
+    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "인증을 켜면 로컬 프록시 포트에서 사용자 이름과 비밀번호를 요구합니다.",
     ),
@@ -361,6 +365,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("취소"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("모두 선택 해제"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("저장할 수 없음"),
+    "capsule": MessageLookupByLibrary.simpleMessage("캡슐"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "프록시를 전환하지 못해 이전 선택을 복원했습니다",
     ),
@@ -397,9 +402,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "closeConnections": MessageLookupByLibrary.simpleMessage("연결 종료"),
     "color": MessageLookupByLibrary.simpleMessage("색상"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("색상 스타일"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("색상"),
     "columns": MessageLookupByLibrary.simpleMessage("열"),
     "compact": MessageLookupByLibrary.simpleMessage("간결하게"),
     "compatible": MessageLookupByLibrary.simpleMessage("호환 모드"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("확인"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "모든 데이터를 지우시겠습니까?",
@@ -483,6 +490,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
     "dashboard": MessageLookupByLibrary.simpleMessage("대시보드"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("추가 가능"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("데이터베이스"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "변경 사항을 저장하지 못해 되돌렸습니다",
@@ -969,6 +977,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "지난번 시작하는 중에 앱이 예기치 않게 종료되었습니다. 이번 실행에서는 자동 설정을 건너뛰었으니 직접 시작하여 다시 시도하세요.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("레이아웃"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("유출 점검"),
     "light": MessageLookupByLibrary.simpleMessage("라이트"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("자동 줄 바꿈"),
@@ -987,11 +996,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("로드 중…"),
     "local": MessageLookupByLibrary.simpleMessage("로컬"),
     "localImage": MessageLookupByLibrary.simpleMessage("로컬 이미지"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN 프록시"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("로컬 프록시"),
     "locationPermission": MessageLookupByLibrary.simpleMessage("위치 권한"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "끄면 LAN, 루프백, 멀티캐스트 주소가 가상 인터페이스를 거치지 않습니다.",
+    ),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "위치 권한이 거부되어 현재 Wi-Fi 이름을 읽을 수 없습니다. 시스템 설정에서 위치 권한을 직접 켜 주세요.",
     ),
@@ -1021,6 +1034,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("최대화"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("상주 메모리"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("앱 및 공유"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("코어 상한"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("유휴 힙"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("사용 중인 힙"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(
@@ -1052,8 +1066,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("더 보기"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("테마 세부 설정"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("모션"),
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("하단 바"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("내비게이션 바"),
     "network": MessageLookupByLibrary.simpleMessage("네트워크"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1146,6 +1163,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("앨범에서 선택"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("창 고정"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("WebDAV를 연결하세요"),
+    "perApp": MessageLookupByLibrary.simpleMessage("앱별"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("어떤 앱이 프록시를 사용할지 정합니다."),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "스크립트 이름을 입력하세요",
     ),
@@ -1166,6 +1185,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("포트"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("사전 공유 키"),
+    "preferences": MessageLookupByLibrary.simpleMessage("환경 설정"),
     "preferred": MessageLookupByLibrary.simpleMessage("우선"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("사전 요건"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("키 조합을 누르세요"),
@@ -1598,6 +1618,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSID가 비어 있습니다"),
     "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "기본값. sing-tun 내장 경량 사용자 공간 스택이며, TCP 혼잡 제어를 지원하는 유일한 스택입니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor 사용자 공간 스택. 기능과 호환성이 가장 완전하고 메모리 사용량이 상대적으로 큽니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP는 시스템 커널 스택이 처리하고 UDP는 커널이 전달합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "혼합 스택. TCP는 시스템 커널 스택, UDP는 gVisor가 처리합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("스택 트레이스"),
     "standard": MessageLookupByLibrary.simpleMessage("표준"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -1642,20 +1674,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "testUrl": MessageLookupByLibrary.simpleMessage("테스트 URL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("사용할 때 테스트"),
     "textScale": MessageLookupByLibrary.simpleMessage("글자 크기 조절"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("적용 범위"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("항상 켜짐"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN이 연결되면 0.0.0.0/0 경로를 시스템이 처리하므로 별도 스위치가 없습니다.",
+    ),
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "앱의 글자가 이렇게 표시됩니다",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("테마"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("환경 설정"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("테마 세부 설정"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("색상"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("내비게이션 바"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("모션"),
     "textSection": MessageLookupByLibrary.simpleMessage("텍스트"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("테마"),
     "themeColor": MessageLookupByLibrary.simpleMessage("테마 색상"),
     "themeMode": MessageLookupByLibrary.simpleMessage("테마 모드"),
     "tight": MessageLookupByLibrary.simpleMessage("좁게"),
@@ -1695,6 +1723,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("유형"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP 릴레이 모드"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP 시간 제한"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "라우트 주소가 비어 있으면 모든 트래픽을 처리합니다. 제외 주소의 서브넷은 가상 인터페이스를 거치지 않습니다.",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP 시간 제한은 초 단위이며 gvisor, system, mixed 스택에서만 작동합니다.",
     ),
@@ -1730,6 +1761,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("보기"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("가상 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("선명"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN 동작"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN 관련 구성 변경이 감지되었습니다",
     ),
@@ -1744,6 +1776,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("그대로 두기"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("프록시 경유"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "「차단」에서는 반사 주소가 보이지 않는 것이 정상입니다. 실제 유출을 확인하려면 「고급 설정 → 네트워크」에서 WebRTC를 잠시 「처리하지 않음」으로 바꾼 뒤 확인하고 다시 되돌리세요.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "브라우저에서 WebRTC 확인",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("보호 모드"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "보호가 꺼져 있어 웹 페이지가 기기의 공인 주소를 읽을 수 있습니다",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "탐색이 프록시를 거칩니다. 노드가 UDP를 지원해야 합니다",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("반사 주소"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN 프로브"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "STUN 응답이 없어 차단이 작동 중입니다",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "STUN 서버가 응답했습니다",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "STUN 응답이 없어 판단할 수 없습니다",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

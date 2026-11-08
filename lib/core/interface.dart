@@ -20,6 +20,10 @@ mixin CoreInterface {
 
   Future<bool> get isInit;
 
+  /// The version the core was built with, e.g. `v1.19.33-skyward.2`. Empty
+  /// when the core cannot answer, which the User-Agent then leaves out.
+  Future<String> coreVersion();
+
   Future<bool> forceGc();
 
   Future<String> validateConfig(String path);
@@ -178,6 +182,11 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<bool> get isInit async {
     return await _invokeMethod<bool>(method: CoreMethod.getIsInit) ?? false;
+  }
+
+  @override
+  Future<String> coreVersion() async {
+    return await _invokeMethod<String>(method: CoreMethod.coreVersion) ?? '';
   }
 
   @override

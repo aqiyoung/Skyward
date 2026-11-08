@@ -427,12 +427,7 @@ class AppLocalizations {
 
   /// `Preferences`
   String get preferences {
-    return Intl.message(
-      'Preferences',
-      name: 'preferences',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Preferences', name: 'preferences', desc: '', args: []);
   }
 
   /// `More theme settings`
@@ -470,14 +465,19 @@ class AppLocalizations {
     return Intl.message('Text', name: 'textSection', desc: '', args: []);
   }
 
+  /// `Configuration`
+  String get configuration {
+    return Intl.message(
+      'Configuration',
+      name: 'configuration',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data`
   String get data {
     return Intl.message('Data', name: 'data', desc: '', args: []);
-  }
-
-  /// `Configuration`
-  String get configuration {
-    return Intl.message('Configuration', name: 'configuration', desc: '', args: []);
   }
 
   /// `Extend`
@@ -497,7 +497,12 @@ class AppLocalizations {
 
   /// `Allow LAN`
   String get allowLan {
-    return Intl.message('Allow LAN', name: 'allowLan', desc: '', args: []);
+    return Intl.message(
+      'Allow LAN',
+      name: 'allowLan',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `TUN`
@@ -3111,6 +3116,42 @@ class AppLocalizations {
     return Intl.message('Stack mode', name: 'stackMode', desc: '', args: []);
   }
 
+  String get stackMipsDesc {
+    return Intl.message(
+      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
+      name: "stackMipsDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackGvisorDesc {
+    return Intl.message(
+      "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
+      name: "stackGvisorDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackSystemDesc {
+    return Intl.message(
+      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
+      name: "stackSystemDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get stackMixedDesc {
+    return Intl.message(
+      "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
+      name: "stackMixedDesc",
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Network`
   String get network {
     return Intl.message('Network', name: 'network', desc: '', args: []);
@@ -3331,6 +3372,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Core budget`
+  String get memoryCoreBudget {
+    return Intl.message(
+      'Core budget',
+      name: 'memoryCoreBudget',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Resident memory`
   String get memoryAppResident {
     return Intl.message(
@@ -3511,10 +3562,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Advanced configuration holds network, DNS, added rules, and scripts.`
+  /// `Advanced configuration holds DNS, added rules, and scripts.`
   String get advancedConfigDesc {
     return Intl.message(
-      'Advanced configuration holds network, DNS, added rules, and scripts.',
+      'Advanced configuration holds DNS, added rules, and scripts.',
       name: 'advancedConfigDesc',
       desc: '',
       args: [],
@@ -3629,6 +3680,11 @@ class AppLocalizations {
   /// `Docked`
   String get docked {
     return Intl.message('Docked', name: 'docked', desc: '', args: []);
+  }
+
+  /// `Capsule`
+  String get capsule {
+    return Intl.message('Capsule', name: 'capsule', desc: '', args: []);
   }
 
   /// `Slide`
@@ -8761,6 +8817,212 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Leak check`
+  String get leakCheck {
+    return Intl.message('Leak check', name: 'leakCheck', desc: '', args: []);
+  }
+
+  /// `Guard mode`
+  String get webrtcLeakGuard {
+    return Intl.message(
+      'Guard mode',
+      name: 'webrtcLeakGuard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `STUN probe`
+  String get webrtcLeakStun {
+    return Intl.message(
+      'STUN probe',
+      name: 'webrtcLeakStun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reflected address`
+  String get webrtcLeakReflected {
+    return Intl.message(
+      'Reflected address',
+      name: 'webrtcLeakReflected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Guard is off, so a page can read this device's public address`
+  String get webrtcLeakGuardOffBad {
+    return Intl.message(
+      'Guard is off, so a page can read this device\'s public address',
+      name: 'webrtcLeakGuardOffBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discovery goes through the proxy; the node must carry UDP`
+  String get webrtcLeakGuardProxyBad {
+    return Intl.message(
+      'Discovery goes through the proxy; the node must carry UDP',
+      name: 'webrtcLeakGuardProxyBad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN answer came back, so the block is in force`
+  String get webrtcLeakStunBlocked {
+    return Intl.message(
+      'No STUN answer came back, so the block is in force',
+      name: 'webrtcLeakStunBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A STUN server answered`
+  String get webrtcLeakStunOpen {
+    return Intl.message(
+      'A STUN server answered',
+      name: 'webrtcLeakStunOpen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN answer came back, so the result is inconclusive`
+  String get webrtcLeakStunSilent {
+    return Intl.message(
+      'No STUN answer came back, so the result is inconclusive',
+      name: 'webrtcLeakStunSilent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No STUN host could be resolved; the network is unavailable`
+  String get webrtcLeakStunUnresolved {
+    return Intl.message(
+      'No STUN host could be resolved; the network is unavailable',
+      name: 'webrtcLeakStunUnresolved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.`
+  String get webrtcLeakAdvice {
+    return Intl.message(
+      'With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.',
+      name: 'webrtcLeakAdvice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify WebRTC in a browser`
+  String get webrtcLeakExternal {
+    return Intl.message(
+      'Verify WebRTC in a browser',
+      name: 'webrtcLeakExternal',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get allowBypassDesc {
+    return Intl.message(
+      'Apps may bring up their own VPN and leave this one.',
+      name: 'allowBypassDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get localNetwork {
+    return Intl.message(
+      'LAN proxy',
+      name: 'localNetwork',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get localNetworkDesc {
+    return Intl.message(
+      'When off, LAN, loopback and multicast addresses bypass the virtual interface.',
+      name: 'localNetworkDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get perApp {
+    return Intl.message(
+      'Per app',
+      name: 'perApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get perAppDesc {
+    return Intl.message(
+      'Choose which apps use the proxy.',
+      name: 'perAppDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScope {
+    return Intl.message(
+      'Traffic scope',
+      name: 'takeoverScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScopeAlways {
+    return Intl.message(
+      'Always on',
+      name: 'takeoverScopeAlways',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get takeoverScopeDesc {
+    return Intl.message(
+      'Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.',
+      name: 'takeoverScopeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get tunRouteDesc {
+    return Intl.message(
+      'An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.',
+      name: 'tunRouteDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  String get vpnBehavior {
+    return Intl.message(
+      'VPN behaviour',
+      name: 'vpnBehavior',
+      desc: '',
+      args: [],
+    );
+  }
+
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

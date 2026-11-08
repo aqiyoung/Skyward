@@ -26,28 +26,25 @@ class ScriptContent extends ConsumerWidget {
     final scripts = ref.watch(scriptsProvider).value ?? [];
     return SliverMainAxisGroup(
       slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
         SliverToBoxAdapter(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              InfoHeader(info: Info(label: appLocalizations.extendScript)),
+              ListHeader(title: appLocalizations.extendScript),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: generateGroup([
+                  for (final script in scripts)
+                    _ScriptOption(
+                      label: script.label,
+                      isSelected: script.id == scriptId,
+                      onSelected: () {
+                        _handleChange(ref, profileId, script.id);
+                      },
+                    ),
+                ]),
+              ),
             ],
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: generateGroup([
-              for (final script in scripts)
-                _ScriptOption(
-                  label: script.label,
-                  isSelected: script.id == scriptId,
-                  onSelected: () {
-                    _handleChange(ref, profileId, script.id);
-                  },
-                ),
-            ]),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -80,7 +77,7 @@ class _ScriptOption extends StatelessWidget {
     return DecorationListItem(
       isSelected: isSelected,
       title: Text(label),
-      trailing: isSelected ? const SelectionCheck() : null,
+      trailing: isSelected ? const SelectionBadge() : null,
       onPressed: onSelected,
     );
   }

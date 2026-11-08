@@ -1,7 +1,6 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
-import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,15 +34,20 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
       profileId: widget.profileId,
       child: CommonScaffold(
         title: appLocalizations.extend,
-        body: ScrollConfiguration(
-          behavior: const ShowBarScrollBehavior(),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
-              const _Title(),
-              const _Content(),
-              SliverToBoxAdapter(child: SizedBox(height: context.bottomInset)),
-            ],
+        body: ListRowSeparatorScope(
+          separated: false,
+          child: ScrollConfiguration(
+            behavior: const ShowBarScrollBehavior(),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
+                const _Title(),
+                const _Content(),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.bottomInset),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -67,13 +71,6 @@ class _Title extends ConsumerWidget {
     };
   }
 
-  Glyph _getIcon(ExtendType type) {
-    return switch (type) {
-      ExtendType.standard => AppGlyphs.star,
-      ExtendType.script => AppGlyphs.code,
-    };
-  }
-
   String _getDesc(BuildContext context, ExtendType type) {
     return switch (type) {
       ExtendType.standard => context.appLocalizations.standardModeDesc,
@@ -94,52 +91,48 @@ class _Title extends ConsumerWidget {
     final extendType = ref.watch(extendTypeProvider(profileId));
     return SliverToBoxAdapter(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InfoHeader(info: Info(label: appLocalizations.extendMode)),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Wrap(
-              spacing: 16,
-              children: [
-                for (final type in ExtendType.values)
-                  CommonCard(
-                    isSelected: extendType == type,
-                    fillsSelection: true,
-                    onPressed: () {
-                      _handleChangeType(ref, profileId, type);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          GlyphIcon(_getIcon(type)),
-                          const SizedBox(width: 8),
-                          Flexible(child: Text(_getTitle(context, type))),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
+          ListHeader(title: appLocalizations.extendMode),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              _getDesc(context, extendType),
-              style: AppTextStyle.footnote
-                  .of(context)
-                  .copyWith(
-                    color: context.colorScheme.onSurfaceVariant.opacity80,
-                  ),
-            ),
+            child: generateGroup([
+              for (final type in ExtendType.values)
+                _ExtendModeOption(
+                  title: _getTitle(context, type),
+                  description: _getDesc(context, type),
+                  isSelected: extendType == type,
+                  onPressed: () => _handleChangeType(ref, profileId, type),
+                ),
+            ]),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ExtendModeOption extends StatelessWidget {
+  const _ExtendModeOption({
+    required this.title,
+    required this.description,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final String title;
+  final String description;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecorationListItem(
+      isSelected: isSelected,
+      title: Text(title),
+      subtitle: Text(description),
+      trailing: isSelected ? const SelectionBadge() : null,
+      onPressed: onPressed,
     );
   }
 }

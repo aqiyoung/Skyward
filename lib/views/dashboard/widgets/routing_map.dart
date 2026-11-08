@@ -268,7 +268,7 @@ class _RouteMapState extends State<RouteMap>
     final colorScheme = context.colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final span = worldMapTopLatitude - worldMapBottomLatitude;
+        const span = worldMapTopLatitude - worldMapBottomLatitude;
         final size = Size(
           constraints.maxWidth,
           constraints.maxWidth * span / 360,

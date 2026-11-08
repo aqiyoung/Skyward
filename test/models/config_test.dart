@@ -119,6 +119,7 @@ void main() {
   group('AppSettingProps JSON round-trip', () {
     test('default values survive round-trip', () {
       const props = AppSettingProps();
+      expect(props.navigationBarStyle, NavigationBarStyle.capsule);
       final restored = roundTrip(
         () => props.toJson(),
         AppSettingProps.fromJson,
@@ -130,6 +131,7 @@ void main() {
       expect(restored.openLogs, false);
       expect(restored.closeConnections, true);
       expect(restored.tabAnimation, TabAnimation.fade);
+      expect(restored.navigationBarStyle, NavigationBarStyle.capsule);
       expect(restored.autoCheckUpdate, true);
       expect(restored.sidebarExpanded, true);
       expect(restored.minimizeOnExit, true);

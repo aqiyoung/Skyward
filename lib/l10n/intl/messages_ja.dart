@@ -264,7 +264,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "advancedConfig": MessageLookupByLibrary.simpleMessage("詳細設定"),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "詳細設定には、ネットワーク、DNS、追加ルール、スクリプトがあります。",
+      "詳細設定には、DNS、追加ルール、スクリプトがあります。",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage("暗号化されたプロファイル"),
     "ageSecretKey": MessageLookupByLibrary.simpleMessage("age 秘密鍵"),
@@ -279,7 +279,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "参照されているすべてのプロキシプロバイダー",
     ),
     "allowBypass": MessageLookupByLibrary.simpleMessage("アプリによるVPNバイパスを許可"),
-    "allowLan": MessageLookupByLibrary.simpleMessage("LANプロキシ"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("LAN 接続を許可"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("許可する IP"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("応答"),
@@ -287,8 +287,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage("アプリアクセス制御"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("アプリアイコンのデザイン"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("ローカルプロキシがありません"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage("システムDNSを追加"),
     "authentication": MessageLookupByLibrary.simpleMessage("認証"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "アプリが独自の VPN を確立して、この VPN を迂回できるようにします。",
+    ),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "認証を有効にすると、ローカルプロキシポートの利用にユーザー名とパスワードが必要になります。",
     ),
@@ -370,6 +374,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("キャンセル"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("すべて選択解除"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("保存できません"),
+    "capsule": MessageLookupByLibrary.simpleMessage("カプセル"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "プロキシの切り替えに失敗したため、前回の選択に戻しました",
     ),
@@ -408,9 +413,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "closeConnections": MessageLookupByLibrary.simpleMessage("接続を閉じる"),
     "color": MessageLookupByLibrary.simpleMessage("カラー"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("配色スタイル"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
     "columns": MessageLookupByLibrary.simpleMessage("列数"),
     "compact": MessageLookupByLibrary.simpleMessage("コンパクト"),
     "compatible": MessageLookupByLibrary.simpleMessage("互換モード"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("OK"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "すべてのデータを消去してもよろしいですか？",
@@ -496,6 +503,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("ダーク"),
     "dashboard": MessageLookupByLibrary.simpleMessage("ダッシュボード"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("追加できるカード"),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("データベース"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "変更の保存に失敗したため、元に戻しました",
@@ -984,6 +992,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "前回、アプリは起動中に予期せず終了しました。今回の自動セットアップはスキップしました。手動で起動して再試行できます。",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("レイアウト"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("リークチェック"),
     "light": MessageLookupByLibrary.simpleMessage("ライト"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("折り返し"),
@@ -1002,11 +1011,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("読み込み中…"),
     "local": MessageLookupByLibrary.simpleMessage("ローカル"),
     "localImage": MessageLookupByLibrary.simpleMessage("ローカル画像"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN プロキシ"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("ローカルプロキシ"),
     "locationPermission": MessageLookupByLibrary.simpleMessage("位置情報の権限"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "オフにすると、LAN・ループバック・マルチキャストのアドレスは仮想インターフェースを通りません。",
+    ),
     "locationPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
       "位置情報の権限が拒否されたため、現在の Wi-Fi 名を取得できません。システム設定で位置情報の権限を手動で有効にしてください。",
     ),
@@ -1036,6 +1049,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage("常駐メモリ"),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("アプリと共有"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("コアの上限"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("未使用のヒープ"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("使用中のヒープ"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(
@@ -1067,8 +1081,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("その他"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("テーマの詳細設定"),
+    "motionSection": MessageLookupByLibrary.simpleMessage("モーション"),
     "name": MessageLookupByLibrary.simpleMessage("名前"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("ボトムバー"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("ナビゲーションバー"),
     "network": MessageLookupByLibrary.simpleMessage("ネットワーク"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1165,6 +1182,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("アルバムから選択"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("最前面に固定"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("WebDAVを連携してください"),
+    "perApp": MessageLookupByLibrary.simpleMessage("アプリごと"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage("どのアプリをプロキシ経由にするか選びます。"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage(
       "スクリプト名を入力してください",
     ),
@@ -1185,6 +1204,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("ポート"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("事前共有鍵"),
+    "preferences": MessageLookupByLibrary.simpleMessage("環境設定"),
     "preferred": MessageLookupByLibrary.simpleMessage("優先"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("前提条件"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("キーの組み合わせを押してください"),
@@ -1625,6 +1645,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDが空です"),
     "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "既定値。sing-tun 内蔵の軽量ユーザースペーススタック。TCP 輻輳制御を使えるのはこのスタックだけです。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor のユーザースペーススタック。機能と互換性が最も充実しており、メモリ使用量は比較的多めです。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP はシステムのカーネルスタック、UDP はカーネル転送で処理します。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "複合スタック。TCP はシステムのカーネルスタック、UDP は gVisor で処理します。切り替え後は VPN の再起動が必要です。",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("スタックトレース"),
     "standard": MessageLookupByLibrary.simpleMessage("標準"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -1667,20 +1699,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "testUrl": MessageLookupByLibrary.simpleMessage("テストURL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("使用時にテスト"),
     "textScale": MessageLookupByLibrary.simpleMessage("テキストの拡大縮小"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("適用範囲"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("常に有効"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "VPN 接続後は 0.0.0.0/0 の経路がシステムに引き継がれるため、専用のスイッチはありません。",
+    ),
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "アプリ内の文字はこの大きさで表示されます",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("テーマ"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("環境設定"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("テーマの詳細設定"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("配色"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("ナビゲーションバー"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("モーション"),
     "textSection": MessageLookupByLibrary.simpleMessage("テキスト"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("テーマ"),
     "themeColor": MessageLookupByLibrary.simpleMessage("テーマカラー"),
     "themeMode": MessageLookupByLibrary.simpleMessage("テーマモード"),
     "tight": MessageLookupByLibrary.simpleMessage("コンパクト"),
@@ -1720,6 +1748,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("タイプ"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP リレーモード"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP タイムアウト"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "ルートアドレスが空のときは全トラフィックを引き継ぎます。除外アドレスのサブネットは仮想インターフェースを通りません。",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "UDP タイムアウトは秒単位で、gvisor・system・mixed スタックでのみ有効です。",
     ),
@@ -1755,6 +1786,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("表示"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("仮想 IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("ビビッド"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN の動作"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN関連の設定変更を検出しました",
     ),
@@ -1769,6 +1801,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("未処理"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("プロキシ経由"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "「遮断」では反射アドレスが表示されないのが正常です。実際の漏れを調べるには、「詳細設定 → ネットワーク」で WebRTC を一時的に「そのまま」にし、確認後に戻してください。",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "ブラウザーで WebRTC を確認",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("保護モード"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "保護がオフなので、ページから本体のグローバルアドレスを読めます",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "検出はプロキシ経由です。ノードが UDP に対応している必要があります",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage("反射アドレス"),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN プローブ"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "STUN 応答がないため、ブロックは機能しています",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "STUN サーバーから応答がありました",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "STUN 応答がなく、判定できません",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "STUN ホストを解決できません。ネットワークが利用できません",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("システムに書き込む"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

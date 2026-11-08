@@ -318,7 +318,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Configuration avancée",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "La configuration avancée regroupe le réseau, le DNS, les règles ajoutées et les scripts.",
+      "La configuration avancée regroupe le DNS, les règles ajoutées et les scripts.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Profil chiffré",
@@ -337,11 +337,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Autoriser les apps à contourner le VPN",
     ),
-    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser le LAN"),
+    "allowLan": MessageLookupByLibrary.simpleMessage("Autoriser l'accès LAN"),
     "allowedIps": MessageLookupByLibrary.simpleMessage("IP autorisées"),
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Réponses"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Autoriser les applications à monter leur propre VPN et à contourner celui-ci.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Contrôle d’accès des apps",
     ),
@@ -351,6 +354,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage(
       "Aucun proxy local",
     ),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Ajouter le DNS du système",
     ),
@@ -462,6 +466,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cannotSave": MessageLookupByLibrary.simpleMessage(
       "Enregistrement impossible",
     ),
+    "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Échec du changement de proxy ; la sélection précédente a été rétablie",
     ),
@@ -518,9 +523,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "color": MessageLookupByLibrary.simpleMessage("Couleur"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("Style de couleur"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Couleurs"),
     "columns": MessageLookupByLibrary.simpleMessage("Colonnes"),
     "compact": MessageLookupByLibrary.simpleMessage("Compact"),
     "compatible": MessageLookupByLibrary.simpleMessage("Mode de compatibilité"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmer"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "Voulez-vous vraiment effacer toutes les données ?",
@@ -622,6 +629,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Disponibles à l’ajout",
     ),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("Base de données"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "Échec de l’enregistrement de la modification ; elle a été annulée",
@@ -1230,6 +1238,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "L’app s’est arrêtée de façon inattendue lors de son dernier démarrage. La configuration automatique a été ignorée pour ce lancement ; vous pouvez la démarrer manuellement pour réessayer.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Disposition"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage(
+      "Vérification des fuites",
+    ),
     "light": MessageLookupByLibrary.simpleMessage("Clair"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Retour à la ligne"),
@@ -1252,10 +1263,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Chargement…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Image locale"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage(
+      "Proxy LAN",
+    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Proxys locaux"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "Désactivé, les adresses du réseau local, de bouclage et de multidiffusion ne passent pas par l'interface virtuelle.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Autorisation de localisation",
     ),
@@ -1298,6 +1315,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Mémoire résidente",
     ),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("App et partagée"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Plafond du cœur"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("Tas inactif"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("Tas utilisé"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(
@@ -1339,10 +1357,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("Plus"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage(
+      "Plus d\'options de thème",
+    ),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Animation"),
     "name": MessageLookupByLibrary.simpleMessage("Nom"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage(
       "Barre inférieure",
     ),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
     "network": MessageLookupByLibrary.simpleMessage("Réseau"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1460,6 +1483,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Coller un lien d\'abonnement depuis le presse-papiers",
     ),
     "peers": MessageLookupByLibrary.simpleMessage("Pairs"),
+    "perApp": MessageLookupByLibrary.simpleMessage("Par application"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Choisissez les applications qui utilisent le proxy.",
+    ),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage(
       "Choisir dans l’album",
     ),
@@ -1495,6 +1522,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("Ports"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("Clé prépartagée"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Préférences"),
     "preferred": MessageLookupByLibrary.simpleMessage("Préféré"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prérequis"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage(
@@ -2035,6 +2063,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Les SSID sont vides"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Mode de pile"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Par défaut. Pile userspace légère intégrée à sing-tun ; seule cette pile prend en charge le contrôle de congestion TCP. Redémarrez le VPN après le changement.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "Pile userspace gVisor : la plus complète et compatible, avec une empreinte mémoire plus élevée. Redémarrez le VPN après le changement.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP est traité par la pile noyau du système, UDP est transféré par le noyau. Redémarrez le VPN après le changement.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "Hybride : TCP via la pile noyau du système, UDP via gVisor. Redémarrez le VPN après le changement.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Trace de pile"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -2076,6 +2116,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimation": MessageLookupByLibrary.simpleMessage(
       "Animation des onglets",
     ),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Portée du trafic"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
+      "Toujours actif",
+    ),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "Une fois le VPN établi, Android achemine 0.0.0.0/0 par le tunnel ; aucun interrupteur séparé n'est nécessaire.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Appuyez sur l’icône pour réessayer",
     ),
@@ -2094,17 +2141,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "Le texte de l’app ressemblera à ceci",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("Thème"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("Préférences"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("Plus d'options de thème"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("Couleurs"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("Animation"),
     "textSection": MessageLookupByLibrary.simpleMessage("Texte"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("Thème"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Couleur du thème"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Mode du thème"),
     "tight": MessageLookupByLibrary.simpleMessage("Serrée"),
@@ -2146,6 +2184,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("Mode de relais UDP"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("Délai UDP"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "Une adresse de route vide prend en charge tout le trafic ; les sous-réseaux exclus restent hors de l'interface virtuelle.",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "Le délai UDP est en secondes et ne fonctionne qu’avec les piles gvisor, system et mixed.",
     ),
@@ -2197,6 +2238,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("Afficher"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("IPv4 virtuelle"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vif"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("Comportement du VPN"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "Modification de la configuration liée au VPN détectée",
     ),
@@ -2213,6 +2255,37 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Laisser passer"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Via le proxy"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "En mode « Bloquer », l’absence d’adresse réfléchie est normale. Pour tester une fuite réelle, passez temporairement WebRTC sur « Laisser passer » dans « Avancé → Réseau », vérifiez, puis rétablissez le réglage.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Vérifier WebRTC dans un navigateur",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage(
+      "Mode de protection",
+    ),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "Protection désactivée : une page peut lire l\'adresse publique de l\'appareil",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "La découverte passe par le proxy ; le nœud doit prendre en charge UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage(
+      "Adresse réfléchie",
+    ),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("Sonde STUN"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "Aucune réponse STUN, le blocage est actif",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "Un serveur STUN a répondu",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "Aucune réponse STUN, résultat indéterminé",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "Hôte STUN introuvable : réseau indisponible",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Mode liste blanche"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Écrire dans le système",

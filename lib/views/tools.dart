@@ -8,7 +8,6 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/about.dart';
-import 'package:skyward/views/access.dart';
 import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
@@ -19,6 +18,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
+import 'config/network.dart';
 import 'config/settings_search.dart';
 import 'developer.dart';
 
@@ -40,15 +40,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   }
 
   /// Settings, as upstream groups them: everything that changes how the app
-  /// behaves, in one card under one caption. The two footnotes stay at the
-  /// card's foot because they explain rows that sit inside it.
+  /// behaves, in one card under one caption. The footnote explains the rows
+  /// that sit inside it.
   Widget _getSettingList(bool enableDeveloperMode) {
     final appLocalizations = context.appLocalizations;
     return generateSection(
       title: appLocalizations.settings,
       items: [
         const _PreferencesItem(),
-        if (system.isAndroid) const _AccessItem(),
+        const _NetworkItem(),
         if (system.isDesktop) const _HotkeyItem(),
         const _BackupItem(),
         const _GeneralItem(),
@@ -56,10 +56,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _DiagnosticsItem(),
         if (enableDeveloperMode) const _DeveloperItem(),
       ],
-      footer: [
-        if (system.isAndroid) appLocalizations.accessControlDesc,
-        appLocalizations.advancedConfigDesc,
-      ].join('\n'),
+      footer: appLocalizations.advancedConfigDesc,
     );
   }
 
@@ -299,15 +296,20 @@ class _HotkeyItem extends StatelessWidget {
   }
 }
 
-class _AccessItem extends StatelessWidget {
-  const _AccessItem();
+class _NetworkItem extends StatelessWidget {
+  const _NetworkItem();
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
     return ListItem.open(
-      leading: const IconWell(AppGlyphs.appsList),
-      title: Text(context.appLocalizations.accessControl),
-      widget: const AccessView(),
+      leading: const IconWell(AppGlyphs.key),
+      title: Text(appLocalizations.network),
+      widget: BaseScaffold(
+        rowSeparators: false,
+        title: appLocalizations.network,
+        body: const NetworkListView(),
+      ),
     );
   }
 }

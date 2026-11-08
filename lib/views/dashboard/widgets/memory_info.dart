@@ -60,6 +60,11 @@ class MemorySnapshot {
 
 typedef MemoryReader = Future<MemorySnapshot> Function();
 
+String _formatBytes(int bytes) {
+  final traffic = bytes.traffic;
+  return '${traffic.value} ${traffic.unit}';
+}
+
 Future<MemorySnapshot?> _readMemory(WidgetRef ref, MemoryReader? reader) async {
   try {
     return reader != null ? await reader() : await _readSnapshot(ref);
@@ -402,6 +407,25 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
           label: appLocalizations.other,
           bytes: snapshot.coreOther,
           total: total,
+        ),
+      // The kernel sizes its heap from the device's RAM, so the ceiling is the
+      // number that explains every figure above it.
+      if (core.hasBudget)
+        ListItem(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            spacing: 20,
+            children: [
+              Flexible(child: Text(appLocalizations.memoryCoreBudget)),
+              Text(
+                '${_formatBytes(core.budget)} / ${_formatBytes(core.deviceTotal)}'
+                ' · GOGC ${core.gcPercent}%',
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
         ),
     ];
   }

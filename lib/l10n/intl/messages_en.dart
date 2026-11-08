@@ -302,7 +302,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Advanced configuration",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "Advanced configuration holds network, DNS, added rules, and scripts.",
+      "Advanced configuration holds DNS, added rules, and scripts.",
     ),
     "ageEncryptedProfile": MessageLookupByLibrary.simpleMessage(
       "Encrypted profile",
@@ -326,11 +326,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "alreadyInLocalProxies": m2,
     "answers": MessageLookupByLibrary.simpleMessage("Answers"),
     "app": MessageLookupByLibrary.simpleMessage("App"),
+    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
+      "Apps may bring up their own VPN and leave this one.",
+    ),
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "App access control",
     ),
     "appIconDesign": MessageLookupByLibrary.simpleMessage("App icon design"),
     "appProxiesEmpty": MessageLookupByLibrary.simpleMessage("No local proxies"),
+    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Append system DNS",
     ),
@@ -428,6 +432,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Deselect all"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("Can\'t save"),
+    "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to switch proxy; the previous selection has been restored",
     ),
@@ -478,9 +483,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "color": MessageLookupByLibrary.simpleMessage("Color"),
     "colorStyle": MessageLookupByLibrary.simpleMessage("Color style"),
+    "colorsSection": MessageLookupByLibrary.simpleMessage("Colors"),
     "columns": MessageLookupByLibrary.simpleMessage("Columns"),
     "compact": MessageLookupByLibrary.simpleMessage("Compact"),
     "compatible": MessageLookupByLibrary.simpleMessage("Compatibility mode"),
+    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to clear all data?",
@@ -578,6 +585,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Available to add",
     ),
+    "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("Database"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to save the change; it has been rolled back",
@@ -1148,6 +1156,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The app exited unexpectedly while it was starting up last time. Automatic setup was skipped for this launch; you can start it manually to retry.",
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
+    "leakCheck": MessageLookupByLibrary.simpleMessage("Leak check"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "lineIssueTip": m44,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Word wrap"),
@@ -1168,10 +1177,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "loading": MessageLookupByLibrary.simpleMessage("Loading…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
     "localImage": MessageLookupByLibrary.simpleMessage("Local image"),
+    "localNetwork": MessageLookupByLibrary.simpleMessage("LAN proxy"),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Local proxies"),
+    "localNetworkDesc": MessageLookupByLibrary.simpleMessage(
+      "When off, LAN, loopback and multicast addresses bypass the virtual interface.",
+    ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location permission",
     ),
@@ -1208,6 +1221,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Resident memory",
     ),
     "memoryAppShared": MessageLookupByLibrary.simpleMessage("App & shared"),
+    "memoryCoreBudget": MessageLookupByLibrary.simpleMessage("Core budget"),
     "memoryCoreHeapIdle": MessageLookupByLibrary.simpleMessage("Heap idle"),
     "memoryCoreHeapInuse": MessageLookupByLibrary.simpleMessage("Heap in use"),
     "memoryCoreNotRunning": MessageLookupByLibrary.simpleMessage(
@@ -1245,8 +1259,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "monthsAgo": m50,
     "monthsAgoShort": m51,
     "more": MessageLookupByLibrary.simpleMessage("More"),
+    "moreThemeSettings": MessageLookupByLibrary.simpleMessage(
+      "More theme settings",
+    ),
+    "motionSection": MessageLookupByLibrary.simpleMessage("Motion"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Bottom bar"),
+    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkAccessDeniedError": m52,
     "networkBadResponseError": m53,
@@ -1358,6 +1377,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "peers": MessageLookupByLibrary.simpleMessage("Peers"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Choose from album"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("Pin window"),
+    "perApp": MessageLookupByLibrary.simpleMessage("Per app"),
+    "perAppDesc": MessageLookupByLibrary.simpleMessage(
+      "Choose which apps use the proxy.",
+    ),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),
@@ -1383,6 +1406,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portValue": m61,
     "ports": MessageLookupByLibrary.simpleMessage("Ports"),
     "preSharedKey": MessageLookupByLibrary.simpleMessage("Pre-shared key"),
+    "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
     "preferred": MessageLookupByLibrary.simpleMessage("Preferred"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prerequisites"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage(
@@ -1883,6 +1907,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs are empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Stack trace"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -1924,6 +1960,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
+    "takeoverScope": MessageLookupByLibrary.simpleMessage("Traffic scope"),
+    "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("Always on"),
+    "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
+      "Once the VPN is up, Android routes 0.0.0.0/0 through it; there is no separate switch.",
+    ),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Tap the icon to retry",
     ),
@@ -1938,17 +1979,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "textScalePreview": MessageLookupByLibrary.simpleMessage(
       "Text in the app will look like this",
     ),
-    "theme": MessageLookupByLibrary.simpleMessage("Theme"),
-    "appearance": MessageLookupByLibrary.simpleMessage("Appearance"),
-    "preferences": MessageLookupByLibrary.simpleMessage("Preferences"),
-    "moreThemeSettings": MessageLookupByLibrary.simpleMessage("More theme settings"),
-    "colorsSection": MessageLookupByLibrary.simpleMessage("Colors"),
-    "navigationSection": MessageLookupByLibrary.simpleMessage("Navigation"),
-    "motionSection": MessageLookupByLibrary.simpleMessage("Motion"),
     "textSection": MessageLookupByLibrary.simpleMessage("Text"),
-    "configuration": MessageLookupByLibrary.simpleMessage("Configuration"),
-    "data": MessageLookupByLibrary.simpleMessage("Data"),
-
+    "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
     "tight": MessageLookupByLibrary.simpleMessage("Tight"),
@@ -1990,6 +2022,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "type": MessageLookupByLibrary.simpleMessage("Type"),
     "udpRelayMode": MessageLookupByLibrary.simpleMessage("UDP relay mode"),
     "udpTimeout": MessageLookupByLibrary.simpleMessage("UDP timeout"),
+    "tunRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "An empty route address takes over all traffic; excluded subnets stay outside the virtual interface.",
+    ),
     "udpTimeoutDesc": MessageLookupByLibrary.simpleMessage(
       "The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.",
     ),
@@ -2029,6 +2064,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "view": MessageLookupByLibrary.simpleMessage("View"),
     "virtualIpv4": MessageLookupByLibrary.simpleMessage("Virtual IPv4"),
     "vividStyle": MessageLookupByLibrary.simpleMessage("Vivid"),
+    "vpnBehavior": MessageLookupByLibrary.simpleMessage("VPN behaviour"),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN-related configuration change detected",
     ),
@@ -2045,6 +2081,35 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "webrtcGuardOff": MessageLookupByLibrary.simpleMessage("Leave alone"),
     "webrtcGuardProxy": MessageLookupByLibrary.simpleMessage("Through proxy"),
+    "webrtcLeakAdvice": MessageLookupByLibrary.simpleMessage(
+      "With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.",
+    ),
+    "webrtcLeakExternal": MessageLookupByLibrary.simpleMessage(
+      "Verify WebRTC in a browser",
+    ),
+    "webrtcLeakGuard": MessageLookupByLibrary.simpleMessage("Guard mode"),
+    "webrtcLeakGuardOffBad": MessageLookupByLibrary.simpleMessage(
+      "Guard is off, so a page can read this device\'s public address",
+    ),
+    "webrtcLeakGuardProxyBad": MessageLookupByLibrary.simpleMessage(
+      "Discovery goes through the proxy; the node must carry UDP",
+    ),
+    "webrtcLeakReflected": MessageLookupByLibrary.simpleMessage(
+      "Reflected address",
+    ),
+    "webrtcLeakStun": MessageLookupByLibrary.simpleMessage("STUN probe"),
+    "webrtcLeakStunBlocked": MessageLookupByLibrary.simpleMessage(
+      "No STUN answer came back, so the block is in force",
+    ),
+    "webrtcLeakStunOpen": MessageLookupByLibrary.simpleMessage(
+      "A STUN server answered",
+    ),
+    "webrtcLeakStunSilent": MessageLookupByLibrary.simpleMessage(
+      "No STUN answer came back, so the result is inconclusive",
+    ),
+    "webrtcLeakStunUnresolved": MessageLookupByLibrary.simpleMessage(
+      "No STUN host could be resolved; the network is unavailable",
+    ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("Write to system"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(

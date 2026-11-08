@@ -216,8 +216,19 @@ class ApplicationState extends ConsumerState<Application>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_checkSharedText());
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(_checkSharedText());
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        // Nobody is looking at those icons once the app is away, and Android
+        // picks this moment to decide whether the process is worth keeping.
+        // Dropping the decoded bitmaps costs a re-decode on the way back.
+        PaintingBinding.instance.imageCache.clear();
+      case AppLifecycleState.inactive:
+        // A notification shade or a call: the app is still on screen behind it.
+        break;
     }
   }
 
