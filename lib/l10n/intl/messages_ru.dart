@@ -1995,6 +1995,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Список SSID пуст"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Режим стека"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию. Лёгкий пользовательский стек sing-tun; только он поддерживает управление перегрузкой TCP. После смены перезапустите VPN.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "Пользовательский стек gVisor: самый полный и совместимый, с более высоким расходом памяти. После смены перезапустите VPN.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP обрабатывает системный стек ядра, UDP пересылает ядро. После смены перезапустите VPN.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "Гибрид: TCP через системный стек ядра, UDP через gVisor. После смены перезапустите VPN.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Трассировка стека"),
     "standard": MessageLookupByLibrary.simpleMessage("Стандартный"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

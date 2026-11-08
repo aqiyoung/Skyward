@@ -236,9 +236,18 @@ class TunStackItem extends ConsumerWidget {
   const TunStackItem({super.key});
 
   @override
-  Widget build(BuildContext context, ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stack = ref.watch(
+      patchClashConfigProvider.select((state) => state.tun.stack),
+    );
     return ConfigOptionsItem<TunStack>(
       title: (l) => l.stackMode,
+      subtitle: (l) => switch (stack) {
+        TunStack.mips => l.stackMipsDesc,
+        TunStack.gvisor => l.stackGvisorDesc,
+        TunStack.system => l.stackSystemDesc,
+        TunStack.mixed => l.stackMixedDesc,
+      },
       options: TunStack.values,
       textBuilder: (stack) => stack.name,
       selector: patchClashConfigProvider.select((state) => state.tun.stack),

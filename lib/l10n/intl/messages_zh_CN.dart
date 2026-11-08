@@ -1496,6 +1496,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage("分流策略不能为空"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs为空"),
     "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "默认。sing-tun 自研的轻量用户态协议栈；四档中只有它支持 TCP 拥塞控制。切换后需重启 VPN 生效。",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor 用户态协议栈，功能与兼容性最完整，内存占用相对更高。切换后需重启 VPN 生效。",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP 交给系统内核协议栈处理，UDP 由内核转发。切换后需重启 VPN 生效。",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "混合档：TCP 交给系统内核协议栈，UDP 交给 gVisor 用户态栈。切换后需重启 VPN 生效。",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("堆栈信息"),
     "standard": MessageLookupByLibrary.simpleMessage("标准"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

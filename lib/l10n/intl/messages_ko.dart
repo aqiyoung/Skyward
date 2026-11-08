@@ -1618,6 +1618,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSID가 비어 있습니다"),
     "stackMode": MessageLookupByLibrary.simpleMessage("스택 모드"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "기본값. sing-tun 내장 경량 사용자 공간 스택이며, TCP 혼잡 제어를 지원하는 유일한 스택입니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor 사용자 공간 스택. 기능과 호환성이 가장 완전하고 메모리 사용량이 상대적으로 큽니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP는 시스템 커널 스택이 처리하고 UDP는 커널이 전달합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "혼합 스택. TCP는 시스템 커널 스택, UDP는 gVisor가 처리합니다. 변경 후 VPN을 다시 시작해야 합니다.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("스택 트레이스"),
     "standard": MessageLookupByLibrary.simpleMessage("표준"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

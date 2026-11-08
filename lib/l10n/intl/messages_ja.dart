@@ -1645,6 +1645,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDが空です"),
     "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "既定値。sing-tun 内蔵の軽量ユーザースペーススタック。TCP 輻輳制御を使えるのはこのスタックだけです。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "gVisor のユーザースペーススタック。機能と互換性が最も充実しており、メモリ使用量は比較的多めです。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP はシステムのカーネルスタック、UDP はカーネル転送で処理します。切り替え後は VPN の再起動が必要です。",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "複合スタック。TCP はシステムのカーネルスタック、UDP は gVisor で処理します。切り替え後は VPN の再起動が必要です。",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("スタックトレース"),
     "standard": MessageLookupByLibrary.simpleMessage("標準"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

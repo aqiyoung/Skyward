@@ -1907,6 +1907,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs are empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Default. A lightweight userspace stack built into sing-tun; only this stack supports TCP congestion control. Restart the VPN after switching.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "The gVisor userspace stack: the most complete and compatible, with a higher memory footprint. Restart the VPN after switching.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP is handled by the system kernel stack while UDP is forwarded by the kernel. Restart the VPN after switching.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "A hybrid: TCP through the system kernel stack and UDP through gVisor. Restart the VPN after switching.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Stack trace"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(

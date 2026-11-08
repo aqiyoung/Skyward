@@ -2063,6 +2063,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("Les SSID sont vides"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Mode de pile"),
+    "stackMipsDesc": MessageLookupByLibrary.simpleMessage(
+      "Par défaut. Pile userspace légère intégrée à sing-tun ; seule cette pile prend en charge le contrôle de congestion TCP. Redémarrez le VPN après le changement.",
+    ),
+    "stackGvisorDesc": MessageLookupByLibrary.simpleMessage(
+      "Pile userspace gVisor : la plus complète et compatible, avec une empreinte mémoire plus élevée. Redémarrez le VPN après le changement.",
+    ),
+    "stackSystemDesc": MessageLookupByLibrary.simpleMessage(
+      "TCP est traité par la pile noyau du système, UDP est transféré par le noyau. Redémarrez le VPN après le changement.",
+    ),
+    "stackMixedDesc": MessageLookupByLibrary.simpleMessage(
+      "Hybride : TCP via la pile noyau du système, UDP via gVisor. Redémarrez le VPN après le changement.",
+    ),
     "stackTrace": MessageLookupByLibrary.simpleMessage("Trace de pile"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "standardModeDesc": MessageLookupByLibrary.simpleMessage(
