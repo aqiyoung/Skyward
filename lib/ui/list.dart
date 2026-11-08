@@ -128,6 +128,11 @@ class ListItem<T> extends StatelessWidget {
   final double? minTileHeight;
   final void Function()? onTap;
 
+  /// When true and [trailing] is null, a forward chevron is drawn so a
+  /// tappable row reads as "tap to open / edit" the way [ListItem.open] does.
+  /// Off by default so action rows (backup, restore, ...) keep their clean look.
+  final bool arrow;
+
   const ListItem({
     super.key,
     required this.title,
@@ -139,6 +144,7 @@ class ListItem<T> extends StatelessWidget {
     this.onTap,
     this.color,
     this.minTileHeight,
+    this.arrow = false,
     this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : _action = const _DefaultAction();
@@ -154,6 +160,7 @@ class ListItem<T> extends StatelessWidget {
     ValueChanged<dynamic>? onChanged,
     bool forceFull = true,
     this.horizontalTitleGap,
+    this.arrow = false,
     this.color,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -176,6 +183,7 @@ class ListItem<T> extends StatelessWidget {
     this.horizontalTitleGap,
     this.color,
     this.minTileHeight,
+    this.arrow = false,
     this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : _action = _NextAction(widget: widget),
@@ -193,6 +201,7 @@ class ListItem<T> extends StatelessWidget {
     required ValueChanged<T> onChanged,
     List<CommonPopupMenuItem> extraItems = const [],
     this.horizontalTitleGap,
+    this.arrow = false,
     this.color,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -225,6 +234,7 @@ class ListItem<T> extends StatelessWidget {
     this.horizontalTitleGap,
     this.color,
     this.minTileHeight,
+    this.arrow = false,
     this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
   }) : _action = _InputAction(
@@ -248,6 +258,7 @@ class ListItem<T> extends StatelessWidget {
     bool value = false,
     ValueChanged<bool?>? onChanged,
     this.horizontalTitleGap,
+    this.arrow = false,
     this.color,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -265,6 +276,7 @@ class ListItem<T> extends StatelessWidget {
     required bool value,
     ValueChanged<bool>? onChanged,
     this.horizontalTitleGap,
+    this.arrow = false,
     this.color,
     this.minTileHeight,
     this.minVerticalPadding = listRowVerticalPadding,
@@ -410,6 +422,7 @@ class ListItem<T> extends StatelessWidget {
         return _buildListTile(
           context,
           position: position,
+          trailing: arrow ? _pageTrailing : null,
           onTap: () async {
             final value = await showFloatingDialog<String>(
               context: Navigator.of(context, rootNavigator: true).context,
@@ -473,7 +486,12 @@ class ListItem<T> extends StatelessWidget {
           ),
         );
       case _DefaultAction():
-        return _buildListTile(context, position: position, onTap: onTap);
+        return _buildListTile(
+          context,
+          position: position,
+          trailing: arrow ? _pageTrailing : null,
+          onTap: onTap,
+        );
     }
   }
 }

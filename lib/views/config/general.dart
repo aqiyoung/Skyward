@@ -58,6 +58,7 @@ class TestUrlItem extends ConsumerWidget {
     return ListItem.input(
       title: Text(appLocalizations.testUrl),
       subtitle: Text(testUrl),
+      arrow: true,
       resetValue: defaultTestUrl,
       dialogTitle: appLocalizations.testUrl,
       value: testUrl,
@@ -119,6 +120,7 @@ class PortItem extends ConsumerWidget {
     return ListItem(
       title: Text(appLocalizations.port),
       subtitle: Text('$mixedPort'),
+      arrow: true,
       onTap: () {
         handleShowPortForm(context);
       },
