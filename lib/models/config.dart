@@ -366,7 +366,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(NavigationBarStyle.capsule)
+    @Default(NavigationBarStyle.floating)
     @JsonKey(readValue: _readNavigationBarStyle)
     NavigationBarStyle navigationBarStyle,
     @Default(true) bool autoCheckUpdate,
@@ -596,13 +596,13 @@ abstract class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
-    @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(ThemeMode.light) ThemeMode themeMode,
     @Default(ColorStyle.vivid)
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,
     @Default(false) bool pureBlack,
     @Default(false) bool sidebarBlur,
-    @Default(LiquidGlassMode.none)
+    @Default(LiquidGlassMode.standard)
     @JsonKey(readValue: _readLiquidGlass)
     LiquidGlassMode liquidGlass,
     @Default(1.0) double dockScale,
