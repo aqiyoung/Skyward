@@ -19,13 +19,6 @@
 
 </div>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
-    <img alt="Skyward 在 MacBook 与手机上的仪表盘" src="snapshots/preview.png" width="92%">
-  </picture>
-</p>
-
 ## 功能
 
 - **一个应用覆盖 Android、Windows、macOS 和 Linux**，桌面端同时提供 x64 与 ARM64 版本。
