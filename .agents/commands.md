@@ -182,7 +182,7 @@ also what CI runs; `tool/check_plugins.sh` does not descend into it. It must sta
 run of `plugins/setup` would execute the build hook itself.
 
 Native plugin code under `plugins/*/{linux,macos,windows}` is compiled by the CI `desktop` job, which runs
-`flutter build <platform> --debug` on every branch push, and by the release matrix on a tag; `tool/check_plugins.sh`
+`flutter build <platform> --debug` on every branch push, and by the release build in `build-channel.yaml` on a tag; `tool/check_plugins.sh`
 only analyzes and tests the Dart side.
 
 Root `flutter test` only discovers the root package's `test/` directory by default. Include bundled plugin Dart tests by passing paths explicitly, or run `flutter test` from that plugin package directory, or run `bash tool/check_plugins.sh` to analyze and test every plugin package the way CI does. Native plugin tests under platform folders are not run by `flutter test`.
@@ -331,8 +331,9 @@ proportions, and the slanted wipes, the dot-to-bar marks and the theme transitio
 inside the hero has to be listed in `wireField` in `app.js`, or the capsules run behind it.
 
 `.github/workflows/pages.yaml` deploys it after every successful stable tag build and on pushes to `main` that touch the
-site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the
-release matrix in `build.yaml`, so a renamed artifact needs the same change in `buildsFor` in `site/assets/app.js`.
+site; it stays disabled at the repository level until the site carries Skyward's own branding, and its Pages source
+has to be set to GitHub Actions once. The file names come from the release matrix in `build-channel.yaml`, so a renamed
+artifact needs the same change in `buildsFor` in `site/assets/app.js`.
 
 ## Verify
 
@@ -364,9 +365,9 @@ for `:common`, `:service` and `:app`, with the Flutter compile tasks excluded
 and the gomobile AAR built for one ABI), `rust` (both crates), and a
 Windows runner for the helper's `windows-service` feature. On branch pushes a
 `desktop` job also compiles a debug build per desktop platform; a tag skips it,
-since its release matrix compiles the same native code. Release builds run only
-in the public repository and start alongside the checks; `upload` publishes
-only once every build and every check job passes.
+since the release build in `build-channel.yaml` compiles the same native code.
+Releases live in `ci.yaml` now: it tests, builds and publishes a channel in one
+dispatch, and no job in this workflow uploads anything.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs

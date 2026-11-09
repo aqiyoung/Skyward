@@ -1,5 +1,9 @@
 name: pages
 
+# Kept disabled at the repository level until site/ carries Skyward's own
+# branding: the gates below already point at this repository, so re-enabling
+# is the only step left once the site does too.
+
 on:
   push:
     branches:
@@ -11,7 +15,7 @@ on:
       - '.github/workflows/pages.yaml'
   workflow_run:
     workflows:
-      - build
+      - checks
     types:
       - completed
   workflow_dispatch:
@@ -29,7 +33,7 @@ jobs:
   tag:
     # head_branch also names a branch push's branch, so only a tag at the built commit counts as a release.
     if: >-
-      github.repository == 'chen08209/FlClash' &&
+      github.repository == 'aqiyoung/Skyward' &&
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       startsWith(github.event.workflow_run.head_branch, 'v') &&
@@ -52,7 +56,7 @@ jobs:
   deploy:
     needs: tag
     if: >-
-      github.repository == 'chen08209/FlClash' &&
+      github.repository == 'aqiyoung/Skyward' &&
       !cancelled() &&
       (github.event_name != 'workflow_run' || needs.tag.outputs.stable == 'true')
     runs-on: ubuntu-latest

@@ -2,11 +2,11 @@ name: pr-check
 
 # Lightweight Dart validation for pull requests and feature-branch pushes.
 #
-# The release pipeline (build.yaml / ci.yaml) only runs on `main`/`beta` or by
-# manual dispatch, so feature PRs were never automatically checked. This keeps
-# that split: full release builds stay on the release channels, while every PR
-# gets a fast analyze + test gate so Dart regressions (e.g. the security fixes
-# in this repo) are caught before merge.
+# The release pipeline (ci.yaml) only runs by manual dispatch and the check
+# matrix (build.yaml) only runs on `main`/`beta`, so feature PRs were never
+# automatically checked. This keeps that split: full release builds stay on
+# the release channels, while every PR gets a fast analyze + test gate so Dart
+# regressions (e.g. the security fixes in this repo) are caught before merge.
 
 on:
   pull_request:

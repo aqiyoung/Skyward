@@ -5,9 +5,8 @@ name: build
 # two so a failing test blocks the release while a single failing platform
 # still publishes the rest.
 #
-# Two callers pass the platform set: ci.yaml asks for `all`, ci-android.yaml
-# asks for `android` only -- the phone builds stay on the fast channel while the
-# desktop ones are paused.
+# ci.yaml is the only caller: it leaves `platforms` at its default, so every
+# channel builds every platform.
 #
 # The signing keystore is injected from repository secrets; without it
 # upstream's Gradle falls back to the debug key and appends a `.dev` suffix, so

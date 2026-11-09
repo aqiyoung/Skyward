@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo="${SITE_REPOSITORY:-chen08209/FlClash}"
+repo="${SITE_REPOSITORY:-aqiyoung/Skyward}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="${1:-$root/build/site}"
 
@@ -42,6 +42,6 @@ else
   cp "$root/CHANGELOG.md" "$out/CHANGELOG.md"
 fi
 
-node "$root/tool/render_site.mjs" "$out" "${SITE_URL:-https://chen08209.github.io/FlClash}"
+node "$root/tool/render_site.mjs" "$out" "${SITE_URL:-https://aqiyoung.github.io/Skyward}"
 
 echo "site assembled in $out"
