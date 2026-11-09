@@ -271,19 +271,10 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
           AnimatedVisibility.bottomNavigation(
             visible: isMobile && style == NavigationBarStyle.docked,
             child: _NavigationPadding(
-              child: NavigationBar(
-                destinations: [
-                  for (final (index, item) in navigationItems.indexed)
-                    NavigationDestination(
-                      icon: AnimatedGlyph(
-                        glyph: item.glyph,
-                        filled: index == state.currentIndex,
-                      ),
-                      label: item.label.label,
-                    ),
-                ],
+              child: _IosTabBar(
+                items: navigationItems,
                 selectedIndex: state.currentIndex,
-                onDestinationSelected: (index) {
+                onSelected: (index) {
                   _handleToPage(navigationItems[index].label);
                 },
               ),
@@ -733,6 +724,86 @@ class HomeBackScopeContainer extends ConsumerWidget {
         return false;
       },
       child: child,
+    );
+  }
+}
+
+/// iOS-style bottom tab bar: a fixed, translucent bar with a tinted active
+/// item, used on phones in place of the Material [NavigationBar].
+class _IosTabBar extends StatelessWidget {
+  const _IosTabBar({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<NavigationItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
+    return Material(
+      color: scheme.surface.withOpacity(0.92),
+      child: SizedBox(
+        height: 50,
+        child: Row(
+          children: [
+            for (final (index, item) in items.indexed)
+              Expanded(
+                child: _IosTabItem(
+                  icon: AnimatedGlyph(
+                    glyph: item.glyph,
+                    filled: index == selectedIndex,
+                  ),
+                  label: item.label.label,
+                  selected: index == selectedIndex,
+                  onTap: () => onSelected(index),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IosTabItem extends StatelessWidget {
+  const _IosTabItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Widget icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const iosBlue = Color(0xFF0A84FF);
+    const iosGray = Color(0xFF8E8E93);
+    final color = selected ? iosBlue : iosGray;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
