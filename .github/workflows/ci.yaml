@@ -1,4 +1,4 @@
-name: build and release
+name: release
 
 # Three channels, each one a promotion of the previous by hand:
 #
@@ -9,12 +9,10 @@ name: build and release
 #   stable   a beta that held: `promote` moves beta's tree into `main`, and the
 #            stable channel tests and builds that.
 #
-# Skyward is maintained on its own: `beta` is the tip of this project and nothing
-# here follows upstream on a schedule. The `sync` input is an optional escape
-# hatch for pulling FlClash's `dev` in by hand -- off by default, because a
-# rebase conflict needs a person and an upstream rewrite must never start a
-# release by itself. `main` is never synced: it only moves on promotion, so the
-# stable channel ships code that already ran as beta.
+# Skyward is maintained independently: this workflow no longer pulls from or
+# rebases onto the upstream project (FlClash). It builds and releases only what
+# lives on our own branches. `main` only moves on promotion -- the stable channel
+# ships code that already ran as beta.
 #
 # The `ci` branch holds the automation, and a promotion refreshes the copies on
 # `main` from it -- a manual run is dispatched from `ci`, so these files take
@@ -22,20 +20,14 @@ name: build and release
 # has to sit in the branch trees: a push-triggered workflow only runs from the
 # branch that received the push, so `beta` carries the same file.
 #
-# Rebasing (rather than merging) is what would keep our patches on top if `sync`
-# is ever used: FlClash rewrites `dev` (force-pushes) often enough that a merge
-# is not an option. A sync that cannot be applied cleanly stops loudly and tells
-# Telegram instead of quietly shipping upstream alone.
-#
-# Flow: beta build -> preview build -> (later) beta release ->
+# Flow: [push beta -> preview build] -> (later) beta release ->
 # (later, promote) main = beta's tree -> stable release.
-# With `sync` on, a rebase onto upstream/dev goes first.
 
 on:
   workflow_dispatch:
     inputs:
       channel:
-        description: Which channel to build
+        description: Which channel to plan and build
         type: choice
         options:
           - preview
@@ -43,10 +35,6 @@ on:
           - stable
           - all
         default: preview
-      sync:
-        description: Optional -- rebase beta onto FlClash's upstream/dev first (off by default)
-        type: boolean
-        default: false
       promote:
         description: Promote beta into main (the stable channel) and build it -- needs channel=stable or all
         type: boolean
@@ -61,10 +49,10 @@ on:
         default: true
 
 concurrency:
-  group: build-and-release
+  group: sync-and-release
   cancel-in-progress: false
 
-# A sync force-pushes our branches and tags, and the preview / publish
+# This workflow force-pushes our branches and tags, and the preview / publish
 # workflows this one calls create releases and read back earlier runs. A called
 # workflow cannot ask for more than its caller holds, so both scopes have to be
 # granted here as well -- `contents: read` alone makes every dispatch fail at
@@ -73,13 +61,9 @@ permissions:
   contents: write
   actions: read
 
-# Only the optional `sync` job reads this: the upstream Skyward was detached from.
-env:
-  UPSTREAM_REPO: chen08209/FlClash
-
 jobs:
   sync:
-    name: Absorb upstream (optional)
+    name: Plan release
     runs-on: ubuntu-latest
     # Force-pushes branches and tags to our repository.
     permissions:
@@ -93,15 +77,11 @@ jobs:
       build_number_stable: ${{ steps.rebase.outputs.build_number_stable }}
       build_number_beta: ${{ steps.rebase.outputs.build_number_beta }}
     steps:
-      - name: Sync upstream into our branches
+      - name: Plan and promote
         id: rebase
         env:
-          # GITHUB_TOKEN is refused when a push touches .github/workflows, which
-          # an upstream sync regularly does, so the push needs a PAT carrying the
-          # `workflow` scope.
           TOKEN: ${{ secrets.MIRROR_TOKEN || github.token }}
           CHANNEL: ${{ inputs.channel || 'preview' }}
-          SYNC: ${{ inputs.sync || 'false' }}
           PROMOTE: ${{ inputs.promote || 'false' }}
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -110,7 +90,9 @@ jobs:
           auth="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git clone --quiet --filter=blob:none "$auth" work
           cd work
-          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          # Skyward is maintained independently: this workflow no longer pulls
+          # from or rebases onto the upstream project. It builds and releases
+          # only what lives on our own branches.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -138,62 +120,34 @@ jobs:
             echo "exists_stable=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # beta is the only branch that follows upstream, and only when asked:
-          # a rebase that no longer applies needs a person to sort out, so it is
-          # never on a timer. The branch is checked out either way, because the
-          # promotion and the version numbering read it.
+          # beta is checked out so the promotion and the version numbering below
+          # can read it; there is no upstream to rebase onto, so it is always
+          # ready to release.
           if ! git rev-parse --verify --quiet refs/remotes/origin/beta >/dev/null; then
-            echo "::notice::beta does not exist yet, nothing to sync"
+            echo "::notice::beta does not exist yet, nothing to build"
             echo "exists_beta=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists_beta=true" >> "$GITHUB_OUTPUT"
             git checkout --quiet -B beta refs/remotes/origin/beta
 
-            if [ "$SYNC" != true ]; then
-              echo "beta: sync not requested, building the branch as it stands"
-            else
-              # Only the branch we follow: a bare fetch pulls every feature
-              # branch upstream happens to have open.
-              git fetch --quiet --filter=blob:none upstream dev
-              upstream_tip=$(git rev-parse upstream/dev)
-              base=$(git merge-base refs/heads/beta upstream/dev)
-              echo "beta: upstream/dev tip=$upstream_tip, our base=$base"
-
-              if [ "$upstream_tip" = "$base" ]; then
-                echo "beta: upstream has not moved"
-              else
-                # Our commits are exactly what sits after the old merge base, so
-                # replaying that range on the new upstream tip carries our
-                # patches over and leaves the branch a straight line on top of
-                # upstream.
-                if git rebase --onto upstream/dev "$base" beta; then
-                  git push --quiet --force-with-lease origin beta
-                  echo "synced_beta=true" >> "$GITHUB_OUTPUT"
-                  echo "beta: rebased onto $upstream_tip and pushed"
-                else
-                  git rebase --abort
-                  echo "conflict_beta=true" >> "$GITHUB_OUTPUT"
-                  echo "::error::beta: our commits no longer apply to upstream/dev ($upstream_tip)"
-                fi
-              fi
-            fi
+            # beta builds from whatever it holds now -- there is no upstream to
+            # rebase onto, so it is always ready to release.
+            echo "synced_beta=true" >> "$GITHUB_OUTPUT"
           fi
 
           # Promotion: the stable channel ships what beta has already run, so it
           # takes beta's tree wholesale.
           #
           # A content merge -- even with `-X theirs` -- is not an option:
-          # upstream's main and dev have diverged (each carries commits the other
-          # never got, upstream cherry-picks between them), so their common
-          # ancestor is far behind and merging would union both lines. The stable
-          # channel would then ship code beta never ran. Instead the index is
-          # reset onto beta's tree, the working tree follows it, and anything
-          # beta does not have is dropped. The workflow copies are then taken
-          # from ci, their source of truth.
+          # our `main` and `beta` are independent branches that have never been
+          # merged, so their common ancestor is far behind and merging would
+          # union both lines. The stable channel would then ship code beta never
+          # ran. Instead the index is reset onto beta's tree, the working tree
+          # follows it, and anything beta does not have is dropped. The workflow
+          # copies are then taken from ci, their source of truth.
           #
-          # The commit still names beta as a second parent. Upstream force-pushes
-          # dev, so beta is rebased onto a tip main has never seen and the two
-          # branches share no ancestor; GitHub then reads every push to beta as
+          # The commit still names beta as a second parent. Because the two
+          # branches share no merge ancestry, GitHub reads every push to beta as
           # an unmerged branch and offers a pull request carrying the whole tree
           # against main. `-s ours` records the parents and leaves the tree
           # alone -- the read-tree below is what ships.
@@ -243,8 +197,9 @@ jobs:
 
           # Two numbers per release.
           #
-          # The one users see is upstream's three components plus a fourth of our
-          # own, counting the releases of the line it belongs to: a new version
+          # The one users see is our own three-component base -- taken from this
+          # repository's pubspec.yaml, not from any upstream -- plus a fourth of
+          # our own, counting the releases of the line it belongs to: a new version
           # line starts at .0, and a promoted beta takes a fresh number so that
           # beta users are offered the stable build as well. The app carries it
           # as APP_VERSION (see the build workflow), and the release tag is
@@ -266,7 +221,7 @@ jobs:
           # number of tags, because counting assumes the stamps are contiguous
           # and any tag that ever went missing would hand the same number out
           # twice; and not per version, because that restarts at 01 the moment
-          # upstream ships a new version, and on a day that already had a
+          # a new version line is cut, and on a day that already had a
           # release it would produce a lower versionCode than the one already on
           # the phone, which Android refuses to install over.
           #
@@ -276,8 +231,8 @@ jobs:
           # first page. A preview writes down the code it built against rather
           # than the ABI-shifted one its arm64 APK carries, so one reading
           # serves every channel. The revision is counted from the tags in the
-          # clone instead of the tags API, which pages at 100 names and upstream
-          # alone already has more tags than that.
+          # clone instead of the tags API, which pages at 100 names and a busy
+          # tag history can outgrow quickly.
           now=$(date -u +%s)
           origin=$(date -u -d 2026-01-01 +%s)
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
@@ -320,32 +275,6 @@ jobs:
             stamp=$(( stamp + 1 ))
           done
 
-      - name: Tell Telegram when a sync could not be applied
-        if: always() && steps.rebase.outputs.conflict_beta == 'true'
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          set -euo pipefail
-          [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] || exit 0
-          {
-            echo "⚠️ Skyward 同步中止：上游更新与我们的改动冲突"
-            echo
-            echo "冲突分支：beta（← 上游 dev）"
-            echo "没有构建、没有发布，等人工处理。"
-            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          } > /tmp/msg.txt
-          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text@/tmp/msg.txt" \
-            || echo "::warning::Telegram 推送失败"
-
-      - name: Fail when a rebase conflicted
-        if: steps.rebase.outputs.conflict_beta == 'true'
-        run: |
-          echo "::error::resolve the conflict by hand, then re-run the sync"
-          exit 1
-
       - name: Plan
         id: plan
         env:
@@ -353,7 +282,6 @@ jobs:
           FORCE: ${{ inputs.force_build || 'false' }}
           SYNCED_STABLE: ${{ steps.rebase.outputs.synced_stable }}
           SYNCED_BETA: ${{ steps.rebase.outputs.synced_beta }}
-          CONFLICT_BETA: ${{ steps.rebase.outputs.conflict_beta }}
           EXISTS_STABLE: ${{ steps.rebase.outputs.exists_stable }}
           EXISTS_BETA: ${{ steps.rebase.outputs.exists_beta }}
         run: |
@@ -369,8 +297,8 @@ jobs:
           # A channel only gets built if it exists: `force_build` means "build
           # even when nothing moved", not "build the ones we have not created
           # yet". What "nothing moved" means depends on the channel -- a
-          # promotion for stable, an upstream sync for beta -- but a preview is
-          # built from whatever `beta` holds right now, so asking for one is
+          # promotion for stable, a prior beta release for beta -- but a preview
+          # is built from whatever `beta` holds right now, so asking for one is
           # enough.
           decided() { # $1 = wanted, $2 = synced, $3 = exists
             [ "$1" = true ] && [ "$3" = true ] &&
@@ -385,11 +313,11 @@ jobs:
           echo "build_beta=$(decided "$want_beta" "$SYNCED_BETA" "$EXISTS_BETA")" >> "$GITHUB_OUTPUT"
           echo "plan: preview=$want_preview exists=$EXISTS_BETA"
           echo "plan: stable=$want_stable exists=$EXISTS_STABLE synced=$SYNCED_STABLE"
-          echo "plan: beta=$want_beta exists=$EXISTS_BETA synced=$SYNCED_BETA conflict=$CONFLICT_BETA force=$FORCE"
+          echo "plan: beta=$want_beta exists=$EXISTS_BETA synced=$SYNCED_BETA force=$FORCE"
 
   # The preview channel builds and publishes itself, in the same workflow that
-  # every push to beta runs; here it is called explicitly so a run can sync
-  # upstream and put the result on a phone in one dispatch.
+  # every push to beta runs; here it is called explicitly so a single run can
+  # plan a release and put the result on a phone in one dispatch.
   preview:
     name: Preview
     needs: sync

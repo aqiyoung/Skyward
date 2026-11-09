@@ -30,11 +30,11 @@ APK 签名证书（SHA-256）：`04:89:68:C1:72:8E:0E:2E:27:E7:04:D6:B3:01:74:27
 | `beta` | 项目的开发主线；预览版和测试版都构建它 |
 | `ci` | 只有自动化：`.github/workflows/` + 本文件 |
 
-Skyward 自 2026 年 11 月起独立维护，`beta` 就是本项目的开发主线，不再跟踪上游。CI 里仍留着一个默认关闭的 `sync` 开关：需要吸收 FlClash 的改动时，手动把我们的提交 **rebase** 到上游 `dev` 上——那是一条可选的退路，不是日常流程。
+Skyward 自 2026 年 11 月起独立维护，`beta` 就是本项目的开发主线。工作流里**没有同步上游的步骤**——原来的 `sync` 输入和 `UPSTREAM_REPO` 已经删掉，版本号也只取本仓库 `pubspec.yaml` 的前三段。
 
 `main` 同样**自成一路**：正式版发的是"在 beta 上跑过、被判定稳定"的那份代码。晋升（`promote` 输入）时**直接把 `main` 的树换成 beta 的树**（`git read-tree -u --reset beta`）：merge 或 `-X theirs` 都会把两条线并起来，那样正式版就会带上 beta 没跑过的代码。换完再把工作流副本从 `ci` 取回来，并检查 `main` 与 `beta` 的差异只剩工作流，否则中止。
 
-用 `sync` 时为什么必须 rebase：FlClash 会改写 `dev` 的历史（force-push），merge 无从谈起。rebase 的代价是遇到冲突要人处理，所以**冲突就停下**——同步任务会中止、推 TG 告警、并且**不构建**，不会静默地用上游代码盖掉我们的改动。`sync` **只手动触发**，没有定时任务：冲突需要人看。
+如果以后要吸收 FlClash 的改动，只能**手动**做：本地把 `beta` rebase 到上游 `dev` 再强推。用 rebase 而不是 merge，是因为 FlClash 会改写 `dev` 的历史（force-push），merge 无从谈起；代价是遇到冲突要人处理，而这一步现在**完全在工作流之外**，CI 不会替你做、也不会告警，所以推完必须自己确认代码没被上游盖掉。
 
 ### 我们自己的提交
 
@@ -87,7 +87,7 @@ App 内更新检查读的是 `/releases/latest`（只挑正式版），所以预
   └─ release  tag preview-<构建号> → prerelease → 推 TG（保留最近 5 个）
 
 测试版（手动 channel=beta -f force_build=true）
-  └─ [sync]   （可选）beta ← 上游 dev：只有 -f sync=true 才做
+  └─ [plan]   读本仓库版本号，决定这次构建/晋升哪个通道
   └─ test     跑完整 flutter 测试
   └─ build    矩阵 7 个平台
   └─ release  tag v<版本> → prerelease → 推 TG
@@ -150,9 +150,9 @@ gh workflow run ci.yaml -R aqiyoung/Skyward --ref ci -f channel=all -f force_bui
 
 `preview.yaml` 是例外，它**同时**存在于 `ci` 和 `beta` 树上（按 push 触发的工作流只能跑在收到 push 的那个分支上），两份要**逐字节相同**：改的时候先改 `ci`，再把同一份提交到 `beta`。
 
-## 万一用到 sync、报冲突时
+## 手动 rebase 到上游之后
 
-同步任务发现我们的提交重放不上上游代码时，会**中止、不构建、不发布**，并往 TG 推一条告警。处理办法：
+工作流不再做同步，冲突也不会再由 CI 报出来。如果哪次手动把 `beta` rebase 到上游 `dev` 之后要发版，按这个来：
 
 1. 先判断冲突的那部分改动**上游是不是已经自己做了**。上游一旦自己实现，我们的补丁就该整条丢掉（0.9.1 的 l10n 回移就是这么处理的）——留着只会让之后每次同步都再冲突一遍。
 2. 把分支重建为「上游最新 + 我们剩下的提交」。本地 clone 上游历史很大、经常超时；可行的做法是用 GitHub API 拼树（`git/blobs` → `git/trees`（带 `base_tree`）→ `git/commits` → `PATCH git/refs/heads/<branch>`），或者先在上游那个 commit 上开一个临时 ref、fetch 回来再用真 git 操作。
@@ -188,7 +188,7 @@ gh workflow run ci.yaml -R aqiyoung/Skyward --ref ci \
 
 ## 关于 MIRROR_TOKEN
 
-推送分支时如果提交里包含 `.github/workflows/` 下的文件，GitHub 会拒绝 `GITHUB_TOKEN`（它拿不到 `workflows` 权限）。用了 `sync` 时，rebase 过来的上游提交里就有这些文件，所以那种推送必须用一个带 `workflow` scope 的 PAT。
+推送分支时如果提交里包含 `.github/workflows/` 下的文件，GitHub 会拒绝 `GITHUB_TOKEN`（它拿不到 `workflows` 权限）。工作流自己推送的提交里就带着这些文件，所以推送必须用一个带 `workflow` scope 的 PAT。
 
 > ⚠️ 目前填的是账号的 **classic PAT**，权限很宽（含 `delete_repo`、`admin:org` 等）。建议换成**只对这个仓库生效的 fine-grained PAT**：
 > - Repository access：仅 `aqiyoung/Skyward`
