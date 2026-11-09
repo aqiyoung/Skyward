@@ -1,4 +1,4 @@
-> **说明** — Skyward 最初基于 [chen08209](https://github.com/chen08209) 的 FlClash 修改而来，现作为独立项目维护。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名改动与和上游的关系见 [FORK.md](FORK.md)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
+> **说明** — Skyward 最初基于 [chen08209](https://github.com/chen08209) 的 FlClash 修改而来，现作为独立项目维护。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名改动以及它与 FlClash 的关系见 [FORK.md](FORK.md)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
 
 <div align="center">
 
@@ -54,7 +54,7 @@
   <a href="https://github.com/aqiyoung/Skyward/releases/latest"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" height="56"></a>
 </p>
 
-这些包由本仓库编译，用的是本仓库自己的签名证书。上游项目（官网、F-Droid 仓库、Homebrew tap）的包是另一套签名，
+这些包由本仓库编译，用的是本仓库自己的签名证书。FlClash 官方发布的包（官网、F-Droid 仓库、Homebrew tap）是另一套签名，
 两边混装需要先卸载一次 —— 详见 [FORK.md](https://github.com/aqiyoung/Skyward/blob/main/FORK.md)。
 
 **Linux 托盘图标**
@@ -68,7 +68,7 @@ sudo dnf install libayatana-appindicator-gtk3     # Fedora
 
 **无人值守的桌面环境**
 
-FlClash 要在免责声明被接受后才会启动核心。在容器等无人点击的环境里，可在应用的环境变量中设置
+Skyward 要在免责声明被接受后才会启动核心。在容器等无人点击的环境里，可在应用的环境变量中设置
 `FLCLASH_ACCEPT_DISCLAIMER=1`，首次启动时即视为接受。
 
 ## 使用
@@ -100,7 +100,7 @@ adb shell am start -a com.threely.skyward.action.TOGGLE
 
 ```bash
 git clone --recursive https://github.com/aqiyoung/Skyward.git
-cd FlClash
+cd Skyward
 flutter pub get
 dart setup.dart android   # 或 windows、macos、linux
 ```
