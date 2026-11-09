@@ -7,6 +7,7 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/config/dns.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/profiles/custom/custom.dart';
 import 'package:skyward/views/profiles/extend/extend.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -137,6 +138,14 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
 
   @override
   Widget build(BuildContext context) {
+    // Read the real status-bar inset and the view form above the scaffold:
+    // inside the body, extendBodyBehindAppBar changes what MediaQuery's top
+    // padding means. Pickers and compact sheets keep the ordinary bar layout.
+    final largeTitle =
+        ViewScope.isMobileOf(context) &&
+        !context.isInCompactSheet &&
+        !widget.picker;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
     return Consumer(
       builder: (_, ref, _) {
         final appLocalizations = context.appLocalizations;
@@ -144,38 +153,50 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
         final state = ref.watch(profilesStateProvider);
         final spacing = cardSpacingOf(context, ref.watch(viewModeProvider));
         final picker = widget.picker;
+        final primaryAction = state.profiles.isEmpty || picker
+            ? null
+            : IconButtonData(
+                glyph: AppGlyphs.addCircle,
+                onPressed: () => showAddProfilePage(context),
+                tooltip: appLocalizations.addProfile,
+              );
+        final iconActions =
+            picker ? <IconButtonData>[] : _buildActions(state.profiles);
+        final body = NullStatusSwitcher(
+          isEmpty: state.profiles.isEmpty,
+          nullStatus: NullStatus(
+            label: appLocalizations.nullTip(appLocalizations.profiles),
+            description: appLocalizations.nullProfileDesc,
+            illustration: NullStatusIllustration.profile,
+            action: TonalButton(
+              size: TonalButtonSize.bar,
+              glyph: AppGlyphs.addCircle,
+              label: appLocalizations.addProfile,
+              onPressed: () => showAddProfilePage(context),
+            ),
+          ),
+          child: _ProfilesGrid(
+            profiles: state.profiles,
+            currentProfileId: state.currentProfileId,
+            spacing: spacing,
+            revealsSelected: !picker,
+          ),
+        );
         return CommonScaffold(
           isLoading: isLoading,
           title: appLocalizations.profiles,
-          primaryAction: state.profiles.isEmpty || picker
-              ? null
-              : IconButtonData(
-                  glyph: AppGlyphs.addCircle,
-                  onPressed: () => showAddProfilePage(context),
-                  tooltip: appLocalizations.addProfile,
-                ),
-          iconActions: picker ? const [] : _buildActions(state.profiles),
-          foldPrimaryAction: true,
-          body: NullStatusSwitcher(
-            isEmpty: state.profiles.isEmpty,
-            nullStatus: NullStatus(
-              label: appLocalizations.nullTip(appLocalizations.profiles),
-              description: appLocalizations.nullProfileDesc,
-              illustration: NullStatusIllustration.profile,
-              action: TonalButton(
-                size: TonalButtonSize.bar,
-                glyph: AppGlyphs.addCircle,
-                label: appLocalizations.addProfile,
-                onPressed: () => showAddProfilePage(context),
-              ),
-            ),
-            child: _ProfilesGrid(
-              profiles: state.profiles,
-              currentProfileId: state.currentProfileId,
-              spacing: spacing,
-              revealsSelected: !picker,
-            ),
-          ),
+          primaryAction: largeTitle ? null : primaryAction,
+          iconActions: largeTitle ? const [] : iconActions,
+          foldPrimaryAction: !largeTitle,
+          largeTitle: largeTitle,
+          body: largeTitle
+              ? PageLargeTitle(
+                  title: appLocalizations.profiles,
+                  statusBarTop: statusBarTop,
+                  actions: [?primaryAction, ...iconActions],
+                  body: body,
+                )
+              : body,
         );
       },
     );

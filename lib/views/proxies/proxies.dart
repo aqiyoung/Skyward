@@ -3,6 +3,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -156,28 +157,51 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     final picker = widget.picker;
     final primaryAction = _buildPrimaryAction();
+    final menuItems =
+        picker ? <CommonPopupMenuItem>[] : _buildMenuItems(context, style);
+    final iconActions = <IconButtonData>[
+      if (_isTab && !picker)
+        IconButtonData(
+          glyph: AppGlyphs.locate,
+          onPressed: () {
+            _proxiesTabKey.currentState?.scrollToGroupSelected();
+          },
+          tooltip: context.appLocalizations.scrollToSelected,
+        ),
+    ];
+    // On a phone the heading, its buttons and the search field all move into
+    // the page and the bar is left completely empty, matching the dashboard
+    // and the global-search tab. Pickers and compact sheets keep the ordinary
+    // bar so a sheet's own chrome is not duplicated over a page heading.
+    final largeTitle =
+        ViewScope.isMobileOf(context) && !context.isInCompactSheet && !picker;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final body = switch (style.type) {
+      ProxiesType.tab => _tabView,
+      ProxiesType.list => const ProxiesListView(),
+    };
     return CommonScaffold(
       isLoading: isLoading,
       resizeToAvoidBottomInset: false,
-      primaryAction: primaryAction,
-      searchActions: [?primaryAction],
-      iconActions: [
-        if (_isTab && !picker)
-          IconButtonData(
-            glyph: AppGlyphs.locate,
-            onPressed: () {
-              _proxiesTabKey.currentState?.scrollToGroupSelected();
-            },
-            tooltip: context.appLocalizations.scrollToSelected,
-          ),
-      ],
-      menuItems: picker ? const [] : _buildMenuItems(context, style),
+      primaryAction: largeTitle ? null : primaryAction,
+      searchActions: largeTitle ? const [] : [?primaryAction],
+      iconActions: largeTitle ? const [] : iconActions,
+      menuItems: largeTitle ? const [] : menuItems,
       title: context.appLocalizations.proxies,
-      searchState: AppBarSearchState(onSearch: _onSearch),
-      body: switch (style.type) {
-        ProxiesType.tab => _tabView,
-        ProxiesType.list => const ProxiesListView(),
-      },
+      searchState:
+          largeTitle ? null : AppBarSearchState(onSearch: _onSearch),
+      largeTitle: largeTitle,
+      body: largeTitle
+          ? PageLargeTitle(
+              title: context.appLocalizations.proxies,
+              statusBarTop: statusBarTop,
+              actions: [?primaryAction, ...iconActions],
+              menuItems: menuItems,
+              searchHint: context.appLocalizations.search,
+              onSearch: _onSearch,
+              body: body,
+            )
+          : body,
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/hotkey.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,22 +103,35 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getSettingList(developerMode),
       _getAboutList(),
     ];
+    // On a phone the heading moves into the page and the bar is left empty.
+    // Desktop and compact sheets keep the ordinary bar title and layout.
+    final largeTitle =
+        ViewScope.isMobileOf(context) && !context.isInCompactSheet;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final body = Builder(
+      builder: (context) => ListView.builder(
+        key: toolsStoreKey,
+        itemCount: items.length,
+        itemBuilder: (_, index) => items[index],
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: context.cardTopPadding,
+          bottom: 20 + context.bottomInset,
+        ),
+      ),
+    );
     return CommonScaffold(
       rowSeparators: false,
       title: widget.label.label,
-      body: Builder(
-        builder: (context) => ListView.builder(
-          key: toolsStoreKey,
-          itemCount: items.length,
-          itemBuilder: (_, index) => items[index],
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: context.cardTopPadding,
-            bottom: 20 + context.bottomInset,
-          ),
-        ),
-      ),
+      largeTitle: largeTitle,
+      body: largeTitle
+          ? PageLargeTitle(
+              title: widget.label.label,
+              statusBarTop: statusBarTop,
+              body: body,
+            )
+          : body,
     );
   }
 }

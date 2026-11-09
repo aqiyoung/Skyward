@@ -9,6 +9,7 @@ export 'disclaimer.dart';
 export 'dns_queries.dart';
 export 'global_search.dart';
 export 'logs.dart';
+export 'page_large_title.dart';
 export 'profiles/profiles.dart';
 export 'proxies/proxies.dart';
 export 'resources.dart';
