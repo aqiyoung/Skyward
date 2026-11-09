@@ -1,4 +1,4 @@
-> **Fork 说明** — 这是 [aqiyoung](https://github.com/aqiyoung) 的 FlClash 分支，在这里以 **Skyward** 的名字发布。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名改动和全部补丁见 [FORK.md](FORK.md)。上游项目是 [chen08209/FlClash](https://github.com/chen08209/FlClash)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
+> **说明** — Skyward 最初基于 [chen08209](https://github.com/chen08209) 的 FlClash 修改而来，现作为独立项目维护。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名改动与和上游的关系见 [FORK.md](FORK.md)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
 
 <div align="center">
 

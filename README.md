@@ -1,4 +1,4 @@
-> **Fork notice** — this is [aqiyoung](https://github.com/aqiyoung)'s fork of FlClash, released here as **Skyward** (Skyward). Builds are published in [this repository's releases](../../releases/latest); see [FORK.md](FORK.md) for the version scheme, the signing change and the full list of patches. The upstream project is [chen08209/FlClash](https://github.com/chen08209/FlClash). This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
+> **Note** — Skyward began as a fork of [FlClash](https://github.com/chen08209/FlClash) by chen08209 and is now maintained independently. Builds are published in [this repository's releases](../../releases/latest); see [FORK.md](FORK.md) for the version scheme, the signing change and the relationship with upstream. This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
 
 <div align="center">
 
