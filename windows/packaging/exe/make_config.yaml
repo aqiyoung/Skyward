@@ -3,7 +3,7 @@ script_template: inno_setup.iss
 # directory and Start menu group, so an upgrade still landed in FlClash.
 app_id: 2DA60D9A-1F82-4E9D-AE25-D9FF599B50B2
 app_name: Skyward
-publisher: chen08209
+publisher: aqiyoung
 publisher_url: https://github.com/aqiyoung/Skyward
 display_name: Skyward
 executable_name: Skyward.exe
