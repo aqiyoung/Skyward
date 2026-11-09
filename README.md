@@ -1,4 +1,4 @@
-> **Fork notice** — this is [aqiyoung](https://github.com/aqiyoung)'s fork of FlClash, released here as **Skyward** (Skyward). Builds are published in [this repository's releases](../../releases/latest); see [FORK.md](FORK.md) for the version scheme, the signing change and the full list of patches. The upstream project is [chen08209/FlClash](https://github.com/chen08209/FlClash). This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
+> **Note** — Skyward began as a fork of [FlClash](https://github.com/chen08209/FlClash) by chen08209 and is now maintained independently. Builds are published in [this repository's releases](../../releases/latest); see [FORK.md](FORK.md) for the version scheme, the signing change and how Skyward relates to FlClash. This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
 
 <div align="center">
 
@@ -18,13 +18,6 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 [Releases](https://github.com/aqiyoung/Skyward/releases/latest) · [Download](#download) · [Changelog](CHANGELOG.md) · [Build from source](#build-from-source)
 
 </div>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
-    <img alt="Skyward dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
-  </picture>
-</p>
 
 ## Features
 
@@ -65,8 +58,8 @@ Get the latest build from [this repository's Releases](https://github.com/aqiyou
   <a href="https://github.com/aqiyoung/Skyward/releases/latest"><img alt="Get it on GitHub" src="snapshots/get-it-on-github.svg" height="56"></a>
 </p>
 
-These builds are compiled from this repository and signed with its own certificate. Builds from the upstream
-project (its website, F-Droid repository or Homebrew tap) carry a different signature, so switching between the
+These builds are compiled from this repository and signed with its own certificate. Builds published by FlClash
+itself (its website, F-Droid repository or Homebrew tap) carry a different signature, so switching between the
 two means uninstalling once — see [FORK.md](https://github.com/aqiyoung/Skyward/blob/main/FORK.md).
 
 **Linux tray icon**
@@ -81,7 +74,7 @@ sudo dnf install libayatana-appindicator-gtk3     # Fedora
 
 **Unattended desktop**
 
-FlClash starts the core only after the disclaimer is accepted. Where nobody can click it, such as a container, set
+Skyward starts the core only after the disclaimer is accepted. Where nobody can click it, such as a container, set
 `FLCLASH_ACCEPT_DISCLAIMER=1` in the app's environment to accept it on first launch.
 
 ## Usage
@@ -116,7 +109,7 @@ host, except Android, which builds anywhere.
 
 ```bash
 git clone --recursive https://github.com/aqiyoung/Skyward.git
-cd FlClash
+cd Skyward
 flutter pub get
 dart setup.dart android   # or windows, macos, linux
 ```
