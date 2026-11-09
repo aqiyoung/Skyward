@@ -245,10 +245,12 @@ class _BackupAndRestoreState extends ConsumerState<BackupAndRestore> {
             headerPadding: context.sectionHeaderPadding,
             items: [
               ListItem(
+                leading: const IconWell(AppGlyphs.export),
                 onTap: _backupOnLocal,
                 title: Text(appLocalizations.backup),
               ),
               ListItem(
+                leading: const IconWell(AppGlyphs.importFile),
                 onTap: _restoreOnLocal,
                 title: Text(appLocalizations.restore),
               ),
