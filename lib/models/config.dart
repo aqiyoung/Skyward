@@ -366,7 +366,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
-    @Default(NavigationBarStyle.floating)
+    @Default(NavigationBarStyle.capsule)
     @JsonKey(readValue: _readNavigationBarStyle)
     NavigationBarStyle navigationBarStyle,
     @Default(true) bool autoCheckUpdate,
@@ -602,7 +602,7 @@ abstract class ThemeProps with _$ThemeProps {
     ColorStyle colorStyle,
     @Default(false) bool pureBlack,
     @Default(false) bool sidebarBlur,
-    @Default(LiquidGlassMode.standard)
+    @Default(LiquidGlassMode.none)
     @JsonKey(readValue: _readLiquidGlass)
     LiquidGlassMode liquidGlass,
     @Default(1.0) double dockScale,
