@@ -15,6 +15,7 @@ import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
+import 'widgets/card.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
@@ -89,14 +90,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
-      iconActions: [
-        if (editable && !editing)
-          IconButtonData(
-            glyph: AppGlyphs.edit,
-            tooltip: appLocalizations.editDashboard,
-            onPressed: () => _setEditing(true),
-          ),
-      ],
+      // The edit affordance now lives at the foot of the card list, not in the
+      // floating bar: with the bar's title hidden at rest (large title), a lone
+      // pencil up there left the whole top strip looking empty. The gear tile
+      // at the bottom is where the reader goes to rearrange the cards.
       // The providers learn a resize a frame late, too late for the cards.
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -115,7 +112,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     platform: platform,
                     gap: gap,
                     editing: editing,
+                    largeTitle: editable && !editing,
                     cardKeyOf: _cardKeyOf,
+                    onEdit: () => _setEditing(true),
                     onDone: () => _setEditing(false),
                   ),
           );
@@ -322,14 +321,18 @@ class _MobileDashboard extends ConsumerWidget {
     required this.platform,
     required this.gap,
     required this.editing,
+    required this.largeTitle,
     required this.cardKeyOf,
+    required this.onEdit,
     required this.onDone,
   });
 
   final SupportPlatform platform;
   final double gap;
   final bool editing;
+  final bool largeTitle;
   final GlobalKey Function(DashboardWidget widget) cardKeyOf;
+  final VoidCallback onEdit;
   final VoidCallback onDone;
 
   @override
@@ -337,7 +340,13 @@ class _MobileDashboard extends ConsumerWidget {
     final saved = ref.watch(
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    final top = MediaQuery.paddingOf(context).top + 4;
+    // A large-title home has no bar surface at rest, so it needs only the
+    // status bar's clearance -- not the whole toolbar height the floating bar
+    // would otherwise push the title down by. Editing keeps the ordinary bar
+    // and its full inset.
+    final top = largeTitle
+        ? MediaQuery.viewPaddingOf(context).top + 8
+        : MediaQuery.paddingOf(context).top + 4;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
       // A viewport per card lays them all out and holds the scroll end still.
@@ -379,6 +388,10 @@ class _MobileDashboard extends ConsumerWidget {
                         key: cardKeyOf(widget),
                         child: widget.card,
                       ),
+                    // Rearranging the cards is a quiet action at the foot of
+                    // the board, not a pencil floating in the empty top strip.
+                    // A gear marks it as a settings-style edit of the board.
+                    _EditDashboardTile(onTap: onEdit),
                   ],
                 ),
               ),
@@ -386,6 +399,38 @@ class _MobileDashboard extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// The quiet gear row at the foot of the board. It replaces the pencil that
+/// used to float alone in the bar; tapping it opens the card editor. Kept as a
+/// normal card so it reads as part of the board, not a floating control.
+class _EditDashboardTile extends StatelessWidget {
+  const _EditDashboardTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return DashboardCard(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      onTap: onTap,
+      semanticLabel: appLocalizations.editDashboard,
+      child: ListItem(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: const IconWell(
+          AppGlyphs.settings,
+          side: 36,
+          glyphSize: 20,
+          shape: AppShape.md,
+        ),
+        title: Text(appLocalizations.editDashboard),
+        // The card carries the tap; the row only shows the forward chevron so
+        // one press does not drive two ink wells.
+        arrow: true,
+      ),
     );
   }
 }

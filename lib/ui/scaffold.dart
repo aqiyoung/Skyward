@@ -53,6 +53,11 @@ const _titleAsideDuration = Duration(milliseconds: 200);
 /// dashboard's large title block (title + status line + padding).
 const double largeTitleScrollExtent = 72.0;
 
+/// Fraction of the large-title collapse at which the bar surface reaches full
+/// opacity. Earlier than the compact title appears, so cards scrolling under
+/// the bar are never readable through it.
+const double _largeTitleSurfaceFullAt = 0.55;
+
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
@@ -821,11 +826,25 @@ class CommonScaffoldState extends State<CommonScaffold>
   }
 
   Widget _buildFloatingHeader(Widget appBar) {
+    final backgroundColor =
+        widget.backgroundColor ??
+        SurfaceLevel.page.colorOf(context.colorScheme);
+    if (widget.largeTitle) {
+      // An iOS Large Title page has no bar surface while its large title is
+      // on screen; one fades in only as that title scrolls away. A static
+      // translucent scrim would both sit over the large title and let cards
+      // show through the bar later. Driving it by the same scroll progress as
+      // the compact title keeps the two in step. Off by default: every other
+      // page keeps the original [FloatingHeader] gradient untouched.
+      return _LargeTitleHeader(
+        backgroundColor: backgroundColor,
+        progress: _largeTitleProgress,
+        child: appBar,
+      );
+    }
     final top = MediaQuery.paddingOf(context).top;
     return FloatingHeader(
-      backgroundColor:
-          widget.backgroundColor ??
-          SurfaceLevel.page.colorOf(context.colorScheme),
+      backgroundColor: backgroundColor,
       fadeStart: top / (top + pageToolbarHeight),
       overhang: _headerOverhang,
       child: appBar,
@@ -1895,14 +1914,18 @@ class _TitleAside extends StatelessWidget {
   }
 }
 
-/// The compact bar title of an opt-in iOS Large Title page. It starts fully
-/// transparent and fades in by [progress] -- how far the body's large title has
-/// scrolled under the bar -- so the two titles trade places instead of both
-/// showing at once. A hidden title stays out of reach, as a menu title carries
-/// a tap. This is the counterpart of [_TitleAside], used only when
-/// [CommonScaffold.largeTitle] is on.
+/// The compact bar title of an opt-in iOS Large Title page. It holds back
+/// until the body's large title has nearly scrolled away, then fades in over
+/// [progress]'s last stretch -- fading from the very first pixel is what put
+/// two copies of the title on screen at once. A hidden title stays out of
+/// reach, as a menu title carries a tap. This is the counterpart of
+/// [_TitleAside], used only when [CommonScaffold.largeTitle] is on.
 class _CompactTitleFade extends StatelessWidget {
   const _CompactTitleFade({required this.progress, required this.child});
+
+  /// Collapse fraction at which the compact title begins to appear. The large
+  /// title is gone by then, so the two never share the top of the screen.
+  static const _revealFrom = 0.6;
 
   final ValueListenable<double> progress;
   final Widget child;
@@ -1911,10 +1934,73 @@ class _CompactTitleFade extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<double>(
       valueListenable: progress,
-      builder: (context, value, _) => IgnorePointer(
-        ignoring: value < 1,
-        child: Opacity(opacity: value, child: child),
-      ),
+      builder: (context, value, _) {
+        final opacity = ((value - _revealFrom) / (1 - _revealFrom))
+            .clamp(0.0, 1.0);
+        return IgnorePointer(
+          ignoring: opacity < 1,
+          child: Opacity(opacity: opacity, child: child),
+        );
+      },
+    );
+  }
+}
+
+/// The bar surface of an opt-in iOS Large Title page. The shared
+/// [FloatingHeader] is a static translucent gradient: at rest it lays a grey
+/// strip over the empty area above the large title, and once content scrolls
+/// under it, cards read straight through. This one starts fully transparent --
+/// so the large title can sit close under the status bar with no empty strip
+/// above it -- and fades to an opaque surface by the time the title has gone,
+/// keeping the bar legible and the content behind it hidden.
+class _LargeTitleHeader extends StatelessWidget {
+  const _LargeTitleHeader({
+    required this.backgroundColor,
+    required this.progress,
+    required this.child,
+  });
+
+  final Color backgroundColor;
+  final ValueListenable<double> progress;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: progress,
+      builder: (context, value, _) {
+        final surface = (value / _largeTitleSurfaceFullAt).clamp(0.0, 1.0);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: -_headerOverhang,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      // Solid over the bar itself; only the foot eases out so
+                      // the edge does not cut across the content below.
+                      stops: const [0.0, 0.88, 1.0],
+                      colors: [
+                        backgroundColor.withValues(alpha: surface),
+                        backgroundColor.withValues(alpha: surface),
+                        backgroundColor.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            child,
+          ],
+        );
+      },
     );
   }
 }
