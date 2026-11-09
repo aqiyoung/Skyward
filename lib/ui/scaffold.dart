@@ -46,6 +46,13 @@ typedef AppBarSearchStateBuilder =
 /// come back as it scrolls down.
 const _titleAsideDuration = Duration(milliseconds: 200);
 
+/// How far an iOS Large Title page scrolls before its compact bar title is
+/// fully faded in. A page opts in with [CommonScaffold.largeTitle] and lays out
+/// its large title in the body with roughly this much room above the first row,
+/// so the two titles trade places as it scrolls under the bar. Matches the
+/// dashboard's large title block (title + status line + padding).
+const double largeTitleScrollExtent = 72.0;
+
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
@@ -105,6 +112,14 @@ class CommonScaffold extends StatefulWidget {
   /// are never chased down a scroll.
   final bool hideActionsOnScroll;
 
+  /// Opt-in iOS Large Title. When on, the compact bar title starts hidden and
+  /// fades in only once the body's large title has scrolled past the bar, while
+  /// the bar's actions stay put (an iOS large-title bar keeps its trailing
+  /// buttons). Off by default -- every other page keeps the original title and
+  /// action behaviour untouched. The page supplies the large title itself in
+  /// its scrolling body.
+  final bool largeTitle;
+
   const CommonScaffold({
     super.key,
     required this.body,
@@ -130,6 +145,7 @@ class CommonScaffold extends StatefulWidget {
     this.canSort = false,
     this.rowSeparators = false,
     this.hideActionsOnScroll = true,
+    this.largeTitle = false,
   });
 
   @override
@@ -152,6 +168,11 @@ class CommonScaffoldState extends State<CommonScaffold>
   );
   final _searchOrigin = ValueNotifier<Rect?>(null);
   final _searchCovered = ValueNotifier(false);
+
+  /// How far an opt-in iOS Large Title page has scrolled its body title out of
+  /// view, 0 (large title fully shown, compact bar title hidden) to 1 (compact
+  /// bar title fully faded in). Drives [CommonScaffold.largeTitle] only.
+  final _largeTitleProgress = ValueNotifier<double>(0);
 
   /// Set while the page is being scrolled up: the title steps aside there so
   /// the first row keeps the room it is heading into, and comes back as soon as
@@ -284,15 +305,31 @@ class CommonScaffoldState extends State<CommonScaffold>
   /// horizontally between pages, and a list a card holds scrolls inside it
   /// without moving anything the title was covering.
   bool _handleScrolling(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical ||
-        notification is! ScrollUpdateNotification) {
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) {
+      return false;
+    }
+    // On an opt-in iOS Large Title page, fade the compact bar title in by how
+    // far the body's large title has scrolled under the bar, and back out as it
+    // returns. This reads the offset (not just the delta) on every vertical
+    // notification -- settling exactly at the top still resets to hidden, and
+    // an end notification cannot leave the fade stranded mid-way. Off by
+    // default: other pages keep the original title-aside behaviour untouched.
+    if (widget.largeTitle) {
+      final progress = (metrics.pixels / largeTitleScrollExtent).clamp(0.0, 1.0);
+      if (_largeTitleProgress.value != progress) {
+        _largeTitleProgress.value = progress;
+      }
+    }
+    // Only a live vertical scroll update drives the title-aside behaviour; a
+    // card's own scroll or a horizontal tab swipe must not move the bar title.
+    if (notification is! ScrollUpdateNotification) {
       return false;
     }
     final delta = notification.scrollDelta;
     if (delta == null || delta == 0) {
       return false;
     }
-    final metrics = notification.metrics;
     // At the top there is nothing left to uncover, so the title stays where it
     // starts even if the page is dragged on.
     final aside = delta > 0 && metrics.pixels > metrics.minScrollExtent;
@@ -376,6 +413,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     _searchOrigin.dispose();
     _searchCovered.dispose();
     _titleAside.dispose();
+    _largeTitleProgress.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
     super.dispose();
@@ -615,6 +653,12 @@ class CommonScaffoldState extends State<CommonScaffold>
               ),
             ],
           );
+    // An opt-in iOS Large Title page starts with the compact bar title hidden
+    // and fades it in by scroll progress, instead of stepping the title aside.
+    // Every other page keeps the original behaviour exactly.
+    if (widget.largeTitle) {
+      return _CompactTitleFade(progress: _largeTitleProgress, child: content);
+    }
     return _TitleAside(aside: _titleAside, child: content);
   }
 
@@ -832,6 +876,7 @@ class CommonScaffoldState extends State<CommonScaffold>
               // is a control the reader can afford to chase down a scroll.
               final actionsAside =
                   widget.hideActionsOnScroll &&
+                  !widget.largeTitle &&
                   !_sorting &&
                   widget.confirmationAction == null;
               final appBar = AppBar(
@@ -1845,6 +1890,30 @@ class _TitleAside extends StatelessWidget {
             child: child,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The compact bar title of an opt-in iOS Large Title page. It starts fully
+/// transparent and fades in by [progress] -- how far the body's large title has
+/// scrolled under the bar -- so the two titles trade places instead of both
+/// showing at once. A hidden title stays out of reach, as a menu title carries
+/// a tap. This is the counterpart of [_TitleAside], used only when
+/// [CommonScaffold.largeTitle] is on.
+class _CompactTitleFade extends StatelessWidget {
+  const _CompactTitleFade({required this.progress, required this.child});
+
+  final ValueListenable<double> progress;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: progress,
+      builder: (context, value, _) => IgnorePointer(
+        ignoring: value < 1,
+        child: Opacity(opacity: value, child: child),
       ),
     );
   }

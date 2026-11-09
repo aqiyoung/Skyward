@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'edit.dart';
+import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
@@ -75,6 +76,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
+      // The mobile home leads with an iOS Large Title in the body; the compact
+      // bar title fades in as it scrolls away. Editing and the desktop grid
+      // keep the ordinary bar title.
+      largeTitle: editable && !editing,
       backAction: editing ? () => _setEditing(false) : null,
       actions: [if (!editing && coreLib == null) const CoreStatusButton()],
       confirmationAction: editing
@@ -365,6 +370,10 @@ class _MobileDashboard extends ConsumerWidget {
                 child: Column(
                   spacing: gap,
                   children: [
+                    // The iOS Large Title + status line lead the home screen and
+                    // scroll away with the content; the bar's compact title is
+                    // faded in by CommonScaffold as this goes under the bar.
+                    const DashboardLargeTitle(),
                     for (final widget in widgets)
                       RepaintBoundary(
                         key: cardKeyOf(widget),
