@@ -5,6 +5,7 @@ import 'package:skyward/core/core.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,17 +73,43 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     // bar height (and a wrapping removePadding can zero it), so neither is a
     // safe source for placing the heading just under the status bar.
     final statusBarTop = MediaQuery.paddingOf(context).top;
+    final largeTitle = editable && !editing;
+    // The providers learn a resize a frame late, too late for the cards.
+    final dashboardBody = LayoutBuilder(
+      builder: (context, constraints) {
+        final room = constraints.biggest / scale;
+        final layout = DashboardDensity.of(room);
+        return DashboardDensityScope(
+          density: layout,
+          scale: scale,
+          child: layout.isDesktop
+              ? _DesktopDashboard(
+                  platform: platform,
+                  columns: dashboardColumnsOf(room.width),
+                  gap: gap,
+                )
+              : _MobileDashboard(
+                  platform: platform,
+                  gap: gap,
+                  editing: editing,
+                  largeTitle: largeTitle,
+                  cardKeyOf: _cardKeyOf,
+                  onEdit: () => _setEditing(true),
+                  onDone: () => _setEditing(false),
+                ),
+        );
+      },
+    );
     return CommonScaffold(
       backgroundColor: DashboardColors.of(context).page,
-      // Only the editing state needs a bar title; the resting home hides its
-      // title entirely and keeps the heading as a fixed block in the page.
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      // The mobile home keeps its heading as a fixed block in the body and
-      // shows no title in the bar at all. Editing and the desktop grid keep
-      // the ordinary bar title.
-      largeTitle: editable && !editing,
+      // The resting phone home uses the same fixed PageLargeTitle block as
+      // every other tab, so its heading never scrolls up under the status bar
+      // and all pages share one design. Editing and the desktop grid keep the
+      // ordinary bar title.
+      largeTitle: largeTitle,
       backAction: editing ? () => _setEditing(false) : null,
       actions: [if (!editing && coreLib == null) const CoreStatusButton()],
       confirmationAction: editing
@@ -92,37 +119,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
-      // The edit affordance now lives at the foot of the card list, not in the
-      // floating bar: with the bar's title hidden at rest (large title), a lone
-      // pencil up there left the whole top strip looking empty. The gear tile
-      // at the bottom is where the reader goes to rearrange the cards.
-      // The providers learn a resize a frame late, too late for the cards.
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final room = constraints.biggest / scale;
-          final layout = DashboardDensity.of(room);
-          return DashboardDensityScope(
-            density: layout,
-            scale: scale,
-            child: layout.isDesktop
-                ? _DesktopDashboard(
-                    platform: platform,
-                    columns: dashboardColumnsOf(room.width),
-                    gap: gap,
-                  )
-                : _MobileDashboard(
-                    platform: platform,
-                    gap: gap,
-                    editing: editing,
-                    largeTitle: editable && !editing,
-                    statusBarTop: statusBarTop,
-                    cardKeyOf: _cardKeyOf,
-                    onEdit: () => _setEditing(true),
-                    onDone: () => _setEditing(false),
-                  ),
-          );
-        },
-      ),
+      // The edit affordance lives at the foot of the card list, not in the
+      // empty top strip. The gear tile is where rearranging starts.
+      body: largeTitle
+          ? PageLargeTitle(
+              title: appLocalizations.dashboard,
+              statusBarTop: statusBarTop,
+              subtitle: const DashboardStatusLine(),
+              body: dashboardBody,
+            )
+          : dashboardBody,
     );
   }
 }
@@ -325,7 +331,6 @@ class _MobileDashboard extends ConsumerWidget {
     required this.gap,
     required this.editing,
     required this.largeTitle,
-    required this.statusBarTop,
     required this.cardKeyOf,
     required this.onEdit,
     required this.onDone,
@@ -335,12 +340,6 @@ class _MobileDashboard extends ConsumerWidget {
   final double gap;
   final bool editing;
   final bool largeTitle;
-
-  /// The real status-bar inset read above the scaffold. Inside the body,
-  /// [extendBodyBehindAppBar] lifts MediaQuery's top padding to the whole bar
-  /// height and a wrapping removePadding can zero it, so neither is a safe
-  /// source for placing the heading just under the status bar.
-  final double statusBarTop;
   final GlobalKey Function(DashboardWidget widget) cardKeyOf;
   final VoidCallback onEdit;
   final VoidCallback onDone;
@@ -350,13 +349,10 @@ class _MobileDashboard extends ConsumerWidget {
     final saved = ref.watch(
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    // The heading is a fixed block in the page, sitting just below the status
-    // bar with a little air above it -- no toolbar height, and no compact bar
-    // title to make room for, since a large-title page shows none. Editing
-    // keeps the ordinary bar and its full inset.
-    final top = largeTitle
-        ? statusBarTop + 12
-        : MediaQuery.paddingOf(context).top + 4;
+    // The shared large-title block already owns the strip under the status
+    // bar, so the cards start flush beneath its own bottom spacing. Editing
+    // has no such block: its ordinary bar needs the full inset back.
+    final top = largeTitle ? 0.0 : MediaQuery.paddingOf(context).top + 4;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
       // A viewport per card lays them all out and holds the scroll end still.
@@ -389,11 +385,6 @@ class _MobileDashboard extends ConsumerWidget {
                 child: Column(
                   spacing: gap,
                   children: [
-                    // The iOS Large Title + status line lead the home screen as
-                    // a fixed block in the page and scroll away with the cards;
-                    // the bar stays a plain strip and never fades a compact
-                    // title in over them.
-                    const DashboardLargeTitle(),
                     for (final widget in widgets)
                       RepaintBoundary(
                         key: cardKeyOf(widget),
