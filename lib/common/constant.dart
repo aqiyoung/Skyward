@@ -38,6 +38,14 @@ const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 // upstream's three, so this is the only place the revision survives off Android.
 const buildVersion = String.fromEnvironment('APP_VERSION');
 
+// The build channel, injected by the build alongside `APP_VERSION`. It names
+// the stream a build belongs to so the UI can label it -- `dev` for the dev
+// preview, `beta` for the beta preview. Official releases leave it empty. This
+// is display-only: it never enters `displayVersion`, whose fourth component the
+// update check parses as a number, so a non-numeric suffix there would break
+// OTA upgrade detection.
+const buildChannel = String.fromEnvironment('APP_CHANNEL');
+
 const disclaimerVersion = 1;
 
 String _randomPipeId() {

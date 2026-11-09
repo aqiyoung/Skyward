@@ -216,8 +216,10 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
     // been handed to the download, the row says what is happening instead of
     // naming the version for the minutes that takes.
     final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
+    final channelSuffix = buildChannelSuffix();
     final version = globalState.hasPackageInfo
-        ? globalState.packageInfo.displayVersion
+        ? '${globalState.packageInfo.displayVersion}'
+            '${channelSuffix.isNotEmpty ? ' $channelSuffix' : ''}'
         : null;
     final text = downloading
         ? appLocalizations.versionUpdateDownloading

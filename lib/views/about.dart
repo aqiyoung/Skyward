@@ -5,6 +5,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
+import 'package:skyward/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -172,6 +173,23 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 ),
                 title: Text(appLocalizations.privacyPolicy),
                 widget: const PrivacyPolicyView(),
+              ),
+              // The build's version, with the dev/beta channel suffix the
+              // preview workflows stamp in. Shown here so the channel a phone is
+              // running is visible on the About page, not only on the tools tab.
+              ListItem(
+                leading: const IconWell(
+                  AppGlyphs.appsList,
+                  side: 40,
+                  glyphSize: 20,
+                  shape: AppShape.md,
+                ),
+                title: Text(appLocalizations.currentVersion),
+                trailing: Text(
+                  '${globalState.packageInfo.displayVersion}'
+                  '${buildChannelSuffix().isNotEmpty ? ' ${buildChannelSuffix()}' : ''}',
+                  style: context.listSubtitleStyle,
+                ),
               ),
             ],
           ),
