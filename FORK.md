@@ -97,7 +97,7 @@ Skyward 最初基于 [chen08209/FlClash](https://github.com/chen08209/FlClash) �
 
 - **FlClash**（[chen08209/FlClash](https://github.com/chen08209/FlClash)）：本项目的起点与 UI 基础。
 - **mihomo / Clash.Meta**（[MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)）：代理内核。
-- 构建所依赖的工具链（如 [flutter_distributor](https://github.com/chen08209/flutter_distributor) 等）。
+- 构建所依赖的工具链（如 [flutter_distributor](https://github.com/aqiyoung/flutter_distributor)，本仓库镜像自 fastforge）。
 
 本仓库产物与上游一样受 **GPL-3.0** 约束；使用、修改与分发请遵守该许可证，派生作品同样须以 GPL-3.0 发布并保留原始版权声明。
 

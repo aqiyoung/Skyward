@@ -16,13 +16,11 @@ Skyward is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Forked Dependencies
 
-Two build-time dependencies still point at repositories under `chen08209` -- the
-FlClash account, **not** this one (`aqiyoung`). Skyward was detached from that
-project and no longer syncs it, which makes these the only remaining build
-dependencies on it: if either repository goes away, `flutter pub get` or the
-desktop packaging step fails and no release can be built. Vendoring them under
-`plugins/`, or re-forking them onto our own account, is the way out; the
-`launch_at_startup` pin can also go once the *upstream* fix below lands.
+No build-time dependency points at a repository under `chen08209` (the FlClash
+account) any more. Skyward was detached from that project in November 2026 and
+no longer syncs it; two of its forks were still being fetched, and both now live
+somewhere we control -- `launch_at_startup` in-repo under `plugins/`,
+`flutter_distributor` mirrored onto our own account.
 
 Each entry records what the fork changes and what has to be true before it can go
 back to the published package, so a future upgrade does not have to rediscover it.
@@ -39,20 +37,26 @@ was replaced by the in-repo `plugins/window` package; the behaviors it carried
 re-map on Linux, corner preference, terminate and activate events) live there
 now, see the window plugin section of `architecture.md`.
 
-`launch_at_startup` — `chen08209/launch_at_startup`, version 0.5.1.
+`launch_at_startup` — vendored at `plugins/launch_at_startup`, taken unchanged
+from `chen08209/launch_at_startup` `e930ce65`, version 0.5.1.
 
 - Migrates `win32_registry` from `^2.0.0` to `^3.0.3`, which is a breaking rename
   across the whole Windows implementation (`Registry.openPath` → `CURRENT_USER.open`,
   `createValue` → `setValue`, `getStringValue` → `getString`).
 - This one is not optional while it lasts: Skyward depends on `win32_registry: ^3.0.3`
   directly, and upstream's `^2.0.0` constraint cannot co-resolve with it.
-- Drop the fork when upstream publishes a release that accepts `win32_registry` 3.x.
+- Drop the vendored copy when upstream publishes a release that accepts
+  `win32_registry` 3.x: point `pubspec.yaml` back at the published package and
+  delete `plugins/launch_at_startup`.
 
-`flutter_distributor` -- `chen08209/flutter_distributor`, tag `v0.6.11-flclash.4`,
-activated from git by `setup.dart` on every desktop packaging run (see Build
-System in `architecture.md`). The fork carries what the release workflow relies
-on, so it cannot be swapped for the published package as-is. Re-forking it onto
-our own account is the obvious fix: same code, a repository we control.
+`flutter_distributor` — mirrored at `aqiyoung/flutter_distributor`, tag
+`v0.6.11-flclash.4`, activated from git by `setup.dart` on every packaging run
+(see Build System in `architecture.md`). The mirror is a `git clone --mirror` of
+`chen08209/flutter_distributor` — itself a fork of `fastforgedev/fastforge` — so
+`main`, the `FlClash` branch and every `v0.6.11-flclash.*` tag are present. When
+the tool changes: commit to the mirror, tag it there, then bump `--git-ref` in
+`setup.dart`; the two must move together. The fork carries what the release
+workflow relies on, so it cannot be swapped for the published package as-is.
 
 The `yaml_writer` fork (`chen08209/yaml_writer`) was replaced by
 `lib/common/yaml_writer.dart`. Its key quoting let keys such as `!a`, `'a` or
