@@ -1,4 +1,8 @@
 {
+  "mine": "我的",
+  "pagesLabel": "页面",
+  "toolEntries": "工具入口",
+  "searchHint": "搜索页面、工具与设置",
   "rule": "规则",
   "rules": "规则",
   "global": "全局",

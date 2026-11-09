@@ -1461,6 +1461,26 @@ class AppLocalizations {
     return Intl.message('Search', name: 'search', desc: '', args: []);
   }
 
+  /// `Mine`
+  String get mine {
+    return Intl.message('Mine', name: 'mine', desc: '', args: []);
+  }
+
+  /// `Pages`
+  String get pagesLabel {
+    return Intl.message('Pages', name: 'pagesLabel', desc: '', args: []);
+  }
+
+  /// `Tools`
+  String get toolEntries {
+    return Intl.message('Tools', name: 'toolEntries', desc: '', args: []);
+  }
+
+  /// `Search pages, tools and settings`
+  String get searchHint {
+    return Intl.message('Search pages, tools and settings', name: 'searchHint', desc: '', args: []);
+  }
+
   /// `Allow apps to bypass VPN`
   String get allowBypass {
     return Intl.message(

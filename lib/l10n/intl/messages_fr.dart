@@ -2299,5 +2299,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Oui"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chinois simplifié"),
+    "mine": MessageLookupByLibrary.simpleMessage("Moi"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Outils"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("Rechercher pages, outils et réglages"),
   };
 }

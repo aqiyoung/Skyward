@@ -1,4 +1,8 @@
 {
+  "mine": "マイページ",
+  "pagesLabel": "ページ",
+  "toolEntries": "ツール",
+  "searchHint": "ページ、ツール、設定を検索",
   "rule": "ルール",
   "rules": "ルール",
   "global": "グローバル",

@@ -1682,5 +1682,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
+    "mine": MessageLookupByLibrary.simpleMessage("我的"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("页面"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("工具入口"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、工具与设置"),
   };
 }

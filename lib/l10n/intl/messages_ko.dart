@@ -1816,5 +1816,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
+    "mine": MessageLookupByLibrary.simpleMessage("마이"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("페이지"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("도구"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 도구, 설정 검색"),
   };
 }

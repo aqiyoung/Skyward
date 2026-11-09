@@ -1,4 +1,8 @@
 {
+  "mine": "Mine",
+  "pagesLabel": "Pages",
+  "toolEntries": "Tools",
+  "searchHint": "Search pages, tools and settings",
   "rule": "Rule",
   "rules": "Rules",
   "global": "Global",

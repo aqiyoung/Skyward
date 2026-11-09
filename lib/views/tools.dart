@@ -19,11 +19,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
 import 'config/network.dart';
-import 'config/settings_search.dart';
 import 'developer.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
-  const ToolsView({super.key});
+  const ToolsView({super.key, this.label = PageLabel.tools});
+
+  /// Which dock label this page was opened under. The dashboard's mobile
+  /// fourth tab calls it "Mine", so the heading follows that label instead of
+  /// the old "More". Desktop keeps the default. Global search now lives in
+  /// its own tab, so this page no longer carries a settings-only search
+  /// button in the bar.
+  final PageLabel label;
 
   @override
   ConsumerState<ToolsView> createState() => _ToolViewState();
@@ -77,7 +83,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     final developerMode = ref.watch(
       appSettingProvider.select((state) => state.developerMode),
     );
@@ -99,17 +104,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     ];
     return CommonScaffold(
       rowSeparators: false,
-      title: appLocalizations.tools,
-      iconActions: [
-        IconButtonData(
-          glyph: AppGlyphs.search,
-          tooltip: appLocalizations.search,
-          onPressed: () => showExtend(
-            context,
-            builder: (_) => const SettingsSearchView(),
-          ),
-        ),
-      ],
+      title: widget.label.label,
       body: Builder(
         builder: (context) => ListView.builder(
           key: toolsStoreKey,
