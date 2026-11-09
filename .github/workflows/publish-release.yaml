@@ -40,8 +40,8 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     # Self-hosted telegram-bot-api so sendDocument accepts the 60 MB+
-    # installers the cloud Bot API would reject -- the same setup beta's
-    # build.yaml uses since ece6895. Needs the TELEGRAM_API_ID and
+    # installers the cloud Bot API would reject -- the same setup preview.yaml
+    # runs. Needs the TELEGRAM_API_ID and
     # TELEGRAM_API_HASH secrets.
     services:
       telegram-bot-api:
@@ -263,8 +263,8 @@ jobs:
             ${{ inputs.prerelease && '--prerelease' || '--latest' }}
 
       # The APK goes up as a document through the self-hosted telegram-bot-api
-      # (localhost:8081) -- the same approach beta's build.yaml uses since
-      # ece6895. The local API lifts the 50 MB upload cap the cloud Bot API
+      # (localhost:8081) -- the same approach preview.yaml uses. The local API
+      # lifts the 50 MB upload cap the cloud Bot API
       # enforces, so the 60 MB+ installer uploads as a file. If this run
       # produced no android APK, fall back to the links-only message.
       - name: Announce on Telegram
