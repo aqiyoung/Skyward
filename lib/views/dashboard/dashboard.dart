@@ -15,7 +15,6 @@ import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
-import 'widgets/card.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
@@ -68,18 +67,21 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     }
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
+    // Read the real status-bar inset here, above the scaffold: inside the
+    // body, extendBodyBehindAppBar lifts MediaQuery's top padding to the whole
+    // bar height (and a wrapping removePadding can zero it), so neither is a
+    // safe source for placing the heading just under the status bar.
+    final statusBarTop = MediaQuery.paddingOf(context).top;
     return CommonScaffold(
       backgroundColor: DashboardColors.of(context).page,
-      // The edit button steps aside with the title while the dashboard
-      // scrolls up; this is now the scaffold default on every page.
-      // Editing holds a confirmation action, which the scaffold keeps in
-      // reach, so this only ever hides the edit button.
+      // Only the editing state needs a bar title; the resting home hides its
+      // title entirely and keeps the heading as a fixed block in the page.
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      // The mobile home leads with an iOS Large Title in the body; the compact
-      // bar title fades in as it scrolls away. Editing and the desktop grid
-      // keep the ordinary bar title.
+      // The mobile home keeps its heading as a fixed block in the body and
+      // shows no title in the bar at all. Editing and the desktop grid keep
+      // the ordinary bar title.
       largeTitle: editable && !editing,
       backAction: editing ? () => _setEditing(false) : null,
       actions: [if (!editing && coreLib == null) const CoreStatusButton()],
@@ -113,6 +115,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     gap: gap,
                     editing: editing,
                     largeTitle: editable && !editing,
+                    statusBarTop: statusBarTop,
                     cardKeyOf: _cardKeyOf,
                     onEdit: () => _setEditing(true),
                     onDone: () => _setEditing(false),
@@ -322,6 +325,7 @@ class _MobileDashboard extends ConsumerWidget {
     required this.gap,
     required this.editing,
     required this.largeTitle,
+    required this.statusBarTop,
     required this.cardKeyOf,
     required this.onEdit,
     required this.onDone,
@@ -331,6 +335,12 @@ class _MobileDashboard extends ConsumerWidget {
   final double gap;
   final bool editing;
   final bool largeTitle;
+
+  /// The real status-bar inset read above the scaffold. Inside the body,
+  /// [extendBodyBehindAppBar] lifts MediaQuery's top padding to the whole bar
+  /// height and a wrapping removePadding can zero it, so neither is a safe
+  /// source for placing the heading just under the status bar.
+  final double statusBarTop;
   final GlobalKey Function(DashboardWidget widget) cardKeyOf;
   final VoidCallback onEdit;
   final VoidCallback onDone;
@@ -340,12 +350,12 @@ class _MobileDashboard extends ConsumerWidget {
     final saved = ref.watch(
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    // A large-title home has no bar surface at rest, so it needs only the
-    // status bar's clearance -- not the whole toolbar height the floating bar
-    // would otherwise push the title down by. Editing keeps the ordinary bar
-    // and its full inset.
+    // The heading is a fixed block in the page, sitting just below the status
+    // bar with a little air above it -- no toolbar height, and no compact bar
+    // title to make room for, since a large-title page shows none. Editing
+    // keeps the ordinary bar and its full inset.
     final top = largeTitle
-        ? MediaQuery.viewPaddingOf(context).top + 8
+        ? statusBarTop + 12
         : MediaQuery.paddingOf(context).top + 4;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
@@ -379,9 +389,10 @@ class _MobileDashboard extends ConsumerWidget {
                 child: Column(
                   spacing: gap,
                   children: [
-                    // The iOS Large Title + status line lead the home screen and
-                    // scroll away with the content; the bar's compact title is
-                    // faded in by CommonScaffold as this goes under the bar.
+                    // The iOS Large Title + status line lead the home screen as
+                    // a fixed block in the page and scroll away with the cards;
+                    // the bar stays a plain strip and never fades a compact
+                    // title in over them.
                     const DashboardLargeTitle(),
                     for (final widget in widgets)
                       RepaintBoundary(
@@ -403,9 +414,10 @@ class _MobileDashboard extends ConsumerWidget {
   }
 }
 
-/// The quiet gear row at the foot of the board. It replaces the pencil that
-/// used to float alone in the bar; tapping it opens the card editor. Kept as a
-/// normal card so it reads as part of the board, not a floating control.
+/// A small, centred hint at the foot of the board. It replaces the pencil
+/// that used to float alone in the bar, and deliberately is not another full
+/// card: a quiet capsule that reads as a hint rather than as board content.
+/// Tapping it opens the card editor.
 class _EditDashboardTile extends StatelessWidget {
   const _EditDashboardTile({required this.onTap});
 
@@ -414,22 +426,37 @@ class _EditDashboardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return DashboardCard(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      onTap: onTap,
-      semanticLabel: appLocalizations.editDashboard,
-      child: ListItem(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        leading: const IconWell(
-          AppGlyphs.settings,
-          side: 36,
-          glyphSize: 20,
-          shape: AppShape.md,
+    final colorScheme = context.colorScheme;
+    return Center(
+      child: Semantics(
+        button: true,
+        label: appLocalizations.editDashboard,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: DashboardColors.of(context).tone2,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GlyphIcon(
+                  AppGlyphs.settings,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  appLocalizations.editDashboard,
+                  style: DashboardText.label(context),
+                ),
+              ],
+            ),
+          ),
         ),
-        title: Text(appLocalizations.editDashboard),
-        // The card carries the tap; the row only shows the forward chevron so
-        // one press does not drive two ink wells.
-        arrow: true,
       ),
     );
   }

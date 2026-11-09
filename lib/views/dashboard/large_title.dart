@@ -11,10 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// long -- into one line under the title, instead of leaving them to be found
 /// scattered across cards.
 ///
-/// Shown by the page's own scrolling body; the opt-in large-title bar fades
-/// its compact title in as this scrolls under the bar, so the two titles trade
-/// places rather than both showing at once. This block's height is roughly the
-/// scroll extent that fade is timed against.
+/// Shown by the page's own scrolling body as a fixed heading: it is part of
+/// the page, not a bar title, and carries no compact copy that would fade in
+/// or float over the content when the page scrolls. It simply scrolls away
+/// with the cards beneath it.
 class DashboardLargeTitle extends ConsumerWidget {
   const DashboardLargeTitle({super.key});
 

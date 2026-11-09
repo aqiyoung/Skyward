@@ -46,17 +46,9 @@ typedef AppBarSearchStateBuilder =
 /// come back as it scrolls down.
 const _titleAsideDuration = Duration(milliseconds: 200);
 
-/// How far an iOS Large Title page scrolls before its compact bar title is
-/// fully faded in. A page opts in with [CommonScaffold.largeTitle] and lays out
-/// its large title in the body with roughly this much room above the first row,
-/// so the two titles trade places as it scrolls under the bar. Matches the
-/// dashboard's large title block (title + status line + padding).
-const double largeTitleScrollExtent = 72.0;
-
-/// Fraction of the large-title collapse at which the bar surface reaches full
-/// opacity. Earlier than the compact title appears, so cards scrolling under
-/// the bar are never readable through it.
-const double _largeTitleSurfaceFullAt = 0.55;
+/// Extra room below the status bar that a large-title page's solid top strip
+/// fades out over, so content scrolling under it is not cut by a hard edge.
+const double _largeTitleTopFade = 12.0;
 
 class CommonScaffold extends StatefulWidget {
   final Widget body;
@@ -117,12 +109,12 @@ class CommonScaffold extends StatefulWidget {
   /// are never chased down a scroll.
   final bool hideActionsOnScroll;
 
-  /// Opt-in iOS Large Title. When on, the compact bar title starts hidden and
-  /// fades in only once the body's large title has scrolled past the bar, while
-  /// the bar's actions stay put (an iOS large-title bar keeps its trailing
-  /// buttons). Off by default -- every other page keeps the original title and
-  /// action behaviour untouched. The page supplies the large title itself in
-  /// its scrolling body.
+  /// Opt-in static large-title page. When on, the floating bar carries no
+  /// title at all -- it stays a plain, solid strip over the status bar -- and
+  /// the page supplies its own heading as a fixed block in the scrolling body.
+  /// Nothing fades, collapses or trades places on scroll, so no title ever
+  /// floats over the content. Bar actions stay put. Off by default -- every
+  /// other page keeps the original title and action behaviour untouched.
   final bool largeTitle;
 
   const CommonScaffold({
@@ -173,11 +165,6 @@ class CommonScaffoldState extends State<CommonScaffold>
   );
   final _searchOrigin = ValueNotifier<Rect?>(null);
   final _searchCovered = ValueNotifier(false);
-
-  /// How far an opt-in iOS Large Title page has scrolled its body title out of
-  /// view, 0 (large title fully shown, compact bar title hidden) to 1 (compact
-  /// bar title fully faded in). Drives [CommonScaffold.largeTitle] only.
-  final _largeTitleProgress = ValueNotifier<double>(0);
 
   /// Set while the page is being scrolled up: the title steps aside there so
   /// the first row keeps the room it is heading into, and comes back as soon as
@@ -314,18 +301,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     if (metrics.axis != Axis.vertical) {
       return false;
     }
-    // On an opt-in iOS Large Title page, fade the compact bar title in by how
-    // far the body's large title has scrolled under the bar, and back out as it
-    // returns. This reads the offset (not just the delta) on every vertical
-    // notification -- settling exactly at the top still resets to hidden, and
-    // an end notification cannot leave the fade stranded mid-way. Off by
-    // default: other pages keep the original title-aside behaviour untouched.
-    if (widget.largeTitle) {
-      final progress = (metrics.pixels / largeTitleScrollExtent).clamp(0.0, 1.0);
-      if (_largeTitleProgress.value != progress) {
-        _largeTitleProgress.value = progress;
-      }
-    }
     // Only a live vertical scroll update drives the title-aside behaviour; a
     // card's own scroll or a horizontal tab swipe must not move the bar title.
     if (notification is! ScrollUpdateNotification) {
@@ -418,7 +393,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     _searchOrigin.dispose();
     _searchCovered.dispose();
     _titleAside.dispose();
-    _largeTitleProgress.dispose();
     _loadingNotifier.dispose();
     _keywordsNotifier.dispose();
     super.dispose();
@@ -658,11 +632,11 @@ class CommonScaffoldState extends State<CommonScaffold>
               ),
             ],
           );
-    // An opt-in iOS Large Title page starts with the compact bar title hidden
-    // and fades it in by scroll progress, instead of stepping the title aside.
-    // Every other page keeps the original behaviour exactly.
+    // A large-title page keeps its heading in the scrolling body and shows no
+    // title in the bar at all -- not even a compact one that fades in on
+    // scroll. Every other page keeps the original aside behaviour exactly.
     if (widget.largeTitle) {
-      return _CompactTitleFade(progress: _largeTitleProgress, child: content);
+      return const SizedBox.shrink();
     }
     return _TitleAside(aside: _titleAside, child: content);
   }
@@ -830,15 +804,14 @@ class CommonScaffoldState extends State<CommonScaffold>
         widget.backgroundColor ??
         SurfaceLevel.page.colorOf(context.colorScheme);
     if (widget.largeTitle) {
-      // An iOS Large Title page has no bar surface while its large title is
-      // on screen; one fades in only as that title scrolls away. A static
-      // translucent scrim would both sit over the large title and let cards
-      // show through the bar later. Driving it by the same scroll progress as
-      // the compact title keeps the two in step. Off by default: every other
-      // page keeps the original [FloatingHeader] gradient untouched.
-      return _LargeTitleHeader(
+      // A large-title page keeps a plain, steady strip over the status bar:
+      // opaque page colour, no title, no fade in or out on scroll. Content
+      // scrolling up simply hides behind it instead of reading through a
+      // translucent scrim, and no compact title ever floats in to replace the
+      // heading in the body. Off by default: every other page keeps the
+      // original [FloatingHeader] gradient untouched.
+      return _StaticHeader(
         backgroundColor: backgroundColor,
-        progress: _largeTitleProgress,
         child: appBar,
       );
     }
@@ -1914,93 +1887,50 @@ class _TitleAside extends StatelessWidget {
   }
 }
 
-/// The compact bar title of an opt-in iOS Large Title page. It holds back
-/// until the body's large title has nearly scrolled away, then fades in over
-/// [progress]'s last stretch -- fading from the very first pixel is what put
-/// two copies of the title on screen at once. A hidden title stays out of
-/// reach, as a menu title carries a tap. This is the counterpart of
-/// [_TitleAside], used only when [CommonScaffold.largeTitle] is on.
-class _CompactTitleFade extends StatelessWidget {
-  const _CompactTitleFade({required this.progress, required this.child});
-
-  /// Collapse fraction at which the compact title begins to appear. The large
-  /// title is gone by then, so the two never share the top of the screen.
-  static const _revealFrom = 0.6;
-
-  final ValueListenable<double> progress;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<double>(
-      valueListenable: progress,
-      builder: (context, value, _) {
-        final opacity = ((value - _revealFrom) / (1 - _revealFrom))
-            .clamp(0.0, 1.0);
-        return IgnorePointer(
-          ignoring: opacity < 1,
-          child: Opacity(opacity: opacity, child: child),
-        );
-      },
-    );
-  }
-}
-
-/// The bar surface of an opt-in iOS Large Title page. The shared
-/// [FloatingHeader] is a static translucent gradient: at rest it lays a grey
-/// strip over the empty area above the large title, and once content scrolls
-/// under it, cards read straight through. This one starts fully transparent --
-/// so the large title can sit close under the status bar with no empty strip
-/// above it -- and fades to an opaque surface by the time the title has gone,
-/// keeping the bar legible and the content behind it hidden.
-class _LargeTitleHeader extends StatelessWidget {
-  const _LargeTitleHeader({
-    required this.backgroundColor,
-    required this.progress,
-    required this.child,
-  });
+/// The steady bar of a large-title page: a solid strip of page colour over the
+/// status bar, tapering out just below it so content scrolling up is hidden
+/// rather than read through. The shared [FloatingHeader] is a translucent
+/// gradient that lets cards show through; this one is opaque and never changes
+/// with scroll, and carries no title -- the page's heading stays a fixed block
+/// in its own body. Used only when [CommonScaffold.largeTitle] is on.
+class _StaticHeader extends StatelessWidget {
+  const _StaticHeader({required this.backgroundColor, required this.child});
 
   final Color backgroundColor;
-  final ValueListenable<double> progress;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<double>(
-      valueListenable: progress,
-      builder: (context, value, _) {
-        final surface = (value / _largeTitleSurfaceFullAt).clamp(0.0, 1.0);
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: -_headerOverhang,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      // Solid over the bar itself; only the foot eases out so
-                      // the edge does not cut across the content below.
-                      stops: const [0.0, 0.88, 1.0],
-                      colors: [
-                        backgroundColor.withValues(alpha: surface),
-                        backgroundColor.withValues(alpha: surface),
-                        backgroundColor.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
+    final top = MediaQuery.paddingOf(context).top;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: top + _largeTitleTopFade,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  // Solid behind the status bar; only the last stretch fades so
+                  // the strip has no hard edge against the content below.
+                  stops: const [0.0, 0.8, 1.0],
+                  colors: [
+                    backgroundColor,
+                    backgroundColor,
+                    backgroundColor.withValues(alpha: 0),
+                  ],
                 ),
               ),
             ),
-            child,
-          ],
-        );
-      },
+          ),
+        ),
+        child,
+      ],
     );
   }
 }
