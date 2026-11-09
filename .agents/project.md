@@ -16,12 +16,13 @@ Skyward is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Forked Dependencies
 
-One `pubspec.yaml` dependency is pinned to a fork by commit SHA. The fork lives
-under `chen08209`, the same account that owns this repository, so it is
-maintained in-house rather than tracked from a third party: advancing a pin is a
-local decision, and there is no external maintainer to wait on for the patch
-itself. What the fork still waits on is the *upstream* fix that would let the pin
-be dropped entirely, recorded below.
+Two build-time dependencies still point at repositories under `chen08209` -- the
+FlClash account, **not** this one (`aqiyoung`). Skyward was detached from that
+project and no longer syncs it, which makes these the only remaining build
+dependencies on it: if either repository goes away, `flutter pub get` or the
+desktop packaging step fails and no release can be built. Vendoring them under
+`plugins/`, or re-forking them onto our own account, is the way out; the
+`launch_at_startup` pin can also go once the *upstream* fix below lands.
 
 Each entry records what the fork changes and what has to be true before it can go
 back to the published package, so a future upgrade does not have to rediscover it.
@@ -46,6 +47,12 @@ now, see the window plugin section of `architecture.md`.
 - This one is not optional while it lasts: Skyward depends on `win32_registry: ^3.0.3`
   directly, and upstream's `^2.0.0` constraint cannot co-resolve with it.
 - Drop the fork when upstream publishes a release that accepts `win32_registry` 3.x.
+
+`flutter_distributor` -- `chen08209/flutter_distributor`, tag `v0.6.11-flclash.4`,
+activated from git by `setup.dart` on every desktop packaging run (see Build
+System in `architecture.md`). The fork carries what the release workflow relies
+on, so it cannot be swapped for the published package as-is. Re-forking it onto
+our own account is the obvious fix: same code, a repository we control.
 
 The `yaml_writer` fork (`chen08209/yaml_writer`) was replaced by
 `lib/common/yaml_writer.dart`. Its key quoting let keys such as `!a`, `'a` or
