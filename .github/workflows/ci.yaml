@@ -1,4 +1,4 @@
-name: sync upstream and release
+name: build and release
 
 # Three channels, each one a promotion of the previous by hand:
 #
@@ -9,11 +9,12 @@ name: sync upstream and release
 #   stable   a beta that held: `promote` moves beta's tree into `main`, and the
 #            stable channel tests and builds that.
 #
-# `beta` is the only branch that follows upstream: upstream's `dev` plus our own
-# commits rebased on top. That sync is manual (`sync` input, off by default):
-# a rebase conflict needs a person, and an upstream rewrite must never start a
-# release by itself. `main` is never synced from upstream -- it only moves on
-# promotion, so the stable channel ships code that already ran as beta.
+# Skyward is maintained on its own: `beta` is the tip of this project and nothing
+# here follows upstream on a schedule. The `sync` input is an optional escape
+# hatch for pulling FlClash's `dev` in by hand -- off by default, because a
+# rebase conflict needs a person and an upstream rewrite must never start a
+# release by itself. `main` is never synced: it only moves on promotion, so the
+# stable channel ships code that already ran as beta.
 #
 # The `ci` branch holds the automation, and a promotion refreshes the copies on
 # `main` from it -- a manual run is dispatched from `ci`, so these files take
@@ -21,19 +22,20 @@ name: sync upstream and release
 # has to sit in the branch trees: a push-triggered workflow only runs from the
 # branch that received the push, so `beta` carries the same file.
 #
-# Rebasing is what keeps our patches alive across every upstream sync, and
-# upstream rewrites `dev` (force-pushes) often enough that a merge is not an
-# option. A sync that cannot be applied cleanly stops loudly and tells Telegram
-# instead of quietly shipping upstream alone.
+# Rebasing (rather than merging) is what would keep our patches on top if `sync`
+# is ever used: FlClash rewrites `dev` (force-pushes) often enough that a merge
+# is not an option. A sync that cannot be applied cleanly stops loudly and tells
+# Telegram instead of quietly shipping upstream alone.
 #
-# Flow: [rebase beta<-upstream/dev] -> preview build -> (later) beta release ->
+# Flow: beta build -> preview build -> (later) beta release ->
 # (later, promote) main = beta's tree -> stable release.
+# With `sync` on, a rebase onto upstream/dev goes first.
 
 on:
   workflow_dispatch:
     inputs:
       channel:
-        description: Which channel to sync and build
+        description: Which channel to build
         type: choice
         options:
           - preview
@@ -42,7 +44,7 @@ on:
           - all
         default: preview
       sync:
-        description: Rebase beta onto upstream/dev first (manual sync only)
+        description: Optional -- rebase beta onto FlClash's upstream/dev first (off by default)
         type: boolean
         default: false
       promote:
@@ -59,10 +61,10 @@ on:
         default: true
 
 concurrency:
-  group: sync-and-release
+  group: build-and-release
   cancel-in-progress: false
 
-# The sync force-pushes our branches and tags, and the preview / publish
+# A sync force-pushes our branches and tags, and the preview / publish
 # workflows this one calls create releases and read back earlier runs. A called
 # workflow cannot ask for more than its caller holds, so both scopes have to be
 # granted here as well -- `contents: read` alone makes every dispatch fail at
@@ -71,12 +73,13 @@ permissions:
   contents: write
   actions: read
 
+# Only the optional `sync` job reads this: the upstream Skyward was detached from.
 env:
   UPSTREAM_REPO: chen08209/FlClash
 
 jobs:
   sync:
-    name: Sync upstream
+    name: Absorb upstream (optional)
     runs-on: ubuntu-latest
     # Force-pushes branches and tags to our repository.
     permissions:
