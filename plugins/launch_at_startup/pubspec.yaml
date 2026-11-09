@@ -1,0 +1,18 @@
+name: launch_at_startup
+description: Auto launch on startup / login for Skyward's desktop builds, vendored from launch_at_startup 0.5.1.
+version: 0.5.1
+homepage: https://github.com/leanflutter/launch_at_startup
+publish_to: none
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The only reason this is vendored rather than taken from pub: upstream 0.5.1
+  # still constrains win32_registry to ^2.0.0, and Skyward depends on ^3.0.3
+  # directly, so the two cannot co-resolve. The chen08209 fork migrated the
+  # Windows implementation to the 3.x API; this copy is that fork, unchanged.
+  win32_registry: ^3.0.3
