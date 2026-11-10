@@ -51,16 +51,17 @@ class PageLargeTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final hasSearch = searchHint != null && onSearch != null;
+    // A pushed page keeps its back button in the bar; the heading must sit
+    // below that bar rather than at the status bar's edge, or the first
+    // glyph lands behind the back button (a tab page has no leading, so its
+    // heading keeps the tighter top inset).
+    final hasLeading = ModalRoute.of(context)?.impliesAppBarDismissal == true;
+    final headingTop = statusBarTop + (hasLeading ? pageToolbarHeight : 12.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(
-            22,
-            statusBarTop + 12,
-            22,
-            12,
-          ),
+          padding: EdgeInsetsDirectional.fromSTEB(22, headingTop, 22, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
