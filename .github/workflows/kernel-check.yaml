@@ -91,7 +91,7 @@ jobs:
             gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
             exit 1
           }
-          go test -count=1 -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          go test -count=1 -v -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
           # The config package reaches out to the network in some of its tests,
           # so only the tests this project added run here.
           go test -count=1 -tags "$kernel_tags" -run 'TestRawTun' ./config/
