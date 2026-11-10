@@ -88,7 +88,7 @@ expect_pass 'an acronym' 'fix(core): DNS leaks after wake'
 expect_fail 'an upper case first word before punctuation' 'lower case' \
   'fix(core): Keep, or drop, the socket'
 expect_fail 'a trailing period' 'period' "$subject."
-expect_fail 'a changelog translation trailer' 'Changelog-zh-CN' \
+expect_pass 'a changelog translation trailer' \
   'feat: x' '' 'Changelog-zh-CN: 新功能'
 expect_fail 'an unknown changelog trailer' 'Changelog-de' \
   'feat: x' '' 'Changelog-de: Neu'
