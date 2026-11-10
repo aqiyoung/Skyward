@@ -161,10 +161,7 @@ void main() {
         moreUrl: 'https://example.com',
       );
 
-      expect(
-        text,
-        '<b>问题修复</b>\n• Reject &lt;script&gt; &amp; "quoted" input',
-      );
+      expect(text, '<b>问题修复</b>\n• Reject &lt;script&gt; &amp; "quoted" input');
     });
 
     test('says so when a version has no user facing changes', () {

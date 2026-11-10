@@ -359,10 +359,8 @@ Future<int> _ensureLinuxDependencies() async {
 /// Pinned SHA-256 of the appimagetool `continuous` build, per arch,
 /// taken 2026-10-30. See `_ensureLinuxDependencies`.
 const _appimagetoolSha256 = {
-  'x86_64':
-      'b90f4a8b18967545fda78a445b27680a1642f1ef9488ced28b65398f2be7add2',
-  'aarch64':
-      'a48972e5ae91c944c5a7c80214e7e0a42dd6aa3ae979d8756203512a74ff574d',
+  'x86_64': 'b90f4a8b18967545fda78a445b27680a1642f1ef9488ced28b65398f2be7add2',
+  'aarch64': 'a48972e5ae91c944c5a7c80214e7e0a42dd6aa3ae979d8756203512a74ff574d',
 };
 
 Future<bool> _verifyAppimagetool(String path) async {

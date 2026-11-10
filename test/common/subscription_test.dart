@@ -5,7 +5,8 @@ void main() {
   group('vless links', () {
     // A Reality node that needs XTLS vision: the keys below are the ones a
     // server enforces, so losing them turns the node into a dead entry.
-    const reality = 'vless://11111111-2222-3333-4444-555555555555@example.com:443'
+    const reality =
+        'vless://11111111-2222-3333-4444-555555555555@example.com:443'
         '?encryption=none&security=reality&sni=www.example.com&fp=chrome'
         '&pbk=PUBKEY&sid=abcd&type=tcp&flow=xtls-rprx-vision#Reality';
 
@@ -21,7 +22,8 @@ void main() {
     });
 
     test('leaves a plain link without the keys it does not carry', () {
-      const plain = 'vless://11111111-2222-3333-4444-555555555555@a.example:80'
+      const plain =
+          'vless://11111111-2222-3333-4444-555555555555@a.example:80'
           '#Plain';
       final config = convertToClashConfig(plain);
 

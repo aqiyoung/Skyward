@@ -280,10 +280,7 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
           ),
           if (mobile) const SizedBox(height: 12) else const Spacer(),
           grid,
-          if (footer != null) ...[
-            const SizedBox(height: 10),
-            footer,
-          ],
+          if (footer != null) ...[const SizedBox(height: 10), footer],
         ],
       ),
     );

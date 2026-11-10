@@ -283,10 +283,7 @@ void main() {
     expect(tester.getRect(portraits.at(0)).right, lessThan(june2.left));
     expect(june2.right, lessThan(tester.getRect(portraits.at(1)).left));
     expect(tester.getRect(portraits.at(1)).right, lessThan(arue.left));
-    expect(
-      find.text(AppLocalizations.current.appIconDesign),
-      findsNWidgets(2),
-    );
+    expect(find.text(AppLocalizations.current.appIconDesign), findsNWidgets(2));
   });
 
   // The update check lives on the row that names the build, not on a page of

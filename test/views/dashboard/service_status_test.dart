@@ -165,10 +165,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.text(currentAppLocalizations.networkOverview),
-      findsOneWidget,
-    );
+    expect(find.text(currentAppLocalizations.networkOverview), findsOneWidget);
     // The connection, request and DNS counts live in the tools pages
     // now, not under the grid on the dashboard.
     expect(

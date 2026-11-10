@@ -35,9 +35,13 @@ class ExpireChip extends StatelessWidget {
           child: Text(
             expire.show,
             maxLines: 1,
-            style: AppTextStyle.caption1.of(context, emphasized: true).copyWith(
-              color: expired ? colorScheme.error : colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyle.caption1
+                .of(context, emphasized: true)
+                .copyWith(
+                  color: expired
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
+                ),
           ),
         ),
       ),

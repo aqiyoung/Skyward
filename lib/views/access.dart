@@ -496,7 +496,8 @@ class _AccessStatus extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCount = ref.watch(
       accessControlStateProvider.select(
-        (state) => state.currentList.where(installedPackageNames.contains).length,
+        (state) =>
+            state.currentList.where(installedPackageNames.contains).length,
       ),
     );
     final appLocalizations = context.appLocalizations;
@@ -506,13 +507,13 @@ class _AccessStatus extends ConsumerWidget {
     final description = authorizes
         ? appLocalizations.installedAppsPermissionRequired
         : enabled
-            ? switch (accessControl.mode) {
-                AccessControlMode.acceptSelected =>
-                  appLocalizations.accessControlAllowDesc,
-                AccessControlMode.rejectSelected =>
-                  appLocalizations.accessControlNotAllowDesc,
-              }
-            : appLocalizations.accessControlDisabledDesc;
+        ? switch (accessControl.mode) {
+            AccessControlMode.acceptSelected =>
+              appLocalizations.accessControlAllowDesc,
+            AccessControlMode.rejectSelected =>
+              appLocalizations.accessControlNotAllowDesc,
+          }
+        : appLocalizations.accessControlDisabledDesc;
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(
         16,

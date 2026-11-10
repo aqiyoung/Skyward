@@ -194,9 +194,7 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
     _targetAskedAt[query] = DateTime.now();
     if (_targetAskedAt.length > _targetCacheLimit * 4) {
       final now = DateTime.now();
-      _targetAskedAt.removeWhere(
-        (_, at) => now.difference(at) >= _targetRetry,
-      );
+      _targetAskedAt.removeWhere((_, at) => now.difference(at) >= _targetRetry);
     }
     try {
       final location = await lookupTargetLocation(
@@ -271,7 +269,9 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
     final appLocalizations = context.appLocalizations;
     final chinese = Localizations.localeOf(context).languageCode == 'zh';
     final mobile = !DashboardDensityScope.of(context).isDesktop;
-    final hideIp = ref.watch(appSettingProvider.select((state) => state.hideIp));
+    final hideIp = ref.watch(
+      appSettingProvider.select((state) => state.hideIp),
+    );
     final active = _live();
     final location = _location;
     final direct = ref
@@ -289,8 +289,7 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
     // city when the address is somewhere the province list does not cover.
     final localPlace = _placeIn(
       localCountry,
-      geoPlaceOfRegion(location?.region) ??
-          geoCityOfNode(location?.city ?? ''),
+      geoPlaceOfRegion(location?.region) ?? geoCityOfNode(location?.city ?? ''),
     );
     final exit = _exitOf(active);
     final relays = _relaysOf(active, chinese);
@@ -375,10 +374,7 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 20,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: RouteMap(stops: stops),
-                ),
+                Expanded(flex: 3, child: RouteMap(stops: stops)),
                 Expanded(
                   flex: 2,
                   child: Padding(
@@ -390,16 +386,16 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
                       children: [
                         _Legend(
                           label: appLocalizations.routeFrom,
-                          value: localPlace?.label(chinese: chinese) ??
+                          value:
+                              localPlace?.label(chinese: chinese) ??
                               localCountry?.label(chinese: chinese),
                           detail: detail.localIp,
                         ),
                         _Legend(
                           label: appLocalizations.routeVia,
-                          value: exit ??
-                              (active == null
-                                  ? null
-                                  : appLocalizations.direct),
+                          value:
+                              exit ??
+                              (active == null ? null : appLocalizations.direct),
                           detail: relays,
                         ),
                         _Legend(
@@ -422,7 +418,8 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
                 Expanded(
                   child: _Legend(
                     label: appLocalizations.routeFrom,
-                    value: localPlace?.label(chinese: chinese) ??
+                    value:
+                        localPlace?.label(chinese: chinese) ??
                         localCountry?.label(chinese: chinese),
                     detail: detail.localIp,
                   ),
@@ -431,7 +428,8 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
                 Expanded(
                   child: _Legend(
                     label: appLocalizations.routeVia,
-                    value: exit ??
+                    value:
+                        exit ??
                         (active == null ? null : appLocalizations.direct),
                     detail: relays,
                   ),

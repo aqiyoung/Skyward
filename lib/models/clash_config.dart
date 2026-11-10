@@ -50,8 +50,7 @@ const baselineDns = Dns(
   nameserverPolicy: {
     // Domestic names keep resolving through a domestic DoH only, so CDN
     // answers stay close and are never replaced by an overseas resolver.
-    'geosite:cn':
-        'https://doh.pub/dns-query,https://dns.alidns.com/dns-query',
+    'geosite:cn': 'https://doh.pub/dns-query,https://dns.alidns.com/dns-query',
     'geoip:cn': 'https://doh.pub/dns-query,https://dns.alidns.com/dns-query',
   },
   // Overseas encrypted resolvers, consulted only when the primary answer looks

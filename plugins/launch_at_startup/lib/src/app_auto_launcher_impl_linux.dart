@@ -22,7 +22,8 @@ class AppAutoLauncherImplLinux extends AppAutoLauncher {
 
   @override
   Future<bool> enable() async {
-    String contents = '''
+    String contents =
+        '''
 [Desktop Entry]
 Type=Application
 Name=$appName

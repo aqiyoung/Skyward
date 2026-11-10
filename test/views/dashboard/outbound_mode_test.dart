@@ -184,7 +184,12 @@ void main() {
   });
 
   testWidgets('large text on a narrow phone still fits', (tester) async {
-    await pump(tester, const OutboundModeSelector(), width: 300, textScale: 1.4);
+    await pump(
+      tester,
+      const OutboundModeSelector(),
+      width: 300,
+      textScale: 1.4,
+    );
 
     expect(tester.takeException(), isNull);
   });

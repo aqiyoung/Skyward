@@ -8,7 +8,10 @@ void main() {
   test('blocking keeps the four refusals unchanged', () {
     expect(webrtcRulesFor(WebrtcGuard.block), webrtcGuardRules);
     for (final port in ports) {
-      expect(webrtcRulesFor(WebrtcGuard.block), contains('DST-PORT,$port,REJECT'));
+      expect(
+        webrtcRulesFor(WebrtcGuard.block),
+        contains('DST-PORT,$port,REJECT'),
+      );
     }
   });
 
