@@ -2307,5 +2307,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchHint": MessageLookupByLibrary.simpleMessage(
       "Buscar páginas, nodos, herramientas y ajustes",
     ),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Agradecimientos"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward comenzó como una bifurcación de FlClash de chen08209 y se basa en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
+    ),
   };
 }

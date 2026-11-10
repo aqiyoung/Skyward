@@ -2304,5 +2304,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchHint": MessageLookupByLibrary.simpleMessage(
       "Rechercher pages, nœuds, outils et réglages",
     ),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Remerciements"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward est initialement un fork de FlClash par chen08209 et repose sur le noyau mihomo (Clash.Meta) de MetaCubeX. Les deux sont publiés sous licence GPL-3.0.",
+    ),
   };
 }

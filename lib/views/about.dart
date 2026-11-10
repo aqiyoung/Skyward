@@ -6,6 +6,7 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -104,126 +105,137 @@ class _AboutViewState extends ConsumerState<AboutView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    // A phone uses the same fixed heading as the five tabs: the bar is left
+    // empty and solid, so the hero and the cards can never show through a
+    // translucent bar. Desktop and compact sheets keep the ordinary title.
+    final largeTitle =
+        ViewScope.isMobileOf(context) && !context.isInCompactSheet;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final body = ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        top: largeTitle ? 0 : context.contentTopPadding,
+        bottom: 32 + context.bottomInset,
+      ),
+      children: [
+        _AboutHero(
+          onEnterDeveloperMode: () {
+            ref
+                .read(appSettingProvider.notifier)
+                .update((state) => state.copyWith(developerMode: true));
+            context.showNotifier(
+              appLocalizations.developerModeEnableTip,
+              level: MessageLevel.success,
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        // No headings over any of the cards: the rows say what they are, and
+        // a label above two of them only said it twice. The update check is
+        // not here either -- it belongs to the row that names the build, on
+        // the tools tab, so this page is only what the build is and what it
+        // stands on.
+        generateSection(
+          items: [
+            _buildLinkItem(
+              glyph: AppGlyphs.code,
+              title: appLocalizations.project,
+              url: 'https://github.com/$repository',
+              label: 'github.com/$repository',
+            ),
+            _buildLinkItem(
+              glyph: AppGlyphs.cpu,
+              title: appLocalizations.core,
+              // Link the repository root so this follows the default branch
+              // instead of naming a branch that can be renamed or removed.
+              url: 'https://github.com/aqiyoung/skyward-core',
+              label: 'github.com/aqiyoung/skyward-core',
+            ),
+            _buildLinkItem(
+              glyph: AppGlyphs.gavel,
+              title: appLocalizations.disclaimerLicenseTitle,
+              url: 'https://github.com/$repository/blob/main/LICENSE',
+              label: 'GPL-3.0',
+            ),
+            // The terms are a page of their own, reached from this row: read
+            // here in full, they were a scroll few ever finished.
+            ListItem.open(
+              leading: const IconWell(
+                AppGlyphs.rules,
+                side: 40,
+                glyphSize: 20,
+                shape: AppShape.md,
+              ),
+              title: Text(appLocalizations.disclaimer),
+              widget: const DisclaimerView(),
+            ),
+            ListItem.open(
+              leading: const IconWell(
+                AppGlyphs.info,
+                side: 40,
+                glyphSize: 20,
+                shape: AppShape.md,
+              ),
+              title: Text(appLocalizations.privacyPolicy),
+              widget: const PrivacyPolicyView(),
+            ),
+            // The build's version, with the dev/beta channel suffix the
+            // preview workflows stamp in. Shown here so the channel a phone is
+            // running is visible on the About page, not only on the tools tab.
+            ListItem(
+              leading: const IconWell(
+                AppGlyphs.appsList,
+                side: 40,
+                glyphSize: 20,
+                shape: AppShape.md,
+              ),
+              title: Text(appLocalizations.currentVersion),
+              trailing: Text(
+                '${globalState.packageInfo.displayVersion}'
+                '${buildChannelSuffix().isNotEmpty ? ' ${buildChannelSuffix()}' : ''}',
+                style: context.listSubtitleStyle,
+              ),
+            ),
+          ],
+        ),
+        generateSection(
+          items: [
+            // Upstream FlClash lives here, not on the card above: that
+            // one carries this project's own entry, so a second project
+            // there reads as a competing project link.
+            _buildLogoLinkItem(
+              asset: 'assets/images/avatar/flclash.png',
+              title: 'FlClash',
+              url: 'https://github.com/chen08209/FlClash',
+              label: 'github.com/chen08209/FlClash',
+            ),
+            _buildContributors(appLocalizations.appIconDesign),
+          ],
+        ),
+        generateSection(
+          title: appLocalizations.acknowledgments,
+          items: [
+            _buildLinkItem(
+              glyph: AppGlyphs.cpu,
+              title: 'mihomo (Clash.Meta)',
+              url: 'https://github.com/MetaCubeX/mihomo',
+              label: 'github.com/MetaCubeX/mihomo',
+            ),
+          ],
+          footer: appLocalizations.acknowledgmentsDesc,
+        ),
+      ],
+    );
     return CommonScaffold(
       rowSeparators: false,
       title: '${appLocalizations.about} $appName',
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 32 + context.bottomInset,
-        ),
-        children: [
-          _AboutHero(
-            onEnterDeveloperMode: () {
-              ref
-                  .read(appSettingProvider.notifier)
-                  .update((state) => state.copyWith(developerMode: true));
-              context.showNotifier(
-                appLocalizations.developerModeEnableTip,
-                level: MessageLevel.success,
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          // No headings over any of the cards: the rows say what they are, and
-          // a label above two of them only said it twice. The update check is
-          // not here either -- it belongs to the row that names the build, on
-          // the tools tab, so this page is only what the build is and what it
-          // stands on.
-          generateSection(
-            items: [
-              _buildLinkItem(
-                glyph: AppGlyphs.code,
-                title: appLocalizations.project,
-                url: 'https://github.com/$repository',
-                label: 'github.com/$repository',
-              ),
-              _buildLinkItem(
-                glyph: AppGlyphs.cpu,
-                title: appLocalizations.core,
-                // Link the repository root so this follows the default branch
-                // instead of naming a branch that can be renamed or removed.
-                url: 'https://github.com/aqiyoung/skyward-core',
-                label: 'github.com/aqiyoung/skyward-core',
-              ),
-              _buildLinkItem(
-                glyph: AppGlyphs.gavel,
-                title: appLocalizations.disclaimerLicenseTitle,
-                url: 'https://github.com/$repository/blob/main/LICENSE',
-                label: 'GPL-3.0',
-              ),
-              // The terms are a page of their own, reached from this row: read
-              // here in full, they were a scroll few ever finished.
-              ListItem.open(
-                leading: const IconWell(
-                  AppGlyphs.rules,
-                  side: 40,
-                  glyphSize: 20,
-                  shape: AppShape.md,
-                ),
-                title: Text(appLocalizations.disclaimer),
-                widget: const DisclaimerView(),
-              ),
-              ListItem.open(
-                leading: const IconWell(
-                  AppGlyphs.info,
-                  side: 40,
-                  glyphSize: 20,
-                  shape: AppShape.md,
-                ),
-                title: Text(appLocalizations.privacyPolicy),
-                widget: const PrivacyPolicyView(),
-              ),
-              // The build's version, with the dev/beta channel suffix the
-              // preview workflows stamp in. Shown here so the channel a phone is
-              // running is visible on the About page, not only on the tools tab.
-              ListItem(
-                leading: const IconWell(
-                  AppGlyphs.appsList,
-                  side: 40,
-                  glyphSize: 20,
-                  shape: AppShape.md,
-                ),
-                title: Text(appLocalizations.currentVersion),
-                trailing: Text(
-                  '${globalState.packageInfo.displayVersion}'
-                  '${buildChannelSuffix().isNotEmpty ? ' ${buildChannelSuffix()}' : ''}',
-                  style: context.listSubtitleStyle,
-                ),
-              ),
-            ],
-          ),
-          generateSection(
-            items: [
-              // Upstream FlClash lives here, not on the card above: that
-              // one carries this project's own entry, so a second project
-              // there reads as a competing project link.
-              _buildLogoLinkItem(
-                asset: 'assets/images/avatar/flclash.png',
-                title: 'FlClash',
-                url: 'https://github.com/chen08209/FlClash',
-                label: 'github.com/chen08209/FlClash',
-              ),
-              _buildContributors(appLocalizations.appIconDesign),
-            ],
-          ),
-          generateSection(
-            title: 'Acknowledgments',
-            items: [
-              _buildLinkItem(
-                glyph: AppGlyphs.cpu,
-                title: 'mihomo (Clash.Meta)',
-                url: 'https://github.com/MetaCubeX/mihomo',
-                label: 'github.com/MetaCubeX/mihomo',
-              ),
-            ],
-            footer:
-                'Skyward began as a fork of FlClash by chen08209 and is built '
-                'on the mihomo (Clash.Meta) core by MetaCubeX. Both are released '
-                'under GPL-3.0.',
-          ),
-        ],
-      ),
+      largeTitle: largeTitle,
+      body: largeTitle
+          ? PageLargeTitle(
+              title: appLocalizations.about,
+              statusBarTop: statusBarTop,
+              body: body,
+            )
+          : body,
     );
   }
 }

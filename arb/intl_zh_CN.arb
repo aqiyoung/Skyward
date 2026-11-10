@@ -1,4 +1,6 @@
 {
+  "acknowledgments": "鸣谢",
+  "acknowledgmentsDesc": "Skyward 最初派生自 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
   "mine": "我的",
   "pagesLabel": "页面",
   "toolEntries": "工具入口",
