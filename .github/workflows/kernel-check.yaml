@@ -88,7 +88,8 @@ jobs:
           # code, and its formatting is upstream's business: config/utils.go,
           # for one, is not gofmt-clean.
           test -z "$(gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go)" || {
-            gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
+            # The diff, not just the name of the file: the fix is in it.
+            gofmt -d ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
             exit 1
           }
           go test -count=1 -v -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
