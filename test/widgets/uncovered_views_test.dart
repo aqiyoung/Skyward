@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/context_menu.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
@@ -293,6 +295,13 @@ void main() {
   testWidgets('the version row checks for an update where it stands', (
     tester,
   ) async {
+    // The check caches the releases it reads, and the cache lives in the
+    // app's data directory. Without a directory of its own the check cannot
+    // finish, and the row never learns that the build is up to date.
+    final root = await Directory.systemTemp.createTemp('skyward-version-row-');
+    addTearDown(() => root.delete(recursive: true));
+    await useAppPaths(root);
+
     final container = _containerFor(tester);
     final originalAdapter = request.dio.httpClientAdapter;
     addTearDown(() => request.dio.httpClientAdapter = originalAdapter);

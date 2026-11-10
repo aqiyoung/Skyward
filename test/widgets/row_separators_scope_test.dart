@@ -82,7 +82,9 @@ void main() {
     }
   });
 
-  testWidgets('separatedOf falls back to true outside a scope', (tester) async {
+  testWidgets('separatedOf falls back to false outside a scope', (
+    tester,
+  ) async {
     late bool read;
     await tester.pumpWidget(
       TestApp(
@@ -94,6 +96,6 @@ void main() {
         ),
       ),
     );
-    expect(read, isTrue);
+    expect(read, isFalse);
   });
 }

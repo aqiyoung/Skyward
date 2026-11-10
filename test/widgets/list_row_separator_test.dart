@@ -189,20 +189,23 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         child: Scaffold(
-          body: ListView(
-            controller: controller,
-            children: [
-              generateSection(
-                items: [
-                  for (var index = 0; index < 3; index++)
-                    DecorationListItem(
-                      title: Text('row $index'),
-                      onPressed: () {},
-                    ),
-                ],
-              ),
-              const SizedBox(height: 2000),
-            ],
+          body: ListRowSeparatorScope(
+            separated: true,
+            child: ListView(
+              controller: controller,
+              children: [
+                generateSection(
+                  items: [
+                    for (var index = 0; index < 3; index++)
+                      DecorationListItem(
+                        title: Text('row $index'),
+                        onPressed: () {},
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 2000),
+              ],
+            ),
           ),
         ),
       ),
