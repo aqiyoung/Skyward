@@ -84,6 +84,31 @@ repeat every morning; delete that tag to be told again.
    compile fails there. Read the injected version back from the build log (`-X ...constant.Version=`) and
    from the core's own startup lines in the app's log page.
 
+## The kernel's own CI does not run on our branches
+
+`skyward-core` keeps the workflows it inherited from upstream, and they are wired to the upstream
+`Alpha` branch: a push to `skyward`, or to a branch of ours, is checked by nobody. The kernel step in
+`.github/workflows/kernel-check.yaml` is what checks it instead: it builds the whole kernel, keeps the
+packages this project owns formatted, runs their tests, and vets them for every platform the app
+ships on. A kernel commit is therefore not done until that job is green on a branch that carries it.
+
+## The go stack
+
+The kernel carries a fifth tun stack, `go`, for the Go-native TCP/IP stack. The kernel does not carry
+the stack itself: a build that has one registers it, and a build that does not refuses the stack by
+name. The stack arrives with a pinned dependency on `github.com/sagernet/sing-tun`, and that pin has
+its own upgrade path, which is stricter than the rest of the kernel:
+
+1. Move the pin to a commit that passes the kernel's own tests in `sagernet/sing-tun`, never to a
+   branch head.
+2. Push the pin; `kernel-check` builds the kernel and runs the differential tests (the same
+   configuration through both stacks must produce the same connections and the same rule hits).
+3. Run the baseline: `tool/bench/tunnel_bench.sh` with `--stack legacy` and then `--stack go`. A
+   regression of more than 10% blocks the merge.
+4. Only then land it on `skyward` and move the app's pin.
+
+The plan this follows is in `.agents/go-stack-plan.md`.
+
 ## Traps
 
 - Do not track `main` in `skyward-core`: it is a stale branch (head `008b91bf`, February 2025) with
