@@ -103,8 +103,8 @@ its own upgrade path, which is stricter than the rest of the kernel:
    branch head.
 2. Push the pin; `kernel-check` builds the kernel and runs the differential tests (the same
    configuration through both stacks must produce the same connections and the same rule hits).
-3. Run the baseline: `tool/bench/tunnel_bench.sh` with `--stack legacy` and then `--stack go`. A
-   regression of more than 10% blocks the merge.
+3. Run the baseline: the kernel's `bench/tunnel_bench.sh`, in the kernel's `benchmark` workflow,
+   measures both stacks in one run. A regression of more than 10% blocks the merge.
 4. Only then land it on `skyward` and move the app's pin.
 
 The plan this follows is in `.agents/go-stack-plan.md`.
