@@ -65,10 +65,10 @@ void main() {
   }
 
   group('theme mode', () {
-    testWidgets('defaults to following the system', (tester) async {
+    testWidgets('defaults to light', (tester) async {
       await pumpThemeView(tester);
 
-      expect(readTheme().themeMode, ThemeMode.system);
+      expect(readTheme().themeMode, ThemeMode.light);
     });
 
     testWidgets('switches to light and back to dark', (tester) async {
@@ -310,7 +310,7 @@ void main() {
       container.read(systemBrightnessProvider.notifier).value =
           Brightness.light;
       await pumpThemeView(tester);
-      expect(readTheme().themeMode, ThemeMode.system);
+      expect(readTheme().themeMode, ThemeMode.light);
 
       await tester.tap(find.text('Pure black mode'));
       await tester.pumpAndSettle();

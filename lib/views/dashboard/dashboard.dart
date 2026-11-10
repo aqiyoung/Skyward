@@ -424,9 +424,9 @@ class _EditDashboardTile extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: DashboardColors.of(context).tone2,
-              borderRadius: BorderRadius.circular(20),
+              shape: AppShape.all(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

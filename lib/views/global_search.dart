@@ -155,7 +155,6 @@ class _GlobalSearchViewState extends ConsumerState<GlobalSearchView> {
     ];
 
     return CommonScaffold(
-      rowSeparators: false,
       title: appLocalizations.search,
       largeTitle: true,
       body: PageLargeTitle(

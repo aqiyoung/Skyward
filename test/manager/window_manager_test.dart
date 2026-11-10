@@ -269,6 +269,11 @@ void main() {
     testWidgets('is applied on start and mirrored into the provider', (
       tester,
     ) async {
+      // The blur takes the theme's brightness: put the app in dark so the
+      // mirrored value is unambiguous, whichever way the default leans.
+      container
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(themeMode: ThemeMode.dark));
       await pumpWindowManager(tester);
       await tester.pumpAndSettle();
 

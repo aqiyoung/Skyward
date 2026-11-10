@@ -34,22 +34,19 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
       profileId: widget.profileId,
       child: CommonScaffold(
         title: appLocalizations.extend,
-        body: ListRowSeparatorScope(
-          separated: false,
-          child: ScrollConfiguration(
-            behavior: const ShowBarScrollBehavior(),
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: SizedBox(height: context.appBarInset),
-                ),
-                const _Title(),
-                const _Content(),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: context.bottomInset),
-                ),
-              ],
-            ),
+        body: ScrollConfiguration(
+          behavior: const ShowBarScrollBehavior(),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: SizedBox(height: context.appBarInset),
+              ),
+              const _Title(),
+              const _Content(),
+              SliverToBoxAdapter(
+                child: SizedBox(height: context.bottomInset),
+              ),
+            ],
           ),
         ),
       ),

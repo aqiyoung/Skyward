@@ -482,7 +482,10 @@ void main() {
       addTearDown(container.dispose);
       globalState.container = container;
       container.read(viewSizeProvider.notifier).value = const Size(1400, 1000);
-      container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+      // The settings centre the redesign moved out of the old "tools" tab is
+      // now the "Mine" destination, so the route that must survive enabling
+      // logs is the mine page (the former tools page).
+      container.read(currentPageLabelProvider.notifier).toPage(PageLabel.mine);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

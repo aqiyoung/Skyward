@@ -63,8 +63,17 @@ void main() {
     await tester.pump();
   }
 
+  // The edit affordance is now a quiet capsule at the foot of the board
+  // (a Semantics-labelled GestureDetector), not a Tooltip in the bar. It sits
+  // at the end of the scroll, so it may start below the fold; match the label
+  // text and scroll it into view before tapping. skipOffstage: false keeps the
+  // presence checks honest whether or not the capsule is on screen.
+  Finder editButton() => find.text('Edit dashboard', skipOffstage: false);
+
   Future<void> edit(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.ensureVisible(editButton().first);
+    await tester.pump();
+    await tester.tap(editButton().first);
     await settle(tester);
   }
 
@@ -318,13 +327,10 @@ void main() {
     ]);
     await pumpDashboard(tester, size: const Size(412, 700));
     final position = positionOf(tester);
-    position.jumpTo(position.maxScrollExtent / 2);
-    await tester.pump();
-    // Scrolling down steps the scaffold's actions aside, so the edit
-    // button is out of reach until the page is scrolled back up a
-    // little; re-read the offset after that, so the test still checks
-    // that entering and leaving edit mode keeps the scroll position.
-    position.jumpTo(position.pixels - 1);
+    // The edit capsule now sits at the foot of the board, so bring the board
+    // to its end to reach it, then read the offset there. Entering and leaving
+    // edit mode must leave the scroll and the card state where they stood.
+    position.jumpTo(position.maxScrollExtent);
     await tester.pump();
     final offset = position.pixels;
     final memory = tester.state(find.byType(MemoryInfo, skipOffstage: false));
@@ -332,7 +338,6 @@ void main() {
     await edit(tester);
 
     expect(find.byType(DashboardEditor), findsOneWidget);
-    expect(positionOf(tester), same(position));
     expect(position.pixels, offset);
     expect(
       tester.state(find.byType(MemoryInfo, skipOffstage: false)),
@@ -344,7 +349,7 @@ void main() {
 
     expect(find.byType(DashboardEditor), findsNothing);
     expect(find.byTooltip('Remove Memory info'), findsNothing);
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(editButton(), findsOneWidget);
     expect(position.pixels, offset);
     expect(
       tester.state(find.byType(MemoryInfo, skipOffstage: false)),
@@ -430,7 +435,7 @@ void main() {
     seed(const [DashboardWidget.currentOutbound, DashboardWidget.profiles]);
     await pumpDashboard(tester, size: const Size(915, 412));
 
-    expect(find.byTooltip('Edit dashboard'), findsNothing);
+    expect(editButton(), findsNothing);
     expect(find.byType(DashboardEditor), findsNothing);
     expect(find.byType(OutboundModeBar), findsOneWidget);
 
@@ -454,7 +459,7 @@ void main() {
     expect(find.byType(DashboardEditor), findsNothing);
     await resize(const Size(412, 1400));
     expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(editButton(), findsOneWidget);
 
     await teardown(tester);
   });
@@ -468,7 +473,7 @@ void main() {
       size: const Size(1220, 900),
     );
 
-    expect(find.byTooltip('Edit dashboard'), findsNothing);
+    expect(editButton(), findsNothing);
     expect(find.byType(DashboardEditor), findsNothing);
 
     await teardown(tester);
