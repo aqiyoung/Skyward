@@ -41,11 +41,10 @@ void main() {
     await tester.pump();
   }
 
-  Future<void> pumpTools(WidgetTester tester) => pump(tester, const ToolsView());
+  Future<void> pumpTools(WidgetTester tester) =>
+      pump(tester, const ToolsView());
 
-  testWidgets('the settings page carries no search of its own', (
-    tester,
-  ) async {
+  testWidgets('the settings page carries no search of its own', (tester) async {
     await pumpTools(tester);
     final appLocalizations = tester
         .element(find.byType(ToolsView))
