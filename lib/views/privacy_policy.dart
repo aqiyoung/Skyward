@@ -17,17 +17,13 @@ class PrivacyPolicyView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.privacyPolicy),
-      ),
+      appBar: AppBar(title: Text(appLocalizations.privacyPolicy)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _maxContentWidth),
           child: ListView(
             padding: EdgeInsets.symmetric(
-              horizontal: context.isMobileView
-                  ? _mobileGutter
-                  : _desktopGutter,
+              horizontal: context.isMobileView ? _mobileGutter : _desktopGutter,
               vertical: context.isMobileView ? 16 : _desktopTopPadding,
             ),
             children: [
@@ -67,10 +63,7 @@ class _PolicySection extends StatelessWidget {
   final String title;
   final String content;
 
-  const _PolicySection({
-    required this.title,
-    required this.content,
-  });
+  const _PolicySection({required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
@@ -79,15 +72,9 @@ class _PolicySection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppTextStyle.headline.of(context),
-          ),
+          Text(title, style: AppTextStyle.headline.of(context)),
           const SizedBox(height: 8),
-          Text(
-            content,
-            style: AppTextStyle.subheadline.of(context),
-          ),
+          Text(content, style: AppTextStyle.subheadline.of(context)),
         ],
       ),
     );

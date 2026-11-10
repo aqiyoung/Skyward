@@ -208,10 +208,7 @@ void main() {
 
     final card = find.byType(ProfileItem);
     expect(
-      find.descendant(
-        of: card,
-        matching: find.byType(LinearProgressIndicator),
-      ),
+      find.descendant(of: card, matching: find.byType(LinearProgressIndicator)),
       findsNothing,
     );
     expect(

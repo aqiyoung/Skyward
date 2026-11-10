@@ -233,6 +233,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     @Default({}) Map<String, dynamic> injectedRuleProviders,
     String? matchTarget,
     @Default(false) bool safeMode,
+
     /// Placed ahead of the profile's rules, because discovery must not reach
     /// a peer before a rule has decided what to do with it.
     @Default(WebrtcGuard.block) WebrtcGuard webrtcGuard,

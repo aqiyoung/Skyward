@@ -255,10 +255,7 @@ class _DesktopDashboard extends StatelessWidget {
                 (2, const ServiceStatusCard()),
             ]),
           ),
-          sized(
-            routingHeight,
-            row(const [(4, RoutingBoardCard())]),
-          ),
+          sized(routingHeight, row(const [(4, RoutingBoardCard())])),
         ];
         final rowsHeight =
             padding.vertical +

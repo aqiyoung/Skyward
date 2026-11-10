@@ -162,10 +162,9 @@ abstract final class DashboardWeight {
 
 /// The dashboard's text roles; every figure reads in tabular digits.
 abstract final class DashboardText {
-  static TextStyle cardTitle(BuildContext context) =>
-      AppTextStyle.subheadline
-          .of(context)
-          .copyWith(fontWeight: DashboardWeight.title);
+  static TextStyle cardTitle(BuildContext context) => AppTextStyle.subheadline
+      .of(context)
+      .copyWith(fontWeight: DashboardWeight.title);
 
   static TextStyle label(BuildContext context, {Color? color}) => AppTextStyle
       .caption1
@@ -209,8 +208,7 @@ abstract final class DashboardText {
         fontWeight: DashboardWeight.value,
       );
 
-  static TextStyle rowTitle(BuildContext context) =>
-      AppTextStyle.subheadline
-          .of(context)
-          .copyWith(fontWeight: DashboardWeight.value);
+  static TextStyle rowTitle(BuildContext context) => AppTextStyle.subheadline
+      .of(context)
+      .copyWith(fontWeight: DashboardWeight.value);
 }

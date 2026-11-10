@@ -98,9 +98,7 @@ class ProfilesCard extends ConsumerWidget {
             profile?.realLabel ?? appLocalizations.addProfile,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: name
-                .of(context)
-                .copyWith(fontWeight: DashboardWeight.title),
+            style: name.of(context).copyWith(fontWeight: DashboardWeight.title),
           ),
         ),
         if (profile != null && switchable)

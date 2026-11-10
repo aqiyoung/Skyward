@@ -189,8 +189,7 @@ class _LogsViewState extends ConsumerState<LogsView>
             padding: padding,
             itemCount: logs.length,
             extentEstimation: recordListExtentEstimation,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: recordListGap),
+            separatorBuilder: (_, _) => const SizedBox(height: recordListGap),
             itemBuilder: (_, index) {
               final log = logs[index];
               return LogItem(log: log);
@@ -218,7 +217,8 @@ class _FilterChips extends StatelessWidget {
         children: [
           for (final filter in filters.filters)
             TonalChip(
-              label: filters.facetOf(filter.kind)?.label(filter.value) ??
+              label:
+                  filters.facetOf(filter.kind)?.label(filter.value) ??
                   filter.value,
               color: context.raisedSurfaceLevel.colorOf(colorScheme),
               foregroundColor: colorScheme.onSurfaceVariant,

@@ -104,10 +104,8 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         IconButtonData(
           glyph: AppGlyphs.search,
           tooltip: appLocalizations.search,
-          onPressed: () => showExtend(
-            context,
-            builder: (_) => const SettingsSearchView(),
-          ),
+          onPressed: () =>
+              showExtend(context, builder: (_) => const SettingsSearchView()),
         ),
       ],
       body: Builder(

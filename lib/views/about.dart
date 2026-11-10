@@ -199,7 +199,8 @@ class _AboutViewState extends ConsumerState<AboutView> {
                 label: 'github.com/MetaCubeX/mihomo',
               ),
             ],
-            footer: 'Skyward began as a fork of FlClash by chen08209 and is built '
+            footer:
+                'Skyward began as a fork of FlClash by chen08209 and is built '
                 'on the mihomo (Clash.Meta) core by MetaCubeX. Both are released '
                 'under GPL-3.0.',
           ),

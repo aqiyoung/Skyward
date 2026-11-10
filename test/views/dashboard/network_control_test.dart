@@ -86,9 +86,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tapping the LAN block opens its detail page', (
-    tester,
-  ) async {
+  testWidgets('tapping the LAN block opens its detail page', (tester) async {
     await pump(tester, SupportPlatform.Android);
     container.read(localIpProvider.notifier).update((_) => '192.168.1.23');
     await tester.pump();

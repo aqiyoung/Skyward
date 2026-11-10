@@ -140,7 +140,10 @@ class Request {
     final remoteVersion = release['tag_name'] as String;
     final version = globalState.packageInfo.displayVersion;
     final hasUpdate = shouldOfferUpdate(
-      remoteVersion: releaseVersionOf(remoteVersion, release['name'] as String?),
+      remoteVersion: releaseVersionOf(
+        remoteVersion,
+        release['name'] as String?,
+      ),
       remoteBuildNumber: releaseBuildNumber(release['body']),
       installedVersion: version,
     );
@@ -199,7 +202,9 @@ class Request {
 
   Future<void> _cacheReleases(List<dynamic> releases) async {
     try {
-      await (await _releasesCacheFile()).safeWriteAsString(jsonEncode(releases));
+      await (await _releasesCacheFile()).safeWriteAsString(
+        jsonEncode(releases),
+      );
     } catch (error) {
       commonPrint.log(
         'cache releases failed: ${compactError(error)}',

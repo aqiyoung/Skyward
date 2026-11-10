@@ -431,12 +431,10 @@ class _RouteMapPainter extends CustomPainter {
 
   Offset _project(RouteStop stop, Size size, double left) {
     final x = ((stop.longitude - left) % 360) / 360;
-    final y = (worldMapTopLatitude - stop.latitude) /
+    final y =
+        (worldMapTopLatitude - stop.latitude) /
         (worldMapTopLatitude - worldMapBottomLatitude);
-    return Offset(
-      x * size.width,
-      y.clamp(0.0, 1.0).toDouble() * size.height,
-    );
+    return Offset(x * size.width, y.clamp(0.0, 1.0).toDouble() * size.height);
   }
 
   @override

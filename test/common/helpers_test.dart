@@ -253,10 +253,7 @@ void main() {
 
     test('rebuilds a preview version from its tag and name', () {
       expect(
-        releaseVersionOf(
-          'preview-2090029901',
-          'Skyward 1.0.0.2090029901（预览版）',
-        ),
+        releaseVersionOf('preview-2090029901', 'Skyward 1.0.0.2090029901（预览版）'),
         '1.0.0.2090029901',
       );
       expect(releaseVersionOf('preview-2090029901'), '1.0.0.2090029901');
@@ -269,12 +266,7 @@ void main() {
       String name,
       String body, {
       bool draft = false,
-    }) => {
-      'tag_name': tag,
-      'name': name,
-      'body': body,
-      'draft': draft,
-    };
+    }) => {'tag_name': tag, 'name': name, 'body': body, 'draft': draft};
 
     final stable23 = release(
       'v1.0.0.23',
@@ -294,10 +286,11 @@ void main() {
 
     test('a stable install is offered the newer beta over its own preview', () {
       expect(
-        newestOfferableRelease(
-          [preview9901, beta24, stable23],
-          installedVersion: '1.0.0.23',
-        ),
+        newestOfferableRelease([
+          preview9901,
+          beta24,
+          stable23,
+        ], installedVersion: '1.0.0.23'),
         beta24,
       );
     });
@@ -309,30 +302,32 @@ void main() {
         '- 构建号：`2090029905`',
       );
       expect(
-        newestOfferableRelease(
-          [preview9905, stable23],
-          installedVersion: '1.0.0.23',
-        ),
+        newestOfferableRelease([
+          preview9905,
+          stable23,
+        ], installedVersion: '1.0.0.23'),
         preview9905,
       );
     });
 
     test('a preview install is offered the newer beta', () {
       expect(
-        newestOfferableRelease(
-          [preview9901, beta24, stable23],
-          installedVersion: '1.0.0.2090029813',
-        ),
+        newestOfferableRelease([
+          preview9901,
+          beta24,
+          stable23,
+        ], installedVersion: '1.0.0.2090029813'),
         beta24,
       );
     });
 
     test('nothing is offered once the newest build is installed', () {
       expect(
-        newestOfferableRelease(
-          [preview9901, beta24, stable23],
-          installedVersion: '1.0.0.24',
-        ),
+        newestOfferableRelease([
+          preview9901,
+          beta24,
+          stable23,
+        ], installedVersion: '1.0.0.24'),
         isNull,
       );
     });
@@ -345,10 +340,10 @@ void main() {
         draft: true,
       );
       expect(
-        newestOfferableRelease(
-          [draftPreview, stable23],
-          installedVersion: '1.0.0.23',
-        ),
+        newestOfferableRelease([
+          draftPreview,
+          stable23,
+        ], installedVersion: '1.0.0.23'),
         isNull,
       );
     });
@@ -361,10 +356,10 @@ void main() {
         'notes',
       );
       expect(
-        newestOfferableRelease(
-          [previewNoNumber, nextStable],
-          installedVersion: '1.0.0.23',
-        ),
+        newestOfferableRelease([
+          previewNoNumber,
+          nextStable,
+        ], installedVersion: '1.0.0.23'),
         nextStable,
       );
     });

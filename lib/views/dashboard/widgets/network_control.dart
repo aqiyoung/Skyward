@@ -98,7 +98,11 @@ class _StatusTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 4,
               children: [
-                Text(title, maxLines: 1, style: DashboardText.rowTitle(context)),
+                Text(
+                  title,
+                  maxLines: 1,
+                  style: DashboardText.rowTitle(context),
+                ),
                 Text(
                   subtitle,
                   maxLines: 1,
@@ -128,7 +132,9 @@ class _VpnStatusTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final enabled = ref.watch(vpnSettingProvider.select((state) => state.enable));
+    final enabled = ref.watch(
+      vpnSettingProvider.select((state) => state.enable),
+    );
     final running = ref.watch(isStartProvider);
     final suspended = ref.watch(suspendProvider);
     final safeMode = ref.watch(safeModeProvider);
@@ -148,7 +154,9 @@ class _VpnStatusTile extends ConsumerWidget {
 
     return _StatusTile(
       title: 'VPN',
-      subtitle: effective ? appLocalizations.enabled : appLocalizations.disabled,
+      subtitle: effective
+          ? appLocalizations.enabled
+          : appLocalizations.disabled,
       onTap: () {
         if (effective) {
           ref.read(commonActionProvider.notifier).toggleRunning();
@@ -176,9 +184,8 @@ class _LanStatusTile extends ConsumerWidget {
     return _StatusTile(
       title: appLocalizations.allowLan,
       subtitle: allowLan ? appLocalizations.enabled : appLocalizations.disabled,
-      onTap: () => unawaited(
-        BaseNavigator.push(context, const LanAccessView()),
-      ),
+      onTap: () =>
+          unawaited(BaseNavigator.push(context, const LanAccessView())),
     );
   }
 }

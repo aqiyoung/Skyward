@@ -100,8 +100,7 @@ void main() {
 
     expect(
       find.byWidgetPredicate(
-        (widget) =>
-            widget is ListRowSeparatorScope && !widget.separated,
+        (widget) => widget is ListRowSeparatorScope && !widget.separated,
       ),
       findsOneWidget,
     );

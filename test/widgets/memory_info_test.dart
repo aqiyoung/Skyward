@@ -601,34 +601,35 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('the sheet shows the heap ceiling the Core sized for the device', (
-      tester,
-    ) async {
-      const budgeted = CoreMemoryStats(
-        rss: 4 * 1024 * 1024,
-        heapInuse: 2 * 1024 * 1024,
-        heapIdle: 1024 * 1024,
-        stackInuse: 512 * 1024,
-        runtimeOther: 256 * 1024,
-        budget: 288 * 1024 * 1024,
-        gcPercent: 70,
-        deviceTotal: 8 * 1024 * 1024 * 1024,
-      );
+    testWidgets(
+      'the sheet shows the heap ceiling the Core sized for the device',
+      (tester) async {
+        const budgeted = CoreMemoryStats(
+          rss: 4 * 1024 * 1024,
+          heapInuse: 2 * 1024 * 1024,
+          heapIdle: 1024 * 1024,
+          stackInuse: 512 * 1024,
+          runtimeOther: 256 * 1024,
+          budget: 288 * 1024 * 1024,
+          gcPercent: 70,
+          deviceTotal: 8 * 1024 * 1024 * 1024,
+        );
 
-      await openSheet(
-        tester,
-        reader: () async => MemorySnapshot.resolve(
-          rss: 12 * 1024 * 1024,
-          core: budgeted,
-          coreInProcess: false,
-        ),
-      );
+        await openSheet(
+          tester,
+          reader: () async => MemorySnapshot.resolve(
+            rss: 12 * 1024 * 1024,
+            core: budgeted,
+            coreInProcess: false,
+          ),
+        );
 
-      expect(find.text('Core budget'), findsOneWidget);
-      expect(find.textContaining('GOGC 70%'), findsOneWidget);
+        expect(find.text('Core budget'), findsOneWidget);
+        expect(find.textContaining('GOGC 70%'), findsOneWidget);
 
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
 
     testWidgets('an in-process Core labels the app share as shared', (
       tester,
