@@ -1816,5 +1816,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
+    "mine": MessageLookupByLibrary.simpleMessage("마이"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("페이지"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("도구"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 노드, 도구, 설정 검색"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("감사의 글"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward는 chen08209의 FlClash에서 분기되었으며 MetaCubeX의 mihomo (Clash.Meta) 코어를 기반으로 합니다. 두 프로젝트 모두 GPL-3.0으로 배포됩니다.",
+    ),
   };
 }

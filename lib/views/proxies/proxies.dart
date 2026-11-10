@@ -3,6 +3,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -156,28 +157,115 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     final picker = widget.picker;
     final primaryAction = _buildPrimaryAction();
+    final menuItems = picker
+        ? <CommonPopupMenuItem>[]
+        : _buildMenuItems(context, style);
+    final iconActions = <IconButtonData>[
+      if (_isTab && !picker)
+        IconButtonData(
+          glyph: AppGlyphs.locate,
+          onPressed: () {
+            _proxiesTabKey.currentState?.scrollToGroupSelected();
+          },
+          tooltip: context.appLocalizations.scrollToSelected,
+        ),
+    ];
+    // On a phone the heading and its buttons move into the page and the bar
+    // is left completely empty, matching the dashboard and the global-search
+    // tab. Pickers and compact sheets keep the ordinary bar so a sheet's own
+    // chrome is not duplicated over a page heading.
+    final largeTitle =
+        ViewScope.isMobileOf(context) && !context.isInCompactSheet && !picker;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final body = switch (style.type) {
+      ProxiesType.tab => _tabView,
+      ProxiesType.list => const ProxiesListView(),
+    };
+    // The dock's search tab is now the only place to start a proxy search.
+    // When a hit there filters this list, show the active term as a small
+    // dismissible chip under the heading instead of a second search field.
+    final proxyQuery = ref.watch(queryProvider(QueryTag.proxies));
+    final subtitle = largeTitle && proxyQuery.isNotEmpty
+        ? _QueryChip(
+            query: proxyQuery,
+            onClear: () =>
+                ref.read(queryProvider(QueryTag.proxies).notifier).value = '',
+          )
+        : null;
     return CommonScaffold(
       isLoading: isLoading,
       resizeToAvoidBottomInset: false,
-      primaryAction: primaryAction,
-      searchActions: [?primaryAction],
-      iconActions: [
-        if (_isTab && !picker)
-          IconButtonData(
-            glyph: AppGlyphs.locate,
-            onPressed: () {
-              _proxiesTabKey.currentState?.scrollToGroupSelected();
-            },
-            tooltip: context.appLocalizations.scrollToSelected,
-          ),
-      ],
-      menuItems: picker ? const [] : _buildMenuItems(context, style),
+      primaryAction: largeTitle ? null : primaryAction,
+      searchActions: largeTitle ? const [] : [?primaryAction],
+      iconActions: largeTitle ? const [] : iconActions,
+      menuItems: largeTitle ? const [] : menuItems,
       title: context.appLocalizations.proxies,
-      searchState: AppBarSearchState(onSearch: _onSearch),
-      body: switch (style.type) {
-        ProxiesType.tab => _tabView,
-        ProxiesType.list => const ProxiesListView(),
-      },
+      searchState: largeTitle ? null : AppBarSearchState(onSearch: _onSearch),
+      largeTitle: largeTitle,
+      body: largeTitle
+          ? PageLargeTitle(
+              title: context.appLocalizations.proxies,
+              statusBarTop: statusBarTop,
+              actions: [?primaryAction, ...iconActions],
+              menuItems: menuItems,
+              subtitle: subtitle,
+              body: body,
+            )
+          : body,
+    );
+  }
+}
+
+/// The active proxy filter, shown under the heading when a hit in the dock's
+/// search tab opened this page. Tapping it clears the filter so the full list
+/// comes back -- this page keeps no search field of its own any more.
+class _QueryChip extends StatelessWidget {
+  const _QueryChip({required this.query, required this.onClear});
+
+  final String query;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(top: 10),
+      child: Semantics(
+        button: true,
+        label: context.appLocalizations.clearSearch,
+        child: GestureDetector(
+          onTap: onClear,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
+            decoration: BoxDecoration(
+              color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    query,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.subheadline
+                        .of(context)
+                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GlyphIcon(
+                  AppGlyphs.close,
+                  size: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

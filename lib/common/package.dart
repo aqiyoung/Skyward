@@ -4,6 +4,25 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'common.dart';
 
+/// The display-only channel suffix for the running build. `dev` builds read
+/// "DEV", `beta` builds read "Beta"; official releases carry no channel and so
+/// read empty. This is appended to the version *string the user sees* and
+/// nothing else -- it must not reach [PackageInfoExtension.displayVersion],
+/// whose fourth component the update check parses as an integer. A non-numeric
+/// character there throws in [compareVersions] and would make the app stop
+/// offering OTA upgrades. Keeping the channel out of the compared version is
+/// what lets dev and beta builds keep installing over one another.
+String buildChannelSuffix() {
+  switch (buildChannel) {
+    case 'dev':
+      return 'DEV';
+    case 'beta':
+      return 'Beta';
+    default:
+      return '';
+  }
+}
+
 extension PackageInfoExtension on PackageInfo {
   /// The version users see and updates are compared against. The packages only
   /// carry upstream's three components, so the injected [buildVersion] supplies

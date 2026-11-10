@@ -1,4 +1,10 @@
 {
+  "acknowledgments": "Acknowledgments",
+  "acknowledgmentsDesc": "Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.",
+  "mine": "Mine",
+  "pagesLabel": "Pages",
+  "toolEntries": "Tools",
+  "searchHint": "Search pages, nodes, tools and settings",
   "rule": "Rule",
   "rules": "Rules",
   "global": "Global",

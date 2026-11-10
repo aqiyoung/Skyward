@@ -6,6 +6,12 @@ name: kernel check
 # job mirrors pr-check: it runs on every push to a non-main/non-beta branch and
 # on every pull request, compiles the core, and runs its unit tests so kernel
 # changes are caught the same way the Flutter side is.
+#
+# The kernel lives in core/Clash.Meta (skyward-core) and has its own workflows,
+# but they only run on the upstream Alpha branch, so a commit on our branches
+# would be checked by nobody. The kernel step below is what checks it: it
+# builds the whole kernel, keeps the packages we own formatted, and runs their
+# tests on every platform the app ships on.
 
 on:
   pull_request:
@@ -40,8 +46,56 @@ jobs:
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            core/go.sum
+            core/Clash.Meta/go.sum
+      # The kernel and the wrapper that binds it are two modules, and a new
+      # dependency in the kernel moves the wrapper's module graph with it.
+      # Resolving the modules here keeps the build honest, and the resolved
+      # files are attached to the run so they can be committed.
+      - name: Resolve the core's module graph
+        working-directory: core
+        run: |
+          go mod tidy
+          if ! git diff --quiet -- go.mod go.sum; then
+            echo "::warning::go.mod and go.sum are out of date; the resolved files are attached to this run"
+            git diff --stat -- go.mod go.sum
+          fi
+      - name: Attach the resolved module files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-module-files
+          path: |
+            core/go.mod
+            core/go.sum
       - name: Build and test the core
         working-directory: core
         run: |
           go test -count=1 .
           go vet . ./cmd/...
+      - name: Build and test the kernel
+        working-directory: core/Clash.Meta
+        env:
+          CGO_ENABLED: 0
+        run: |
+          tags="$(sed -n 's/^tags: *//p' ../../build_config.yaml)"
+          test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
+          # The go stack is behind a build tag of its own: it is checked here,
+          # and it is not in the releases yet.
+          kernel_tags="$tags,with_go_stack"
+          go build -tags "$kernel_tags" ./...
+          # The packages this project owns. The rest of the kernel is upstream
+          # code, and its formatting is upstream's business: config/utils.go,
+          # for one, is not gofmt-clean.
+          test -z "$(gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go)" || {
+            gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
+            exit 1
+          }
+          go test -count=1 -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          # The config package reaches out to the network in some of its tests,
+          # so only the tests this project added run here.
+          go test -count=1 -tags "$kernel_tags" -run 'TestRawTun' ./config/
+          go vet -tags "$kernel_tags" ./constant/... ./config/... ./listener/sing_tun/...
+          GOOS=darwin GOARCH=arm64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          GOOS=windows GOARCH=amd64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          GOOS=android GOARCH=arm64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...

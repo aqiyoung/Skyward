@@ -1682,5 +1682,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
+    "mine": MessageLookupByLibrary.simpleMessage("我的"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("页面"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("工具入口"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、节点、工具与设置"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("鸣谢"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward 最初派生自 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
+    ),
   };
 }

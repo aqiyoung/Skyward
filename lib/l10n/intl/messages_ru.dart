@@ -2228,5 +2228,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
+    "mine": MessageLookupByLibrary.simpleMessage("Мой"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Страницы"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Инструменты"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Поиск страниц, узлов, инструментов и настроек",
+    ),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Благодарности"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward начинался как форк FlClash от chen08209 и построен на ядре mihomo (Clash.Meta) от MetaCubeX. Оба проекта распространяются под лицензией GPL-3.0.",
+    ),
   };
 }

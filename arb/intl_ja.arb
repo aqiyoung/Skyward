@@ -1,4 +1,10 @@
 {
+  "acknowledgments": "謝辞",
+  "acknowledgmentsDesc": "Skyward は chen08209 氏の FlClash から派生し、MetaCubeX の mihomo (Clash.Meta) カーネルを基に構築されています。両者は GPL-3.0 の下で公開されています。",
+  "mine": "マイページ",
+  "pagesLabel": "ページ",
+  "toolEntries": "ツール",
+  "searchHint": "ページ、ノード、ツール、設定を検索",
   "rule": "ルール",
   "rules": "ルール",
   "global": "グローバル",

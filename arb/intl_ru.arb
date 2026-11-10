@@ -1,4 +1,10 @@
 {
+  "acknowledgments": "Благодарности",
+  "acknowledgmentsDesc": "Skyward начинался как форк FlClash от chen08209 и построен на ядре mihomo (Clash.Meta) от MetaCubeX. Оба проекта распространяются под лицензией GPL-3.0.",
+  "mine": "Мой",
+  "pagesLabel": "Страницы",
+  "toolEntries": "Инструменты",
+  "searchHint": "Поиск страниц, узлов, инструментов и настроек",
   "rule": "Правило",
   "rules": "Правила",
   "global": "Глобальный",

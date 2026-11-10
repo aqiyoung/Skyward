@@ -124,10 +124,15 @@ List<String> createFlutterBuildArgs({
   return flutterBuildArgs;
 }
 
-Map<String, String> createBuildEnvironment(String env, {String? appVersion}) {
+Map<String, String> createBuildEnvironment(
+  String env, {
+  String? appVersion,
+  String? channel,
+}) {
   return {
     'APP_ENV': env,
     if (appVersion != null && appVersion.isNotEmpty) 'APP_VERSION': appVersion,
+    if (channel != null && channel.isNotEmpty) 'APP_CHANNEL': channel,
   };
 }
 
@@ -172,6 +177,7 @@ Future<int> _package(
       createBuildEnvironment(
         env,
         appVersion: Platform.environment['APP_VERSION_NAME'],
+        channel: Platform.environment['APP_CHANNEL_NAME'],
       ),
     ),
   );

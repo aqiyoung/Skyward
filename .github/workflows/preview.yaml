@@ -420,6 +420,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           APP_VERSION_NAME: ${{ steps.version.outputs.version }}
+          APP_CHANNEL_NAME: beta
         run: dart setup.dart android --env ${{ inputs.env || 'pre' }} --arch arm64 -v
 
       - name: Name the artifact after our version

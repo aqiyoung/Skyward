@@ -101,7 +101,8 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
               ListItem(
                 title: const Text(appName),
                 trailing: Text(
-                  'v${globalState.packageInfo.displayVersion}',
+                  'v${globalState.packageInfo.displayVersion}'
+                  '${buildChannelSuffix().isNotEmpty ? ' ${buildChannelSuffix()}' : ''}',
                   style: context.listSubtitleStyle,
                 ),
               ),

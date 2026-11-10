@@ -2122,5 +2122,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
+    "mine": MessageLookupByLibrary.simpleMessage("Mine"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Tools"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Search pages, nodes, tools and settings",
+    ),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Acknowledgments"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.",
+    ),
   };
 }

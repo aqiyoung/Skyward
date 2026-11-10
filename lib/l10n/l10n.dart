@@ -1461,6 +1461,51 @@ class AppLocalizations {
     return Intl.message('Search', name: 'search', desc: '', args: []);
   }
 
+  /// `Mine`
+  String get mine {
+    return Intl.message('Mine', name: 'mine', desc: '', args: []);
+  }
+
+  /// `Pages`
+  String get pagesLabel {
+    return Intl.message('Pages', name: 'pagesLabel', desc: '', args: []);
+  }
+
+  /// `Tools`
+  String get toolEntries {
+    return Intl.message('Tools', name: 'toolEntries', desc: '', args: []);
+  }
+
+  /// `Search pages, nodes, tools and settings`
+  String get searchHint {
+    return Intl.message(
+      'Search pages, nodes, tools and settings',
+      name: 'searchHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Acknowledgments`
+  String get acknowledgments {
+    return Intl.message(
+      'Acknowledgments',
+      name: 'acknowledgments',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Skyward began as a fork of FlClash by chen08209 ...`
+  String get acknowledgmentsDesc {
+    return Intl.message(
+      'Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.',
+      name: 'acknowledgmentsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Allow apps to bypass VPN`
   String get allowBypass {
     return Intl.message(
