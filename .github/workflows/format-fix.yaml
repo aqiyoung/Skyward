@@ -29,18 +29,23 @@ jobs:
           channel: stable
           flutter-version: '3.47.6'
 
+      # Mirrors checks: pub get first so package_config pins the language
+      # version dart format parses with.
+      - name: Install dependencies
+        run: flutter pub get
+
       - name: Format
         run: dart format lib test tool plugins setup.dart
 
       - name: Commit and push
         run: |
-          if git diff --quiet; then
+          git add lib test tool plugins setup.dart
+          if git diff --cached --quiet; then
             echo 'Already formatted.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
           git commit -m 'style: dart format 全仓（与 checks 同一 Flutter 版本）' \
             -m 'Changelog: skip'
           git push origin HEAD:refs/heads/${{ inputs.branch }}
