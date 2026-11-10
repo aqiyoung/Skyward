@@ -49,6 +49,25 @@ jobs:
           cache-dependency-path: |
             core/go.sum
             core/Clash.Meta/go.sum
+      # The kernel and the wrapper that binds it are two modules, and a new
+      # dependency in the kernel moves the wrapper's module graph with it.
+      # Resolving the modules here keeps the build honest, and the resolved
+      # files are attached to the run so they can be committed.
+      - name: Resolve the core's module graph
+        working-directory: core
+        run: |
+          go mod tidy
+          if ! git diff --quiet -- go.mod go.sum; then
+            echo "::warning::go.mod and go.sum are out of date; the resolved files are attached to this run"
+            git diff --stat -- go.mod go.sum
+          fi
+      - name: Attach the resolved module files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-module-files
+          path: |
+            core/go.mod
+            core/go.sum
       - name: Build and test the core
         working-directory: core
         run: |
@@ -61,7 +80,10 @@ jobs:
         run: |
           tags="$(sed -n 's/^tags: *//p' ../../build_config.yaml)"
           test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
-          go build -tags "$tags" ./...
+          # The go stack is behind a build tag of its own: it is checked here,
+          # and it is not in the releases yet.
+          kernel_tags="$tags,with_go_stack"
+          go build -tags "$kernel_tags" ./...
           # The packages this project owns. The rest of the kernel is upstream
           # code, and its formatting is upstream's business: config/utils.go,
           # for one, is not gofmt-clean.
@@ -69,11 +91,11 @@ jobs:
             gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
             exit 1
           }
-          go test -count=1 -tags "$tags" ./constant/... ./listener/sing_tun/...
+          go test -count=1 -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
           # The config package reaches out to the network in some of its tests,
           # so only the tests this project added run here.
-          go test -count=1 -tags "$tags" -run 'TestRawTun' ./config/
-          go vet -tags "$tags" ./constant/... ./config/... ./listener/sing_tun/...
-          GOOS=darwin GOARCH=arm64 go vet -tags "$tags" ./constant/... ./listener/sing_tun/...
-          GOOS=windows GOARCH=amd64 go vet -tags "$tags" ./constant/... ./listener/sing_tun/...
-          GOOS=android GOARCH=arm64 go vet -tags "$tags" ./constant/... ./listener/sing_tun/...
+          go test -count=1 -tags "$kernel_tags" -run 'TestRawTun' ./config/
+          go vet -tags "$kernel_tags" ./constant/... ./config/... ./listener/sing_tun/...
+          GOOS=darwin GOARCH=arm64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          GOOS=windows GOARCH=amd64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
+          GOOS=android GOARCH=arm64 go vet -tags "$kernel_tags" ./constant/... ./listener/sing_tun/...
