@@ -1,6 +1,5 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/ui.dart';
-import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -17,12 +16,10 @@ class PrivacyPolicyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    // The five tabs keep their heading fixed in the page; this detail page
-    // does the same on a phone instead of falling back to a plain Material
-    // AppBar that looks unlike the rest of the app.
-    final largeTitle =
-        ViewScope.isMobileOf(context) && !context.isInCompactSheet;
-    final statusBarTop = MediaQuery.paddingOf(context).top;
+    // A pushed detail page reached from the about page: it keeps the ordinary
+    // inline bar title beside its back button (← 隐私政策) instead of the
+    // tabs' fixed large title, which would only waste the strip above the bar
+    // on a secondary screen.
     final isMobile = context.isMobileView;
     final gutter = isMobile ? _mobileGutter : _desktopGutter;
     final vertical = isMobile ? 16.0 : _desktopTopPadding;
@@ -30,12 +27,7 @@ class PrivacyPolicyView extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxContentWidth),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            gutter,
-            largeTitle ? 0 : vertical,
-            gutter,
-            vertical,
-          ),
+          padding: EdgeInsets.fromLTRB(gutter, vertical, gutter, vertical),
           children: [
             _PolicySection(
               title: appLocalizations.privacyPolicyDataCollectionTitle,
@@ -65,17 +57,7 @@ class PrivacyPolicyView extends StatelessWidget {
         ),
       ),
     );
-    return CommonScaffold(
-      title: appLocalizations.privacyPolicy,
-      largeTitle: largeTitle,
-      body: largeTitle
-          ? PageLargeTitle(
-              title: appLocalizations.privacyPolicy,
-              statusBarTop: statusBarTop,
-              body: body,
-            )
-          : body,
-    );
+    return CommonScaffold(title: appLocalizations.privacyPolicy, body: body);
   }
 }
 

@@ -6,7 +6,6 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/state.dart';
-import 'package:skyward/views/page_large_title.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,15 +104,13 @@ class _AboutViewState extends ConsumerState<AboutView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    // A phone uses the same fixed heading as the five tabs: the bar is left
-    // empty and solid, so the hero and the cards can never show through a
-    // translucent bar. Desktop and compact sheets keep the ordinary title.
-    final largeTitle =
-        ViewScope.isMobileOf(context) && !context.isInCompactSheet;
-    final statusBarTop = MediaQuery.paddingOf(context).top;
+    // A pushed page reached from Settings: it carries a back button, so it
+    // keeps the ordinary inline bar title beside that button (← 关于 Skyward)
+    // rather than the tabs' fixed large title. A large title here would only
+    // burn the strip above the bar and overlap the leading.
     final body = ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-        top: largeTitle ? 0 : context.contentTopPadding,
+        top: context.contentTopPadding,
         bottom: 32 + context.bottomInset,
       ),
       children: [
@@ -226,14 +223,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
     return CommonScaffold(
       rowSeparators: false,
       title: '${appLocalizations.about} $appName',
-      largeTitle: largeTitle,
-      body: largeTitle
-          ? PageLargeTitle(
-              title: appLocalizations.about,
-              statusBarTop: statusBarTop,
-              body: body,
-            )
-          : body,
+      body: body,
     );
   }
 }

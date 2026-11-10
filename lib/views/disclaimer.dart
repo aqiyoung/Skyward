@@ -3,7 +3,6 @@ import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/providers/app.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
-import 'package:skyward/views/page_large_title.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,29 +96,18 @@ class DisclaimerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     if (!requireConsent) {
-      // Same fixed heading as the five tabs on a phone; the floating bar is
-      // left empty so no terms text can show through it.
-      final largeTitle =
-          ViewScope.isMobileOf(context) && !context.isInCompactSheet;
-      final statusBarTop = MediaQuery.paddingOf(context).top;
+      // A pushed page reached from the about page: it keeps the ordinary
+      // inline bar title beside its back button (← 免责声明) instead of the
+      // tabs' fixed large title, which would only waste the strip above the
+      // bar on a secondary screen.
       final body = _buildBody(
         padding: const EdgeInsets.symmetric(horizontal: _mobileGutter).copyWith(
-          top: largeTitle ? 0 : context.contentTopPadding,
+          top: context.contentTopPadding,
           bottom: 32 + context.bottomInset,
         ),
         children: const [DisclaimerTerms()],
       );
-      return CommonScaffold(
-        title: appLocalizations.disclaimer,
-        largeTitle: largeTitle,
-        body: largeTitle
-            ? PageLargeTitle(
-                title: appLocalizations.disclaimer,
-                statusBarTop: statusBarTop,
-                body: body,
-              )
-            : body,
-      );
+      return CommonScaffold(title: appLocalizations.disclaimer, body: body);
     }
     // First-launch consent keeps its plain bar and its bottom action bar.
     final body = _buildBody(
