@@ -115,13 +115,17 @@ jobs:
             echo "::error::build number ${build_number} no longer fits a Windows file version"
             exit 1
           fi
-          version="${base}.${build_number}"
+          # What users read is the four components plus `-pre`: the desktop
+          # preview is a snapshot, so its fourth component counts today's builds
+          # rather than spending a release number on the line. The build number
+          # stays behind it for the Windows file version, which takes digits only.
+          version="${base}.$(printf '%02d' "$(( build_number - prefix ))")-pre"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}"
+          echo "building ${version} from ${base}, file version ${build_number}"
 
       # What changed since the previous desktop preview, so the release page
       # says what to look at rather than only which number it is.
@@ -214,7 +218,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The packaging names files after the pubspec's three components; the
+          # version users read adds today's count and the channel.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           shopt -s nullglob
           for file in dist/*; do
             name="$(basename "$file")"

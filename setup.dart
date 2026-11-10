@@ -128,11 +128,18 @@ Map<String, String> createBuildEnvironment(
   String env, {
   String? appVersion,
   String? channel,
+  String? buildNumber,
 }) {
   return {
     'APP_ENV': env,
     if (appVersion != null && appVersion.isNotEmpty) 'APP_VERSION': appVersion,
     if (channel != null && channel.isNotEmpty) 'APP_CHANNEL': channel,
+    // The versionCode the build was made with. The version string no longer
+    // carries it -- the fourth component counts the day's snapshots and the
+    // suffix names the channel -- so the update check reads the number that
+    // Android actually orders installs by.
+    if (buildNumber != null && buildNumber.isNotEmpty)
+      'APP_BUILD_NUMBER': buildNumber,
   };
 }
 
@@ -178,6 +185,7 @@ Future<int> _package(
         env,
         appVersion: Platform.environment['APP_VERSION_NAME'],
         channel: Platform.environment['APP_CHANNEL_NAME'],
+        buildNumber: Platform.environment['APP_BUILD_NUMBER'],
       ),
     ),
   );

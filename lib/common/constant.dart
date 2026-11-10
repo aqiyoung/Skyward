@@ -36,14 +36,20 @@ const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 // The four-component version, injected by the build. pubspec.yaml cannot carry
 // it (pub refuses a four-part version) and the desktop packages only report
 // upstream's three, so this is the only place the revision survives off Android.
+// The channel rides along as a suffix (`1.0.1.07-pre`), so one string says both
+// which line this is and who built it.
 const buildVersion = String.fromEnvironment('APP_VERSION');
+
+// The versionCode this build was made with, injected by the build. Android
+// orders installs by it, and it is the one number every channel draws from and
+// only ever raises -- which is what lets a preview, a beta and a release be
+// compared at all. The version string no longer carries it: its fourth
+// component counts the day's snapshots, which says nothing about installs.
+const buildNumber = String.fromEnvironment('APP_BUILD_NUMBER');
 
 // The build channel, injected by the build alongside `APP_VERSION`. It names
 // the stream a build belongs to so the UI can label it -- `dev` for the dev
-// preview, `beta` for the beta preview. Official releases leave it empty. This
-// is display-only: it never enters `displayVersion`, whose fourth component the
-// update check parses as a number, so a non-numeric suffix there would break
-// OTA upgrade detection.
+// preview, `beta` for the beta preview. Official releases leave it empty.
 const buildChannel = String.fromEnvironment('APP_CHANNEL');
 
 const disclaimerVersion = 1;

@@ -192,7 +192,7 @@ jobs:
             echo "本仓库自编译的 Skyward（基于上游 FlClash）：\`${BRANCH}\` 分支 = ${origin} + 我们自己的改动。"
             echo
             echo "- 渠道：\`${label}\`"
-            echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是我们自己的迭代号）"
+            echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是这条线上的发布序号，后缀标明渠道）"
             echo "- 构建号：\`${BUILD_NUMBER}\`（APK 的 versionCode）"
             echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
             echo "- 构建时间：$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -242,10 +242,13 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
         run: |
           set -euo pipefail
+          # The version names its channel as a suffix already (`1.0.1.6-beta`),
+          # so only the release needs a word: it is the one with nothing after
+          # the number.
           if [ "$CHANNEL" = stable ]; then
             title="Skyward ${VERSION}（正式版）"
           else
-            title="Skyward ${VERSION}（beta）"
+            title="Skyward ${VERSION}"
           fi
           # A tag is a version that has already been published, so this only
           # happens when a run is retried: replacing the release keeps the
@@ -283,7 +286,7 @@ jobs:
           if [ "$CHANNEL" = stable ]; then
             label="正式版"
           else
-            label="beta"
+            label="测试版"
           fi
 
           # gh-proxy.com in front of github.com: the assets live on GitHub,

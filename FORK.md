@@ -15,15 +15,17 @@ Android 一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`
 ## 版本号
 
 ```
-<本项目自有 base>.<我们自己的迭代号>
-例如        1.0.0.14
+<本项目自有 base>.<序号>[-渠道]
+例如        1.0.1.6-beta     1.0.1.6     1.0.1.07-pre     1.0.1.07-dev
 ```
 
-- 前三段（base）是 **Skyward 自己的版本 base**，不再取自上游 `pubspec.yaml`、也不再跟随上游版本号。当前 base 为 `1.0.0`。
-- 第四位是我们自己的迭代号：**一路往上数、不随上游版本重置**。每次发版（测试版或正式版）都 +1，把 beta 晋升成正式版时也拿一个新号——这样 beta 用户也会收到正式版的更新提示。预览版不占这个号，它走 `preview-*` tag。
-- **Release tag 就是这四段版本**（如 `v1.0.0.14`）：App 拿自己的版本名去比 tag，相等就不提示，第四位变大了才提示。所以"上游没动、只是我们重建"现在也能推送给用户。（2026-10-18 之前发的包版本名只有三段，它们不会因为第四位提示更新，需要手动来下载页看一眼。）
-- 装上去的包处处显示四段：pub 不接受四段版本号，`pubspec.yaml` 里只能写三段，所以四段版本名在构建时以 `APP_VERSION` 注入（`setup.dart` 读 CI 的 `APP_VERSION_NAME`，写进 `env.json` 的 dart-define），`PackageInfo.displayVersion` 优先用它、为空时回落到 `package_info_plus` 的三段；Android 的 `versionName` 也直接写这四段，所以「设置 → 应用 → Skyward」里看到的和 App 里的一致。「检查更新」同样走四段比较，第四位变大就能提示。
-- 每次构建另外带一个 `<YYYYMMDD><当天序号>` 的**构建号**，写进 `pubspec.yaml`（构建时注入、不提交），它就是 APK 的 `versionCode`，保证新包一定比手机里那个"更新"，否则 Android 会拒绝覆盖安装。构建号记在 Release 说明里。
+- 前三段（base）是 **Skyward 自己的版本 base**，不再取自上游 `pubspec.yaml`、也不再跟随上游版本号。当前 base 为 `1.0.1`。
+- 第四位分两种，看渠道：**正式版和测试版**共用一条发布序号，一路往上数、每次发版 +1，把 beta 晋升成正式版时也拿一个新号——这样 beta 用户也会收到正式版的更新提示；**预览版和 dev 版**不占发布号，第四位是当天的第几次构建（`01` 起），因为它们是同一天的快照，不是发布。
+- 渠道写在**后缀**里：正式版没有后缀，测试版 `-beta`，预览版 `-pre`，dev 版 `-dev`。数字部分干净、固定四段，看得懂哪条线、第几次构建、哪个渠道。
+- **Release tag 就是带后缀的完整版本**（如 `v1.0.1.6-beta`）。
+- 装上去的包处处显示这个版本：pub 不接受四段版本号，`pubspec.yaml` 里只能写三段，所以版本名在构建时以 `APP_VERSION` 注入（`setup.dart` 读 CI 的 `APP_VERSION_NAME`，写进 `env.json` 的 dart-define），`PackageInfo.displayVersion` 优先用它、为空时回落到 `package_info_plus` 的三段；Android 的 `versionName` 也直接写它，所以「设置 → 应用 → Skyward」里看到的和 App 里的一致。
+- 每次构建另外带一个 **`20900000 + 自 2026-01-01 起的天数×100 + 当天序号`** 的构建号，写进 `pubspec.yaml`（构建时注入、不提交），它就是 APK 的 `versionCode`，保证新包一定比手机里那个"更新"，否则 Android 会拒绝覆盖安装。**这个数字不出现在版本名里**，只记在 Release 说明和 APK 元数据里；App 通过 `APP_BUILD_NUMBER` 拿到自己那一份，用来和 Release 说明里的构建号比大小——这就是「检查更新」判断新旧的依据。
+- 三个写构建号的地方（预览、dev、正式/测试版）读同一本账：当天已占的 `preview-*` / `dev-*` tag，加上最近一次 Release 说明里的构建号，取最大再 +1，所以谁先谁后都不会撞号。
 
 ## 三个渠道
 

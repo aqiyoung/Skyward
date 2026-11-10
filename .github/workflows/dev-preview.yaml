@@ -113,17 +113,19 @@ jobs:
           sed -i 's/applicationId = "com.threely.skyward"/applicationId = "com.follow.clash"/' android/app/build.gradle.kts
           grep -n 'applicationId' android/app/build.gradle.kts
 
-      # A preview draws its versionCode from the same counter ci.yaml uses --
+      # A dev build draws its versionCode from the same counter ci.yaml uses --
       # 2,090,000,000 plus a hundred per day since 2026-01-01 plus the sequence
       # that day, read back from the releases already out -- so it installs over
       # the release on the phone and the next release installs over it.
-      # Numbering previews above the releases ended with a release refused as a
+      # Numbering snapshots above the releases ended with a release refused as a
       # downgrade, which is why the counter is shared rather than offset.
       #
-      # split-per-abi adds the ABI's own offset on top of this base (arm64-v8a
-      # is +2000), so the value here is not what the APK ends up carrying; the
-      # verify step reads the real one back out.
-      - name: Choose a preview version
+      # The version a user reads is the four components plus `-dev`:
+      # `1.0.1.07-dev`. The fourth component is today's count, not a release
+      # number -- a snapshot spends none -- and the suffix says who built it.
+      # The versionCode above stays out of it, where it orders installs without
+      # being read as a version.
+      - name: Choose a dev version
         id: version
         env:
           # The shared counter is read back from the releases, which the API
@@ -157,18 +159,13 @@ jobs:
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
           build_number=$(( day_prefix * 100 + stamp ))
-          # The build number doubles as the visible version and the tag: it is
-          # the only number here that is unique and monotonic across both ways a
-          # preview starts (a push, which numbers its own runs, and ci.yaml
-          # calling in, which inherits the caller's numbering). Writing the tag
-          # down is what makes the second half true -- see the next step.
-          version="${base}.${build_number}"
+          version="${base}.$(printf '%02d' "$stamp")-dev"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}, base versionCode ${build_number}"
+          echo "building ${version} from ${base}, versionCode ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
       # to write its number down too: a lightweight tag under it. Without that
@@ -424,6 +421,9 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           APP_VERSION_NAME: ${{ steps.version.outputs.version }}
+          # The versionCode, kept out of the version on purpose: Android orders
+          # installs by it, the user reads the version above.
+          APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
           APP_CHANNEL_NAME: dev
         run: dart setup.dart android --env ${{ inputs.env || 'pre' }} --arch arm64 -v
 
@@ -432,7 +432,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The packaging names files after the pubspec's three components; the
+          # version users read adds today's count and the channel.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           shopt -s nullglob
           for file in dist/*; do
             name="$(basename "$file")"
@@ -591,10 +594,10 @@ jobs:
           # short and in Chinese, so they are shown whole -- cutting by byte
           # (`cut -c`) would split a multi-byte character in half.
           {
-            echo "🧪 Skyward ${VERSION}（dev 预览版）"
+            echo "🧪 Skyward ${VERSION}"
             echo
             echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID}"
-            echo "versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            echo "Android arm64-v8a 单架构"
             if [ -n "${CHANGELOG}" ]; then
               echo
               echo "📝 本次更新"

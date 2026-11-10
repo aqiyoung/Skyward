@@ -154,7 +154,11 @@ jobs:
             exit 1
           fi
           echo "upstream had: $(grep '^version:' pubspec.yaml)"
-          base="${VERSION%.*}"
+          # The version carries the channel as a suffix (`1.0.1.6-beta`); the
+          # pubspec takes only the three components, which are the same for
+          # every channel.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           if ! printf '%s' "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::expected a four-component version, got '$VERSION'"
             exit 1
@@ -320,6 +324,10 @@ jobs:
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
+          # What Android orders installs by. The version above no longer holds
+          # it, so the app reads it back to tell whether a release is newer than
+          # the build on the phone.
+          APP_BUILD_NUMBER: ${{ inputs.build_number }}
         run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
 
       # The packaging tools name their output after the pubspec version, which
@@ -333,7 +341,11 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The suffix comes off first: the packaging names files after the
+          # three components, and only the last component of the version is
+          # dropped to find them.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           shopt -s nullglob
           renamed=0
           for file in dist/*; do
