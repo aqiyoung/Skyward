@@ -5,7 +5,6 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/features/form/form.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/config.dart';
-import 'package:skyward/providers/action.dart';
 import 'package:skyward/views/access.dart';
 import 'package:skyward/views/config/override.dart';
 import 'package:skyward/views/config/tun.dart';
