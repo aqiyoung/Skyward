@@ -16,3 +16,6 @@ dependencies:
   # directly, so the two cannot co-resolve. The chen08209 fork migrated the
   # Windows implementation to the 3.x API; this copy is that fork, unchanged.
   win32_registry: ^3.0.3
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
