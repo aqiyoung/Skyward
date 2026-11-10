@@ -1,0 +1,78 @@
+name: core check
+
+# The kernel lives in its own repository (aqiyoung/skyward-core) and is
+# checked there, on the branch the pin points at. What is left for this
+# repository is the wrapper that binds it (core/), the module graph that
+# wrapper shares with the kernel, and a smoke build of the pinned kernel,
+# so a pin that does not compile is caught here rather than in a release.
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+      - beta
+  workflow_dispatch:
+
+concurrency:
+  group: core-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: '1.27.1'
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      # The submodule URL is SSH; public repos clone fine over HTTPS, so redirect.
+      - name: Clone submodules over HTTPS
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            core/go.sum
+            core/Clash.Meta/go.sum
+      # The kernel and the wrapper that binds it are two modules, and a new
+      # dependency in the kernel moves the wrapper's module graph with it.
+      # Resolving the modules here keeps the build honest, and the resolved
+      # files are attached to the run so they can be committed.
+      - name: Resolve the core's module graph
+        working-directory: core
+        run: |
+          go mod tidy
+          if ! git diff --quiet -- go.mod go.sum; then
+            echo "::warning::go.mod and go.sum are out of date; the resolved files are attached to this run"
+            git diff --stat -- go.mod go.sum
+          fi
+      - name: Attach the resolved module files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-module-files
+          path: |
+            core/go.mod
+            core/go.sum
+      - name: Build and test the wrapper
+        working-directory: core
+        run: |
+          go test -count=1 .
+          go vet . ./cmd/...
+      # The kernel has its own check in the repository it lives in. What
+      # matters here is that the pin this build carries still compiles.
+      - name: Build the pinned kernel
+        working-directory: core/Clash.Meta
+        env:
+          CGO_ENABLED: 0
+        run: |
+          tags="$(sed -n 's/^tags: *//p' ../../build_config.yaml)"
+          test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
+          go build -tags "$tags" ./...
