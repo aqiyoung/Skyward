@@ -16,6 +16,7 @@ import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
+import 'widgets/build_channel_badge.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
@@ -111,7 +112,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       // ordinary bar title.
       largeTitle: largeTitle,
       backAction: editing ? () => _setEditing(false) : null,
-      actions: [if (!editing && coreLib == null) const CoreStatusButton()],
+      actions: [
+        // Which channel this build is from, before the core's own state: the
+        // two together are the whole answer to "what am I running".
+        if (!editing) const BuildChannelBadge(),
+        if (!editing && coreLib == null) const CoreStatusButton(),
+      ],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
