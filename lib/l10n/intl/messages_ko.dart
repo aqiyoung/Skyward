@@ -1819,6 +1819,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("마이"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("페이지"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("도구"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 도구, 설정 검색"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 노드, 도구, 설정 검색"),
   };
 }

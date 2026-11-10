@@ -1844,6 +1844,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("マイページ"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("ページ"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("ツール"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("ページ、ツール、設定を検索"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("ページ、ノード、ツール、設定を検索"),
   };
 }

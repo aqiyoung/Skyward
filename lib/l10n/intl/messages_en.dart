@@ -2126,6 +2126,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("Mine"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("Tools"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("Search pages, tools and settings"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("Search pages, nodes, tools and settings"),
   };
 }

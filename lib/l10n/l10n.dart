@@ -1476,9 +1476,9 @@ class AppLocalizations {
     return Intl.message('Tools', name: 'toolEntries', desc: '', args: []);
   }
 
-  /// `Search pages, tools and settings`
+  /// `Search pages, nodes, tools and settings`
   String get searchHint {
-    return Intl.message('Search pages, tools and settings', name: 'searchHint', desc: '', args: []);
+    return Intl.message('Search pages, nodes, tools and settings', name: 'searchHint', desc: '', args: []);
   }
 
   /// `Allow apps to bypass VPN`

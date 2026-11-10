@@ -1685,6 +1685,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("我的"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("页面"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("工具入口"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、工具与设置"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、节点、工具与设置"),
   };
 }
