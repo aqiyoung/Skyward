@@ -9,6 +9,20 @@ Clash 的"万兆"不是玄学，杠杆有两个：**用 Go 原生 TCP/IP 栈替�
 **mihomo 的路由判定模型（`PrepareConnection`）与 sing-box 的流级裁决模型（`JudgeFlow`）语义不等价**，必须写一层适配。
 Apple 端（NetworkExtension）应当**后置**：它需要一整套客户端工程（App Store 账号、NE 扩展、签名），与内核红利解耦。
 
+### 现在到哪了（2026-11-10）
+
+| 阶段 | 状态 | 说明 |
+| --- | --- | --- |
+| P0 基线脚本 | 完成 | `tool/bench/tunnel_bench.sh`，同机回环，人工在真机跑 |
+| P1 扩展点 | 完成 | `tun.stack: go` 可选；没有实现时**明确拒绝**而不是换栈；kernel 的 CI 补上了（内核自带的 CI 只跑 `Alpha` 分支，等于没人检查） |
+| P2 适配层 | 进行中 | 栈已接上并编译通过（`with_go_stack` 构建标签），**尚未承载过真实流量**；下一步是差分测试 |
+| P3 平台接通 | 未开始 | Android fd / 桌面 utun 的设备路径 |
+| P4 灰度与性能 | 未开始 | |
+| P5/P6 Apple | 未开始 | 独立立项 |
+
+一个关键事实：**我们的内核比 Clash 的内核更接近可用**——我们的 `PrepareConnection` 只处理 ICMP，TCP/UDP 的路由判定本来就在 mihomo 的 handler 里，
+所以适配层比 Clash 写的那套更薄：go stack 只需要判"准不准 + DNS 劫持"，然后把连接交给 mihomo 的 handler。
+
 ## 1. 目标 / 非目标
 
 ### 目标
