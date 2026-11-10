@@ -1033,10 +1033,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -2126,6 +2125,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("Mine"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("Tools"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("Search pages, nodes, tools and settings"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Search pages, nodes, tools and settings",
+    ),
   };
 }

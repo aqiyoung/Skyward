@@ -43,9 +43,7 @@ class _SettingsSearchViewState extends State<SettingsSearchView> {
                 // The pill theme cannot dress the field: SearchField pins
                 // `filled` in its own decoration, so the pill carries an
                 // explicit fill, as the bar's search field does.
-                fill: SurfaceLevel.floatingOf(
-                  colorScheme,
-                ).colorOf(colorScheme),
+                fill: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
               ),
             ),
           ),

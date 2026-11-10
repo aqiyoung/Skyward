@@ -14,8 +14,9 @@ class AppAutoLauncherImplMacOS extends AppAutoLauncher {
 
   @override
   Future<bool> isEnabled() async {
-    final isEnabled =
-        await platform.invokeMethod<bool>('launchAtStartupIsEnabled');
+    final isEnabled = await platform.invokeMethod<bool>(
+      'launchAtStartupIsEnabled',
+    );
     if (isEnabled == null) {
       throw Exception(
         'WARNING: AppAutoLauncherImplMacOS.isEnabled null response! platform.invokeMethod<bool>("launchAtStartupIsEnabled") returned a null response when checking if app is set to launch at startup.',
@@ -28,8 +29,9 @@ class AppAutoLauncherImplMacOS extends AppAutoLauncher {
   @override
   Future<bool> enable() async {
     if (!await isEnabled()) {
-      await platform
-          .invokeMethod('launchAtStartupSetEnabled', {'setEnabledValue': true});
+      await platform.invokeMethod('launchAtStartupSetEnabled', {
+        'setEnabledValue': true,
+      });
     }
     return true;
   }
@@ -37,10 +39,9 @@ class AppAutoLauncherImplMacOS extends AppAutoLauncher {
   @override
   Future<bool> disable() async {
     if (await isEnabled()) {
-      await platform.invokeMethod(
-        'launchAtStartupSetEnabled',
-        {'setEnabledValue': false},
-      );
+      await platform.invokeMethod('launchAtStartupSetEnabled', {
+        'setEnabledValue': false,
+      });
     }
     return true;
   }

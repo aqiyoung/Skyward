@@ -7,7 +7,8 @@ import 'package:win32_registry/win32_registry.dart'
 
 bool isRunningInMsix(String packageName) {
   final String resolvedExecutable = Platform.resolvedExecutable;
-  final bool isMsix = resolvedExecutable.contains('WindowsApps') &&
+  final bool isMsix =
+      resolvedExecutable.contains('WindowsApps') &&
       resolvedExecutable.contains(packageName);
   return isMsix;
 }
@@ -24,14 +25,14 @@ class AppAutoLauncherImplWindows extends AppAutoLauncher {
   late String _registryValue;
 
   RegistryKey get _regKey => CURRENT_USER.open(
-        r'Software\Microsoft\Windows\CurrentVersion\Run',
-        config: const RegistryOpenConfig(access: RegistryAccess.all),
-      );
+    r'Software\Microsoft\Windows\CurrentVersion\Run',
+    config: const RegistryOpenConfig(access: RegistryAccess.all),
+  );
 
   RegistryKey get _startupApprovedRegKey => CURRENT_USER.open(
-        r'Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run',
-        config: const RegistryOpenConfig(access: RegistryAccess.all),
-      );
+    r'Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run',
+    config: const RegistryOpenConfig(access: RegistryAccess.all),
+  );
 
   static const int _startupApprovedRegKeyBytesLength = 12;
 
@@ -44,10 +45,7 @@ class AppAutoLauncherImplWindows extends AppAutoLauncher {
 
   @override
   Future<bool> enable() async {
-    _regKey.setValue(
-      appName,
-      RegistryValue.string(_registryValue),
-    );
+    _regKey.setValue(appName, RegistryValue.string(_registryValue));
 
     final bytes = Uint8List(_startupApprovedRegKeyBytesLength);
     bytes[0] = 2;
@@ -111,7 +109,8 @@ class AppAutoLauncherImplWindowsMsix extends AppAutoLauncher {
 
   @override
   Future<bool> enable() async {
-    final String script = '''
+    final String script =
+        '''
     \$TargetPath = "$appPath"
     \$ShortcutFile = "\$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\$appName.lnk"
     \$WScriptShell = New-Object -ComObject WScript.Shell
@@ -130,7 +129,8 @@ class AppAutoLauncherImplWindowsMsix extends AppAutoLauncher {
   @override
   Future<bool> disable() async {
     if (_shortcutFile.existsSync()) {
-      final String script = '''
+      final String script =
+          '''
     Remove-Item -Path "\$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\$appName.lnk"
   ''';
       final result = Process.runSync('powershell', ['-Command', script]);

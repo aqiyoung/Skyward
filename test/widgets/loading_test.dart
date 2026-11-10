@@ -105,33 +105,30 @@ void main() {
   });
 
   for (final disableAnimations in [false, true]) {
-    testWidgets(
-      'CommonCircleLoading paints a whole loop, '
-      'disableAnimations: $disableAnimations',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: MediaQuery(
-              data: MediaQueryData(disableAnimations: disableAnimations),
-              child: const Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CommonCircleLoading(size: 12),
-                    CommonCircleLoading.page(),
-                  ],
-                ),
+    testWidgets('CommonCircleLoading paints a whole loop, '
+        'disableAnimations: $disableAnimations', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(disableAnimations: disableAnimations),
+            child: const Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CommonCircleLoading(size: 12),
+                  CommonCircleLoading.page(),
+                ],
               ),
             ),
           ),
-        );
-        for (var i = 0; i < 110; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+        ),
+      );
+      for (var i = 0; i < 110; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
-        expect(tester.takeException(), isNull);
-      },
-    );
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets('CommonCircleLoading.page draws back in with its switcher', (

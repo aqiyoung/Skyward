@@ -40,7 +40,9 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
             behavior: const ShowBarScrollBehavior(),
             child: CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.appBarInset),
+                ),
                 const _Title(),
                 const _Content(),
                 SliverToBoxAdapter(

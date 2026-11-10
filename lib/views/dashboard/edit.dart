@@ -320,16 +320,19 @@ class _PresenceState extends State<_Presence>
 
   void _run() {
     final run = widget.leaving ? _controller.reverse() : _controller.forward();
-    run.then((_) {
-      if (mounted) {
-        widget.onSettled();
-      }
-    }, onError: (error, stack) {
-      commonPrint.log(
-        'leaving animation settled with error: $error',
-        logLevel: LogLevel.warning,
-      );
-    });
+    run.then(
+      (_) {
+        if (mounted) {
+          widget.onSettled();
+        }
+      },
+      onError: (error, stack) {
+        commonPrint.log(
+          'leaving animation settled with error: $error',
+          logLevel: LogLevel.warning,
+        );
+      },
+    );
   }
 
   void _reveal() {

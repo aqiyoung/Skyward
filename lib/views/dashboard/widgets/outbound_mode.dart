@@ -39,10 +39,7 @@ class OutboundModeSelector extends ConsumerWidget {
         .copyWith(fontWeight: DashboardWeight.value);
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: ShapeDecoration(
-        color: colors.tone,
-        shape: AppShape.all(26),
-      ),
+      decoration: ShapeDecoration(color: colors.tone, shape: AppShape.all(26)),
       child: Row(
         children: [
           for (final item in Mode.values)
@@ -80,8 +77,8 @@ class OutboundModeSelector extends ConsumerWidget {
                               GlyphIcon(
                                 AppGlyphs.check,
                                 size: 16,
-                                color: colorScheme.brightness ==
-                                        Brightness.light
+                                color:
+                                    colorScheme.brightness == Brightness.light
                                     ? colorScheme.primary
                                     : colorScheme.onPrimaryContainer,
                               ),
@@ -93,10 +90,9 @@ class OutboundModeSelector extends ConsumerWidget {
                                 style: style.copyWith(
                                   color: item == mode
                                       ? (colorScheme.brightness ==
-                                              Brightness.light
-                                          ? colorScheme.primary
-                                          : colorScheme
-                                              .onPrimaryContainer)
+                                                Brightness.light
+                                            ? colorScheme.primary
+                                            : colorScheme.onPrimaryContainer)
                                       : colorScheme.onSurfaceVariant,
                                   fontWeight: item == mode
                                       ? DashboardWeight.title

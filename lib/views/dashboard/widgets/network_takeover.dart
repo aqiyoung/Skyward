@@ -28,7 +28,8 @@ const DashboardRowMetrics cardRowMetrics = (
 /// A tile's icon and switch sit as far in from its ends as from its edges, so
 /// a full pill keeps both concentric with its corners. Without the icon, the
 /// title lines up with the content of the cards above and below.
-DashboardRowMetrics _tileMetricsOf(DashboardDensity density) => density.isCompact
+DashboardRowMetrics _tileMetricsOf(DashboardDensity density) =>
+    density.isCompact
     ? (
         padding: const EdgeInsets.fromLTRB(10, 0, 12, 0),
         titleStart: dashboardCardPadding(density).left,
@@ -133,11 +134,7 @@ class TakeoverSwitchRows extends StatelessWidget {
           spacing: 8,
           children: [
             for (final kind in TakeoverSwitch.values)
-              TakeoverRow(
-                kind: kind,
-                metrics: metrics,
-                showIcon: showIcon,
-              ),
+              TakeoverRow(kind: kind, metrics: metrics, showIcon: showIcon),
           ],
         );
       },

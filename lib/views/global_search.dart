@@ -49,15 +49,18 @@ class _GlobalSearchViewState extends ConsumerState<GlobalSearchView> {
     final pageHits = <_Hit>[
       for (final item in dockItems)
         _Hit(
-          [item.label.label, appLocalizations.pagesLabel, _keywordsOf(item.label)],
+          [
+            item.label.label,
+            appLocalizations.pagesLabel,
+            _keywordsOf(item.label),
+          ],
           (context) => ListItem(
             leading: IconWell(item.glyph),
             title: Text(item.label.label),
             subtitle: Text(appLocalizations.pagesLabel),
             arrow: true,
-            onTap: () => ref
-                .read(currentPageLabelProvider.notifier)
-                .toPage(item.label),
+            onTap: () =>
+                ref.read(currentPageLabelProvider.notifier).toPage(item.label),
           ),
         ),
     ];
@@ -91,10 +94,7 @@ class _GlobalSearchViewState extends ConsumerState<GlobalSearchView> {
     final settingsHits = <_Hit>[
       for (final entry in settingsEntries)
         _Hit(
-          [
-            ...entry.fieldsOf(appLocalizations),
-            appLocalizations.settings,
-          ],
+          [...entry.fieldsOf(appLocalizations), appLocalizations.settings],
           (context) => ListItem.open(
             leading: const IconWell(AppGlyphs.settings),
             title: Text(entry.title(appLocalizations)),
@@ -131,9 +131,8 @@ class _GlobalSearchViewState extends ConsumerState<GlobalSearchView> {
               subtitle: Text(group.name),
               arrow: true,
               onTap: () {
-                ref
-                    .read(queryProvider(QueryTag.proxies).notifier)
-                    .value = proxy.name;
+                ref.read(queryProvider(QueryTag.proxies).notifier).value =
+                    proxy.name;
                 ref
                     .read(currentPageLabelProvider.notifier)
                     .toPage(PageLabel.proxies);

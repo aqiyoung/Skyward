@@ -226,10 +226,11 @@ void main() {
         'DOMAIN,existing.example,DIRECT',
         'MATCH,Original',
       ]);
-      expect(
-        result.counts,
-        (groups: 0, proxies: 0, rules: webrtcGuardRules.length + 3),
-      );
+      expect(result.counts, (
+        groups: 0,
+        proxies: 0,
+        rules: webrtcGuardRules.length + 3,
+      ));
     },
   );
 

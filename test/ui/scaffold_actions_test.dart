@@ -48,10 +48,7 @@ Future<void> _pumpPage(
 /// fully opaque.
 double _actionOpacity(WidgetTester tester) {
   final button = find.widgetWithGlyph(IconButton, AppGlyphs.edit);
-  final fade = find.ancestor(
-    of: button,
-    matching: find.byType(FadeTransition),
-  );
+  final fade = find.ancestor(of: button, matching: find.byType(FadeTransition));
   return tester.widget<FadeTransition>(fade.first).opacity.value;
 }
 

@@ -1072,12 +1072,12 @@ void main() {
             setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
           ],
         );
         addTearDown(scoped.dispose);
@@ -1121,12 +1121,12 @@ void main() {
             ),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
           ],
         );
         addTearDown(scoped.dispose);
@@ -1160,12 +1160,12 @@ void main() {
             setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
           ],
         );
         addTearDown(scoped.dispose);
@@ -1207,12 +1207,12 @@ void main() {
             ),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
             safeModeProvider.overrideWithValue(true),
           ],
         );
@@ -1477,10 +1477,11 @@ void main() {
       ]);
       expect(overlay['mixed-port'], isNot(1));
       expect(await configFile.readAsString(), 'previous');
-      expect(
-        globalState.lastConfigCounts,
-        (groups: 2, proxies: 3, rules: webrtcGuardRules.length + 6),
-      );
+      expect(globalState.lastConfigCounts, (
+        groups: 2,
+        proxies: 3,
+        rules: webrtcGuardRules.length + 6,
+      ));
 
       await setupAction.applyProfile();
       expect(pushed, hasLength(1));
@@ -1597,12 +1598,12 @@ void main() {
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             commonActionProvider.overrideWith(TestCommonAction.new),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
           ],
         );
         addTearDown(scoped.dispose);
@@ -1919,12 +1920,12 @@ void main() {
             setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
             coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
             setupActionProvider.overrideWith(SetupAction.new),
-          // The ad-block module is on by default and would prefix every
-          // generated rule list; these tests are about the profile's own
-          // rules, so the module stays off here.
-          appSettingProvider.overrideWithBuild(
-            (_, _) => const AppSettingProps(adBlock: false),
-          ),
+            // The ad-block module is on by default and would prefix every
+            // generated rule list; these tests are about the profile's own
+            // rules, so the module stays off here.
+            appSettingProvider.overrideWithBuild(
+              (_, _) => const AppSettingProps(adBlock: false),
+            ),
           ],
         );
         addTearDown(scoped.dispose);

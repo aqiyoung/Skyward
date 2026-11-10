@@ -110,9 +110,7 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
     final header = DashboardCardHeader(
       glyph: AppGlyphs.status,
       title: appLocalizations.status,
-      leading: [
-        DashboardChip(label: chipLabel, tone: chipTone, dot: isStart),
-      ],
+      leading: [DashboardChip(label: chipLabel, tone: chipTone, dot: isStart)],
     );
     // The profiles card answers which profile is active, so the status
     // card does not repeat its name here.
@@ -171,10 +169,7 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
                         header,
                         SizedBox(height: metrics.ipTop),
                         exitRow,
-                        if (!beside) ...[
-                          const Spacer(),
-                          cells,
-                        ],
+                        if (!beside) ...[const Spacer(), cells],
                       ],
                     ),
                   ),
@@ -214,11 +209,7 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        exitRow,
-                        const SizedBox(height: 16),
-                        cells,
-                      ],
+                      children: [exitRow, const SizedBox(height: 16), cells],
                     ),
                   ),
                   startToggle,
@@ -1021,7 +1012,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                       color: glass ? null : color,
                       shadow: enabled
                           ? (isLight && up ? colors.ok : colorScheme.primary)
-                              .withValues(alpha: up ? 0.3 : 0.16)
+                                .withValues(alpha: up ? 0.3 : 0.16)
                           : Colors.transparent,
                       ring: _focused
                           ? focusRingSide(colorScheme, standsOff: true)

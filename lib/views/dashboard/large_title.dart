@@ -43,10 +43,7 @@ class DashboardStatusLine extends ConsumerWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: tone,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: tone, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Flexible(

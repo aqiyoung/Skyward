@@ -185,8 +185,8 @@ class CommonAction extends _$CommonAction {
           page is String
               ? page
               : tag is String
-                  ? 'https://github.com/$repository/releases/tag/$tag'
-                  : 'https://github.com/$repository/releases/latest',
+              ? 'https://github.com/$repository/releases/tag/$tag'
+              : 'https://github.com/$repository/releases/latest',
         ),
       );
       return;

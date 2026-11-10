@@ -1069,10 +1069,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -2232,6 +2231,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "mine": MessageLookupByLibrary.simpleMessage("Мой"),
     "pagesLabel": MessageLookupByLibrary.simpleMessage("Страницы"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("Инструменты"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("Поиск страниц, узлов, инструментов и настроек"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Поиск страниц, узлов, инструментов и настроек",
+    ),
   };
 }

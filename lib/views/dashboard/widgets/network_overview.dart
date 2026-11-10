@@ -13,8 +13,6 @@ class NetworkOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ServiceStatusCard(
-      title: context.appLocalizations.networkOverview,
-    );
+    return ServiceStatusCard(title: context.appLocalizations.networkOverview);
   }
 }

@@ -405,8 +405,7 @@ class DashboardConnectedButton extends StatelessWidget {
                 right: Radius.circular(rtl ? start : end),
               ),
             );
-            final isLight =
-                colorScheme.brightness == Brightness.light;
+            final isLight = colorScheme.brightness == Brightness.light;
             final selectedBackground = isLight
                 ? const Color(0xFFE5E5EA)
                 : colorScheme.primaryContainer;
@@ -471,9 +470,10 @@ class DashboardChip extends StatelessWidget {
       // is a vivid green capsule with white text, not a pale tint. Its fill
       // is the running green the start button wears. Dark mode keeps the
       // container pair, where a vivid fill would not read.
-      DashboardChipTone.ok => colorScheme.brightness == Brightness.light
-          ? (colors.ok, Colors.white)
-          : (colors.okContainer, colors.onOkContainer),
+      DashboardChipTone.ok =>
+        colorScheme.brightness == Brightness.light
+            ? (colors.ok, Colors.white)
+            : (colors.okContainer, colors.onOkContainer),
       DashboardChipTone.warn => (colors.warnContainer, colors.onWarnContainer),
     };
     return Container(
@@ -498,10 +498,7 @@ class DashboardChip extends StatelessWidget {
             style: AppTextStyle.caption1
                 .of(context)
                 .toTabular
-                .copyWith(
-                  color: foreground,
-                  fontWeight: DashboardWeight.value,
-                ),
+                .copyWith(color: foreground, fontWeight: DashboardWeight.value),
           ),
         ],
       ),

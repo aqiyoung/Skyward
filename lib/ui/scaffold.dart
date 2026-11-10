@@ -810,10 +810,7 @@ class CommonScaffoldState extends State<CommonScaffold>
       // translucent scrim, and no compact title ever floats in to replace the
       // heading in the body. Off by default: every other page keeps the
       // original [FloatingHeader] gradient untouched.
-      return _StaticHeader(
-        backgroundColor: backgroundColor,
-        child: appBar,
-      );
+      return _StaticHeader(backgroundColor: backgroundColor, child: appBar);
     }
     final top = MediaQuery.paddingOf(context).top;
     return FloatingHeader(

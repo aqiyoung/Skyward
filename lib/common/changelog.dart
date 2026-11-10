@@ -22,10 +22,7 @@ String changelogGroupTitle(
   ChangelogType.unknown => '',
 };
 
-ChangelogVersion? parseReleaseChangelog(
-  String? body, {
-  String? languageCode,
-}) {
+ChangelogVersion? parseReleaseChangelog(String? body, {String? languageCode}) {
   if (body == null) {
     return null;
   }

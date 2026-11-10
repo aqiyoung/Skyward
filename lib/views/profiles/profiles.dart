@@ -160,8 +160,9 @@ class _ProfilesViewState extends ConsumerState<ProfilesView> {
                 onPressed: () => showAddProfilePage(context),
                 tooltip: appLocalizations.addProfile,
               );
-        final iconActions =
-            picker ? <IconButtonData>[] : _buildActions(state.profiles);
+        final iconActions = picker
+            ? <IconButtonData>[]
+            : _buildActions(state.profiles);
         final body = NullStatusSwitcher(
           isEmpty: state.profiles.isEmpty,
           nullStatus: NullStatus(

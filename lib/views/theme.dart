@@ -135,10 +135,8 @@ class ThemeColorItem extends ConsumerWidget {
     return _ColorSwatches(
       colors: [null, ...themeColors.primaryColors],
       selected: themeColors.primaryColor,
-      onSelect: (color) => _update(
-        ref,
-        (state) => state.copyWith(primaryColor: color),
-      ),
+      onSelect: (color) =>
+          _update(ref, (state) => state.copyWith(primaryColor: color)),
       onEdit: (color) => _handleEdit(context, ref, color),
       onDelete: (color) => _handleDelete(context, ref, color),
       onAdd: () => _handleAdd(context, ref),
@@ -491,10 +489,7 @@ class FontFamilyRow extends ConsumerWidget {
           ),
         ],
       ),
-      onTap: () => showExtend(
-        context,
-        builder: (_) => const FontFamilyView(),
-      ),
+      onTap: () => showExtend(context, builder: (_) => const FontFamilyView()),
     );
   }
 }
@@ -664,8 +659,7 @@ class TextScaleCard extends ConsumerStatefulWidget {
   static const _step = 0.05;
 
   @override
-  ConsumerState<TextScaleCard> createState() =>
-      _TextScaleCardState();
+  ConsumerState<TextScaleCard> createState() => _TextScaleCardState();
 }
 
 class _TextScaleCardState extends ConsumerState<TextScaleCard> {
@@ -691,8 +685,8 @@ class _TextScaleCardState extends ConsumerState<TextScaleCard> {
     final scale = _draft ?? (textScale.enable ? textScale.scale : systemScale);
     final percent = '${(scale * 100).round()}%';
     final level = context.raisedSurfaceLevel;
-    final divisions =
-        ((maxTextScale - minTextScale) / TextScaleCard._step).round();
+    final divisions = ((maxTextScale - minTextScale) / TextScaleCard._step)
+        .round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

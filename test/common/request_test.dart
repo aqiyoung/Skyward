@@ -137,10 +137,12 @@ void main() {
 
       await request.checkForUpdate();
 
-      final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
+      final cache = File(
+        join(await appPath.homeDirPath, 'releases_cache.json'),
+      );
       expect(await cache.exists(), isTrue);
-      final stored =
-          (jsonDecode(await cache.readAsString()) as List).cast<Map>();
+      final stored = (jsonDecode(await cache.readAsString()) as List)
+          .cast<Map>();
       expect(stored.any((r) => r['tag_name'] == 'v1.0.0.24'), isTrue);
     });
 
@@ -154,21 +156,25 @@ void main() {
           version: '1.0.0.2090029901',
           buildNumber: '2090029901',
         );
-        final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
-        await cache.writeAsString(jsonEncode([
-          {
-            'tag_name': 'preview-2090029901',
-            'name': 'Skyward 1.0.0.2090029901（预览版）',
-            'body': '- 构建号：`2090029901`',
-            'draft': false,
-          },
-          {
-            'tag_name': 'v1.0.0.2090029902',
-            'name': 'Skyward 1.0.0.2090029902（beta）',
-            'body': '- 构建号：`2090029902`',
-            'draft': false,
-          },
-        ]));
+        final cache = File(
+          join(await appPath.homeDirPath, 'releases_cache.json'),
+        );
+        await cache.writeAsString(
+          jsonEncode([
+            {
+              'tag_name': 'preview-2090029901',
+              'name': 'Skyward 1.0.0.2090029901（预览版）',
+              'body': '- 构建号：`2090029901`',
+              'draft': false,
+            },
+            {
+              'tag_name': 'v1.0.0.2090029902',
+              'name': 'Skyward 1.0.0.2090029902（beta）',
+              'body': '- 构建号：`2090029902`',
+              'draft': false,
+            },
+          ]),
+        );
 
         // The list endpoint is rate limited, so the live check cannot read it.
         final request = requestAnswering({
@@ -191,15 +197,19 @@ void main() {
           version: '1.0.0.2090029901',
           buildNumber: '2090029901',
         );
-        final cache = File(join(await appPath.homeDirPath, 'releases_cache.json'));
-        await cache.writeAsString(jsonEncode([
-          {
-            'tag_name': 'preview-2090029901',
-            'name': 'Skyward 1.0.0.2090029901（预览版）',
-            'body': '- 构建号：`2090029901`',
-            'draft': false,
-          },
-        ]));
+        final cache = File(
+          join(await appPath.homeDirPath, 'releases_cache.json'),
+        );
+        await cache.writeAsString(
+          jsonEncode([
+            {
+              'tag_name': 'preview-2090029901',
+              'name': 'Skyward 1.0.0.2090029901（预览版）',
+              'body': '- 构建号：`2090029901`',
+              'draft': false,
+            },
+          ]),
+        );
 
         final request = requestAnswering({
           'api.github.com': () => ResponseBody.fromString('{}', 403),

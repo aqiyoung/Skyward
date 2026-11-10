@@ -157,8 +157,9 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     final isLoading = ref.watch(loadingProvider(LoadingTag.proxies));
     final picker = widget.picker;
     final primaryAction = _buildPrimaryAction();
-    final menuItems =
-        picker ? <CommonPopupMenuItem>[] : _buildMenuItems(context, style);
+    final menuItems = picker
+        ? <CommonPopupMenuItem>[]
+        : _buildMenuItems(context, style);
     final iconActions = <IconButtonData>[
       if (_isTab && !picker)
         IconButtonData(
@@ -187,9 +188,8 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
     final subtitle = largeTitle && proxyQuery.isNotEmpty
         ? _QueryChip(
             query: proxyQuery,
-            onClear: () => ref
-                .read(queryProvider(QueryTag.proxies).notifier)
-                .value = '',
+            onClear: () =>
+                ref.read(queryProvider(QueryTag.proxies).notifier).value = '',
           )
         : null;
     return CommonScaffold(
@@ -200,8 +200,7 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
       iconActions: largeTitle ? const [] : iconActions,
       menuItems: largeTitle ? const [] : menuItems,
       title: context.appLocalizations.proxies,
-      searchState:
-          largeTitle ? null : AppBarSearchState(onSearch: _onSearch),
+      searchState: largeTitle ? null : AppBarSearchState(onSearch: _onSearch),
       largeTitle: largeTitle,
       body: largeTitle
           ? PageLargeTitle(

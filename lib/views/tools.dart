@@ -228,7 +228,7 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
     final channelSuffix = buildChannelSuffix();
     final version = globalState.hasPackageInfo
         ? '${globalState.packageInfo.displayVersion}'
-            '${channelSuffix.isNotEmpty ? ' $channelSuffix' : ''}'
+              '${channelSuffix.isNotEmpty ? ' $channelSuffix' : ''}'
         : null;
     final text = downloading
         ? appLocalizations.versionUpdateDownloading

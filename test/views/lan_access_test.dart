@@ -36,10 +36,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          locale: Locale('en'),
-          child: LanAccessView(),
-        ),
+        child: const TestApp(locale: Locale('en'), child: LanAccessView()),
       ),
     );
     await tester.pumpAndSettle();

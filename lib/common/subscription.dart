@@ -147,9 +147,7 @@ Map<String, dynamic>? _parseVless(String link) {
         final hostPort = decoded.substring(atIdx + 1);
         // uuidPart may be "uuid" or "method:uuid"
         final colonIdx = uuidPart.indexOf(':');
-        userInfo = colonIdx != -1
-            ? uuidPart.substring(colonIdx + 1)
-            : uuidPart;
+        userInfo = colonIdx != -1 ? uuidPart.substring(colonIdx + 1) : uuidPart;
         final hpColon = hostPort.lastIndexOf(':');
         if (hpColon != -1) {
           host = hostPort.substring(0, hpColon);
@@ -193,7 +191,8 @@ Map<String, dynamic>? _parseVless(String link) {
     final tlsParam = params['tls'];
     final hasTls = security == 'tls' || tlsParam == '1' || tlsParam == 'true';
     // Reality indicated by security=reality, or pbk (public key), or xtls param
-    final isReality = security == 'reality' ||
+    final isReality =
+        security == 'reality' ||
         params['pbk'] != null ||
         params['xtls'] != null;
 
@@ -254,9 +253,7 @@ Map<String, dynamic>? _parseVless(String link) {
         }
         if (wsOpts.isNotEmpty) proxy['ws-opts'] = wsOpts;
       } else if (type == 'grpc') {
-        proxy['grpc-opts'] = {
-          'grpc-service-name': params['serviceName'] ?? '',
-        };
+        proxy['grpc-opts'] = {'grpc-service-name': params['serviceName'] ?? ''};
       }
     }
 
@@ -345,7 +342,6 @@ Map<String, dynamic>? _parseSs(String link) {
   return null;
 }
 
-
 Map<String, dynamic>? _parseSsr(String link) {
   // ssr://base64(host:port:protocol:method:obfs:base64pass/?obfsparam=...&protoparam=...&remarks=...&group=...)
   try {
@@ -390,7 +386,8 @@ Map<String, dynamic>? _parseSsr(String link) {
       'protocol': protocol,
       'obfs': obfs,
       if (obfsParam != null && obfsParam.isNotEmpty) 'obfs-param': obfsParam,
-      if (protocolParam != null && protocolParam.isNotEmpty) 'protocol-param': protocolParam,
+      if (protocolParam != null && protocolParam.isNotEmpty)
+        'protocol-param': protocolParam,
       if (group != null && group.isNotEmpty) 'group': group,
     };
   } catch (_) {
@@ -415,7 +412,8 @@ Map<String, dynamic>? _parseHysteria2(String link) {
       if (params['sni'] != null) 'sni': params['sni'],
       if (params['insecure'] == '1') 'skip-cert-verify': true,
       if (params['obfs'] != null) 'obfs': params['obfs'],
-      if (params['obfs-password'] != null) 'obfs-password': params['obfs-password'],
+      if (params['obfs-password'] != null)
+        'obfs-password': params['obfs-password'],
     };
   } catch (_) {
     return null;
@@ -564,7 +562,9 @@ String _valueToYaml(dynamic value, int indent) {
   }
   if (value is Map) {
     final pad = ' ' * (indent + 2);
-    final entries = value.entries.map((e) => '$pad${e.key}: ${_valueToYaml(e.value, indent + 2)}');
+    final entries = value.entries.map(
+      (e) => '$pad${e.key}: ${_valueToYaml(e.value, indent + 2)}',
+    );
     return '\n${entries.join('\n')}';
   }
   return value.toString();

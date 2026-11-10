@@ -119,8 +119,9 @@ void main() {
     expect(file.existsSync(), isTrue, reason: 'missing ${file.path}');
     final codec = await ui.instantiateImageCodec(await file.readAsBytes());
     final image = (await codec.getNextFrame()).image;
-    final pixels =
-        (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+    final pixels = (await image.toByteData(
+      format: ui.ImageByteFormat.rawRgba,
+    ))!;
     var opaque = 0;
     var tinted = 0;
     for (var i = 0; i < pixels.lengthInBytes; i += 4) {
@@ -143,8 +144,10 @@ void main() {
     image.dispose();
     codec.dispose();
     expect(opaque, greaterThan(0), reason: 'themed icon is empty');
-    expect(tinted, 0,
-        reason: 'themed icon must be pure white; the system applies the tint');
+    expect(
+      tinted,
+      0,
+      reason: 'themed icon must be pure white; the system applies the tint',
+    );
   });
-
 }
