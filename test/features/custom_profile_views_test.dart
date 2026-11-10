@@ -160,10 +160,12 @@ Finder _menuItem(String label) => find.descendant(
   matching: find.text(label),
 );
 
-Widget _proxyGroupsPage(int profileId) => CommonScaffold(
-  title: 'Groups',
-  body: CustomScrollView(slivers: [CustomProxyGroupsSection(profileId)]),
-);
+Widget _proxyGroupsPage(int profileId, {bool rowSeparators = false}) =>
+    CommonScaffold(
+      title: 'Groups',
+      rowSeparators: rowSeparators,
+      body: CustomScrollView(slivers: [CustomProxyGroupsSection(profileId)]),
+    );
 
 void _setViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(1400, 1000);
@@ -186,6 +188,7 @@ Future<_TestProxyGroups> _pumpProxyGroups(
   WidgetTester tester, {
   bool pushed = false,
   Set<String> inUse = const {},
+  bool rowSeparators = false,
 }) async {
   _setViewport(tester);
   final profile = Profile.custom();
@@ -228,7 +231,9 @@ Future<_TestProxyGroups> _pumpProxyGroups(
     UncontrolledProviderScope(
       container: container,
       child: TestApp(
-        child: pushed ? const SizedBox() : _proxyGroupsPage(profile.id),
+        child: pushed
+            ? const SizedBox()
+            : _proxyGroupsPage(profile.id, rowSeparators: rowSeparators),
       ),
     ),
   );
@@ -384,7 +389,9 @@ void main() {
   testWidgets('groups list rounds only the first and last rows', (
     tester,
   ) async {
-    await _pumpProxyGroups(tester);
+    // The rounding is drawn with the separators, and a page draws no
+    // separators unless it asks for them.
+    await _pumpProxyGroups(tester, rowSeparators: true);
 
     final rows = find.byType(DecorationListItem);
     expect(rows, findsNWidgets(3));
