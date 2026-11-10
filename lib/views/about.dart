@@ -198,22 +198,21 @@ class _AboutViewState extends ConsumerState<AboutView> {
           ],
         ),
         generateSection(
+          items: [_buildContributors(appLocalizations.appIconDesign)],
+        ),
+        generateSection(
+          title: appLocalizations.acknowledgments,
           items: [
-            // Upstream FlClash lives here, not on the card above: that
-            // one carries this project's own entry, so a second project
-            // there reads as a competing project link.
+            // FlClash is the upstream this build forked from and mihomo is the
+            // core it runs on — both belong in the same credit, so the footer
+            // below can name them together rather than split the story across
+            // two sections.
             _buildLogoLinkItem(
               asset: 'assets/images/avatar/flclash.png',
               title: 'FlClash',
               url: 'https://github.com/chen08209/FlClash',
               label: 'github.com/chen08209/FlClash',
             ),
-            _buildContributors(appLocalizations.appIconDesign),
-          ],
-        ),
-        generateSection(
-          title: appLocalizations.acknowledgments,
-          items: [
             _buildLinkItem(
               glyph: AppGlyphs.cpu,
               title: 'mihomo (Clash.Meta)',
