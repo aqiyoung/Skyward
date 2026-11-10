@@ -63,9 +63,10 @@ jobs:
           test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
           go build -tags "$tags" ./...
           # The packages this project owns. The rest of the kernel is upstream
-          # code, and its formatting is upstream's business.
-          test -z "$(gofmt -l ./constant ./config ./listener/sing_tun)" || {
-            gofmt -l ./constant ./config ./listener/sing_tun >&2
+          # code, and its formatting is upstream's business: config/utils.go,
+          # for one, is not gofmt-clean.
+          test -z "$(gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go)" || {
+            gofmt -l ./constant ./listener/sing_tun ./config/tun_stack_test.go >&2
             exit 1
           }
           go test -count=1 -tags "$tags" ./constant/... ./listener/sing_tun/...
