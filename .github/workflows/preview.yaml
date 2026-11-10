@@ -19,6 +19,9 @@ on:
     paths-ignore:
       - '.github/**'
       - '**/*.md'
+      # README screenshots. `assets/**` is deliberately not here: that is
+      # bundled into the app, and a tray or About change has to be built.
+      - 'snapshots/**'
       # The desktop preview's trigger. A build of that one changes no app code,
       # and rebuilding the phone preview beside it would only add a tag.
       - '.desktop-preview'
