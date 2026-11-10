@@ -1,15 +1,18 @@
 name: checks
 
-# The check matrix only: Dart, plugins, desktop, Go, Android and Rust on every
-# push to main/beta. Releases do not live here anymore -- ci.yaml tests, builds
-# and publishes every channel, so the old release jobs (gated to the upstream
-# repository and pushing to its Homebrew/F-Droid repos) are gone with the fork.
+# The check matrix only: Dart, plugins, desktop, Go, Android and Rust. Releases
+# do not live here anymore -- ci.yaml tests, builds and publishes every channel,
+# so the old release jobs (gated to the upstream repository and pushing to its
+# Homebrew/F-Droid repos) are gone with the fork.
+#
+# `beta` is deliberately absent: a push there is a beta release, and ci.yaml
+# already tests every platform for it. Running this matrix beside that one only
+# paid for the same checks twice.
 
 on:
   push:
     branches:
       - main
-      - beta
     tags:
       - 'v*'
   workflow_dispatch:

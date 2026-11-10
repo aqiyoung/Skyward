@@ -1,6 +1,6 @@
 # 更新日志（中文）
 
-中文文案的**真源是提交里的 `Changelog-Zh:` trailer**。构建时 `preview.yaml` 从上一版到 HEAD 的提交中提取这些
+中文文案的**真源是提交里的 `Changelog-Zh:` trailer**。构建时从上一版到 HEAD 的提交中提取这些
 行作为 Telegram 文案；app 内更新日志也从 Release 里的结构化 JSON 读取，中文环境显示这一条。
 
 本文件只在两种情况下兜底：

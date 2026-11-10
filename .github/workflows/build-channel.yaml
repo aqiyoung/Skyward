@@ -328,6 +328,9 @@ jobs:
           # it, so the app reads it back to tell whether a release is newer than
           # the build on the phone.
           APP_BUILD_NUMBER: ${{ inputs.build_number }}
+          # The channel the home corner wears (`Beta`). A release leaves this
+          # empty: it is the app, and the badge is only for a build being tried.
+          APP_CHANNEL_NAME: ${{ inputs.channel == 'beta' && 'beta' || '' }}
         run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
 
       # The packaging tools name their output after the pubspec version, which

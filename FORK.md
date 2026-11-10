@@ -1,14 +1,14 @@
 # Skyward
 
-Skyward 是一个多平台代理客户端，基于 Clash.Meta（mihomo）内核。本项目**最初从 [chen08209/FlClash](https://github.com/chen08209/FlClash) fork 修改而来**，自 2026 年起作为**独立项目维护**：不再同步上游代码、不再跟随上游版本，版本号与发版流程完全由本项目自己掌控。发布仍以 **Skyward** 名义：包名、桌面图标下的名字和安装包文件名都是自己的，和上游官方包分别安装。构建由 GitHub Actions 全平台完成、自签名，发布到本仓库的 Releases（同时推送到 TG 频道 [@sanyeinfo](https://t.me/sanyeinfo)）。
+Skyward 是一个多平台代理客户端，基于 Clash.Meta（mihomo）内核。本项目**最初从 [chen08209/FlClash](https://github.com/chen08209/FlClash) fork 修改而来**，自 2026 年起作为**独立项目维护**：不再同步上游代码、不再跟随上游版本，版本号与发版流程完全由本项目自己掌控。发布仍以 **Skyward** 名义：包名、桌面图标下的名字和安装包文件名都是自己的，和上游官方包分别安装。构建由 GitHub Actions 全平台完成、自签名，发布到本仓库的 Releases。测试版和正式版会推送到 TG 频道 [@sanyeinfo](https://t.me/sanyeinfo)，dev 包只推给作者本人。
 
 本仓库只发布**客户端本体**：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。装好之后用什么配置，由使用者自己填。
 
 **装哪个**
 
 - **正式版**（推荐）：[最新 Release](../../releases/latest) 里 `Skyward-` 开头的安装包。`/releases/latest` 永远指向正式版。
-- **测试版**：在 [Releases 列表](../../releases) 里标着 *Pre-release* 的那个，比正式版新，也可能有问题。
-- **预览版**：只有 Android arm64 一个包，每次代码有改动就自动构建（tag 形如 `preview-<构建号>`）。它是我们自己装机试新功能用的，比测试版更早、也更糙。
+- **测试版**：在 [Releases 列表](../../releases) 里标着 *Pre-release* 的那个，比正式版新，也可能有问题。`beta` 分支每次推送都会自动出一个。
+- **Dev 版**：`dev` 分支每次有代码改动就自动构建，只有 Android arm64 一个包（桌面端另有一个 Windows 包，改 `.desktop-preview` 才出）。只推给作者本人、不进 TG 频道，比测试版更早也更糙。
 
 Android 一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`（老机器），模拟器下 `-x86_64.apk`。
 
@@ -16,26 +16,28 @@ Android 一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`
 
 ```
 <本项目自有 base>.<序号>[-渠道]
-例如        1.0.1.6-beta     1.0.1.6     1.0.1.07-pre     1.0.1.07-dev
+例如        1.0.1.6-beta     1.0.1.6     1.0.1.07-dev
 ```
 
 - 前三段（base）是 **Skyward 自己的版本 base**，不再取自上游 `pubspec.yaml`、也不再跟随上游版本号。当前 base 为 `1.0.1`。
-- 第四位分两种，看渠道：**正式版和测试版**共用一条发布序号，一路往上数、每次发版 +1，把 beta 晋升成正式版时也拿一个新号——这样 beta 用户也会收到正式版的更新提示；**预览版和 dev 版**不占发布号，第四位是当天的第几次构建（`01` 起），因为它们是同一天的快照，不是发布。
-- 渠道写在**后缀**里：正式版没有后缀，测试版 `-beta`，预览版 `-pre`，dev 版 `-dev`。数字部分干净、固定四段，看得懂哪条线、第几次构建、哪个渠道。
+- 第四位分两种，看渠道：**正式版和测试版**共用一条发布序号，一路往上数、每次发版 +1，把 beta 晋升成正式版时也拿一个新号——这样 beta 用户也会收到正式版的更新提示；**dev 版**不占发布号，第四位是当天的第几次构建（`01` 起），因为它是同一天的快照，不是发布。
+- 渠道写在**后缀**里：正式版没有后缀，测试版 `-beta`，dev 版 `-dev`。数字部分干净、固定四段，看得懂哪条线、第几次构建、哪个渠道。
 - **Release tag 就是带后缀的完整版本**（如 `v1.0.1.6-beta`）。
-- 装上去的包处处显示这个版本：pub 不接受四段版本号，`pubspec.yaml` 里只能写三段，所以版本名在构建时以 `APP_VERSION` 注入（`setup.dart` 读 CI 的 `APP_VERSION_NAME`，写进 `env.json` 的 dart-define），`PackageInfo.displayVersion` 优先用它、为空时回落到 `package_info_plus` 的三段；Android 的 `versionName` 也直接写它，所以「设置 → 应用 → Skyward」里看到的和 App 里的一致。
+- 装上去的包处处显示这个版本：pub 不接受四段版本号，`pubspec.yaml` 里只能写三段，所以版本名在构建时以 `APP_VERSION` 注入（`setup.dart` 读 CI 的 `APP_VERSION_NAME`，写进 `env.json` 的 dart-define），`PackageInfo.displayVersion` 优先用它、为空时回落到 `package_info_plus` 的三段；Android 的 `versionName` 也直接写它，所以「设置 → 应用 → Skyward」里看到的和 App 里的一致。首页右上角还会挂一个渠道角标（`DEV` / `Beta`），正式版没有角标。
 - 每次构建另外带一个 **`20900000 + 自 2026-01-01 起的天数×100 + 当天序号`** 的构建号，写进 `pubspec.yaml`（构建时注入、不提交），它就是 APK 的 `versionCode`，保证新包一定比手机里那个"更新"，否则 Android 会拒绝覆盖安装。**这个数字不出现在版本名里**，只记在 Release 说明和 APK 元数据里；App 通过 `APP_BUILD_NUMBER` 拿到自己那一份，用来和 Release 说明里的构建号比大小——这就是「检查更新」判断新旧的依据。
-- 三个写构建号的地方（预览、dev、正式/测试版）读同一本账：当天已占的 `preview-*` / `dev-*` tag，加上最近一次 Release 说明里的构建号，取最大再 +1，所以谁先谁后都不会撞号。
+- 两个写构建号的地方（dev、正式/测试版）读同一本账：当天已占的 `dev-*` tag（历史 `preview-*` tag 也读，那是已经花掉的号），加上最近一次 Release 说明里的构建号，取最大再 +1，所以谁先谁后都不会撞号。
 
 ## 三个渠道
 
-| 渠道 | 分支 | 内容 | Release |
-| --- | --- | --- | --- |
-| 正式版 | [`main`](../../tree/main) | 已经跑过测试版的代码，晋升进来的 | 标为 Latest |
-| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动 | prerelease，不抢占 Latest |
-| 预览版 | [`beta`](../../tree/beta) | 同上，只构建 Android arm64、不跑测试 | prerelease，tag 是 `preview-*` |
+| 渠道 | 分支 | 内容 | Release | 去哪 |
+| --- | --- | --- | --- | --- |
+| 正式版 | [`main`](../../tree/main) | 已经跑过测试版的代码，晋升进来的 | 标为 Latest，全平台 | 频道 [@sanyeinfo](https://t.me/sanyeinfo) |
+| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动，每次 push 自动出 | prerelease，只构建 Android，不抢占 Latest | 频道 [@sanyeinfo](https://t.me/sanyeinfo)，静默不响铃 |
+| dev 版 | [`dev`](../../tree/dev) | 还在改的代码，每次 push 自动出 | prerelease，tag 是 `dev-*`，只有 Android arm64 | 只推给作者本人 |
 
-三个渠道依次走：预览版是还在改的快速验证包，稳定下来才发测试版，测试版跑一段没问题才晋升成正式版。三个渠道**同包名**（`com.threely.skyward`）、**同签名**，可以互相覆盖安装，`versionCode` 保证单调递增。
+三个渠道**同包名**（`com.threely.skyward`）、**同签名**，可以互相覆盖安装，`versionCode` 保证单调递增。
+
+升级路径是两步：dev 是边改边试的包，稳定下来合进 `beta`，push 上去就自动出一版测试包；测试版跑一段时间没问题，再手动 promote 成正式版。
 
 每个 Release 的说明里先列**自该渠道上一个版本以来的提交标题**（自动生成的更新日志，最多 40 条），TG 推送里也带上前面几条；`ci:` 这类纯自动化的提交不列。
 

@@ -80,9 +80,9 @@ repeat every morning; delete that tag to be told again.
    a dozen indirects). `go mod tidy` inside `core/` is what produces it: it resolves modules and does
    not build the app, so the rule against building on the host does not cover it.
 
-4. Verify in CI, never locally. Push `beta`; the preview builds the Go core, so a pin that does not
-   compile fails there. Read the injected version back from the build log (`-X ...constant.Version=`) and
-   from the core's own startup lines in the app's log page.
+4. Verify in CI, never locally. Push `beta`; the beta channel builds the Go core before it publishes,
+   so a pin that does not compile fails there. Read the injected version back from the build log
+   (`-X ...constant.Version=`) and from the core's own startup lines in the app's log page.
 
 ## The kernel's own CI does not run on our branches
 

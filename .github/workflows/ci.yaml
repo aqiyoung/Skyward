@@ -1,13 +1,18 @@
 name: release
 
-# Three channels, each one a promotion of the previous by hand:
+# Three channels: dev, beta and stable. A push drives the first two, and the
+# third is a promotion of the second.
 #
-#   preview  every push to `beta` rebuilds a phone build (preview.yaml: Android
-#            arm64 only, no tests) -- the fast loop while a change is settling.
-#   beta     a preview that settled: this workflow tests and builds every
-#            platform off `beta` and publishes a prerelease.
-#   stable   a beta that held: `promote` moves beta's tree into `main`, and the
-#            stable channel tests and builds that.
+#   dev     every push to `dev` rebuilds a phone package (dev-preview.yaml:
+#           Android arm64 only, no tests) and announces it privately. The fast
+#           loop while a change is settling.
+#   beta    every push to `beta` runs this workflow: it tests every platform
+#           and builds the phone package, then publishes a prerelease to the
+#           channel. A commit that reached beta is one the app's own checks let
+#           through. Desktop and Linux rides come with the stable channel, which
+#           builds all of them.
+#   stable  a beta that held: `promote` moves beta's tree into `main`, and the
+#           stable channel tests and builds that.
 #
 # Skyward is maintained independently: this workflow no longer pulls from or
 # rebases onto the upstream project (FlClash). It builds and releases only what
@@ -16,12 +21,12 @@ name: release
 #
 # The `ci` branch holds the automation, and a promotion refreshes the copies on
 # `main` from it -- a manual run is dispatched from `ci`, so these files take
-# effect without waiting for a promotion. preview.yaml is among them but also
-# has to sit in the branch trees: a push-triggered workflow only runs from the
-# branch that received the push, so `beta` carries the same file.
+# effect without waiting for a promotion. build-channel.yaml and
+# publish-release.yaml are among them but also have to sit in the branch trees:
+# a push-triggered workflow only runs from the branch that received the push.
 #
-# Flow: [push beta -> preview build] -> (later) beta release ->
-# (later, promote) main = beta's tree -> stable release.
+# Flow: [push dev -> dev package] -> [push beta -> beta release] ->
+# (promote) main = beta's tree -> stable release.
 
 on:
   workflow_dispatch:
@@ -30,11 +35,10 @@ on:
         description: Which channel to plan and build
         type: choice
         options:
-          - preview
           - beta
           - stable
           - all
-        default: preview
+        default: beta
       promote:
         description: Promote beta into main (the stable channel) and build it -- needs channel=stable or all
         type: boolean
@@ -44,15 +48,31 @@ on:
         type: boolean
         default: false
       publish:
-        description: Create the release and announce it on Telegram
+        description: Create the release and announce it on Telegram (a push always publishes)
         type: boolean
         default: true
+  # A push to beta is a beta release: it ran the app's checks to get there, so
+  # the channel tests every platform and publishes the result. A manual
+  # dispatch is what re-runs one, or promotes it.
+  push:
+    branches:
+      - beta
+    # A push that changes no app code has nothing to install: documentation and
+    # the automation itself are not a beta.
+    paths-ignore:
+      - '.github/**'
+      - '**/*.md'
+      - 'snapshots/**'
+      - '.desktop-preview'
 
 concurrency:
-  group: sync-and-release
-  cancel-in-progress: false
+  # A push cancels the push it supersedes -- three quick commits should not
+  # queue three half-hour releases. A dispatch is never cancelled: it may be
+  # halfway through publishing, and its tag is already written.
+  group: sync-and-release-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
-# This workflow force-pushes our branches and tags, and the preview / publish
+# This workflow force-pushes our branches and tags, and the build / publish
 # workflows this one calls create releases and read back earlier runs. A called
 # workflow cannot ask for more than its caller holds, so both scopes have to be
 # granted here as well -- `contents: read` alone makes every dispatch fail at
@@ -69,7 +89,6 @@ jobs:
     permissions:
       contents: write
     outputs:
-      build_preview: ${{ steps.plan.outputs.build_preview }}
       build_stable: ${{ steps.plan.outputs.build_stable }}
       build_beta: ${{ steps.plan.outputs.build_beta }}
       version_stable: ${{ steps.rebase.outputs.version_stable }}
@@ -81,7 +100,8 @@ jobs:
         id: rebase
         env:
           TOKEN: ${{ secrets.MIRROR_TOKEN || github.token }}
-          CHANNEL: ${{ inputs.channel || 'preview' }}
+          # A push is the beta channel; a dispatch names the one it wants.
+          CHANNEL: ${{ inputs.channel || 'beta' }}
           PROMOTE: ${{ inputs.promote || 'false' }}
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -97,16 +117,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           case "$CHANNEL" in
-            all) channels="preview stable beta" ;;
-            preview) channels="preview" ;;
+            all) channels="stable beta" ;;
             stable) channels="stable" ;;
             beta) channels="beta" ;;
-            *) echo "::error::unknown channel '$CHANNEL' (expected all, preview, beta or stable; the stable channel builds branch main)"; exit 1 ;;
+            *) echo "::error::unknown channel '$CHANNEL' (expected all, beta or stable; the stable channel builds branch main)"; exit 1 ;;
           esac
 
           # A channel is not a branch: the stable channel (what the repository
-          # shows by default) is our `main`, the beta channel is `beta`, and the
-          # preview channel builds the same `beta` branch with fewer platforms.
+          # shows by default) is our `main`, and the beta channel is `beta`.
           # The step outputs and the jobs that read them stay keyed by channel,
           # so only the git work below uses $br.
           branch_of() { [ "$1" = stable ] && echo main || echo beta; }
@@ -174,7 +192,6 @@ jobs:
               git checkout --quiet refs/remotes/origin/ci -- \
                 .github/workflows/ci.yaml \
                 .github/workflows/build-channel.yaml \
-                .github/workflows/preview.yaml \
                 .github/workflows/publish-release.yaml \
                 .github/workflows/core-watch.yaml
               git add -A
@@ -215,7 +232,7 @@ jobs:
           # the ceiling is 2,100,000,000, past which Flutter refuses to build,
           # and a hundred codes a day keeps the series inside it for another 270
           # years. Every channel draws from the one counter, stable first: the
-          # same day gives stable ...01, then beta ...02, then a preview ...03.
+          # same day gives stable ...01, then beta ...02, then a dev build ...03.
           #
           # The sequence is one past the highest spent *that day*: not the
           # number of tags, because counting assumes the stamps are contiguous
@@ -228,7 +245,7 @@ jobs:
           # The tags carry only the version, so the build number is read back
           # from the release titles and notes, which is where it is written;
           # releases come back newest first, so the ones spent today are on the
-          # first page. A preview writes down the code it built against rather
+          # first page. A snapshot writes down the code it built against rather
           # than the ABI-shifted one its arm64 APK carries, so one reading
           # serves every channel. The revision is counted from the tags in the
           # clone instead of the tags API, which pages at 100 names and a busy
@@ -238,12 +255,14 @@ jobs:
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          # Today's claimed numbers live in the tags a preview or a dev build
-          # writes before it builds. Read them from the API rather than from the
-          # clone: the checkout is shallow, a clone with no tags reads as
-          # "nothing was claimed today", and that is exactly how a beta once
-          # came out with a lower versionCode than the preview already on the
-          # phone -- which Android refuses to install over.
+          # Today's claimed numbers live in the tags a snapshot writes before it
+          # builds. A dev build writes one; a preview build used to, and a tag
+          # it left behind the same day is still a number already spent. Read
+          # them from the API rather than from the clone: the checkout is
+          # shallow, a clone with no tags reads as "nothing was claimed today",
+          # and that is exactly how a beta once came out with a lower
+          # versionCode than the package already on the phone -- which Android
+          # refuses to install over.
           preview_tags=$(gh api \
             "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
             --jq '.[].ref' 2>/dev/null || true)
@@ -262,9 +281,6 @@ jobs:
             | sed -n 's/.*skyward:build-number:\([0-9][0-9]*\).*/\1/p' | sort -n | tail -1)
           taken=""
           for ch in $channels; do
-            # The preview channel publishes under a `preview-*` tag, so it takes
-            # no version from the line; its job carries the code itself.
-            [ "$ch" = preview ] && continue
             br=$(branch_of "$ch")
             git rev-parse --verify --quiet "refs/heads/$br" >/dev/null || continue
             base_version=$(git show "$br:pubspec.yaml" | sed -n 's/^version: *\([^+]*\).*/\1/p' | tr -d '\r')
@@ -307,7 +323,7 @@ jobs:
       - name: Plan
         id: plan
         env:
-          CHANNEL: ${{ inputs.channel || 'preview' }}
+          CHANNEL: ${{ inputs.channel || 'beta' }}
           FORCE: ${{ inputs.force_build || 'false' }}
           SYNCED_STABLE: ${{ steps.rebase.outputs.synced_stable }}
           SYNCED_BETA: ${{ steps.rebase.outputs.synced_beta }}
@@ -316,45 +332,25 @@ jobs:
         run: |
           set -euo pipefail
           case "$CHANNEL" in
-            all) want_preview=true; want_stable=true; want_beta=true ;;
-            preview) want_preview=true; want_stable=false; want_beta=false ;;
-            stable) want_preview=false; want_stable=true; want_beta=false ;;
-            beta) want_preview=false; want_stable=false; want_beta=true ;;
-            *) echo "::error::unknown channel '$CHANNEL' (expected all, preview, beta or stable; the stable channel builds branch main)"; exit 1 ;;
+            all) want_stable=true; want_beta=true ;;
+            stable) want_stable=true; want_beta=false ;;
+            beta) want_stable=false; want_beta=true ;;
+            *) echo "::error::unknown channel '$CHANNEL' (expected all, beta or stable; the stable channel builds branch main)"; exit 1 ;;
           esac
 
           # A channel only gets built if it exists: `force_build` means "build
           # even when nothing moved", not "build the ones we have not created
           # yet". What "nothing moved" means depends on the channel -- a
-          # promotion for stable, a prior beta release for beta -- but a preview
-          # is built from whatever `beta` holds right now, so asking for one is
-          # enough.
+          # promotion for stable, a prior beta release for beta.
           decided() { # $1 = wanted, $2 = synced, $3 = exists
             [ "$1" = true ] && [ "$3" = true ] &&
               { [ "$2" = true ] || [ "$FORCE" = true ]; } && echo true || echo false
           }
-          requested() { # $1 = wanted, $2 = exists
-            { [ "$1" = true ] && [ "$2" = true ]; } && echo true || echo false
-          }
 
-          echo "build_preview=$(requested "$want_preview" "$EXISTS_BETA")" >> "$GITHUB_OUTPUT"
           echo "build_stable=$(decided "$want_stable" "$SYNCED_STABLE" "$EXISTS_STABLE")" >> "$GITHUB_OUTPUT"
           echo "build_beta=$(decided "$want_beta" "$SYNCED_BETA" "$EXISTS_BETA")" >> "$GITHUB_OUTPUT"
-          echo "plan: preview=$want_preview exists=$EXISTS_BETA"
           echo "plan: stable=$want_stable exists=$EXISTS_STABLE synced=$SYNCED_STABLE"
           echo "plan: beta=$want_beta exists=$EXISTS_BETA synced=$SYNCED_BETA force=$FORCE"
-
-  # The preview channel builds and publishes itself, in the same workflow that
-  # every push to beta runs; here it is called explicitly so a single run can
-  # plan a release and put the result on a phone in one dispatch.
-  preview:
-    name: Preview
-    needs: sync
-    if: needs.sync.outputs.build_preview == 'true'
-    uses: ./.github/workflows/preview.yaml
-    with:
-      ref: beta
-    secrets: inherit
 
   test-stable:
     name: Test stable
@@ -410,6 +406,12 @@ jobs:
       version: ${{ needs.sync.outputs.version_beta }}
       build_number: ${{ needs.sync.outputs.build_number_beta }}
       stage: build
+      # The phone only. Every push publishes a beta, and the full matrix is six
+      # runners -- two of them macOS, billed at ten times the rate -- for a
+      # package that is mostly installed on a phone to see whether it works.
+      # Desktop and Linux reach their users through a stable release, which
+      # still builds every platform.
+      platforms: android
     secrets: inherit
 
   # A release needs its own channel's tests to have passed. A single failed
@@ -435,8 +437,10 @@ jobs:
   release-beta:
     name: Release beta
     needs: [sync, test-beta, build-beta]
+    # A push is a beta release -- that is what pushing to beta means. A
+    # dispatch may opt out with publish=false.
     if: >-
-      inputs.publish &&
+      (github.event_name == 'push' || inputs.publish) &&
       needs.sync.outputs.build_beta == 'true' &&
       needs.test-beta.result == 'success' &&
       needs.build-beta.result != 'cancelled'

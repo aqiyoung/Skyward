@@ -605,7 +605,7 @@ jobs:
             fi
             echo
             echo "⬇️ 安装包即本条消息附件"
-            echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
+            echo "（Dev 版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
 
