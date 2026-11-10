@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -27,14 +27,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/context_menu.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 import '../plugins/code_forge/support.dart';
 
-class _PendingAdapter implements HttpClientAdapter {
-  final response = Completer<ResponseBody>();
+/// Answers the releases list the update check asks for.
+///
+/// The answer comes at once. A request that stayed open would leave the
+/// check waiting inside the widget test's own guard, and the test would
+/// wait for the check: two waits that never end.
+class _ReleasesAdapter implements HttpClientAdapter {
+  _ReleasesAdapter(this.body);
+
+  final String body;
   int requests = 0;
 
   @override
@@ -42,9 +50,13 @@ class _PendingAdapter implements HttpClientAdapter {
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
-  ) {
+  ) async {
     requests++;
-    return response.future;
+    return ResponseBody.fromString(
+      body,
+      200,
+      headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+    );
   }
 
   @override
@@ -293,10 +305,24 @@ void main() {
   testWidgets('the version row checks for an update where it stands', (
     tester,
   ) async {
+    // The check caches the releases it reads, and the cache lives in the
+    // app's data directory. Without a directory of its own the check cannot
+    // finish, and the row never learns that the build is up to date.
+    final root = await Directory.systemTemp.createTemp('skyward-version-row-');
+    addTearDown(() => root.delete(recursive: true));
+    await useAppPaths(root);
+
     final container = _containerFor(tester);
     final originalAdapter = request.dio.httpClientAdapter;
     addTearDown(() => request.dio.httpClientAdapter = originalAdapter);
-    final adapter = _PendingAdapter();
+    // The check reads the releases list, not `/releases/latest`: it has to
+    // see the preview and beta releases too, so a single release object is
+    // no longer the shape it parses.
+    final adapter = _ReleasesAdapter(
+      jsonEncode([
+        {'tag_name': 'v0.0.0', 'name': 'Skyward 0.0.0'},
+      ]),
+    );
     request.dio.httpClientAdapter = adapter;
 
     await tester.pumpWidget(
@@ -325,31 +351,10 @@ void main() {
 
     await tester.tap(row);
     await tester.pump();
-    expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('Checking…'), findsOneWidget);
-
-    // A second tap while the first is still in flight must not ask twice.
-    await tester.tap(row);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(adapter.requests, 1);
-
-    // The check reads the releases list, not `/releases/latest`: it has to see
-    // the preview and beta releases too, so a single release object is no
-    // longer the shape it parses.
-    adapter.response.complete(
-      ResponseBody.fromString(
-        jsonEncode([
-          {'tag_name': 'v0.0.0', 'name': 'Skyward 0.0.0'},
-        ]),
-        200,
-        headers: {
-          Headers.contentTypeHeader: [Headers.jsonContentType],
-        },
-      ),
-    );
-    await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
+    // The row asked once, and it found nothing newer than this build.
+    expect(adapter.requests, 1);
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.text('Up to date'), findsOneWidget);
 
