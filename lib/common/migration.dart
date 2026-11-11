@@ -91,13 +91,14 @@ class Migration {
 
   /// One-off setting changes for upgrades, apart from [currentVersion], which
   /// backups carry and an older app refuses when it is newer than its own.
-  static const upgradeVersion = 4;
+  static const upgradeVersion = 5;
 
   static const Map<int, Config Function(Config config)> _upgrades = {
     1: _resetThemeColors,
     2: _keepGlassLook,
     3: _followSystemColors,
     4: _turnOffSidebarBlur,
+    5: _settleFlashingGlassDock,
   };
 
   Future<Config> run() async {
@@ -237,6 +238,27 @@ Config _followSystemColors(Config config) {
 // Releases stored sidebar blur on while its switch stayed hidden.
 Config _turnOffSidebarBlur(Config config) =>
     config.copyWith(themeProps: config.themeProps.copyWith(sidebarBlur: false));
+
+// A floating dock with glass on draws a lens copy of the bar. Picking a tab
+// slides that lens across its two neighbours and they flash mid-flight. New
+// installs default to the steady capsule bar with glass off, but upgrades
+// kept their stored floating + glass setting, so existing users still saw the
+// flash. Settle only that legacy combination onto the new default, once; any
+// style or glass tier the user chose afterwards is left untouched.
+Config _settleFlashingGlassDock(Config config) {
+  final app = config.appSettingProps;
+  final theme = config.themeProps;
+  if (app.navigationBarStyle != NavigationBarStyle.floating ||
+      theme.liquidGlass == LiquidGlassMode.none) {
+    return config;
+  }
+  return config.copyWith(
+    appSettingProps: app.copyWith(
+      navigationBarStyle: NavigationBarStyle.capsule,
+    ),
+    themeProps: theme.copyWith(liquidGlass: LiquidGlassMode.none),
+  );
+}
 
 bool _isV0(Map<String, Object?>? configMap) =>
     configMap?['proxiesStyle'] != null;
