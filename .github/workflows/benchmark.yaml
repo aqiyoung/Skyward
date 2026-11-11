@@ -47,40 +47,8 @@ jobs:
         run: |
           set -euo pipefail
           for stack in legacy go; do
-            kernel_stack=mips
-            if [[ "$stack" == "go" ]]; then
-              kernel_stack=go
-            fi
-            python3 - "$RUNNER_TEMP/config-$stack.yaml" "$kernel_stack" <<'PY'
-import sys
-
-path, stack = sys.argv[1], sys.argv[2]
-with open(path, "w") as handle:
-    handle.write(f"""mixed-port: 17890
-mode: rule
-log-level: warning
-ipv6: false
-dns:
-  enable: true
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-proxies:
-  - name: local
-    type: http
-    server: 127.0.0.1
-    port: 17891
-rules:
-  - MATCH,local
-tun:
-  enable: true
-  stack: {stack}
-  device: skyward-bench
-  auto-route: false
-  auto-detect-interface: false
-""")
-PY
             echo "=== the $stack stack ==="
-            sudo "$RUNNER_TEMP/bench" "$RUNNER_TEMP/config-$stack.yaml" 3 64 | tee "$RUNNER_TEMP/$stack.log"
+            sudo "$RUNNER_TEMP/bench" -stack "$stack" -runs 3 -size 64 | tee "$RUNNER_TEMP/$stack.log"
           done
       - name: Attach the numbers
         if: always()

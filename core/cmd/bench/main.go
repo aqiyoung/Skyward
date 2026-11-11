@@ -14,16 +14,50 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
+	"flag"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
-	"strconv"
+	"path/filepath"
 	"time"
 
 	"core"
 )
+
+// configYAML is the configuration the tunnel is measured with. The
+// tunnel takes its address from the DNS fake-ip range, so the client asks
+// for an address in that range and the tunnel's own subnet route carries
+// it; no name is ever looked up.
+func configYAML(stack string) string {
+	kernelStack := "mips"
+	if stack == "go" {
+		kernelStack = "go"
+	}
+	return fmt.Sprintf(`mixed-port: 17890
+mode: rule
+log-level: warning
+ipv6: false
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+proxies:
+  - name: local
+    type: http
+    server: 127.0.0.1
+    port: 17891
+rules:
+  - MATCH,local
+tun:
+  enable: true
+  stack: %s
+  device: skyward-bench
+  auto-route: false
+  auto-detect-interface: false
+`, kernelStack)
+}
 
 const (
 	targetPort = 18080
@@ -35,18 +69,10 @@ const (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: bench <config.yaml> [runs] [sizeMiB]")
-		os.Exit(2)
-	}
-	configPath := os.Args[1]
-	runs, sizeMiB := 3, 64
-	if len(os.Args) > 2 {
-		runs, _ = strconv.Atoi(os.Args[2])
-	}
-	if len(os.Args) > 3 {
-		sizeMiB, _ = strconv.Atoi(os.Args[3])
-	}
+	stack := flag.String("stack", "legacy", "the tun stack to measure: legacy or go")
+	runs := flag.Int("runs", 3, "how many times to measure")
+	sizeMiB := flag.Int("size", 64, "the payload size in MiB")
+	flag.Parse()
 
 	home, err := os.MkdirTemp("", "skyward-bench-")
 	if err != nil {
@@ -80,6 +106,10 @@ func main() {
 	go serveProxy(proxy)
 
 	// The core, the way the application starts it.
+	configPath := filepath.Join(home, "config.yaml")
+	if err := os.WriteFile(configPath, []byte(configYAML(*stack)), 0o644); err != nil {
+		panic(err)
+	}
 	initParams := fmt.Sprintf(`{"home-dir": %q, "version": 1}`, home)
 	setupParams := fmt.Sprintf(`{"base": {"path": %q}}`, configPath)
 	done := make(chan string, 1)
@@ -91,10 +121,10 @@ func main() {
 	defer core.StopListener()
 
 	url := fmt.Sprintf("http://%s:%d/payload.bin", clientAddress, targetPort)
-	fmt.Printf("config=%s runs=%d size=%dMiB\n", configPath, runs, sizeMiB)
+	fmt.Printf("stack=%s runs=%d size=%dMiB\n", *stack, *runs, *sizeMiB)
 
 	best := 0.0
-	for run := 1; run <= runs; run++ {
+	for run := 1; run <= *runs; run++ {
 		start := time.Now()
 		response, err := http.Get(url)
 		if err != nil {
