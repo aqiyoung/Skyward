@@ -301,6 +301,22 @@ jobs:
               revision=$(( revision + 1 ))
             done
             taken="$taken ${base_version}.${revision}"
+            # The day's hundred codes are split by channel, not drawn from one
+            # pool: a phone that moves from dev to beta installs the beta, and
+            # Android reads nothing but the number to decide that. Dev works up
+            # from the bottom, beta starts at 80 and stable at 90 -- so today's
+            # beta outranks every dev built today, including the ones that come
+            # after it, which is the case that sent a dev package onto a beta
+            # channel as a downgrade. Each stays monotonic on its own: the
+            # counter below is one past the highest spent today.
+            case "$ch" in
+              beta) floor=80 ;;
+              stable) floor=90 ;;
+              *) floor=0 ;;
+            esac
+            if [ "$stamp" -lt "$floor" ]; then
+              stamp=$floor
+            fi
             code=$(( day_prefix * 100 + stamp ))
             # A pruned preview or dev tag must not let this release fall behind
             # a number already handed out: the notes of the newest release carry
