@@ -46,6 +46,10 @@ typedef AppBarSearchStateBuilder =
 /// come back as it scrolls down.
 const _titleAsideDuration = Duration(milliseconds: 200);
 
+/// Extra room below the status bar that a large-title page's solid top strip
+/// fades out over, so content scrolling under it is not cut by a hard edge.
+const double _largeTitleTopFade = 12.0;
+
 class CommonScaffold extends StatefulWidget {
   final Widget body;
   final Color? backgroundColor;
@@ -105,6 +109,14 @@ class CommonScaffold extends StatefulWidget {
   /// are never chased down a scroll.
   final bool hideActionsOnScroll;
 
+  /// Opt-in static large-title page. When on, the floating bar carries no
+  /// title at all -- it stays a plain, solid strip over the status bar -- and
+  /// the page supplies its own heading as a fixed block in the scrolling body.
+  /// Nothing fades, collapses or trades places on scroll, so no title ever
+  /// floats over the content. Bar actions stay put. Off by default -- every
+  /// other page keeps the original title and action behaviour untouched.
+  final bool largeTitle;
+
   const CommonScaffold({
     super.key,
     required this.body,
@@ -128,8 +140,9 @@ class CommonScaffold extends StatefulWidget {
     this.onKeywordsUpdate,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
-    this.rowSeparators = true,
+    this.rowSeparators = false,
     this.hideActionsOnScroll = true,
+    this.largeTitle = false,
   });
 
   @override
@@ -284,15 +297,19 @@ class CommonScaffoldState extends State<CommonScaffold>
   /// horizontally between pages, and a list a card holds scrolls inside it
   /// without moving anything the title was covering.
   bool _handleScrolling(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical ||
-        notification is! ScrollUpdateNotification) {
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) {
+      return false;
+    }
+    // Only a live vertical scroll update drives the title-aside behaviour; a
+    // card's own scroll or a horizontal tab swipe must not move the bar title.
+    if (notification is! ScrollUpdateNotification) {
       return false;
     }
     final delta = notification.scrollDelta;
     if (delta == null || delta == 0) {
       return false;
     }
-    final metrics = notification.metrics;
     // At the top there is nothing left to uncover, so the title stays where it
     // starts even if the page is dragged on.
     final aside = delta > 0 && metrics.pixels > metrics.minScrollExtent;
@@ -615,6 +632,12 @@ class CommonScaffoldState extends State<CommonScaffold>
               ),
             ],
           );
+    // A large-title page keeps its heading in the scrolling body and shows no
+    // title in the bar at all -- not even a compact one that fades in on
+    // scroll. Every other page keeps the original aside behaviour exactly.
+    if (widget.largeTitle) {
+      return const SizedBox.shrink();
+    }
     return _TitleAside(aside: _titleAside, child: content);
   }
 
@@ -777,11 +800,21 @@ class CommonScaffoldState extends State<CommonScaffold>
   }
 
   Widget _buildFloatingHeader(Widget appBar) {
+    final backgroundColor =
+        widget.backgroundColor ??
+        SurfaceLevel.page.colorOf(context.colorScheme);
+    if (widget.largeTitle) {
+      // A large-title page keeps a plain, steady strip over the status bar:
+      // opaque page colour, no title, no fade in or out on scroll. Content
+      // scrolling up simply hides behind it instead of reading through a
+      // translucent scrim, and no compact title ever floats in to replace the
+      // heading in the body. Off by default: every other page keeps the
+      // original [FloatingHeader] gradient untouched.
+      return _StaticHeader(backgroundColor: backgroundColor, child: appBar);
+    }
     final top = MediaQuery.paddingOf(context).top;
     return FloatingHeader(
-      backgroundColor:
-          widget.backgroundColor ??
-          SurfaceLevel.page.colorOf(context.colorScheme),
+      backgroundColor: backgroundColor,
       fadeStart: top / (top + pageToolbarHeight),
       overhang: _headerOverhang,
       child: appBar,
@@ -832,6 +865,7 @@ class CommonScaffoldState extends State<CommonScaffold>
               // is a control the reader can afford to chase down a scroll.
               final actionsAside =
                   widget.hideActionsOnScroll &&
+                  !widget.largeTitle &&
                   !_sorting &&
                   widget.confirmationAction == null;
               final appBar = AppBar(
@@ -1804,7 +1838,7 @@ class BaseScaffold extends StatelessWidget {
     super.key,
     required this.title,
     required this.body,
-    this.rowSeparators = true,
+    this.rowSeparators = false,
   });
 
   @override
@@ -1846,6 +1880,54 @@ class _TitleAside extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The steady bar of a large-title page: a solid strip of page colour over the
+/// status bar, tapering out just below it so content scrolling up is hidden
+/// rather than read through. The shared [FloatingHeader] is a translucent
+/// gradient that lets cards show through; this one is opaque and never changes
+/// with scroll, and carries no title -- the page's heading stays a fixed block
+/// in its own body. Used only when [CommonScaffold.largeTitle] is on.
+class _StaticHeader extends StatelessWidget {
+  const _StaticHeader({required this.backgroundColor, required this.child});
+
+  final Color backgroundColor;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: top + _largeTitleTopFade,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  // Solid behind the status bar; only the last stretch fades so
+                  // the strip has no hard edge against the content below.
+                  stops: const [0.0, 0.8, 1.0],
+                  colors: [
+                    backgroundColor,
+                    backgroundColor,
+                    backgroundColor.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        child,
+      ],
     );
   }
 }

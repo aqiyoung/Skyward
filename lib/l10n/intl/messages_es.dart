@@ -258,6 +258,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("Cuenta"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Agradecimientos"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward comenzó como una bifurcación de FlClash de chen08209 y se basa en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("Acción"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(
       "Probar la latencia de todos",
@@ -583,6 +587,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Smart App Control de Windows bloqueó SkywardCore.exe porque no está firmado. Abre Seguridad de Windows → Control de aplicaciones y navegador → Configuración de Smart App Control, elige Desactivado y vuelve a iniciar Skyward. Smart App Control no se puede volver a activar sin reinstalar Windows.",
     ),
     "coreStatus": MessageLookupByLibrary.simpleMessage("Estado del núcleo"),
+    "coreVersion": MessageLookupByLibrary.simpleMessage("Versión del núcleo"),
     "country": MessageLookupByLibrary.simpleMessage("Región"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("Fallo detectado"),
     "crashDetectedTip": m6,
@@ -1030,6 +1035,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "Al desplazarse por la página, la barra inferior conserva solo sus iconos",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage(
+      "Ocultar la notificación permanente",
+    ),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "El proxy sigue funcionando. Android exige una notificación de servicio en primer plano, así que esta pasa a ser silenciosa y no aparece en la pantalla de bloqueo; los ajustes del sistema pueden desactivarla del todo",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("Ocultar contraseña"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Ocultar proxies sin respuesta",
@@ -1108,9 +1119,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Introduce el contenido de la regla",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Se denegó el permiso de lista de apps, por lo que no se pueden mostrar las apps instaladas. Concédelo manualmente en los ajustes del sistema.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Este sistema oculta la lista de apps instaladas hasta que se concede el permiso. Autorízalo para configurar el proxy por app.",
     ),
@@ -1349,6 +1361,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "Esto es un mensaje.",
     ),
+    "mine": MessageLookupByLibrary.simpleMessage("Mío"),
     "minimize": MessageLookupByLibrary.simpleMessage("Minimizar"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "Minimizar al salir",
@@ -1477,6 +1490,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideEntries": MessageLookupByLibrary.simpleMessage(
       "Entradas de sobrescritura",
     ),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Páginas"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("Analizar IP pura"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "Analizar IP pura analiza las conexiones que solo llevan una dirección IP.",
@@ -1736,6 +1750,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Direcciones excluidas de la ruta",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Dispositivo"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Mapa plano"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("Globo 3D"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Destino"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Nodo"),
     "routingMark": MessageLookupByLibrary.simpleMessage(
@@ -1915,6 +1931,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Ir a la selección",
     ),
     "search": MessageLookupByLibrary.simpleMessage("Buscar"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Buscar páginas, nodos, herramientas y ajustes",
+    ),
     "seconds": MessageLookupByLibrary.simpleMessage("segundos"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("Clave"),
@@ -2154,6 +2173,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Consejo"),
     "toggle": MessageLookupByLibrary.simpleMessage("Alternar"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolerancia"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Herramientas"),
     "tools": MessageLookupByLibrary.simpleMessage("Más"),
     "torch": MessageLookupByLibrary.simpleMessage("Linterna"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),

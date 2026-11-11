@@ -13,17 +13,24 @@ import 'package:skyward/views/backup_and_restore.dart';
 import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/hotkey.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
 import 'config/network.dart';
-import 'config/settings_search.dart';
 import 'developer.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
-  const ToolsView({super.key});
+  const ToolsView({super.key, this.label = PageLabel.tools});
+
+  /// Which dock label this page was opened under. The dashboard's mobile
+  /// fourth tab calls it "Mine", so the heading follows that label instead of
+  /// the old "More". Desktop keeps the default. Global search now lives in
+  /// its own tab, so this page no longer carries a settings-only search
+  /// button in the bar.
+  final PageLabel label;
 
   @override
   ConsumerState<ToolsView> createState() => _ToolViewState();
@@ -77,7 +84,6 @@ class _ToolViewState extends ConsumerState<ToolsView> {
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
     final developerMode = ref.watch(
       appSettingProvider.select((state) => state.developerMode),
     );
@@ -97,30 +103,35 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getSettingList(developerMode),
       _getAboutList(),
     ];
-    return CommonScaffold(
-      rowSeparators: false,
-      title: appLocalizations.tools,
-      iconActions: [
-        IconButtonData(
-          glyph: AppGlyphs.search,
-          tooltip: appLocalizations.search,
-          onPressed: () =>
-              showExtend(context, builder: (_) => const SettingsSearchView()),
-        ),
-      ],
-      body: Builder(
-        builder: (context) => ListView.builder(
-          key: toolsStoreKey,
-          itemCount: items.length,
-          itemBuilder: (_, index) => items[index],
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: context.cardTopPadding,
-            bottom: 20 + context.bottomInset,
-          ),
+    // On a phone the heading moves into the page and the bar is left empty.
+    // Desktop and compact sheets keep the ordinary bar title and layout.
+    final largeTitle =
+        ViewScope.isMobileOf(context) && !context.isInCompactSheet;
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final body = Builder(
+      builder: (context) => ListView.builder(
+        key: toolsStoreKey,
+        itemCount: items.length,
+        itemBuilder: (_, index) => items[index],
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: context.cardTopPadding,
+          bottom: 20 + context.bottomInset,
         ),
       ),
+    );
+    return CommonScaffold(
+      rowSeparators: false,
+      title: widget.label.label,
+      largeTitle: largeTitle,
+      body: largeTitle
+          ? PageLargeTitle(
+              title: widget.label.label,
+              statusBarTop: statusBarTop,
+              body: body,
+            )
+          : body,
     );
   }
 }
@@ -215,7 +226,7 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
     // naming the version for the minutes that takes.
     final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
     final version = globalState.hasPackageInfo
-        ? globalState.packageInfo.displayVersion
+        ? globalState.packageInfo.labeledVersion
         : null;
     final text = downloading
         ? appLocalizations.versionUpdateDownloading

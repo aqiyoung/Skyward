@@ -95,17 +95,27 @@ class DisclaimerView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final body = _buildBody(
-      padding: const EdgeInsets.symmetric(horizontal: _mobileGutter).copyWith(
-        top: context.contentTopPadding,
-        // Below the terms the consent bar takes the system bar itself.
-        bottom: 32 + (requireConsent ? 0 : context.bottomInset),
-      ),
-      children: const [DisclaimerTerms()],
-    );
     if (!requireConsent) {
+      // A pushed page reached from the about page: it keeps the ordinary
+      // inline bar title beside its back button (← 免责声明) instead of the
+      // tabs' fixed large title, which would only waste the strip above the
+      // bar on a secondary screen.
+      final body = _buildBody(
+        padding: const EdgeInsets.symmetric(horizontal: _mobileGutter).copyWith(
+          top: context.contentTopPadding,
+          bottom: 32 + context.bottomInset,
+        ),
+        children: const [DisclaimerTerms()],
+      );
       return CommonScaffold(title: appLocalizations.disclaimer, body: body);
     }
+    // First-launch consent keeps its plain bar and its bottom action bar.
+    final body = _buildBody(
+      padding: const EdgeInsets.symmetric(
+        horizontal: _mobileGutter,
+      ).copyWith(top: context.contentTopPadding, bottom: 32),
+      children: const [DisclaimerTerms()],
+    );
     return Consumer(
       builder: (context, ref, _) {
         if (ref.watch(isMobileViewProvider)) {

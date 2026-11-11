@@ -368,7 +368,7 @@ void main() {
     final mobile = container.read(currentNavigationItemsStateProvider).value;
     expect(
       mobile.map((item) => item.label),
-      containsAll([PageLabel.dashboard, PageLabel.profiles, PageLabel.tools]),
+      containsAll([PageLabel.dashboard, PageLabel.profiles, PageLabel.mine]),
     );
     expect(
       mobile.map((item) => item.label),
@@ -726,7 +726,7 @@ void main() {
   });
 
   test('theme and simple derived providers cover fallback branches', () {
-    expect(container.read(currentBrightnessProvider), Brightness.dark);
+    expect(container.read(currentBrightnessProvider), Brightness.light);
     container
         .read(systemBrightnessProvider.notifier)
         .update((_) => Brightness.light);

@@ -40,8 +40,8 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
   global hotkeys on the desktop.
 - **Open source and ad-free**, licensed under GPL-3.0.
 
-> New additions above first land in the [beta / preview channel](FORK.md) and reach the default `main`
-> branch at the next promotion. See [FORK.md](FORK.md) for the three release channels.
+> New additions above first land in the [beta channel](FORK.md) and reach the default `main`
+> branch at the next promotion. See [FORK.md](FORK.md) for the three channels.
 
 ## Download
 

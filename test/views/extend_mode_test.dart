@@ -98,11 +98,19 @@ void main() {
 
     await pumpExtend(tester);
 
+    // The page says so itself, and the scaffold around it does not turn the
+    // separators back on: no scope on the page draws one.
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is ListRowSeparatorScope && widget.separated,
+      ),
+      findsNothing,
+    );
     expect(
       find.byWidgetPredicate(
         (widget) => widget is ListRowSeparatorScope && !widget.separated,
       ),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(tester.takeException(), isNull);
   });

@@ -36,6 +36,7 @@ private data class ExtendedNotificationParams(
     val stopText: String,
     val showStopAction: Boolean,
     val contentText: String,
+    val hidden: Boolean,
 )
 
 private val NotificationParams.extended: ExtendedNotificationParams
@@ -43,7 +44,10 @@ private val NotificationParams.extended: ExtendedNotificationParams
         title,
         stopText,
         showStopAction,
-        Core.getSpeedTrafficText(onlyStatisticsProxy),
+        // A hidden notification is never read, and the speed costs a core call
+        // to produce: skip it rather than compute a string nobody sees.
+        if (hideNotification) "" else Core.getSpeedTrafficText(onlyStatisticsProxy),
+        hideNotification,
     )
 
 internal class NotificationModule(
@@ -71,7 +75,16 @@ internal class NotificationModule(
                 combine(
                     flow {
                         while (true) {
-                            delay(1_000)
+                            // A hidden notification shows no speed, so there is
+                            // nothing to refresh. Parking the tick also matters
+                            // on ROMs that let the user swipe a foreground
+                            // notification away: re-posting it every second
+                            // would bring it straight back. Parameter changes
+                            // still arrive through the second flow below.
+                            val hidden =
+                                ServiceConfig.notificationParams.value.hideNotification
+                            delay(if (hidden) 60_000 else 1_000)
+                            if (hidden) continue
                             emit(Unit)
                         }
                     },
@@ -88,41 +101,69 @@ internal class NotificationModule(
         service.getSystemService<PowerManager>()?.isInteractive ?: true
 
     private val notificationBuilder: NotificationCompat.Builder by lazy {
+        builder(hidden = false)
+    }
+
+    // A separate builder, not a flag on the one above: the channel is fixed
+    // when a builder is created, and moving a posted notification to another
+    // channel means building it again.
+    private val hiddenNotificationBuilder: NotificationCompat.Builder by lazy {
+        builder(hidden = true)
+    }
+
+    private fun builder(hidden: Boolean): NotificationCompat.Builder {
         val intent = Intent().setComponent(Components.mainActivity)
 
-        NotificationCompat.Builder(
+        return NotificationCompat.Builder(
             service,
-            GlobalState.NOTIFICATION_CHANNEL,
+            if (hidden) {
+                GlobalState.NOTIFICATION_CHANNEL_SILENT
+            } else {
+                GlobalState.NOTIFICATION_CHANNEL
+            },
         ).apply {
             setSmallIcon(R.drawable.ic_service)
             setContentTitle("Skyward")
             setContentIntent(intent.toPendingIntent)
-            setPriority(NotificationCompat.PRIORITY_LOW)
             setCategory(NotificationCompat.CATEGORY_SERVICE)
             setOngoing(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
             }
-            setShowWhen(true)
             setOnlyAlertOnce(true)
+            if (hidden) {
+                // The channel is already IMPORTANCE_MIN; these cover what a
+                // channel does not: no timestamp in the corner, nothing on the
+                // lock screen, and the lowest priority for pre-Oreo devices,
+                // which have no channels at all.
+                setPriority(NotificationCompat.PRIORITY_MIN)
+                setSilent(true)
+                setShowWhen(false)
+                setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            } else {
+                setPriority(NotificationCompat.PRIORITY_LOW)
+                setShowWhen(true)
+            }
         }
     }
 
     private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
 
     private fun update(params: ExtendedNotificationParams) {
+        val builder =
+            if (params.hidden) hiddenNotificationBuilder else notificationBuilder
         service.startForeground(
-            with(notificationBuilder) {
-                setContentTitle(params.title)
-                setContentText(params.contentText)
-                clearActions()
-                if (params.showStopAction) {
-                    addAction(0, params.stopText, stopIntent)
-                }
-                build()
-            },
-        )
-    }
+      with(builder) {
+        setContentTitle(params.title)
+        setContentText(params.contentText.takeIf { it.isNotEmpty() })
+        clearActions()
+        if (params.showStopAction) {
+          addAction(0, params.stopText, stopIntent)
+        }
+        build()
+      },
+    )
+  }
 
     @Suppress("DEPRECATION")
     override fun stop() {

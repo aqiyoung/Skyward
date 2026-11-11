@@ -620,6 +620,14 @@ enum PageLabel {
   resources,
   connections,
   dns,
+
+  /// The mobile "Mine" tab: a settings centre built from the former tools
+  /// page. Appended so every existing value keeps its persisted index.
+  mine,
+
+  /// The mobile global-search tab: one index over pages, tool entries and
+  /// settings rows. Also appended for the same reason.
+  search,
 }
 
 enum RuleAction {

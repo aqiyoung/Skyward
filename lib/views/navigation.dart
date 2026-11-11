@@ -71,10 +71,28 @@ class Navigation implements NavigationPort {
             ? [NavigationItemMode.desktop, NavigationItemMode.more]
             : [],
       ),
+      // The global search: one index over pages, tool entries and settings.
+      // Fourth in the mobile row, immediately before "Mine": the three pages
+      // ahead of it are the walk through the app, while the settings centre
+      // stays the corner a row is expected to end on. Desktop keeps its
+      // sidebar, so this is mobile-only.
       NavigationItem(
-        glyph: AppGlyphs.moreCircle,
-        label: PageLabel.tools,
-        builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+        glyph: AppGlyphs.search,
+        label: PageLabel.search,
+        builder: (_) =>
+            const GlobalSearchView(key: GlobalObjectKey(PageLabel.search)),
+        modes: [NavigationItemMode.mobile],
+      ),
+      // "Mine" is the settings centre: the former tools page (tool entries +
+      // settings + about) under a label and glyph that read as one's own. It
+      // keeps both modes, so the desktop sidebar only changes its label.
+      NavigationItem(
+        glyph: AppGlyphs.account,
+        label: PageLabel.mine,
+        builder: (_) => const ToolsView(
+          key: GlobalObjectKey(PageLabel.mine),
+          label: PageLabel.mine,
+        ),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];

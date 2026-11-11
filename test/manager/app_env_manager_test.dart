@@ -24,11 +24,16 @@ void main() {
     );
   }
 
-  testWidgets('a stable build carries no banner', (tester) async {
+  testWidgets('a debug build labels itself, whatever its channel', (
+    tester,
+  ) async {
     await pump(tester, safeMode: false);
 
+    // A package carries its channel in the home's corner pill; the ribbon is
+    // for the build that exists on one machine only.
+    final banner = tester.widget<Banner>(find.byType(Banner));
+    expect(banner.message, 'DEBUG');
     expect(find.byKey(const Key('child')), findsOneWidget);
-    expect(find.byType(Banner), findsNothing);
   });
 
   testWidgets('a safe mode build is bannered on any channel', (tester) async {

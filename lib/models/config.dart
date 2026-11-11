@@ -356,6 +356,16 @@ abstract class AppSettingProps with _$AppSettingProps {
     List<DashboardWidget> dashboardWidgets,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
+
+    /// Draws the dashboard's route on a globe instead of the flat sheet. Off
+    /// by default: the sheet fits more of the world into the same height, and
+    /// the globe is there for the shape of a route, not for reading its legs.
+    @Default(false) bool routeMapGlobe,
+
+    /// Keeps the service's own notification out of sight. Android requires a
+    /// foreground service to post one, so this moves it to a silent channel
+    /// rather than removing it -- the proxy is unaffected.
+    @Default(false) bool hideNotification,
     @Default(false) bool autoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,
@@ -596,7 +606,7 @@ abstract class ThemeProps with _$ThemeProps {
   const factory ThemeProps({
     int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
-    @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(ThemeMode.light) ThemeMode themeMode,
     @Default(ColorStyle.vivid)
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,

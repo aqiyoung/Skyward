@@ -4,11 +4,75 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'common.dart';
 
+/// The channel the running build came from -- `DEV`, `Beta`, empty for a
+/// release. This is the whole of the channel's vocabulary in the UI: the home
+/// pill wears it, and [PackageInfoExtension.labeledVersion] prints it after the
+/// number.
+///
+/// Both sources are asked, version first: a package from the pipeline names its
+/// channel in the version (`1.0.1.07-dev`), while a build made by hand has only
+/// the env it was built with. A release has neither.
+String buildChannelLabel() =>
+    _channelLabel(channelOf(buildVersion) ?? buildChannel);
+
+String _channelLabel(String? channel) {
+  switch (channel?.toLowerCase()) {
+    case 'dev':
+      return 'DEV';
+    // `pre` is the name the retired preview channel stamped into versions a
+    // phone may still be running; those builds are betas in all but name.
+    case 'beta':
+    case 'pre':
+      return 'Beta';
+    default:
+      return '';
+  }
+}
+
+/// The channel a version names as a suffix, lowercased: `pre`, `dev`, `beta`.
+/// A release carries none, which is what makes it a release.
+String? channelOf(String version) {
+  final core = version.split('+').first;
+  final dash = core.indexOf('-');
+  if (dash < 0) return null;
+  final channel = core.substring(dash + 1).trim().toLowerCase();
+  return channel.isEmpty ? null : channel;
+}
+
+/// Where a channel sits when two builds share a version number. A release is
+/// the newest thing on its number, then the beta that was verified for it, then
+/// the snapshots cut before either existed.
+int _channelRank(String? channel) {
+  switch (channel) {
+    case null:
+      return 3;
+    case 'beta':
+      return 2;
+    case 'pre':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 extension PackageInfoExtension on PackageInfo {
   /// The version users see and updates are compared against. The packages only
   /// carry upstream's three components, so the injected [buildVersion] supplies
   /// the revision our release adds on top.
   String get displayVersion => buildVersion.isNotEmpty ? buildVersion : version;
+
+  /// The version as the screens print it: the number, then the channel in the
+  /// same word the home pill wears -- `1.0.1.03 DEV`. The stored version says
+  /// the channel in lowercase (`-dev`) because it also names files and tags; a
+  /// release carries none and reads as its bare number.
+  String get labeledVersion {
+    final built = displayVersion;
+    if (channelOf(built) == null) return built;
+    final core = built.split('+').first;
+    final number = core.substring(0, core.indexOf('-'));
+    final label = buildChannelLabel();
+    return label.isEmpty ? number : '$number $label';
+  }
 
   /// Who this build says it is when it fetches a profile. Providers choose the
   /// format they answer in from this string, and only a `clash.meta/<version>`
@@ -27,8 +91,10 @@ extension PackageInfoExtension on PackageInfo {
 }
 
 int compareVersions(String version1, String version2) {
-  final List<String> v1 = version1.split('+')[0].split('.');
-  final List<String> v2 = version2.split('+')[0].split('.');
+  // The channel is a suffix (`1.0.1.07-pre`), so the numbers come off first:
+  // `int.parse('07-pre')` would throw and take the update check with it.
+  final List<String> v1 = version1.split('+')[0].split('-')[0].split('.');
+  final List<String> v2 = version2.split('+')[0].split('-')[0].split('.');
   final int major1 = int.parse(v1[0]);
   final int major2 = int.parse(v2[0]);
   if (major1 != major2) {
@@ -44,13 +110,13 @@ int compareVersions(String version1, String version2) {
   if (patch1 != patch2) {
     return patch1.compareTo(patch2);
   }
-  // A preview build stamps the day's build number into the fourth slot
+  // A snapshot can carry the day's build number in the fourth slot
   // (`1.0.0.2090029702`) where a release puts its revision (`1.0.0.14`). Read
-  // as numbers the preview always wins, so a preview build never learns that a
-  // release exists -- and the release is where its user belongs. A preview is
-  // a snapshot of the line it was cut from, so it is the earlier side.
-  final preview1 = _isPreviewBuild(v1);
-  final preview2 = _isPreviewBuild(v2);
+  // as numbers the snapshot always wins, so it never learns that a release
+  // exists -- and the release is where its user belongs. A snapshot is a
+  // capture of the line it was cut from, so it is the earlier side.
+  final preview1 = _isSnapshot(version1);
+  final preview2 = _isSnapshot(version2);
   if (preview1 != preview2) {
     return preview1 ? -1 : 1;
   }
@@ -66,6 +132,14 @@ int compareVersions(String version1, String version2) {
   if (revision1 != null && revision2 != null && revision1 != revision2) {
     return revision1.compareTo(revision2);
   }
+  // Same number: the release outranks the beta that was verified for it. Left
+  // out, `1.0.1.6-beta` and `1.0.1.6` would be a tie and a beta user would
+  // never be offered the release.
+  final int rank1 = _channelRank(channelOf(version1));
+  final int rank2 = _channelRank(channelOf(version2));
+  if (rank1 != rank2) {
+    return rank1.compareTo(rank2);
+  }
   final int build1 = version1.contains('+')
       ? int.parse(version1.split('+')[1])
       : 0;
@@ -76,15 +150,28 @@ int compareVersions(String version1, String version2) {
 }
 
 /// Every revision this fork will ever cut is a small count -- one per release.
-/// A build number shares the slot only in preview builds, and those start in
+/// A build number shares the slot only in older builds, and those start in
 /// the billions (a day's prefix times a hundred), so nothing on the release
 /// line can reach this.
 const _revisionCeiling = 1000000;
 
-bool _isPreviewBuild(List<String> parts) {
-  if (parts.length <= 3) return false;
+/// Whether [version] is a snapshot -- a preview or a dev build -- rather than a
+/// beta or a release. The channel says so in the version; builds from before it
+/// did are recognised by the day's build number in the fourth slot.
+bool _isSnapshot(String version) {
+  final channel = channelOf(version);
+  if (channel == 'pre' || channel == 'dev') return true;
+  return _legacyBuildNumber(version) != null;
+}
+
+/// The versionCode an older build wrote into its version's fourth slot. Those
+/// builds carried no separate number, so the version is the only place to read
+/// it from; anything below the ceiling is a revision, not a build number.
+int? _legacyBuildNumber(String version) {
+  final parts = version.split('+')[0].split('-')[0].split('.');
+  if (parts.length <= 3) return null;
   final revision = int.tryParse(parts[3]);
-  return revision != null && revision >= _revisionCeiling;
+  return revision != null && revision >= _revisionCeiling ? revision : null;
 }
 
 /// Where the release notes carry the build number, as a comment: the prose in
@@ -124,42 +211,37 @@ String? releaseApkSha256(Object? body, String assetName) {
 /// Whether [remoteVersion] should be offered to someone running
 /// [installedVersion].
 ///
-/// A preview carries its build number in the fourth slot (`1.0.0.2090029702`)
-/// where a release carries a revision, and both draw from the same build
-/// counter -- so those two numbers are comparable, and the release replaces the
-/// preview exactly while it is the larger one. Comparing version names instead
-/// offers a preview a release its own build already outranks, and Android
-/// refuses a downgrade: the app would promise an update it cannot install.
-/// Every other build keeps the version comparison, where that slot counts
-/// releases.
+/// Every channel draws its build number from one counter, and Android orders
+/// installs by exactly that number -- so where both sides have one, the counter
+/// decides and the version name is decoration. Comparing names instead offers a
+/// build a release its own number already outranks, and Android refuses a
+/// downgrade: the app would promise an update it cannot install.
+///
+/// Without numbers on both sides the version names are all there is, and they
+/// are not comparable across the two conventions -- a snapshot's fourth
+/// component counts the day, a release's counts releases. A snapshot is
+/// therefore never offered anything by name; silence is the honest answer.
 bool shouldOfferUpdate({
   required String remoteVersion,
   required int? remoteBuildNumber,
   required String installedVersion,
   int? installedBuildNumber,
 }) {
-  final parts = installedVersion.split('+')[0].split('.');
-  // A release build does not carry its build number in its version -- the
-  // fourth slot is its revision -- so a caller that found this build's own
-  // release (its notes carry the number) may pass it in. When both sides sit
-  // on the shared counter, the counter decides across every channel: a
-  // stable, beta or preview build is newer exactly when its number is
-  // larger, whatever its version name says.
-  installedBuildNumber ??= _isPreviewBuild(parts)
-      ? (parts.length > 3 ? int.tryParse(parts[3]) : null)
-      : null;
+  // A build knows the versionCode it was made with, injected by the build; a
+  // caller that found this build's own release may also read it from the notes.
+  // Builds old enough to carry neither wrote it into the version instead.
+  installedBuildNumber ??=
+      int.tryParse(buildNumber) ?? _legacyBuildNumber(installedVersion);
   if (installedBuildNumber != null && remoteBuildNumber != null) {
     return remoteBuildNumber > installedBuildNumber;
   }
-  if (_isPreviewBuild(parts)) {
+  if (_isSnapshot(installedVersion)) {
     // A release that does not state its number cannot be placed on the
     // counter, and the version names are not comparable across the two
-    // conventions -- the preview's fourth slot always reads larger. That is
-    // every answer taken from the release page redirect, which carries the tag
-    // and nothing else: the fallback the API drops to once its quota is spent.
-    // Saying nothing is the only honest answer there. Guessing by name would
-    // promise a preview the update it cannot install. (Both numbers present
-    // is already handled above.)
+    // conventions -- the snapshot's fourth component always reads larger. That
+    // is every answer taken from the release page redirect, which carries the
+    // tag and nothing else: the fallback the API drops to once its quota is
+    // spent. (Both numbers present is already handled above.)
     return false;
   }
   return compareVersions(remoteVersion, installedVersion) > 0;
@@ -189,11 +271,12 @@ Map<String, dynamic>? newestOfferableRelease(
     if (tag is! String) continue;
     parsed.add(release);
   }
-  int? installedBuildNumber;
-  final parts = installedVersion.split('+')[0].split('.');
-  if (_isPreviewBuild(parts)) {
-    installedBuildNumber = parts.length > 3 ? int.tryParse(parts[3]) : null;
-  } else {
+  // The build knows the versionCode it was made with, so it does not have to be
+  // found in a release first. The search below stays for builds old enough to
+  // carry neither: theirs is only in their own release's notes.
+  int? installedBuildNumber =
+      int.tryParse(buildNumber) ?? _legacyBuildNumber(installedVersion);
+  if (installedBuildNumber == null) {
     for (final release in parsed) {
       final tag = release['tag_name'] as String;
       if (releaseVersionOf(tag, release['name'] as String?) !=
@@ -210,12 +293,7 @@ Map<String, dynamic>? newestOfferableRelease(
   for (final release in parsed) {
     final tag = release['tag_name'] as String;
     final remoteVersion = releaseVersionOf(tag, release['name'] as String?);
-    final remoteParts = remoteVersion.split('+')[0].split('.');
-    final remoteBuildNumber =
-        releaseBuildNumber(release['body']) ??
-        (_isPreviewBuild(remoteParts)
-            ? (remoteParts.length > 3 ? int.tryParse(remoteParts[3]) : null)
-            : null);
+    final remoteBuildNumber = releaseBuildNumber(release['body']);
     if (!shouldOfferUpdate(
       remoteVersion: remoteVersion,
       remoteBuildNumber: remoteBuildNumber,

@@ -12,6 +12,7 @@ data class SharedState(
     val stopText: String = "Stop",
     val onlyStatisticsProxy: Boolean = false,
     val showStopAction: Boolean = true,
+    val hideNotification: Boolean = false,
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
 )

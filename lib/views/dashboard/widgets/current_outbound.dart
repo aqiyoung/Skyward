@@ -129,7 +129,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
     final cells = _Cells(
       quality: quality,
       loading: loading,
-      active: isStart && !suspended,
       gap: metrics.cellGap,
     );
     final startToggle = SizedBox.square(
@@ -182,7 +181,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
                       child: _Cells(
                         quality: quality,
                         loading: loading,
-                        active: isStart && !suspended,
                         gap: metrics.cellGap,
                         vertical: true,
                       ),
@@ -763,19 +761,17 @@ class _Cells extends StatelessWidget {
   const _Cells({
     required this.quality,
     required this.loading,
-    required this.active,
     required this.gap,
     this.vertical = false,
   });
 
   final IpQuality? quality;
   final bool loading;
-  final bool active;
   final double gap;
 
   /// A column instead of a row, for the room a wide card has beside the
-  /// address. The two sit centred against the start button rather than
-  /// stretched down the card.
+  /// address. The organisation sits centred against the start button rather
+  /// than stretched down the card.
   final bool vertical;
 
   @override
@@ -786,10 +782,9 @@ class _Cells extends StatelessWidget {
       IpQuality(asn: final asn?) => 'AS$asn',
       _ => null,
     };
-    final runTime = _Cell(
-      label: appLocalizations.runTime,
-      value: active ? const _RunTimeValue() : const _Placeholder(),
-    );
+    // The run time is shown once, in the large-title status line at the top
+    // of the page. Repeating it here put the same clock on screen twice, so
+    // the card keeps only the organisation (and its gap to the start button).
     final ipOrganization = _Cell(
       label: appLocalizations.ipOrganization,
       value: organization != null
@@ -804,15 +799,12 @@ class _Cells extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: gap,
-        children: [runTime, ipOrganization],
+        children: [ipOrganization],
       );
     }
     return Row(
       spacing: gap,
-      children: [
-        runTime,
-        Flexible(child: ipOrganization),
-      ],
+      children: [Flexible(child: ipOrganization)],
     );
   }
 }
@@ -870,15 +862,6 @@ class _Placeholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text('—', maxLines: 1, style: _cellStyle(context));
-  }
-}
-
-class _RunTimeValue extends ConsumerWidget {
-  const _RunTimeValue();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return _CellText(getTimeText(ref.watch(runTimeProvider)));
   }
 }
 

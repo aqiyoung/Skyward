@@ -5,7 +5,6 @@ import 'package:skyward/common/system_dns.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
-import 'package:skyward/state.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/icon.dart';
 import 'package:flutter/foundation.dart';
@@ -118,10 +117,12 @@ class AppEnvManager extends ConsumerWidget {
     if (safeMode) {
       return 'SAFE MODE';
     }
-    if (!globalState.isPre) {
-      return null;
-    }
-    return kDebugMode ? 'DEBUG' : globalState.appEnv.toUpperCase();
+    // A package states its channel in the home's corner pill, in the same
+    // words the version line uses, so a release of any channel has nothing to
+    // add here. The ribbon is left to debug builds: the framework's own banner
+    // is switched off, and a build that only exists on one machine is the one
+    // nothing else would mark.
+    return kDebugMode ? 'DEBUG' : null;
   }
 
   @override

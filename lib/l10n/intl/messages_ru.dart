@@ -251,6 +251,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Благодарности"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward начинался как форк FlClash от chen08209 и построен на ядре mihomo (Clash.Meta) от MetaCubeX. Оба проекта распространяются под лицензией GPL-3.0.",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(
       "Проверить все задержки",
@@ -558,6 +562,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Smart App Control в Windows заблокировал неподписанный SkywardCore.exe. Откройте Безопасность Windows → Управление приложениями и браузером → Параметры Smart App Control, выберите «Выкл.» и снова запустите Skyward. Повторно включить Smart App Control без переустановки Windows нельзя.",
     ),
     "coreStatus": MessageLookupByLibrary.simpleMessage("Статус ядра"),
+    "coreVersion": MessageLookupByLibrary.simpleMessage("Версия ядра"),
     "country": MessageLookupByLibrary.simpleMessage("Регион"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("Обнаружен сбой"),
     "crashDetectedTip": m6,
@@ -997,6 +1002,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "Пока страница прокручивается, на нижней панели остаются только значки",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage(
+      "Скрыть постоянное уведомление",
+    ),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "Прокси продолжает работать. Android требует уведомление для службы переднего плана, поэтому оно станет беззвучным и не появится на экране блокировки. Полностью отключить его можно в настройках системы",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("Скрыть пароль"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Скрывать прокси с таймаутом",
@@ -1069,9 +1080,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -1302,6 +1314,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryReleasedSize": m47,
     "messageTest": MessageLookupByLibrary.simpleMessage("Тест сообщения"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("Это сообщение."),
+    "mine": MessageLookupByLibrary.simpleMessage("Мой"),
     "minimize": MessageLookupByLibrary.simpleMessage("Свернуть"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "Сворачивать при выходе",
@@ -1426,6 +1439,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideEntries": MessageLookupByLibrary.simpleMessage(
       "Переопределяемые параметры",
     ),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Страницы"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("Разбирать чистые IP"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "«Разбирать чистые IP» анализирует соединения, у которых есть только IP-адрес.",
@@ -1677,6 +1691,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Исключённые адреса маршрутов",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Устройство"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Плоская карта"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("3D-глобус"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Назначение"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Узел"),
     "routingMark": MessageLookupByLibrary.simpleMessage("Метка маршрутизации"),
@@ -1854,6 +1870,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Прокрутить к выбранному",
     ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Поиск страниц, узлов, инструментов и настроек",
+    ),
     "seconds": MessageLookupByLibrary.simpleMessage("секунд"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("Ключ"),
@@ -2087,6 +2106,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Допуск"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Инструменты"),
     "tools": MessageLookupByLibrary.simpleMessage("Ещё"),
     "torch": MessageLookupByLibrary.simpleMessage("Фонарик"),
     "total": MessageLookupByLibrary.simpleMessage("Всего"),

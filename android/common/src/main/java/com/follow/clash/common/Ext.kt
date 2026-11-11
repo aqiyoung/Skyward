@@ -67,7 +67,9 @@ fun Context.ensureNotificationChannel() {
         return
     }
     val manager = getSystemService(NotificationManager::class.java) ?: return
-    if (manager.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL) != null) {
+    if (manager.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL) != null &&
+        manager.getNotificationChannel(GlobalState.NOTIFICATION_CHANNEL_SILENT) != null
+    ) {
         return
     }
     manager.createNotificationChannel(
@@ -76,6 +78,24 @@ fun Context.ensureNotificationChannel() {
             getString(R.string.service_channel_name),
             NotificationManager.IMPORTANCE_LOW,
         ),
+    )
+    // Everything that makes a notification noticeable is off, including the
+    // badge and the lock screen: at this level most ROMs fold it away into the
+    // "other notifications" area, and none of them alert, vibrate or show an
+    // icon for it. Android still requires a front-end service to post one, so
+    // this is as close to "no notification" as an app may get.
+    manager.createNotificationChannel(
+        NotificationChannel(
+            GlobalState.NOTIFICATION_CHANNEL_SILENT,
+            getString(R.string.service_channel_silent_name),
+            NotificationManager.IMPORTANCE_MIN,
+        ).apply {
+            setSound(null, null)
+            enableVibration(false)
+            enableLights(false)
+            setShowBadge(false)
+            lockscreenVisibility = Notification.VISIBILITY_SECRET
+        },
     )
 }
 

@@ -156,6 +156,29 @@ void main() {
       expect(compareVersions('1.0.0+2', '1.0.0+1'), greaterThan(0));
     });
 
+    test('the channel suffix names a snapshot, it is not a number', () {
+      // A snapshot's fourth component counts the day's builds, a release's
+      // counts releases: reading them alike would make every preview look newer
+      // than the release that supersedes it.
+      expect(compareVersions('1.0.1.6', '1.0.1.07-pre'), greaterThan(0));
+      expect(compareVersions('1.0.1.07-pre', '1.0.1.6'), lessThan(0));
+      expect(compareVersions('1.0.1.07-pre', '1.0.1.08-dev'), lessThan(0));
+      expect(compareVersions('1.0.1.08-dev', '1.0.1.07-pre'), greaterThan(0));
+    });
+
+    test('on the same number the release outranks its beta', () {
+      expect(compareVersions('1.0.1.6', '1.0.1.6-beta'), greaterThan(0));
+      expect(compareVersions('1.0.1.6-beta', '1.0.1.6'), lessThan(0));
+    });
+
+    test('channelOf reads the suffix and nothing else', () {
+      expect(channelOf('1.0.1.07-pre'), 'pre');
+      expect(channelOf('1.0.1.07-dev'), 'dev');
+      expect(channelOf('1.0.1.6-beta'), 'beta');
+      expect(channelOf('1.0.1.6'), isNull);
+      expect(channelOf('1.0.1+2090031333'), isNull);
+    });
+
     test('handles missing minor/patch', () {
       expect(compareVersions('1', '1.0.0'), 0);
     });
@@ -216,6 +239,29 @@ void main() {
           installedVersion: '1.0.0.14',
         ),
         isTrue,
+      );
+    });
+
+    test('a snapshot is compared by the number the build carries', () {
+      // The version cannot say it any more -- its fourth component is today's
+      // count -- so the number Android installs by decides.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.1.6',
+          remoteBuildNumber: 2090031334,
+          installedVersion: '1.0.1.07-pre',
+          installedBuildNumber: 2090031333,
+        ),
+        isTrue,
+      );
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.0.1.6',
+          remoteBuildNumber: 2090031332,
+          installedVersion: '1.0.1.07-pre',
+          installedBuildNumber: 2090031333,
+        ),
+        isFalse,
       );
     });
 

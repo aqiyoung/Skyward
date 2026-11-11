@@ -285,7 +285,11 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.ensureVisible(
+      find.text('Edit dashboard', skipOffstage: false).first,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Edit dashboard', skipOffstage: false).first);
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(DashboardEditor), findsOneWidget);
 
@@ -294,7 +298,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(find.text('Edit dashboard', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('inactive page scope exits access search layer', (tester) async {
@@ -349,7 +353,11 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.ensureVisible(
+      find.text('Edit dashboard', skipOffstage: false).first,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Edit dashboard', skipOffstage: false).first);
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(DashboardEditor), findsOneWidget);
 
@@ -358,7 +366,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(find.text('Edit dashboard', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('system back keeps a card removed in edit mode', (tester) async {
@@ -392,7 +400,11 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.ensureVisible(
+      find.text('Edit dashboard', skipOffstage: false).first,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Edit dashboard', skipOffstage: false).first);
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byTooltip('Remove Memory info'));

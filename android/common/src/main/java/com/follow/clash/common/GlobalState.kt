@@ -10,6 +10,12 @@ import kotlinx.coroutines.SupervisorJob
 
 object GlobalState : CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Default) {
     const val NOTIFICATION_CHANNEL = "Skyward"
+
+    // The channel a hidden notification goes to. A channel's importance is
+    // fixed once it is created -- an app can only lower its own level before
+    // that -- so hiding has to mean a second channel rather than turning the
+    // first one down.
+    const val NOTIFICATION_CHANNEL_SILENT = "Skyward Silent"
     const val NOTIFICATION_ID = 1
     private const val ANY_PID = 0
     private const val EVERY_EXIT_RECORD = 0

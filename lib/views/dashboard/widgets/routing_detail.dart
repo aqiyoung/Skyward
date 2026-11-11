@@ -89,9 +89,16 @@ String routeSummary(List<RouteStop> stops, {required bool chinese}) => stops
     .join(' → ');
 
 class RoutingDetailSheet extends StatelessWidget {
-  const RoutingDetailSheet({super.key, required this.detail});
+  const RoutingDetailSheet({
+    super.key,
+    required this.detail,
+    this.globe = false,
+  });
 
   final RoutingDetail detail;
+
+  /// The sheet shows the same view the card behind it was showing.
+  final bool globe;
 
   /// A row is only worth its space when it says something.
   List<Widget> _rows(Iterable<(String, String?)> entries) => [
@@ -112,7 +119,7 @@ class RoutingDetailSheet extends StatelessWidget {
         ),
         children: [
           if (detail.stops.isNotEmpty) ...[
-            RouteMap(stops: detail.stops),
+            RouteMap(stops: detail.stops, globe: globe),
             const SizedBox(height: 10),
             Text(
               routeSummary(detail.stops, chinese: chinese),

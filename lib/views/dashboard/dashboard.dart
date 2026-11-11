@@ -5,15 +5,18 @@ import 'package:skyward/core/core.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'edit.dart';
+import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
+import 'widgets/build_channel_badge.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
@@ -66,17 +69,55 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     }
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
+    // Read the real status-bar inset here, above the scaffold: inside the
+    // body, extendBodyBehindAppBar lifts MediaQuery's top padding to the whole
+    // bar height (and a wrapping removePadding can zero it), so neither is a
+    // safe source for placing the heading just under the status bar.
+    final statusBarTop = MediaQuery.paddingOf(context).top;
+    final largeTitle = editable && !editing;
+    // The providers learn a resize a frame late, too late for the cards.
+    final dashboardBody = LayoutBuilder(
+      builder: (context, constraints) {
+        final room = constraints.biggest / scale;
+        final layout = DashboardDensity.of(room);
+        return DashboardDensityScope(
+          density: layout,
+          scale: scale,
+          child: layout.isDesktop
+              ? _DesktopDashboard(
+                  platform: platform,
+                  columns: dashboardColumnsOf(room.width),
+                  gap: gap,
+                )
+              : _MobileDashboard(
+                  platform: platform,
+                  gap: gap,
+                  editing: editing,
+                  largeTitle: largeTitle,
+                  cardKeyOf: _cardKeyOf,
+                  onEdit: () => _setEditing(true),
+                  onDone: () => _setEditing(false),
+                ),
+        );
+      },
+    );
     return CommonScaffold(
       backgroundColor: DashboardColors.of(context).page,
-      // The edit button steps aside with the title while the dashboard
-      // scrolls up; this is now the scaffold default on every page.
-      // Editing holds a confirmation action, which the scaffold keeps in
-      // reach, so this only ever hides the edit button.
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
+      // The resting phone home uses the same fixed PageLargeTitle block as
+      // every other tab, so its heading never scrolls up under the status bar
+      // and all pages share one design. Editing and the desktop grid keep the
+      // ordinary bar title.
+      largeTitle: largeTitle,
       backAction: editing ? () => _setEditing(false) : null,
-      actions: [if (!editing && coreLib == null) const CoreStatusButton()],
+      actions: [
+        // Which channel this build is from, before the core's own state: the
+        // two together are the whole answer to "what am I running".
+        if (!editing) const BuildChannelBadge(),
+        if (!editing && coreLib == null) const CoreStatusButton(),
+      ],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
@@ -84,38 +125,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
-      iconActions: [
-        if (editable && !editing)
-          IconButtonData(
-            glyph: AppGlyphs.edit,
-            tooltip: appLocalizations.editDashboard,
-            onPressed: () => _setEditing(true),
-          ),
-      ],
-      // The providers learn a resize a frame late, too late for the cards.
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final room = constraints.biggest / scale;
-          final layout = DashboardDensity.of(room);
-          return DashboardDensityScope(
-            density: layout,
-            scale: scale,
-            child: layout.isDesktop
-                ? _DesktopDashboard(
-                    platform: platform,
-                    columns: dashboardColumnsOf(room.width),
-                    gap: gap,
-                  )
-                : _MobileDashboard(
-                    platform: platform,
-                    gap: gap,
-                    editing: editing,
-                    cardKeyOf: _cardKeyOf,
-                    onDone: () => _setEditing(false),
-                  ),
-          );
-        },
-      ),
+      // The edit affordance lives at the foot of the card list, not in the
+      // empty top strip. The gear tile is where rearranging starts.
+      body: largeTitle
+          ? PageLargeTitle(
+              title: appLocalizations.dashboard,
+              statusBarTop: statusBarTop,
+              subtitle: const DashboardStatusLine(),
+              body: dashboardBody,
+            )
+          : dashboardBody,
     );
   }
 }
@@ -314,14 +333,18 @@ class _MobileDashboard extends ConsumerWidget {
     required this.platform,
     required this.gap,
     required this.editing,
+    required this.largeTitle,
     required this.cardKeyOf,
+    required this.onEdit,
     required this.onDone,
   });
 
   final SupportPlatform platform;
   final double gap;
   final bool editing;
+  final bool largeTitle;
   final GlobalKey Function(DashboardWidget widget) cardKeyOf;
+  final VoidCallback onEdit;
   final VoidCallback onDone;
 
   @override
@@ -329,7 +352,10 @@ class _MobileDashboard extends ConsumerWidget {
     final saved = ref.watch(
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    final top = MediaQuery.paddingOf(context).top + 4;
+    // The shared large-title block already owns the strip under the status
+    // bar, so the cards start flush beneath its own bottom spacing. Editing
+    // has no such block: its ordinary bar needs the full inset back.
+    final top = largeTitle ? 0.0 : MediaQuery.paddingOf(context).top + 4;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
       // A viewport per card lays them all out and holds the scroll end still.
@@ -367,6 +393,10 @@ class _MobileDashboard extends ConsumerWidget {
                         key: cardKeyOf(widget),
                         child: widget.card,
                       ),
+                    // Rearranging the cards is a quiet action at the foot of
+                    // the board, not a pencil floating in the empty top strip.
+                    // A gear marks it as a settings-style edit of the board.
+                    _EditDashboardTile(onTap: onEdit),
                   ],
                 ),
               ),
@@ -374,6 +404,54 @@ class _MobileDashboard extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// A small, centred hint at the foot of the board. It replaces the pencil
+/// that used to float alone in the bar, and deliberately is not another full
+/// card: a quiet capsule that reads as a hint rather than as board content.
+/// Tapping it opens the card editor.
+class _EditDashboardTile extends StatelessWidget {
+  const _EditDashboardTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    return Center(
+      child: Semantics(
+        button: true,
+        label: appLocalizations.editDashboard,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: ShapeDecoration(
+              color: DashboardColors.of(context).tone2,
+              shape: AppShape.all(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GlyphIcon(
+                  AppGlyphs.settings,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  appLocalizations.editDashboard,
+                  style: DashboardText.label(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

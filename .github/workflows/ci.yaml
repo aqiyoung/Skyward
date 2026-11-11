@@ -238,12 +238,28 @@ jobs:
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-            preview_tags=$(git tag --list "preview-*" | sed -n "s/^preview-\(${day_prefix}[0-9]*\)$/\1/p" || true)
-          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" \
+          # Today's claimed numbers live in lightweight tags a dev/preview build
+          # writes before it publishes. A dev build goes to Telegram without a
+          # durable release, so the tags API -- not release titles, not the
+          # clone's own tags -- is the only place that still holds its number.
+          # Reading only release titles is how a stable once came out below the
+          # dev package already on the phone, which Android refuses to install.
+          preview_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            --jq '.[].ref' 2>/dev/null || true)
+          dev_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+            --jq '.[].ref' 2>/dev/null || true)
+          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           # 10#: past the eighth build of a day the stamp carries a leading zero,
           # and bash would read a bare 09 as an invalid octal number.
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
+          # The last number any published release carried, whatever day it was
+          # cut on. A pruned preview or dev tag must not let a release fall
+          # behind a number already handed out.
+          last_code=$(printf '%s\n' "$titles" \
+            | sed -n 's/.*skyward:build-number:\([0-9][0-9]*\).*/\1/p' | sort -n | tail -1)
           taken=""
           for ch in $channels; do
             # The preview channel publishes under a `preview-*` tag, so it takes
@@ -257,7 +273,7 @@ jobs:
             # Past the highest tag of the line, so a tag that went missing never
             # hands the same number out twice.
             highest_revision=$(git tag --list "v${base_version}.*" \
-              | sed -n "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)$/\1/p" \
+              | sed -n "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
               | sort -n | tail -1)
             if [[ -n "$highest_revision" ]]; then
               revision=$(( 10#${highest_revision} + 1 ))
@@ -269,10 +285,21 @@ jobs:
             done
             taken="$taken ${base_version}.${revision}"
             code=$(( day_prefix * 100 + stamp ))
-            echo "version_$ch=${base_version}.${revision}" >> "$GITHUB_OUTPUT"
+            # A pruned tag must not let this release fall behind a number
+            # already handed out; the newest release notes carry the other
+            # half of the ledger.
+            if [ -n "${last_code:-}" ] && [ "$code" -le "$last_code" ]; then
+              code=$(( last_code + 1 ))
+            fi
+            # The channel rides as a suffix, never as digits. A promoted beta
+            # takes the next revision of the line so beta users are offered
+            # the stable build too.
+            suffix=""
+            [ "$ch" = beta ] && suffix="-beta"
+            echo "version_$ch=${base_version}.${revision}${suffix}" >> "$GITHUB_OUTPUT"
             echo "build_number_$ch=${code}" >> "$GITHUB_OUTPUT"
-            echo "$ch ($br): next version ${base_version}.${revision}, build number ${code}"
-            stamp=$(( stamp + 1 ))
+            echo "$ch ($br): next version ${base_version}.${revision}${suffix}, build number ${code}"
+            stamp=$(( code - day_prefix * 100 + 1 ))
           done
 
       - name: Plan

@@ -60,6 +60,22 @@ void main() {
       ]);
     });
 
+    test('does not split when the build already names one ABI', () {
+      final args = setup.createFlutterBuildArgs(
+        platform: 'android',
+        verbose: false,
+        splitAbi: false,
+      );
+
+      // The plugin filters ABIs to its whole supported list whenever it is not
+      // splitting; the app module does the filtering instead, from the same
+      // target-platform property.
+      expect(args, [
+        'dart-define-from-file=env.json',
+        'android-project-arg=disable-abi-filtering=true',
+      ]);
+    });
+
     test('refuses to package while a native build hook is skipped', () {
       const pubspec = '''
 hooks:
