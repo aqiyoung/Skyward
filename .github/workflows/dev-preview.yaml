@@ -141,15 +141,23 @@ jobs:
           now=$(date -u +%s)
           origin=$(date -u -d 2026-01-01 +%s)
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
-          # Only dev's own tags: the counter is per channel, not one pool.
-          # A beta keeps the 80s and a stable the 90s of the day's hundred
-          # codes, so that a beta published after a dev build still installs
-          # over it. Reading the releases back here would let dev climb into
-          # those slices and hand out the number beta is about to take.
-          claimed=$(gh api \
+          # One global, monotonically rising counter for every channel. A dev
+          # built after a beta MUST carry a higher versionCode than that beta:
+          # Android reads nothing but the number and otherwise refuses the
+          # install as a downgrade (-25). Beta claims the 80s of the day's
+          # hundred codes, so reading only dev-* tags left every later dev of
+          # that day below it. Read the build numbers the releases recorded,
+          # the preview tags and dev's own tags, then take one past the highest
+          # number spent today -- whichever channel publishes last ranks highest.
+          dev_tags=$(gh api \
             "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
             --jq '.[].ref' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$claimed" \
+          preview_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            --jq '.[].ref' 2>/dev/null || true)
+          titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
+          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
           build_number=$(( day_prefix * 100 + stamp ))
