@@ -20,19 +20,6 @@ class Navigation implements NavigationPort {
         builder: (_) =>
             const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
       ),
-      // The global search: one index over pages, tool entries and settings.
-      // Second in the mobile row, right after the dashboard: the pages that
-      // follow are the ones people walk through in order, and a search is not
-      // a step in that walk -- it is the way out of it. Last would put it past
-      // "Mine", which is the corner a row is expected to end on. Desktop keeps
-      // its sidebar, so this is mobile-only.
-      NavigationItem(
-        glyph: AppGlyphs.search,
-        label: PageLabel.search,
-        builder: (_) =>
-            const GlobalSearchView(key: GlobalObjectKey(PageLabel.search)),
-        modes: [NavigationItemMode.mobile],
-      ),
       NavigationItem(
         glyph: AppGlyphs.proxies,
         label: PageLabel.proxies,
@@ -83,6 +70,18 @@ class Navigation implements NavigationPort {
         modes: openLogs
             ? [NavigationItemMode.desktop, NavigationItemMode.more]
             : [],
+      ),
+      // The global search: one index over pages, tool entries and settings.
+      // Fourth in the mobile row, immediately before "Mine": the three pages
+      // ahead of it are the walk through the app, while the settings centre
+      // stays the corner a row is expected to end on. Desktop keeps its
+      // sidebar, so this is mobile-only.
+      NavigationItem(
+        glyph: AppGlyphs.search,
+        label: PageLabel.search,
+        builder: (_) =>
+            const GlobalSearchView(key: GlobalObjectKey(PageLabel.search)),
+        modes: [NavigationItemMode.mobile],
       ),
       // "Mine" is the settings centre: the former tools page (tool entries +
       // settings + about) under a label and glyph that read as one's own. It
