@@ -4586,6 +4586,16 @@ class AppLocalizations {
     return Intl.message('Core status', name: 'coreStatus', desc: '', args: []);
   }
 
+  /// `Core version`
+  String get coreVersion {
+    return Intl.message(
+      'Core version',
+      name: 'coreVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Append system DNS`
   String get appendSystemDns {
     return Intl.message(

@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "¿Seguro que quieres forzar el reinicio del núcleo?",
   "dnsHijacking": "Secuestro de DNS",
   "coreStatus": "Estado del núcleo",
+  "coreVersion": "Versión del núcleo",
   "appendSystemDns": "Añadir DNS del sistema",
   "editRule": "Editar regla",
   "extendMode": "Modo de extensión",

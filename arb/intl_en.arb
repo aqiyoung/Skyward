@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "Are you sure you want to force restart the core?",
   "dnsHijacking": "DNS hijacking",
   "coreStatus": "Core status",
+  "coreVersion": "Core version",
   "appendSystemDns": "Append system DNS",
   "editRule": "Edit rule",
   "extendMode": "Extend mode",

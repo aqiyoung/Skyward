@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "코어를 강제로 다시 시작하시겠습니까?",
   "dnsHijacking": "DNS 하이재킹",
   "coreStatus": "코어 상태",
+  "coreVersion": "코어 버전",
   "appendSystemDns": "시스템 DNS 추가",
   "editRule": "규칙 편집",
   "extendMode": "확장 모드",

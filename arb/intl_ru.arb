@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "Вы уверены, что хотите принудительно перезапустить ядро?",
   "dnsHijacking": "Перехват DNS",
   "coreStatus": "Статус ядра",
+  "coreVersion": "Версия ядра",
   "appendSystemDns": "Добавлять системный DNS",
   "editRule": "Редактировать правило",
   "extendMode": "Режим расширения",

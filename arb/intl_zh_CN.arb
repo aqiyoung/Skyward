@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "您确定要强制重启核心吗？",
   "dnsHijacking": "DNS劫持",
   "coreStatus": "核心状态",
+  "coreVersion": "核心版本",
   "appendSystemDns": "追加系统DNS",
   "editRule": "编辑规则",
   "extendMode": "扩展模式",

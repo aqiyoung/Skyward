@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "コアを強制再起動してもよろしいですか？",
   "dnsHijacking": "DNSハイジャック",
   "coreStatus": "コアの状態",
+  "coreVersion": "コアのバージョン",
   "appendSystemDns": "システムDNSを追加",
   "editRule": "ルールを編集",
   "extendMode": "拡張モード",

@@ -6,6 +6,7 @@ import 'package:skyward/providers/app.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/config.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/views/config/dns_leak.dart';
 import 'package:skyward/ui/ui.dart';
@@ -25,11 +26,13 @@ class DiagnosticsView extends ConsumerStatefulWidget {
 class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
   int? _databaseSize;
   int? _tempSize;
+  String? _coreVersion;
 
   @override
   void initState() {
     super.initState();
     unawaited(_measure());
+    unawaited(_loadCoreVersion());
   }
 
   Future<void> _measure() async {
@@ -42,6 +45,22 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
       _databaseSize = databaseSize;
       _tempSize = tempSize;
     });
+  }
+
+  /// The core reports the version it was built with (`constant.Version`).
+  /// Ask again here rather than trusting the copy filled in at init, so a
+  /// restarted core is named by the build actually answering. A core that has
+  /// not started yet leaves the row on whatever init cached, or on "no data".
+  Future<void> _loadCoreVersion() async {
+    try {
+      final version = await ref.read(coreHandlerProvider).coreVersion();
+      if (version.isEmpty || !mounted) {
+        return;
+      }
+      setState(() => _coreVersion = version);
+    } catch (error) {
+      commonPrint.log('diagnostics core version unavailable: $error');
+    }
   }
 
   String _coreStatusText(AppLocalizations appLocalizations, CoreStatus status) {
@@ -57,7 +76,12 @@ class _DiagnosticsViewState extends ConsumerState<DiagnosticsView> {
     PatchClashConfig clashConfig,
     CoreStatus coreStatus,
   ) {
+    final coreVersion = _coreVersion ?? globalState.coreVersion;
     return [
+      (
+        appLocalizations.coreVersion,
+        coreVersion.isNotEmpty ? coreVersion : appLocalizations.noData,
+      ),
       (
         appLocalizations.coreStatus,
         _coreStatusText(appLocalizations, coreStatus),

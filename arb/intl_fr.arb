@@ -569,6 +569,7 @@
   "forceRestartCoreTip": "Voulez-vous vraiment forcer le redémarrage du cœur ?",
   "dnsHijacking": "Détournement DNS",
   "coreStatus": "État du cœur",
+  "coreVersion": "Version du cœur",
   "appendSystemDns": "Ajouter le DNS du système",
   "editRule": "Modifier la règle",
   "extendMode": "Mode d’extension",
