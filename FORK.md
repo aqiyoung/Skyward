@@ -10,7 +10,7 @@ Skyward 是一个多平台代理客户端，基于 Clash.Meta（mihomo）内核�
 - **测试版**：在 [Releases 列表](../../releases) 里标着 *Pre-release* 的那个，比正式版新，也可能有问题。`beta` 分支每次推送都会自动出一个。
 - **Dev 版**：`dev` 分支每次有代码改动就自动构建，只有 Android arm64 一个包（桌面端另有一个 Windows 包，改 `.desktop-preview` 才出）。只推给作者本人、不进 TG 频道，比测试版更早也更糙。
 
-Android 一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`（老机器），模拟器下 `-x86_64.apk`。
+Android 正式版一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`（老机器），模拟器下 `-x86_64.apk`；**测试版只出 `-arm64-v8a.apk` 一个包**。
 
 ## 版本号
 
@@ -32,7 +32,7 @@ Android 一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi-v7a.apk`
 | 渠道 | 分支 | 内容 | Release | 去哪 |
 | --- | --- | --- | --- | --- |
 | 正式版 | [`main`](../../tree/main) | 已经跑过测试版的代码，晋升进来的 | 标为 Latest，全平台 | 频道 [@sanyeinfo](https://t.me/sanyeinfo) |
-| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动，每次 push 自动出 | prerelease，只构建 Android，不抢占 Latest | 频道 [@sanyeinfo](https://t.me/sanyeinfo)，静默不响铃 |
+| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动，每次 push 自动出 | prerelease，只构建 Android arm64 单包，不抢占 Latest | 频道 [@sanyeinfo](https://t.me/sanyeinfo)，静默不响铃 |
 | dev 版 | [`dev`](../../tree/dev) | 还在改的代码，每次 push 自动出 | prerelease，tag 是 `dev-*`，只有 Android arm64 | 只推给作者本人 |
 
 三个渠道**同包名**（`com.threely.skyward`）、**同签名**，可以互相覆盖安装，`versionCode` 保证单调递增。

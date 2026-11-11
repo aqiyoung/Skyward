@@ -412,6 +412,11 @@ jobs:
       # Desktop and Linux reach their users through a stable release, which
       # still builds every platform.
       platforms: android
+      # And one APK, not three: arm64 is what every phone that would install a
+      # beta runs. A split build's extra ABIs only mean two more files to
+      # download, upload and tell apart on a release page nobody reads for a
+      # build that is replaced in hours.
+      android_abi: arm64
     secrets: inherit
 
   # A release needs its own channel's tests to have passed. A single failed

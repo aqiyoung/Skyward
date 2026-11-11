@@ -45,6 +45,11 @@ on:
         required: false
         type: string
         default: all
+      android_abi:
+        description: Build one APK for this ABI instead of one per ABI; empty keeps the split
+        required: false
+        type: string
+        default: ''
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -331,7 +336,9 @@ jobs:
           # The channel the home corner wears (`Beta`). A release leaves this
           # empty: it is the app, and the badge is only for a build being tried.
           APP_CHANNEL_NAME: ${{ inputs.channel == 'beta' && 'beta' || '' }}
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
+        # `android_abi` narrows Android to a single architecture, which also
+        # stops setup.dart from splitting: one APK, not one per ABI.
+        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} ${{ inputs.android_abi != '' && format('--arch {0}', inputs.android_abi) || '' }} -v
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
@@ -374,6 +381,36 @@ jobs:
             esac
           done
           echo "renamed ${renamed} artifact(s) to ${VERSION}:"
+          ls -l dist
+
+      # A single-ABI build does not carry its ABI in the name -- Flutter only
+      # appends the `-arm64-v8a` part when it splits. Both the in-app updater
+      # (it picks the asset whose name holds the device's own ABI) and the
+      # release announcement (`dist/*android-arm64*.apk`) match on that part,
+      # so a nameless APK would quietly degrade to a link-only message. Give
+      # the lone APK the same name a split build gives that ABI.
+      - name: Name the single APK after its ABI
+        if: matrix.platform == 'android' && inputs.android_abi != ''
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          ABI: ${{ inputs.android_abi }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(dist/*.apk)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "::error::a single-ABI build must leave exactly one APK, found ${#apks[@]}"
+            printf '%s\n' "${apks[@]}"
+            exit 1
+          fi
+          case "$ABI" in
+            arm64) suffix=arm64-v8a ;;
+            arm) suffix=armeabi-v7a ;;
+            amd64) suffix=x86_64 ;;
+            *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
+          esac
+          mv "${apks[0]}" "dist/Skyward-${VERSION}-android-${suffix}.apk"
           ls -l dist
 
       # Guards the whole point of this repository. Any certificate other than
