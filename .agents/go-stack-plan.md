@@ -23,6 +23,31 @@ Apple 端（NetworkExtension）应当**后置**：它需要一整套客户端工
 一个关键事实：**我们的内核比 Clash 的内核更接近可用**——我们的 `PrepareConnection` 只处理 ICMP，TCP/UDP 的路由判定本来就在 mihomo 的 handler 里，
 所以适配层比 Clash 写的那套更薄：go stack 只需要判"准不准 + DNS 劫持"，然后把连接交给 mihomo 的 handler。
 
+### 进展（2026-11-11）
+
+**benchmark 首次跑通，两个栈都承载了真实隧道流量。** 此前 `benchmark.yaml` 连续 8 次失败在
+`Measure the tunnel path`：基准程序只执行 `ip route add ... dev skyward-bench`，却没把设备置
+`IFF_UP`。legacy 栈自己会置位，go 栈不会，内核以 `Device for nexthop is not up.` 拒绝该路由。
+`29e7928b` 加入幂等的 `linkUp()` 后，`benchmark` 与 `kernel-check` 双双转绿。
+
+同机回环首测（`ubuntu-latest` 共享 runner，64 MiB、3 runs）：
+
+| 路径 | legacy | go | go/legacy |
+| --- | --- | --- | --- |
+| inbound（relay）median | 1375.0 MiB/s | 1221.0 MiB/s | 0.888 |
+| tunnel best | 1078.6 MiB/s | 949.4 MiB/s | 0.880 |
+
+**这几个数字不能用来做决策。** run 之间波动超过 50%（legacy tunnel 684→1079 MiB/s），远未达到
+P0 要求的「同机两遍差异 < 5%」，且跑在共享 runner 而不是基准机上。它们只说明「跑通了」，
+不说明「快了还是慢了」，更不满足 P4 的 ≥2× 判据。若稳定复测后仍 < 1.5×，按 R6 应暂停复盘。
+
+**P2 的核心 gate 仍未完成。** 本次是性能基准，不是 §5-P2 要求的差分测试——legacy 与 go
+两条路径产出同样的连接数、规则命中、DNS 应答、fake-ip 映射、UDP 会话，尚未验证。
+因此 P2 状态仍是「进行中」，P3/P4 不提前开。
+
+**仍未进入任何发布版本。** dev/beta 的 `build_config.yaml` 仍是 `tags: with_gvisor`、
+默认 `TunMips`；`with_go_stack` 只出现在内核 CI 与 benchmark 里（ADR-6）。
+
 ## 1. 目标 / 非目标
 
 ### 目标
