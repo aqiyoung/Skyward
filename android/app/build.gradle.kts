@@ -22,6 +22,28 @@ val hasReleaseSigning = releaseStoreFile.exists() &&
     releaseKeyAlias != null &&
     releaseKeyPassword != null
 
+/**
+ * The ABIs this build is for, read from the property Flutter passes
+ * (`-Ptarget-platform=android-arm64`). A build that names one architecture packs
+ * a single APK with the engine for that architecture only -- but our own core
+ * ships a `libclash.so` per ABI, and Gradle would pack every one of them, so an
+ * "arm64" package would still carry x86 libraries it can never load and weigh
+ * three times what it needs to. Filtering here makes the name true of the whole
+ * package. A split build names all its architectures, which filters nothing.
+ */
+val requestedAbis = (project.findProperty("target-platform") as String?)
+    ?.split(',')
+    ?.mapNotNull {
+        when (it.trim()) {
+            "android-arm" -> "armeabi-v7a"
+            "android-arm64" -> "arm64-v8a"
+            "android-x64" -> "x86_64"
+            "android-x86" -> "x86"
+            else -> null
+        }
+    }
+    .orEmpty()
+
 android {
     namespace = "com.follow.clash"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -46,6 +68,11 @@ android {
         // the app still reads it back through APP_VERSION (see
         // lib/common/package.dart).
         versionName = System.getenv("APP_VERSION_NAME") ?: flutter.versionName
+        if (requestedAbis.isNotEmpty()) {
+            ndk {
+                abiFilters += requestedAbis
+            }
+        }
     }
 
     signingConfigs {
