@@ -321,7 +321,18 @@ jobs:
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            # A release ships the one APK the phones actually install, and
+            # publish-release.yaml looks for `dist/*android-arm64*.apk`.
+            # Splitting would put ndk.abiFilters and splits.abi in the same
+            # build -- which AGP rejects -- and name three packages for one
+            # version.
+            dart setup.dart android --env "${{ inputs.env }}" --arch arm64 -v
+          else
+            dart setup.dart "${{ matrix.platform }}" --env "${{ inputs.env }}" -v
+          fi
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
@@ -359,6 +370,15 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
+          # A single-ABI build is packaged as `...-android.apk`. Give it the
+          # same name the preview does, so publish-release.yaml's
+          # `dist/*android-arm64*.apk` finds it and Telegram receives the APK
+          # itself instead of a links-only message.
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            for file in dist/*-android.apk; do
+              mv "$file" "dist/${file%-android.apk}-android-arm64-v8a.apk"
+            done
+          fi
           echo "renamed ${renamed} artifact(s) to ${VERSION}:"
           ls -l dist
 
