@@ -1690,6 +1690,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Исключённые адреса маршрутов",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Устройство"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Плоская карта"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("3D-глобус"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Назначение"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Узел"),
     "routingMark": MessageLookupByLibrary.simpleMessage("Метка маршрутизации"),

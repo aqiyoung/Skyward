@@ -1273,6 +1273,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeCarrier": MessageLookupByLibrary.simpleMessage("运营商"),
     "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("排除路由地址"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("本机"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("平面地图"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("3D 地球"),
     "routeTo": MessageLookupByLibrary.simpleMessage("目的地"),
     "routeVia": MessageLookupByLibrary.simpleMessage("节点"),
     "routingMark": MessageLookupByLibrary.simpleMessage("路由标记"),

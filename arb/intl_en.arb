@@ -1005,6 +1005,8 @@
   "connectionStatsDesc": "Live connections, recent requests and DNS queries",
   "routeBoard": "Route",
   "routeBoardDesc": "The hops this device's traffic takes",
+  "routeMapGlobe": "3D globe",
+  "routeMapFlat": "Flat map",
   "routeCarrier": "Carrier",
   "routeFrom": "From",
   "routeVia": "Via",

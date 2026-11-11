@@ -8389,6 +8389,16 @@ class AppLocalizations {
     );
   }
 
+  /// `3D globe`
+  String get routeMapGlobe {
+    return Intl.message('3D globe', name: 'routeMapGlobe', desc: '', args: []);
+  }
+
+  /// `Flat map`
+  String get routeMapFlat {
+    return Intl.message('Flat map', name: 'routeMapFlat', desc: '', args: []);
+  }
+
   /// `Carrier`
   String get routeCarrier {
     return Intl.message('Carrier', name: 'routeCarrier', desc: '', args: []);

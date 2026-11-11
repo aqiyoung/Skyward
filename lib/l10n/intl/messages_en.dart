@@ -1620,6 +1620,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Route exclude addresses",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("From"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Flat map"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("3D globe"),
     "routeTo": MessageLookupByLibrary.simpleMessage("To"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Via"),
     "routingMark": MessageLookupByLibrary.simpleMessage("Routing mark"),

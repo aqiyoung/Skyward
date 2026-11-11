@@ -1005,6 +1005,8 @@
   "connectionStatsDesc": "Connexions en direct, requêtes récentes et requêtes DNS",
   "routeBoard": "Route",
   "routeBoardDesc": "Le chemin du trafic depuis cet appareil",
+  "routeMapGlobe": "Globe 3D",
+  "routeMapFlat": "Carte plane",
   "routeCarrier": "Opérateur",
   "routeFrom": "Appareil",
   "routeVia": "Nœud",

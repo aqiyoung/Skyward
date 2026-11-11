@@ -1005,6 +1005,8 @@
   "connectionStatsDesc": "ライブ接続、最近のリクエスト、DNS クエリ",
   "routeBoard": "ルート",
   "routeBoardDesc": "この端末から目的地までの経路",
+  "routeMapGlobe": "3D 地球儀",
+  "routeMapFlat": "平面マップ",
   "routeCarrier": "回線事業者",
   "routeFrom": "端末",
   "routeVia": "ノード",

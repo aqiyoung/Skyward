@@ -1750,6 +1750,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Adresses de route exclues",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Appareil"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Carte plane"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("Globe 3D"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Destination"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Nœud"),
     "routingMark": MessageLookupByLibrary.simpleMessage("Marque de routage"),

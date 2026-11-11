@@ -1005,6 +1005,8 @@
   "connectionStatsDesc": "Подключения, запросы и DNS-запросы",
   "routeBoard": "Маршрут",
   "routeBoardDesc": "Путь трафика от устройства до назначения",
+  "routeMapGlobe": "3D-глобус",
+  "routeMapFlat": "Плоская карта",
   "routeCarrier": "Оператор",
   "routeFrom": "Устройство",
   "routeVia": "Узел",

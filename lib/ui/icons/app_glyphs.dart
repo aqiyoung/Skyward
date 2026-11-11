@@ -2013,6 +2013,40 @@ abstract final class AppGlyphs {
     ),
   ];
 
+  /// The flat sheet: a folded map, for switching the route back to it.
+  static const mapSheet = Glyph([
+    GlyphPolyline([
+      GlyphVertex(3, 6, 1),
+      GlyphVertex(9, 3.5, 1),
+      GlyphVertex(15, 6, 1),
+      GlyphVertex(21, 3.5, 1),
+      GlyphVertex(21, 18, 1),
+      GlyphVertex(15, 20.5, 1),
+      GlyphVertex(9, 18, 1),
+      GlyphVertex(3, 20.5, 1),
+    ], closed: true),
+    GlyphPolyline([
+      GlyphVertex(9, 3.5),
+      GlyphVertex(9, 18),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(15, 6),
+      GlyphVertex(15, 20.5),
+    ], role: GlyphRole.detail),
+  ]);
+
+  /// The globe: a sphere with two meridians and the equator, which is the
+  /// shape a card wants beside the flat sheet it is being switched from.
+  static const globe = Glyph([
+    GlyphCircle(12, 12, 8.8),
+    GlyphOval(6.4, 3.2, 17.6, 20.8, role: GlyphRole.detail),
+    GlyphOval(9.6, 3.2, 14.4, 20.8, role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(3.2, 12),
+      GlyphVertex(20.8, 12),
+    ], role: GlyphRole.detail),
+  ]);
+
   static GlyphVertex _turnedVertex(Offset corner, double angle) {
     final offset = corner - const Offset(12, 12);
     return GlyphVertex(

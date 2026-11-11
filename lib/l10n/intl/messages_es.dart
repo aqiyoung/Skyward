@@ -1749,6 +1749,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Direcciones excluidas de la ruta",
     ),
     "routeFrom": MessageLookupByLibrary.simpleMessage("Dispositivo"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("Mapa plano"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("Globo 3D"),
     "routeTo": MessageLookupByLibrary.simpleMessage("Destino"),
     "routeVia": MessageLookupByLibrary.simpleMessage("Nodo"),
     "routingMark": MessageLookupByLibrary.simpleMessage(

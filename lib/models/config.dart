@@ -357,6 +357,11 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
 
+    /// Draws the dashboard's route on a globe instead of the flat sheet. Off
+    /// by default: the sheet fits more of the world into the same height, and
+    /// the globe is there for the shape of a route, not for reading its legs.
+    @Default(false) bool routeMapGlobe,
+
     /// Keeps the service's own notification out of sight. Android requires a
     /// foreground service to post one, so this moves it to a silent channel
     /// rather than removing it -- the proxy is unaffected.

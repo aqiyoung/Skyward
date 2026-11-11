@@ -258,9 +258,12 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
   /// Nothing here is live: the board behind the sheet already follows the
   /// connection, and the sheet is the reading of the moment it opened.
   Future<void> _showDetail(RoutingDetail detail) {
+    final globe = ref.read(
+      appSettingProvider.select((state) => state.routeMapGlobe),
+    );
     return showSheet<void>(
       context: context,
-      builder: (_) => RoutingDetailSheet(detail: detail),
+      builder: (_) => RoutingDetailSheet(detail: detail, globe: globe),
     );
   }
 
@@ -271,6 +274,9 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
     final mobile = !DashboardDensityScope.of(context).isDesktop;
     final hideIp = ref.watch(
       appSettingProvider.select((state) => state.hideIp),
+    );
+    final globe = ref.watch(
+      appSettingProvider.select((state) => state.routeMapGlobe),
     );
     final active = _live();
     final location = _location;
@@ -352,6 +358,15 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
             title: appLocalizations.routeBoard,
             chevron: mobile && openable,
             trailing: [
+              DashboardIconButton(
+                glyph: globe ? AppGlyphs.mapSheet : AppGlyphs.globe,
+                tooltip: globe
+                    ? appLocalizations.routeMapFlat
+                    : appLocalizations.routeMapGlobe,
+                onPressed: () => ref
+                    .read(appSettingProvider.notifier)
+                    .update((state) => state.copyWith(routeMapGlobe: !globe)),
+              ),
               if (!mobile && openDetail != null)
                 Transform.translate(
                   offset: const Offset(8, 0),
@@ -374,7 +389,10 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 20,
               children: [
-                Expanded(flex: 3, child: RouteMap(stops: stops)),
+                Expanded(
+                  flex: 3,
+                  child: RouteMap(stops: stops, globe: globe),
+                ),
                 Expanded(
                   flex: 2,
                   child: Padding(
@@ -410,7 +428,7 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
               ],
             )
           else ...[
-            RouteMap(stops: stops),
+            RouteMap(stops: stops, globe: globe),
             const SizedBox(height: 16),
             Row(
               spacing: 6,

@@ -1384,6 +1384,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeCarrier": MessageLookupByLibrary.simpleMessage("回線事業者"),
     "routeExcludeAddress": MessageLookupByLibrary.simpleMessage("ルート除外アドレス"),
     "routeFrom": MessageLookupByLibrary.simpleMessage("端末"),
+    "routeMapFlat": MessageLookupByLibrary.simpleMessage("平面マップ"),
+    "routeMapGlobe": MessageLookupByLibrary.simpleMessage("3D 地球儀"),
     "routeTo": MessageLookupByLibrary.simpleMessage("宛先"),
     "routeVia": MessageLookupByLibrary.simpleMessage("ノード"),
     "routingMark": MessageLookupByLibrary.simpleMessage("ルーティングマーク"),

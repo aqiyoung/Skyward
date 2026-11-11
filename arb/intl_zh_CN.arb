@@ -1005,6 +1005,8 @@
   "connectionStatsDesc": "实时连接、最近请求、DNS查询",
   "routeBoard": "路由",
   "routeBoardDesc": "本机到目的地经过的节点",
+  "routeMapGlobe": "3D 地球",
+  "routeMapFlat": "平面地图",
   "routeCarrier": "运营商",
   "routeFrom": "本机",
   "routeVia": "节点",
