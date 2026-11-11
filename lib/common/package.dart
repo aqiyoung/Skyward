@@ -4,20 +4,25 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'common.dart';
 
-/// The display-only channel suffix for the running build. `dev` builds read
-/// "DEV", `beta` builds read "Beta"; official releases carry no channel and so
-/// read empty.
+/// The channel the running build came from -- `DEV`, `Beta`, empty for a
+/// release. This is the whole of the channel's vocabulary in the UI: the home
+/// pill wears it, and [PackageInfoExtension.labeledVersion] prints it after the
+/// number.
 ///
-/// A build from the current pipeline already carries the channel in its version
-/// (`1.0.1.07-pre`), and this returns nothing for those: the label exists for
-/// builds whose version cannot say which stream it came from, not to say it
-/// twice.
-String buildChannelSuffix() {
-  if (channelOf(buildVersion) != null) return '';
-  switch (buildChannel) {
+/// Both sources are asked, version first: a package from the pipeline names its
+/// channel in the version (`1.0.1.07-dev`), while a build made by hand has only
+/// the env it was built with. A release has neither.
+String buildChannelLabel() =>
+    _channelLabel(channelOf(buildVersion) ?? buildChannel);
+
+String _channelLabel(String? channel) {
+  switch (channel?.toLowerCase()) {
     case 'dev':
       return 'DEV';
+    // `pre` is the name the retired preview channel stamped into versions a
+    // phone may still be running; those builds are betas in all but name.
     case 'beta':
+    case 'pre':
       return 'Beta';
     default:
       return '';
@@ -55,6 +60,19 @@ extension PackageInfoExtension on PackageInfo {
   /// carry upstream's three components, so the injected [buildVersion] supplies
   /// the revision our release adds on top.
   String get displayVersion => buildVersion.isNotEmpty ? buildVersion : version;
+
+  /// The version as the screens print it: the number, then the channel in the
+  /// same word the home pill wears -- `1.0.1.03 DEV`. The stored version says
+  /// the channel in lowercase (`-dev`) because it also names files and tags; a
+  /// release carries none and reads as its bare number.
+  String get labeledVersion {
+    final built = displayVersion;
+    if (channelOf(built) == null) return built;
+    final core = built.split('+').first;
+    final number = core.substring(0, core.indexOf('-'));
+    final label = buildChannelLabel();
+    return label.isEmpty ? number : '$number $label';
+  }
 
   /// Who this build says it is when it fetches a profile. Providers choose the
   /// format they answer in from this string, and only a `clash.meta/<version>`

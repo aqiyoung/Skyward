@@ -458,6 +458,17 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
+          # `--arch arm64` also means "do not split", so the one APK loses the
+          # `-arm64-v8a` the split used to put in its name. Both the in-app
+          # updater (it picks the asset holding the device's ABI) and the
+          # Telegram upload match on that part, so put it back.
+          apks=(dist/*.apk)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "::error::expected one APK, found ${#apks[@]}"
+            printf '%s\n' "${apks[@]}"
+            exit 1
+          fi
+          mv "${apks[0]}" "dist/Skyward-${VERSION}-android-arm64-v8a.apk"
           ls -l dist
 
       # `--arch arm64` has to actually limit the APK, not merely prefer arm64: a

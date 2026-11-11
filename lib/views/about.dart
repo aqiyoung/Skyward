@@ -187,8 +187,7 @@ class _AboutViewState extends ConsumerState<AboutView> {
               ),
               title: Text(appLocalizations.currentVersion),
               trailing: Text(
-                '${globalState.packageInfo.displayVersion}'
-                '${buildChannelSuffix().isNotEmpty ? ' ${buildChannelSuffix()}' : ''}',
+                globalState.packageInfo.labeledVersion,
                 style: context.listSubtitleStyle,
               ),
             ),

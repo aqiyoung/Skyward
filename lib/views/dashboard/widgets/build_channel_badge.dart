@@ -21,7 +21,7 @@ class BuildChannelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = buildChannelSuffix();
+    final label = buildChannelLabel();
     if (label.isEmpty) {
       return const SizedBox.shrink();
     }
