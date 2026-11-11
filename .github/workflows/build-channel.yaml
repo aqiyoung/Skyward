@@ -430,6 +430,8 @@ jobs:
           # separators. Rotating the keystore means updating this line, which is
           # the point: a swap cannot happen without saying so here.
           CERT_SHA256: 65379ed725abfd2330bc2134aaa276ba59a50d5e606f443818003f362c593570
+          # Empty for a split build, which has one APK per ABI by construction.
+          ABI: ${{ inputs.android_abi }}
         run: |
           set -euo pipefail
           build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
@@ -463,6 +465,24 @@ jobs:
             if ! grep -q "versionName='${VERSION}'" <<<"$badging"; then
               echo "::error::$(basename "$apk") does not carry ${VERSION} as its versionName"
               exit 1
+            fi
+            # A package named after one architecture has to hold one
+            # architecture. The engine follows --target-platform, but the core
+            # ships a library per ABI and the packaging packs every one it is
+            # given -- so without the filter this is a 68 MB file of which two
+            # thirds can never load.
+            if [ -n "${ABI}" ]; then
+              case "$ABI" in
+                arm64) want=arm64-v8a ;;
+                arm) want=armeabi-v7a ;;
+                amd64) want=x86_64 ;;
+                *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
+              esac
+              carried="$(unzip -l "$apk" | grep -oE 'lib/[^/]+/' | cut -d/ -f2 | sort -u)"
+              if [ "$carried" != "$want" ]; then
+                echo "::error::$(basename "$apk") carries [$(printf '%s ' $carried)] but was built for ${want}"
+                exit 1
+              fi
             fi
           done
 
