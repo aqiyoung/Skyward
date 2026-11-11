@@ -114,7 +114,9 @@ class Request {
         DirectOverrides(),
       );
       final releases = response.data ?? const <dynamic>[];
-      await _cacheReleases(releases);
+      // The cache is best-effort: a slow or unavailable disk must not hold the
+      // result, or the row would sit on "Checking…" behind a background write.
+      unawaited(_cacheReleases(releases));
       return newestOfferableRelease(
         _platformCandidates(releases),
         installedVersion: globalState.packageInfo.displayVersion,

@@ -45,6 +45,11 @@ on:
         required: false
         type: string
         default: all
+      android_abi:
+        description: Build one APK for this ABI instead of one per ABI; empty keeps the split
+        required: false
+        type: string
+        default: ''
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -154,7 +159,11 @@ jobs:
             exit 1
           fi
           echo "upstream had: $(grep '^version:' pubspec.yaml)"
-          base="${VERSION%.*}"
+          # The version carries the channel as a suffix (`1.0.1.6-beta`); the
+          # pubspec takes only the three components, which are the same for
+          # every channel.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           if ! printf '%s' "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::expected a four-component version, got '$VERSION'"
             exit 1
@@ -320,7 +329,16 @@ jobs:
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
+          # What Android orders installs by. The version above no longer holds
+          # it, so the app reads it back to tell whether a release is newer than
+          # the build on the phone.
+          APP_BUILD_NUMBER: ${{ inputs.build_number }}
+          # The channel the home corner wears (`Beta`). A release leaves this
+          # empty: it is the app, and the badge is only for a build being tried.
+          APP_CHANNEL_NAME: ${{ inputs.channel == 'beta' && 'beta' || '' }}
+        # `android_abi` narrows Android to a single architecture, which also
+        # stops setup.dart from splitting: one APK, not one per ABI.
+        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} ${{ inputs.android_abi != '' && format('--arch {0}', inputs.android_abi) || '' }} -v
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
@@ -333,7 +351,11 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The suffix comes off first: the packaging names files after the
+          # three components, and only the last component of the version is
+          # dropped to find them.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           shopt -s nullglob
           renamed=0
           for file in dist/*; do
@@ -359,6 +381,36 @@ jobs:
             esac
           done
           echo "renamed ${renamed} artifact(s) to ${VERSION}:"
+          ls -l dist
+
+      # A single-ABI build does not carry its ABI in the name -- Flutter only
+      # appends the `-arm64-v8a` part when it splits. Both the in-app updater
+      # (it picks the asset whose name holds the device's own ABI) and the
+      # release announcement (`dist/*android-arm64*.apk`) match on that part,
+      # so a nameless APK would quietly degrade to a link-only message. Give
+      # the lone APK the same name a split build gives that ABI.
+      - name: Name the single APK after its ABI
+        if: matrix.platform == 'android' && inputs.android_abi != ''
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          ABI: ${{ inputs.android_abi }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(dist/*.apk)
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "::error::a single-ABI build must leave exactly one APK, found ${#apks[@]}"
+            printf '%s\n' "${apks[@]}"
+            exit 1
+          fi
+          case "$ABI" in
+            arm64) suffix=arm64-v8a ;;
+            arm) suffix=armeabi-v7a ;;
+            amd64) suffix=x86_64 ;;
+            *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
+          esac
+          mv "${apks[0]}" "dist/Skyward-${VERSION}-android-${suffix}.apk"
           ls -l dist
 
       # Guards the whole point of this repository. Any certificate other than

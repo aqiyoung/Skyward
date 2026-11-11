@@ -238,9 +238,9 @@ class _QueryChip extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Container(
             padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-              borderRadius: BorderRadius.circular(16),
+              shape: AppShape.all(16),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

@@ -100,7 +100,7 @@ ArgParser createSetupArgParser() {
       'arch',
       valueHelp: 'arm,arm64,amd64',
       allowed: ['arm', 'arm64', 'amd64'],
-      help: 'Target architecture (Android only)',
+      help: 'Target architecture (Android only); builds one APK for it',
     )
     ..addFlag(
       'verbose',
@@ -113,12 +113,16 @@ ArgParser createSetupArgParser() {
 List<String> createFlutterBuildArgs({
   required String platform,
   required bool verbose,
+  bool splitAbi = true,
 }) {
   final flutterBuildArgs = <String>[
     if (verbose) 'verbose',
     'dart-define-from-file=env.json',
   ];
-  if (platform == 'android') {
+  // Splitting is what puts an APK for every ABI in `dist/`. A build that has
+  // already named one (`--arch arm64`) has nothing left to split: its single
+  // APK is the one that architecture installs.
+  if (platform == 'android' && splitAbi) {
     flutterBuildArgs.add('split-per-abi');
   }
   return flutterBuildArgs;
@@ -128,11 +132,18 @@ Map<String, String> createBuildEnvironment(
   String env, {
   String? appVersion,
   String? channel,
+  String? buildNumber,
 }) {
   return {
     'APP_ENV': env,
     if (appVersion != null && appVersion.isNotEmpty) 'APP_VERSION': appVersion,
     if (channel != null && channel.isNotEmpty) 'APP_CHANNEL': channel,
+    // The versionCode the build was made with. The version string no longer
+    // carries it -- the fourth component counts the day's snapshots and the
+    // suffix names the channel -- so the update check reads the number that
+    // Android actually orders installs by.
+    if (buildNumber != null && buildNumber.isNotEmpty)
+      'APP_BUILD_NUMBER': buildNumber,
   };
 }
 
@@ -178,6 +189,7 @@ Future<int> _package(
         env,
         appVersion: Platform.environment['APP_VERSION_NAME'],
         channel: Platform.environment['APP_CHANNEL_NAME'],
+        buildNumber: Platform.environment['APP_BUILD_NUMBER'],
       ),
     ),
   );
@@ -185,6 +197,9 @@ Future<int> _package(
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,
     verbose: verbose,
+    // One architecture asked for means one APK: splitting would only produce
+    // that same build under a longer name, plus two ABIs nobody requested.
+    splitAbi: androidArch == null,
   );
   final descriptionArgs = <String>[];
   if (platform != 'android') {

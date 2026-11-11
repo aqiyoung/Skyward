@@ -178,7 +178,9 @@ void main() {
     await tester.tap(find.text('Theme'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Light'), findsOneWidget);
+    // The row's own value already reads "Light" (the default), so the word
+    // appears twice once the menu lists it -- assert the options are offered.
+    expect(find.text('Light'), findsWidgets);
     expect(find.text('Dark'), findsOneWidget);
 
     await tester.tap(find.text('Dark'));

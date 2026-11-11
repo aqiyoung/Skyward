@@ -1,27 +1,24 @@
-name: preview-desktop
+name: dev-desktop
 
-# The desktop preview channel: one Windows build, no tests, published under a
-# `preview-win-` tag so it can be tried on a desktop without waiting for a
-# channel build of every platform.
+# The desktop dev channel: one Windows build, no tests, published under a
+# `dev-win-` tag so it can be tried on a desktop without waiting for a full
+# build of every platform.
 #
-# Manual only. A push to `beta` already rebuilds the Android preview, and
-# packaging a desktop costs half an hour of a runner nobody is waiting on.
+# Started by a push to `dev` that touches `.desktop-preview`, not by the
+# dispatch button: GitHub only dispatches a workflow the default branch carries,
+# and this repository promotes `beta` into `main`, so a CI-only commit on main
+# would make every promotion non-fast-forward. The branch that builds is `dev`,
+# so the workflow lives there and its trigger is a file in the tree.
+# `workflow_dispatch` stays for whenever it does reach main.
 #
 # The tag is not `v*`, so the version counter in ci.yaml -- which reads `v*`
 # tags and release titles -- never counts it, and the Android numbering is
 # untouched. Its number is its own: see the version step for why it cannot
-# reuse the preview channel's.
-#
-# Started by pushing a change to `.desktop-preview`, not by the dispatch
-# button: GitHub only dispatches a workflow the default branch carries, and
-# this repository promotes `beta` into `main` by fast-forward, so a CI-only
-# commit on main would make every promotion non-fast-forward. The branch that
-# builds is `beta`, so the workflow lives there and its trigger is a file in
-# the tree. `workflow_dispatch` stays for whenever it does reach main.
+# reuse the phone dev channel's.
 on:
   push:
     branches:
-      - beta
+      - dev
     paths:
       - '.desktop-preview'
   workflow_dispatch:
@@ -29,7 +26,7 @@ on:
       ref:
         description: Branch or commit to build
         type: string
-        default: beta
+        default: dev
       env:
         description: Value passed to `dart setup.dart --env`
         type: choice
@@ -67,7 +64,7 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      # 预览版推送优先发到私聊 user ID；未设置时回退到公开频道 TELEGRAM_CHAT_ID。
+      # Dev 版推送优先发到私聊 user ID；未设置时回退到公开频道 TELEGRAM_CHAT_ID。
       TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
     steps:
       - name: Checkout
@@ -108,20 +105,25 @@ jobs:
           # Only this day's numbers count: yesterday's are below the prefix and
           # the next run must not walk backwards past it.
           highest=$(printf '%s\n' "$tags" \
-            | sed -n 's/^preview-win-\([0-9][0-9]*\)$/\1/p' \
+            | sed -n 's/^dev-win-\([0-9][0-9]*\)$/\1/p' \
             | awk -v p="$prefix" '$1 >= p' | sort -n | tail -1)
           build_number=$(( ${highest:-$(( prefix - 1 ))} + 1 ))
           if [ "$build_number" -ge 65535 ]; then
             echo "::error::build number ${build_number} no longer fits a Windows file version"
             exit 1
           fi
-          version="${base}.${build_number}"
+          # What users read is the four components plus `-dev`: the desktop
+          # package is a dev snapshot, so its fourth component counts today's
+          # builds rather than spending a release number on the line. The build
+          # number stays behind it for the Windows file version, which takes
+          # digits only.
+          version="${base}.$(printf '%02d' "$(( build_number - prefix ))")-dev"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}"
+          echo "building ${version} from ${base}, file version ${build_number}"
 
       # What changed since the previous desktop preview, so the release page
       # says what to look at rather than only which number it is.
@@ -130,11 +132,11 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: preview-win-${{ steps.version.outputs.build_number }}
+          TAG: dev-win-${{ steps.version.outputs.build_number }}
         run: |
           set -euo pipefail
           previous=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq '[.[] | select(.tag_name | startswith("preview-win-"))] | .[].tag_name' 2>/dev/null \
+            --jq '[.[] | select(.tag_name | startswith("dev-win-"))] | .[].tag_name' 2>/dev/null \
             | grep -vx "$TAG" | head -1 || true)
           commit="$(git rev-parse HEAD)"
 
@@ -214,7 +216,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The packaging names files after the pubspec's three components; the
+          # version users read adds today's count and the channel.
+          stem="${VERSION%%-*}"
+          base="${stem%.*}"
           shopt -s nullglob
           for file in dist/*; do
             name="$(basename "$file")"
@@ -293,7 +298,7 @@ jobs:
       - name: Upload the preview
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: preview-desktop-windows-${{ inputs.arch || 'amd64' }}
+          name: dev-desktop-windows-${{ inputs.arch || 'amd64' }}
           path: ./dist
           if-no-files-found: error
 
@@ -309,12 +314,12 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          tag="preview-win-${BASE_NUMBER}"
+          tag="dev-win-${BASE_NUMBER}"
           commit="$(git rev-parse --short HEAD)"
           (cd dist && sha256sum ./* > SHA256SUMS)
 
           cat > preview-notes.md <<EOF
-          Skyward ${VERSION} 桌面预览版，只含 Windows ${ARCH}。
+          Skyward ${VERSION} 桌面 Dev 版，只含 Windows ${ARCH}。
           EOF
           {
             echo
@@ -330,7 +335,7 @@ jobs:
               printf '%s\n' "$CHANGELOG"
             fi
             echo
-            echo "桌面预览自己计数（100/天），与正式版的构建号不在一条线上：它的数字更小，装上之后正式版的更新检查不会提示升级到同一个版本。验完请卸掉再装正式版。这不是正式发布。"
+            echo "桌面 Dev 版自己计数（100/天），与正式版的构建号不在一条线上：它的数字更小，装上之后正式版的更新检查不会提示升级到同一个版本。验完请卸掉再装正式版。这不是正式发布。"
           } >> preview-notes.md
 
           # A retried run reuses its number, so the tag may already exist.
@@ -339,7 +344,7 @@ jobs:
             -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
           gh release create "$tag" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Skyward ${VERSION}（Windows 桌面预览版）" \
+            --title "Skyward ${VERSION}（Windows 桌面 Dev 版）" \
             --notes-file preview-notes.md \
             --prerelease
 
@@ -353,7 +358,7 @@ jobs:
           set -euo pipefail
           gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
             --json tagName,createdAt,isPrerelease \
-            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("preview-win-")))]
+            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("dev-win-")))]
                   | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' \
           | while read -r tag; do
               [ -z "$tag" ] && continue
@@ -376,10 +381,10 @@ jobs:
           shopt -s nullglob
           # gh-proxy.com in front of github.com: the assets live on GitHub,
           # which is unreachable for a large part of the audience.
-          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-win-${BASE_NUMBER}/"
+          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}/"
 
           {
-            echo "🧪 Skyward ${VERSION}（Windows 桌面预览版）构建成功"
+            echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）构建成功"
             echo
             if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
               echo "自 \`${PREVIOUS}\` 以来："
@@ -395,10 +400,10 @@ jobs:
             done
             echo
             echo "分支 \`${REF}\` ｜ Windows ${ARCH}"
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/preview-win-${BASE_NUMBER}"
+            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/dev-win-${BASE_NUMBER}"
             echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo
-            echo "（桌面预览自己计数，号比正式版小：验完请卸掉再装正式版）"
+            echo "（桌面 Dev 版自己计数，号比正式版小：验完请卸掉再装正式版）"
           } > "$RUNNER_TEMP/msg.txt"
 
           cat "$RUNNER_TEMP/msg.txt"

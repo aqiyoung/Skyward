@@ -39,9 +39,10 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      CHANNEL: ${{ inputs.channel }}
     # Self-hosted telegram-bot-api so sendDocument accepts the 60 MB+
-    # installers the cloud Bot API would reject -- the same setup preview.yaml
-    # runs. Needs the TELEGRAM_API_ID and
+    # installers the cloud Bot API would reject -- the same setup the dev
+    # preview runs. Needs the TELEGRAM_API_ID and
     # TELEGRAM_API_HASH secrets.
     services:
       telegram-bot-api:
@@ -192,7 +193,7 @@ jobs:
             echo "本仓库自编译的 Skyward（基于上游 FlClash）：\`${BRANCH}\` 分支 = ${origin} + 我们自己的改动。"
             echo
             echo "- 渠道：\`${label}\`"
-            echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是我们自己的迭代号）"
+            echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是这条线上的发布序号，后缀标明渠道）"
             echo "- 构建号：\`${BUILD_NUMBER}\`（APK 的 versionCode）"
             echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
             echo "- 构建时间：$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -242,10 +243,13 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
         run: |
           set -euo pipefail
+          # The version names its channel as a suffix already (`1.0.1.6-beta`),
+          # so only the release needs a word: it is the one with nothing after
+          # the number.
           if [ "$CHANNEL" = stable ]; then
             title="Skyward ${VERSION}（正式版）"
           else
-            title="Skyward ${VERSION}（beta）"
+            title="Skyward ${VERSION}"
           fi
           # A tag is a version that has already been published, so this only
           # happens when a run is retried: replacing the release keeps the
@@ -263,7 +267,7 @@ jobs:
             ${{ inputs.prerelease && '--prerelease' || '--latest' }}
 
       # The APK goes up as a document through the self-hosted telegram-bot-api
-      # (localhost:8081) -- the same approach preview.yaml uses. The local API
+      # (localhost:8081) -- the same approach the dev preview uses. The local API
       # lifts the 50 MB upload cap the cloud Bot API
       # enforces, so the 60 MB+ installer uploads as a file. If this run
       # produced no android APK, fall back to the links-only message.
@@ -283,7 +287,7 @@ jobs:
           if [ "$CHANNEL" = stable ]; then
             label="正式版"
           else
-            label="beta"
+            label="测试版"
           fi
 
           # gh-proxy.com in front of github.com: the assets live on GitHub,
@@ -320,12 +324,20 @@ jobs:
           apks=(dist/*android-arm64*.apk)
           apk="${apks[0]:-}"
 
+          # A beta arrives silently. Every push to beta publishes one, so a
+          # day of work can put several in the channel, and none of them is
+          # news worth a phone buzzing at midnight. A stable release still
+          # rings: that one is the news.
+          silent=()
+          [ "$CHANNEL" = beta ] && silent=(-d "disable_notification=true")
+
           send_links() {
             # -f: a rejected post (bad token, chat the bot cannot write to)
             # fails visibly instead of reporting success.
             curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
               --data-urlencode "text@/tmp/msg.txt" \
+              "${silent[@]}" \
               || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
           }
 
@@ -357,12 +369,13 @@ jobs:
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "document=@${apk}" \
             -F "caption=${caption}" \
+            "${silent[@]}" \
             "${api}/sendDocument" | grep -q '"ok":true'; then
             echo "telegram accepted ${apk}"
           else
             echo "::error::APK 文档推送失败（检查 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID）；仍会补发各平台下载链接"
           fi
           # 有 APK 时上面只把安卓 APK 作为文档发出，而文档 caption 受 Telegram 1024 字限制，
-          # 只能放版本号与 Release 页链接，放不下 7 个平台的下载链接。所以无论 APK 是否上传成功，
-          # 这里都再补发一条文本消息（send_links）列出全部平台，否则 TG 频道里看起来「只有安卓」。
+          # 只能放版本号与 Release 页链接，放不下全部平台的下载链接。所以无论 APK 是否上传成功，
+          # 这里都再补发一条文本消息（send_links）列出本次构建出的全部文件。
           send_links

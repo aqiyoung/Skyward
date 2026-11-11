@@ -60,6 +60,16 @@ void main() {
       ]);
     });
 
+    test('does not split when the build already names one ABI', () {
+      final args = setup.createFlutterBuildArgs(
+        platform: 'android',
+        verbose: false,
+        splitAbi: false,
+      );
+
+      expect(args, ['dart-define-from-file=env.json']);
+    });
+
     test('refuses to package while a native build hook is skipped', () {
       const pubspec = '''
 hooks:
