@@ -282,10 +282,11 @@ jobs:
           fi
 
           if [ -z "$entries" ] && [ -n "$previous" ]; then
-            echo "::notice::no Changelog-Zh trailer and no 未发布 section; falling back to commit subjects"
-            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
-              --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
-              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
+            # Commit subjects are English. They are never a substitute for the
+            # Chinese changelog: the only sources are `Changelog-Zh:` trailers
+            # and the `## 未发布` section of CHANGELOG.zh.md. An empty log is
+            # preferable to an English one in a Chinese announcement.
+            echo "::notice::no Changelog-Zh trailer and no 未发布 section; this preview carries no changelog"
           elif [ -z "$previous" ]; then
             echo "::notice::this is the first preview; no changelog range"
           fi

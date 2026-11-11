@@ -328,8 +328,19 @@ jobs:
           # day of work can put several in the channel, and none of them is
           # news worth a phone buzzing at midnight. A stable release still
           # rings: that one is the news.
-          silent=()
-          [ "$CHANNEL" = beta ] && silent=(-d "disable_notification=true")
+          #
+          # The two calls encode their body differently: sendMessage is
+          # urlencoded (--data-urlencode), sendDocument is multipart (-F).
+          # curl refuses to mix -d with -F in one call -- a single shared
+          # `silent` array used to make every APK upload fail instantly (rc=2)
+          # and fall back to links only, which is why the channel saw nothing
+          # but download links. Keep one array per encoding.
+          silent_msg=()
+          silent_doc=()
+          if [ "$CHANNEL" = beta ]; then
+            silent_msg=(-d "disable_notification=true")
+            silent_doc=(-F "disable_notification=true")
+          fi
 
           send_links() {
             # -f: a rejected post (bad token, chat the bot cannot write to)
@@ -337,7 +348,7 @@ jobs:
             curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
               --data-urlencode "text@/tmp/msg.txt" \
-              "${silent[@]}" \
+              "${silent_msg[@]}" \
               || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
           }
 
@@ -369,7 +380,7 @@ jobs:
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "document=@${apk}" \
             -F "caption=${caption}" \
-            "${silent[@]}" \
+            "${silent_doc[@]}" \
             "${api}/sendDocument" | grep -q '"ok":true'; then
             echo "telegram accepted ${apk}"
           else
