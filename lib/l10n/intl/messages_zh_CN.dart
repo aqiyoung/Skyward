@@ -1557,6 +1557,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("系统代理"),
     "tab": MessageLookupByLibrary.simpleMessage("标签页"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("选项卡动画"),
+    "tagged": MessageLookupByLibrary.simpleMessage("标签"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("接管范围"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("始终开启"),
     "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(

@@ -29,6 +29,8 @@ double getItemHeight(ProxyCardType proxyCardType) {
     ProxyCardType.standard => baseHeight,
     ProxyCardType.compact =>
       baseHeight - measure.textHeight(AppTextStyle.subheadline),
+    ProxyCardType.tagged =>
+      baseHeight - measure.textHeight(AppTextStyle.subheadline),
   };
 }
 

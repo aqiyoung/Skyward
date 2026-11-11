@@ -59,7 +59,7 @@ class ProxyCard extends ConsumerWidget {
   Measure get measure => globalState.measure;
 
   Widget _buildProxyNameText(BuildContext context) {
-    if (type == ProxyCardType.compact) {
+    if (type == ProxyCardType.compact || type == ProxyCardType.tagged) {
       return SizedBox(
         height: measure.textHeight(AppTextStyle.subheadline) * 1,
         child: EmojiText(
@@ -132,6 +132,7 @@ class ProxyCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final measure = globalState.measure;
     final isLoose = type == ProxyCardType.loose;
+    final isTagged = type == ProxyCardType.tagged;
     final delayText = _DelayText(
       proxy: proxy,
       testUrl: testUrl,
@@ -144,34 +145,36 @@ class ProxyCard extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           color: context.colorScheme.onSurfaceVariant,
         );
-    final details = isLoose
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final details = switch (type) {
+      ProxyCardType.loose => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: measure.textHeight(AppTextStyle.footnote),
+              child: _ProxyDesc(proxy: proxy, style: typeStyle),
+            ),
+            const SizedBox(height: 6),
+            delayText,
+          ],
+        ),
+      ProxyCardType.tagged => _ProtocolTag(type: proxy.type),
+      _ => SizedBox(
+          height: measure.textHeight(AppTextStyle.footnote),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                height: measure.textHeight(AppTextStyle.footnote),
-                child: _ProxyDesc(proxy: proxy, style: typeStyle),
+              Flexible(
+                flex: 1,
+                child: TooltipText(
+                  text: Text(proxy.type, maxLines: 1, style: typeStyle),
+                ),
               ),
-              const SizedBox(height: 6),
               delayText,
             ],
-          )
-        : SizedBox(
-            height: measure.textHeight(AppTextStyle.footnote),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Flexible(
-                  flex: 1,
-                  child: TooltipText(
-                    text: Text(proxy.type, maxLines: 1, style: typeStyle),
-                  ),
-                ),
-                delayText,
-              ],
-            ),
-          );
+          ),
+        ),
+    };
     return Consumer(
       builder: (context, ref, _) {
         final inUse = ref.watch(
@@ -211,7 +214,9 @@ class ProxyCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: isTagged
+                        ? CrossAxisAlignment.center
+                        : CrossAxisAlignment.start,
                     spacing: 4,
                     children: [
                       Expanded(child: proxyNameText),
@@ -219,9 +224,10 @@ class ProxyCard extends ConsumerWidget {
                         SelectionBadge.preferred(inUse: inUse)
                       else if (inUse)
                         const SelectionBadge(),
+                      if (isTagged) delayText,
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isTagged ? 6 : 8),
                   details,
                 ],
               ),
@@ -428,6 +434,57 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// The tagged card's second line: a coloured protocol chip. A runtime proxy
+/// only carries its type, so this is one chip rather than the row of
+/// transport/security badges a client reading the raw profile can show.
+class _ProtocolTag extends StatelessWidget {
+  const _ProtocolTag({required this.type});
+
+  final String type;
+
+  static (Color, Color) _colors(BuildContext context, String type) {
+    final dark = context.colorScheme.brightness == Brightness.dark;
+    final name = type.toLowerCase();
+    // Fixed tones, like [GroupBadge.colorOf]: each family keeps its own hue
+    // whatever the theme takes, and both tones read on light and dark cards.
+    final base = switch (name) {
+      _ when name.contains('vless') || name.contains('vmess') =>
+        dark ? const Color(0xFF8AB4F8) : const Color(0xFF2C66D6),
+      _ when name.contains('trojan') || name.contains('reality') =>
+        dark ? const Color(0xFFF5B85E) : const Color(0xFFB26A0B),
+      _ when name.contains('shadowsocks') ||
+          name == 'ss' ||
+          name.contains('socks') ||
+          name == 'http' =>
+        dark ? const Color(0xFF7BD8A4) : const Color(0xFF1D8A55),
+      _ when name.contains('hysteria') ||
+          name.contains('tuic') ||
+          name.contains('wireguard') =>
+        dark ? const Color(0xFF6FD3D0) : const Color(0xFF0E8684),
+      _ => dark ? const Color(0xFFC4A6F7) : const Color(0xFF7A45C9),
+    };
+    return (base.withValues(alpha: dark ? 0.22 : 0.14), base);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (background, foreground) = _colors(context, type);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: ShapeDecoration(color: background, shape: AppShape.full),
+      child: Text(
+        type,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyle.caption1
+            .of(context, emphasized: true)
+            .copyWith(color: foreground),
       ),
     );
   }

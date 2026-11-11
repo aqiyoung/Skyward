@@ -364,6 +364,7 @@ const _$ProxyCardTypeEnumMap = {
   ProxyCardType.loose: 'loose',
   ProxyCardType.standard: 'standard',
   ProxyCardType.compact: 'compact',
+  ProxyCardType.tagged: 'tagged',
 };
 
 _TextScale _$TextScaleFromJson(Map<String, dynamic> json) => _TextScale(

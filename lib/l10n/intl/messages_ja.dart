@@ -1708,6 +1708,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("システムプロキシ"),
     "tab": MessageLookupByLibrary.simpleMessage("タブ"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("タブアニメーション"),
+    "tagged": MessageLookupByLibrary.simpleMessage("ラベル付き"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("適用範囲"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("常に有効"),
     "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(

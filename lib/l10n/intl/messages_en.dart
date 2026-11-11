@@ -1982,6 +1982,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
+    "tagged": MessageLookupByLibrary.simpleMessage("Tagged"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("Traffic scope"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("Always on"),
     "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(

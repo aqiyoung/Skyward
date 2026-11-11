@@ -1683,6 +1683,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("시스템 프록시"),
     "tab": MessageLookupByLibrary.simpleMessage("탭"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("탭 애니메이션"),
+    "tagged": MessageLookupByLibrary.simpleMessage("태그"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("적용 범위"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage("항상 켜짐"),
     "takeoverScopeDesc": MessageLookupByLibrary.simpleMessage(
