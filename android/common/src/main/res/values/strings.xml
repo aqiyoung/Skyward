@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Skyward</string>
     <string name="service_channel_name">Skyward Service</string>
+    <string name="service_channel_silent_name">Skyward Service (silent)</string>
 </resources>

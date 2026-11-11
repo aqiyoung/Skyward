@@ -55,6 +55,51 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
+  /// `Acknowledgments`
+  String get acknowledgments {
+    return Intl.message(
+      'Acknowledgments',
+      name: 'acknowledgments',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.`
+  String get acknowledgmentsDesc {
+    return Intl.message(
+      'Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.',
+      name: 'acknowledgmentsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mine`
+  String get mine {
+    return Intl.message('Mine', name: 'mine', desc: '', args: []);
+  }
+
+  /// `Pages`
+  String get pagesLabel {
+    return Intl.message('Pages', name: 'pagesLabel', desc: '', args: []);
+  }
+
+  /// `Tools`
+  String get toolEntries {
+    return Intl.message('Tools', name: 'toolEntries', desc: '', args: []);
+  }
+
+  /// `Search pages, nodes, tools and settings`
+  String get searchHint {
+    return Intl.message(
+      'Search pages, nodes, tools and settings',
+      name: 'searchHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Rule`
   String get rule {
     return Intl.message('Rule', name: 'rule', desc: '', args: []);
@@ -1461,51 +1506,6 @@ class AppLocalizations {
     return Intl.message('Search', name: 'search', desc: '', args: []);
   }
 
-  /// `Mine`
-  String get mine {
-    return Intl.message('Mine', name: 'mine', desc: '', args: []);
-  }
-
-  /// `Pages`
-  String get pagesLabel {
-    return Intl.message('Pages', name: 'pagesLabel', desc: '', args: []);
-  }
-
-  /// `Tools`
-  String get toolEntries {
-    return Intl.message('Tools', name: 'toolEntries', desc: '', args: []);
-  }
-
-  /// `Search pages, nodes, tools and settings`
-  String get searchHint {
-    return Intl.message(
-      'Search pages, nodes, tools and settings',
-      name: 'searchHint',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Acknowledgments`
-  String get acknowledgments {
-    return Intl.message(
-      'Acknowledgments',
-      name: 'acknowledgments',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Skyward began as a fork of FlClash by chen08209 ...`
-  String get acknowledgmentsDesc {
-    return Intl.message(
-      'Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.',
-      name: 'acknowledgmentsDesc',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Allow apps to bypass VPN`
   String get allowBypass {
     return Intl.message(
@@ -1851,6 +1851,26 @@ class AppLocalizations {
     return Intl.message(
       'Stop button in notification',
       name: 'showNotificationStopAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide the ongoing notification`
+  String get hideNotification {
+    return Intl.message(
+      'Hide the ongoing notification',
+      name: 'hideNotification',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The proxy keeps running. Android requires a foreground service to post one, so this makes it silent and keeps it off the lock screen; system settings can turn it off entirely`
+  String get hideNotificationTip {
+    return Intl.message(
+      'The proxy keeps running. Android requires a foreground service to post one, so this makes it silent and keeps it off the lock screen; system settings can turn it off entirely',
+      name: 'hideNotificationTip',
       desc: '',
       args: [],
     );
@@ -8428,8 +8448,7 @@ class AppLocalizations {
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
       count,
-      one:
-          '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
+      one: '1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules',
       other:
           '$label SUB-RULE rules were dropped, since custom profiles do not support sub-rules',
       name: 'customImportDroppedSubRules',

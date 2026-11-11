@@ -237,6 +237,8 @@
   "autoCloseConnectionsDesc": "Auto close connections drops open connections when you switch proxies.",
   "onlyStatisticsProxy": "Only count proxy traffic",
   "showNotificationStopAction": "Stop button in notification",
+  "hideNotification": "Hide the ongoing notification",
+  "hideNotificationTip": "The proxy keeps running. Android requires a foreground service to post one, so this makes it silent and keeps it off the lock screen; system settings can turn it off entirely",
   "pureBlackMode": "Pure black mode",
   "sidebar": "Sidebar",
   "backgroundBlur": "Background blur",

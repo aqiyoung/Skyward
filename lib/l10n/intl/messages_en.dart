@@ -253,6 +253,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("Account"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Acknowledgments"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("Test all delays"),
     "actionDirectMode": MessageLookupByLibrary.simpleMessage("Direct mode"),
@@ -961,6 +965,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "The dock keeps its icons while the page moves",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage(
+      "Hide the ongoing notification",
+    ),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "The proxy keeps running. Android requires a foreground service to post one, so this makes it silent and keeps it off the lock screen; system settings can turn it off entirely",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("Hide password"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "Hide timed-out proxies",
@@ -1033,9 +1043,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1250,6 +1261,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "This is a message.",
     ),
+    "mine": MessageLookupByLibrary.simpleMessage("Mine"),
     "minimize": MessageLookupByLibrary.simpleMessage("Minimize"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on exit"),
     "minutes": MessageLookupByLibrary.simpleMessage("minutes"),
@@ -1368,6 +1380,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Override destination connects to the sniffed domain instead of the original address.",
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("Override entries"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("Parse pure IP"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "Parse pure IP sniffs connections that carry only an IP address.",
@@ -1774,6 +1787,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Scroll to selected",
     ),
     "search": MessageLookupByLibrary.simpleMessage("Search"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Search pages, nodes, tools and settings",
+    ),
     "seconds": MessageLookupByLibrary.simpleMessage("seconds"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("Key"),
@@ -1993,6 +2009,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Tip"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolerance"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Tools"),
     "tools": MessageLookupByLibrary.simpleMessage("More"),
     "torch": MessageLookupByLibrary.simpleMessage("Flashlight"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
@@ -2122,15 +2139,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
-    "mine": MessageLookupByLibrary.simpleMessage("Mine"),
-    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
-    "toolEntries": MessageLookupByLibrary.simpleMessage("Tools"),
-    "searchHint": MessageLookupByLibrary.simpleMessage(
-      "Search pages, nodes, tools and settings",
-    ),
-    "acknowledgments": MessageLookupByLibrary.simpleMessage("Acknowledgments"),
-    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.",
-    ),
   };
 }

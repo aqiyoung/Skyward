@@ -237,6 +237,8 @@
   "autoCloseConnectionsDesc": "Cerrar conexiones automáticamente corta las conexiones abiertas al cambiar de proxy.",
   "onlyStatisticsProxy": "Contar solo el tráfico del proxy",
   "showNotificationStopAction": "Botón de detener en la notificación",
+  "hideNotification": "Ocultar la notificación permanente",
+  "hideNotificationTip": "El proxy sigue funcionando. Android exige una notificación de servicio en primer plano, así que esta pasa a ser silenciosa y no aparece en la pantalla de bloqueo; los ajustes del sistema pueden desactivarla del todo",
   "pureBlackMode": "Modo negro puro",
   "sidebar": "Barra lateral",
   "backgroundBlur": "Desenfoque de fondo",

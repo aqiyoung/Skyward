@@ -227,6 +227,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("アカウント"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("謝辞"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward は chen08209 氏の FlClash から派生し、MetaCubeX の mihomo (Clash.Meta) カーネルを基に構築されています。両者は GPL-3.0 の下で公開されています。",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("アクション"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("すべての遅延をテスト"),
     "actionDirectMode": MessageLookupByLibrary.simpleMessage("ダイレクトモード"),
@@ -815,6 +819,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "ページをスクロールしている間、ボトムバーはアイコンだけを表示します",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage("常駐通知を隠す"),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "プロキシはそのまま動作します。Android はフォアグラウンド サービスの通知を必須とするため、通知をサイレントにしてロック画面に出さないようにします。システム設定で完全にオフにできます",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("パスワードを隠す"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "タイムアウトしたプロキシを隠す",
@@ -1073,6 +1081,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryReleasedSize": m47,
     "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("これはメッセージです。"),
+    "mine": MessageLookupByLibrary.simpleMessage("マイページ"),
     "minimize": MessageLookupByLibrary.simpleMessage("最小化"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("終了時に最小化"),
     "minutes": MessageLookupByLibrary.simpleMessage("分"),
@@ -1175,6 +1184,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "宛先を上書きすると、元のアドレスではなく検出したドメインに接続します。",
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("上書き項目"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("ページ"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("純粋なIPを解析"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "純粋な IP を解析すると、IP アドレスしかない接続をスニッフィングします。",
@@ -1529,6 +1539,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("選択項目へスクロール"),
     "search": MessageLookupByLibrary.simpleMessage("検索"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("ページ、ノード、ツール、設定を検索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("キー"),
@@ -1722,6 +1733,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("ヒント"),
     "toggle": MessageLookupByLibrary.simpleMessage("切り替え"),
     "tolerance": MessageLookupByLibrary.simpleMessage("許容値"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("ツール"),
     "tools": MessageLookupByLibrary.simpleMessage("その他"),
     "torch": MessageLookupByLibrary.simpleMessage("ライト"),
     "total": MessageLookupByLibrary.simpleMessage("合計"),
@@ -1841,13 +1853,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
-    "mine": MessageLookupByLibrary.simpleMessage("マイページ"),
-    "pagesLabel": MessageLookupByLibrary.simpleMessage("ページ"),
-    "toolEntries": MessageLookupByLibrary.simpleMessage("ツール"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("ページ、ノード、ツール、設定を検索"),
-    "acknowledgments": MessageLookupByLibrary.simpleMessage("謝辞"),
-    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward は chen08209 氏の FlClash から派生し、MetaCubeX の mihomo (Clash.Meta) カーネルを基に構築されています。両者は GPL-3.0 の下で公開されています。",
-    ),
   };
 }

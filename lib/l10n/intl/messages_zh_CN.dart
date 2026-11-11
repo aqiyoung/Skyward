@@ -224,6 +224,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("账号"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("鸣谢"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward 最初派生自 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("操作"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("测试全部延迟"),
     "actionDirectMode": MessageLookupByLibrary.simpleMessage("直连模式"),
@@ -752,6 +756,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "页面滚动时，底栏只留图标",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage("隐藏常驻通知"),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "代理照常运行。Android 要求前台服务保留一条通知，这里把它降为静默、不进锁屏；想彻底消失可在系统设置里关闭该通知",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("隐藏密码"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage("隐藏超时代理"),
     "hopInterval": MessageLookupByLibrary.simpleMessage("跳跃间隔"),
@@ -982,6 +990,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryReleasedSize": m47,
     "messageTest": MessageLookupByLibrary.simpleMessage("消息测试"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("这是一条消息。"),
+    "mine": MessageLookupByLibrary.simpleMessage("我的"),
     "minimize": MessageLookupByLibrary.simpleMessage("最小化"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("退出时最小化"),
     "minutes": MessageLookupByLibrary.simpleMessage("分钟"),
@@ -1074,6 +1083,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "覆盖目标地址使用嗅探到的域名替换原目标地址发起连接。",
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("覆写项"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("页面"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("解析纯IP"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "解析纯 IP 会嗅探只有 IP 地址的连接。",
@@ -1394,6 +1404,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "scriptModeDesc": MessageLookupByLibrary.simpleMessage("脚本模式，使用扩展脚本改写整个配置"),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("滚动到已选"),
     "search": MessageLookupByLibrary.simpleMessage("搜索"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、节点、工具与设置"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("密钥"),
@@ -1569,6 +1580,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("提示"),
     "toggle": MessageLookupByLibrary.simpleMessage("切换"),
     "tolerance": MessageLookupByLibrary.simpleMessage("容差"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("工具入口"),
     "tools": MessageLookupByLibrary.simpleMessage("更多"),
     "torch": MessageLookupByLibrary.simpleMessage("手电筒"),
     "total": MessageLookupByLibrary.simpleMessage("总计"),
@@ -1682,13 +1694,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
-    "mine": MessageLookupByLibrary.simpleMessage("我的"),
-    "pagesLabel": MessageLookupByLibrary.simpleMessage("页面"),
-    "toolEntries": MessageLookupByLibrary.simpleMessage("工具入口"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("搜索页面、节点、工具与设置"),
-    "acknowledgments": MessageLookupByLibrary.simpleMessage("鸣谢"),
-    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward 最初派生自 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
-    ),
   };
 }

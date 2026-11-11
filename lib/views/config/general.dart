@@ -259,11 +259,13 @@ ConfigToggleItem _clashToggle({
 
 ConfigToggleItem _appSettingToggle({
   required ConfigLabel title,
+  ConfigLabel? subtitle,
   required bool Function(AppSettingProps state) select,
   required AppSettingProps Function(AppSettingProps state, bool value) update,
 }) {
   return ConfigToggleItem(
     title: title,
+    subtitle: subtitle,
     selector: appSettingProvider.select(select),
     onChanged: (ref, value) => ref
         .read(appSettingProvider.notifier)
@@ -307,6 +309,13 @@ class GeneralView extends ConsumerWidget {
           title: (l) => l.exclude,
           select: (state) => state.hidden,
           update: (state, value) => state.copyWith(hidden: value),
+        ),
+        _appSettingToggle(
+          title: (l) => l.hideNotification,
+          subtitle: (l) => l.hideNotificationTip,
+          select: (state) => state.hideNotification,
+          update: (state, value) =>
+              state.copyWith(hideNotification: value),
         ),
         _appSettingToggle(
           title: (l) => l.showNotificationStopAction,

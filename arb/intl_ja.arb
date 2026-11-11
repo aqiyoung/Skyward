@@ -237,6 +237,8 @@
   "autoCloseConnectionsDesc": "プロキシを切り替えると、既存の接続を自動的に閉じます。",
   "onlyStatisticsProxy": "プロキシトラフィックのみ集計",
   "showNotificationStopAction": "通知に停止ボタンを表示",
+  "hideNotification": "常駐通知を隠す",
+  "hideNotificationTip": "プロキシはそのまま動作します。Android はフォアグラウンド サービスの通知を必須とするため、通知をサイレントにしてロック画面に出さないようにします。システム設定で完全にオフにできます",
   "pureBlackMode": "ピュアブラックモード",
   "sidebar": "サイドバー",
   "backgroundBlur": "背景のぼかし",

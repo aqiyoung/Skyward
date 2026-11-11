@@ -263,6 +263,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("Compte"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("Remerciements"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward est initialement un fork de FlClash par chen08209 et repose sur le noyau mihomo (Clash.Meta) de MetaCubeX. Les deux sont publiés sous licence GPL-3.0.",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("Action"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(
       "Tester tous les délais",
@@ -1023,6 +1027,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "Pendant le défilement de la page, la barre inférieure ne garde que ses icônes",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage(
+      "Masquer la notification permanente",
+    ),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "Le proxy continue de fonctionner. Android impose une notification de service au premier plan : celle-ci devient silencieuse et n\'apparaît pas sur l\'écran de verrouillage ; les réglages système permettent de la désactiver complètement",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage(
       "Masquer le mot de passe",
     ),
@@ -1105,9 +1115,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Saisissez le contenu de la règle",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Ce système masque la liste des apps installées tant que l’autorisation n’est pas accordée. Accordez-la pour configurer le proxy par app.",
     ),
@@ -1344,6 +1355,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "Ceci est un message.",
     ),
+    "mine": MessageLookupByLibrary.simpleMessage("Moi"),
     "minimize": MessageLookupByLibrary.simpleMessage("Réduire"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage(
       "Réduire à la fermeture",
@@ -1472,6 +1484,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overrideEntries": MessageLookupByLibrary.simpleMessage(
       "Entrées de remplacement",
     ),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage(
       "Analyser les IP seules",
     ),
@@ -1914,6 +1927,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Défiler jusqu’à la sélection",
     ),
     "search": MessageLookupByLibrary.simpleMessage("Rechercher"),
+    "searchHint": MessageLookupByLibrary.simpleMessage(
+      "Rechercher pages, nœuds, outils et réglages",
+    ),
     "seconds": MessageLookupByLibrary.simpleMessage("secondes"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("Clé"),
@@ -2153,6 +2169,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("Astuce"),
     "toggle": MessageLookupByLibrary.simpleMessage("Basculer"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolérance"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("Outils"),
     "tools": MessageLookupByLibrary.simpleMessage("Plus"),
     "torch": MessageLookupByLibrary.simpleMessage("Lampe torche"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
@@ -2298,15 +2315,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("Oui"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chinois simplifié"),
-    "mine": MessageLookupByLibrary.simpleMessage("Moi"),
-    "pagesLabel": MessageLookupByLibrary.simpleMessage("Pages"),
-    "toolEntries": MessageLookupByLibrary.simpleMessage("Outils"),
-    "searchHint": MessageLookupByLibrary.simpleMessage(
-      "Rechercher pages, nœuds, outils et réglages",
-    ),
-    "acknowledgments": MessageLookupByLibrary.simpleMessage("Remerciements"),
-    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward est initialement un fork de FlClash par chen08209 et repose sur le noyau mihomo (Clash.Meta) de MetaCubeX. Les deux sont publiés sous licence GPL-3.0.",
-    ),
   };
 }

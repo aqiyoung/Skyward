@@ -228,6 +228,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "accessControlSelectedCount": m0,
     "account": MessageLookupByLibrary.simpleMessage("계정"),
+    "acknowledgments": MessageLookupByLibrary.simpleMessage("감사의 글"),
+    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
+      "Skyward는 chen08209의 FlClash에서 분기되었으며 MetaCubeX의 mihomo (Clash.Meta) 코어를 기반으로 합니다. 두 프로젝트 모두 GPL-3.0으로 배포됩니다.",
+    ),
     "action": MessageLookupByLibrary.simpleMessage("동작"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("모든 지연 테스트"),
     "actionDirectMode": MessageLookupByLibrary.simpleMessage("직접 모드"),
@@ -804,6 +808,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideLabelOnScrollDesc": MessageLookupByLibrary.simpleMessage(
       "페이지를 스크롤하는 동안 하단 바에는 아이콘만 남습니다",
     ),
+    "hideNotification": MessageLookupByLibrary.simpleMessage("상시 알림 숨기기"),
+    "hideNotificationTip": MessageLookupByLibrary.simpleMessage(
+      "프록시는 계속 동작합니다. Android는 포그라운드 서비스에 알림을 요구하므로 이 알림을 조용하게 만들고 잠금 화면에 표시하지 않습니다. 시스템 설정에서 완전히 끌 수 있습니다",
+    ),
     "hidePassword": MessageLookupByLibrary.simpleMessage("비밀번호 숨기기"),
     "hideTimeoutProxies": MessageLookupByLibrary.simpleMessage(
       "시간 초과된 프록시 숨기기",
@@ -1058,6 +1066,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryReleasedSize": m47,
     "messageTest": MessageLookupByLibrary.simpleMessage("메시지 테스트"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("이것은 메시지입니다."),
+    "mine": MessageLookupByLibrary.simpleMessage("마이"),
     "minimize": MessageLookupByLibrary.simpleMessage("최소화"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("종료 시 최소화"),
     "minutes": MessageLookupByLibrary.simpleMessage("분"),
@@ -1156,6 +1165,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "대상 덮어쓰기는 원래 주소 대신 스니핑한 도메인으로 연결합니다.",
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("덮어쓰기 항목"),
+    "pagesLabel": MessageLookupByLibrary.simpleMessage("페이지"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("순수 IP 분석"),
     "parsePureIpDesc": MessageLookupByLibrary.simpleMessage(
       "순수 IP 분석은 IP 주소만 있는 연결을 스니핑합니다.",
@@ -1504,6 +1514,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("선택 항목으로 스크롤"),
     "search": MessageLookupByLibrary.simpleMessage("검색"),
+    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 노드, 도구, 설정 검색"),
     "seconds": MessageLookupByLibrary.simpleMessage("초"),
     "secondsCount": m74,
     "secretKey": MessageLookupByLibrary.simpleMessage("키"),
@@ -1697,6 +1708,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tip": MessageLookupByLibrary.simpleMessage("안내"),
     "toggle": MessageLookupByLibrary.simpleMessage("전환"),
     "tolerance": MessageLookupByLibrary.simpleMessage("허용 오차"),
+    "toolEntries": MessageLookupByLibrary.simpleMessage("도구"),
     "tools": MessageLookupByLibrary.simpleMessage("더 보기"),
     "torch": MessageLookupByLibrary.simpleMessage("손전등"),
     "total": MessageLookupByLibrary.simpleMessage("합계"),
@@ -1816,13 +1828,5 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m86,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
-    "mine": MessageLookupByLibrary.simpleMessage("마이"),
-    "pagesLabel": MessageLookupByLibrary.simpleMessage("페이지"),
-    "toolEntries": MessageLookupByLibrary.simpleMessage("도구"),
-    "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 노드, 도구, 설정 검색"),
-    "acknowledgments": MessageLookupByLibrary.simpleMessage("감사의 글"),
-    "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward는 chen08209의 FlClash에서 분기되었으며 MetaCubeX의 mihomo (Clash.Meta) 코어를 기반으로 합니다. 두 프로젝트 모두 GPL-3.0으로 배포됩니다.",
-    ),
   };
 }

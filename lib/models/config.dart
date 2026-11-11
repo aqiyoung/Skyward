@@ -356,6 +356,11 @@ abstract class AppSettingProps with _$AppSettingProps {
     List<DashboardWidget> dashboardWidgets,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
+
+    /// Keeps the service's own notification out of sight. Android requires a
+    /// foreground service to post one, so this moves it to a silent channel
+    /// rather than removing it -- the proxy is unaffected.
+    @Default(false) bool hideNotification,
     @Default(false) bool autoLaunch,
     @Default(false) bool silentLaunch,
     @Default(false) bool autoRun,

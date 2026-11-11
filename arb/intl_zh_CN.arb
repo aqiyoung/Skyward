@@ -237,6 +237,8 @@
   "autoCloseConnectionsDesc": "自动关闭连接会在切换代理后断开已有连接。",
   "onlyStatisticsProxy": "仅统计代理流量",
   "showNotificationStopAction": "通知栏显示停止按钮",
+  "hideNotification": "隐藏常驻通知",
+  "hideNotificationTip": "代理照常运行。Android 要求前台服务保留一条通知，这里把它降为静默、不进锁屏；想彻底消失可在系统设置里关闭该通知",
   "pureBlackMode": "纯黑模式",
   "sidebar": "侧边栏",
   "backgroundBlur": "背景模糊",
