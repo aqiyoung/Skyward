@@ -70,7 +70,11 @@ android {
         versionName = System.getenv("APP_VERSION_NAME") ?: flutter.versionName
         if (requestedAbis.isNotEmpty()) {
             ndk {
-                abiFilters += requestedAbis
+                // Cleared rather than added to: the Flutter plugin fills this
+                // same set with its whole supported list, and it only leaves it
+                // alone because the build passes `disable-abi-filtering`.
+                abiFilters.clear()
+                abiFilters.addAll(requestedAbis)
             }
         }
     }

@@ -125,6 +125,14 @@ List<String> createFlutterBuildArgs({
   if (platform == 'android' && splitAbi) {
     flutterBuildArgs.add('split-per-abi');
   }
+  // Whenever it is not splitting, the Flutter plugin rewrites the app's
+  // abiFilters to its whole supported list -- so a package built for one
+  // architecture ends up holding every ABI's libraries, three of which can
+  // never load. Turning that off leaves the filtering to the app module,
+  // which reads the same `target-platform` property.
+  if (platform == 'android' && !splitAbi) {
+    flutterBuildArgs.add('android-project-arg=disable-abi-filtering=true');
+  }
   return flutterBuildArgs;
 }
 
