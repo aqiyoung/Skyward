@@ -44,6 +44,28 @@ val requestedAbis = (project.findProperty("target-platform") as String?)
     }
     .orEmpty()
 
+/**
+ * The thousand-block the architecture occupies, mirroring the table the
+ * Flutter plugin uses when it splits (`output.versionCodeOverride =
+ * abiVersionCode * 1000 + base`). That override is what orders an arm64
+ * package above the arm32 one it replaces.
+ *
+ * It only runs for a split build. A build that names one architecture does not
+ * split, so the arithmetic never happened and the package went out 2000 below
+ * the one already on the phone -- which Android refused to install over, as a
+ * downgrade, no matter that its versionName read newer. Applying the block here
+ * puts one architecture's packages in one sequence whether the build split or
+ * not.
+ */
+val singleAbiBlock = requestedAbis.singleOrNull()?.let {
+    when (it) {
+        "armeabi-v7a" -> 1
+        "arm64-v8a" -> 2
+        "x86_64" -> 4
+        else -> null
+    }
+}
+
 android {
     namespace = "com.follow.clash"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -62,7 +84,7 @@ android {
         applicationId = "com.threely.skyward"
         minSdk = flutter.minSdkVersion
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = flutter.versionCode
+        versionCode = flutter.versionCode + (singleAbiBlock ?: 0) * 1000
         // Our revision over upstream rides in the versionCode and in the
         // versionName the app and Android both report, so the two always agree;
         // the app still reads it back through APP_VERSION (see

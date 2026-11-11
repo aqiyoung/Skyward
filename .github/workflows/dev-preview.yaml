@@ -477,6 +477,7 @@ jobs:
         id: verify
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
           APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
           CERT_SHA256: 65379ed725abfd2330bc2134aaa276ba59a50d5e606f443818003f362c593570
         run: |
@@ -506,6 +507,17 @@ jobs:
           fi
           echo "version_code=${version_code}" >> "$GITHUB_OUTPUT"
           echo "the APK carries versionCode ${version_code}"
+
+          # arm64's thousand-block has to be in the number, not just the file
+          # name. Android decides "downgrade" on versionCode alone, and a
+          # single-architecture package that skipped the block sat 2000 below the
+          # one already on the phone -- refused for install while its versionName
+          # read newer.
+          expected_code=$(( BASE_NUMBER + 2000 ))
+          if [ "$version_code" != "$expected_code" ]; then
+            echo "::error::arm64 package carries versionCode ${version_code}, expected ${expected_code} (base ${BASE_NUMBER} plus the arm64 block)"
+            exit 1
+          fi
 
           if ! grep -q "package: name='${APPLICATION_ID}'" <<<"$badging"; then
             echo "::error::$(basename "$apk") is not packaged as ${APPLICATION_ID}"

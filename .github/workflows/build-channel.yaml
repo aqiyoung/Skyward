@@ -432,6 +432,7 @@ jobs:
           CERT_SHA256: 65379ed725abfd2330bc2134aaa276ba59a50d5e606f443818003f362c593570
           # Empty for a split build, which has one APK per ABI by construction.
           ABI: ${{ inputs.android_abi }}
+          BASE_NUMBER: ${{ inputs.build_number }}
         run: |
           set -euo pipefail
           build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
@@ -473,11 +474,22 @@ jobs:
             # thirds can never load.
             if [ -n "${ABI}" ]; then
               case "$ABI" in
-                arm64) want=arm64-v8a ;;
-                arm) want=armeabi-v7a ;;
-                amd64) want=x86_64 ;;
+                arm64) want=arm64-v8a; block=2000 ;;
+                arm) want=armeabi-v7a; block=1000 ;;
+                amd64) want=x86_64; block=4000 ;;
                 *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
               esac
+              # The architecture's thousand-block has to be in the number, not
+              # only in the file name. Android compares versionCode alone, and a
+              # single-ABI package that skipped the block came out 2000 below
+              # the one already on the phone -- refused as a downgrade while its
+              # versionName read newer.
+              version_code="$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$badging" | head -1)"
+              expected_code=$(( BASE_NUMBER + block ))
+              if [ "$version_code" != "$expected_code" ]; then
+                echo "::error::$(basename "$apk") carries versionCode ${version_code}, expected ${expected_code} (base ${BASE_NUMBER} plus the ${want} block)"
+                exit 1
+              fi
               carried="$(unzip -l "$apk" | grep -oE 'lib/[^/]+/' | cut -d/ -f2 | sort -u)"
               if [ "$carried" != "$want" ]; then
                 echo "::error::$(basename "$apk") carries [$(printf '%s ' $carried)] but was built for ${want}"
