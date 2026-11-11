@@ -2137,7 +2137,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimation": MessageLookupByLibrary.simpleMessage(
       "Animación de pestañas",
     ),
-    "tagged": MessageLookupByLibrary.simpleMessage("Etiquetado"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage(
       "Alcance del tráfico",
     ),

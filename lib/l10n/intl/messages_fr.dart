@@ -2136,7 +2136,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimation": MessageLookupByLibrary.simpleMessage(
       "Animation des onglets",
     ),
-    "tagged": MessageLookupByLibrary.simpleMessage("Étiqueté"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("Portée du trafic"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
       "Toujours actif",

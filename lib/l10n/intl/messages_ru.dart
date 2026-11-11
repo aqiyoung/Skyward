@@ -2068,7 +2068,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "systemProxy": MessageLookupByLibrary.simpleMessage("Системный прокси"),
     "tab": MessageLookupByLibrary.simpleMessage("Вкладки"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Анимация вкладок"),
-    "tagged": MessageLookupByLibrary.simpleMessage("С метками"),
     "takeoverScope": MessageLookupByLibrary.simpleMessage("Охват трафика"),
     "takeoverScopeAlways": MessageLookupByLibrary.simpleMessage(
       "Всегда включено",

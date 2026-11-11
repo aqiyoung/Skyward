@@ -1761,11 +1761,6 @@ class AppLocalizations {
     return Intl.message('Compact', name: 'compact', desc: '', args: []);
   }
 
-  /// `Tagged`
-  String get tagged {
-    return Intl.message('Tagged', name: 'tagged', desc: '', args: []);
-  }
-
   /// `Tab`
   String get tab {
     return Intl.message('Tab', name: 'tab', desc: '', args: []);
