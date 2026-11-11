@@ -8,7 +8,8 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The fifth mobile tab: one index over everything the app can open.
+/// The mobile tab in the middle of the dock: one index over everything the app
+/// can open.
 ///
 /// Four kinds of result share the field: the tabs in the dock, the proxy
 /// nodes behind the proxies tab, the tool entries that used to hide in

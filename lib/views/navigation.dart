@@ -29,6 +29,19 @@ class Navigation implements NavigationPort {
             ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
             : [],
       ),
+      // The global search: one index over pages, tool entries and settings.
+      // It takes the middle of the mobile row rather than the far end, where
+      // the last slot belongs to "Mine": the two either side of it are the
+      // pages people move between most, and leaving them in place matters more
+      // than giving the newcomer a corner. Desktop keeps its sidebar, so this
+      // is mobile-only.
+      NavigationItem(
+        glyph: AppGlyphs.search,
+        label: PageLabel.search,
+        builder: (_) =>
+            const GlobalSearchView(key: GlobalObjectKey(PageLabel.search)),
+        modes: [NavigationItemMode.mobile],
+      ),
       NavigationItem(
         glyph: AppGlyphs.profiles,
         label: PageLabel.profiles,
@@ -82,15 +95,6 @@ class Navigation implements NavigationPort {
           label: PageLabel.mine,
         ),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
-      ),
-      // The fifth mobile tab: a global search over pages, tool entries and
-      // settings. Desktop keeps its sidebar, so this tab is mobile-only.
-      NavigationItem(
-        glyph: AppGlyphs.search,
-        label: PageLabel.search,
-        builder: (_) =>
-            const GlobalSearchView(key: GlobalObjectKey(PageLabel.search)),
-        modes: [NavigationItemMode.mobile],
       ),
     ];
   }
