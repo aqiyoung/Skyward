@@ -49,6 +49,7 @@ class SharedStateTest {
               "stopText": "Halt",
               "onlyStatisticsProxy": true,
               "showStopAction": false,
+              "hideNotification": true,
               "vpnOptions": {
                 "enable": true,
                 "port": 7890,
@@ -79,6 +80,7 @@ class SharedStateTest {
         assertEquals("Work", state.currentProfileName)
         assertEquals(true, state.onlyStatisticsProxy)
         assertEquals(false, state.showStopAction)
+        assertEquals(true, state.hideNotification)
         assertEquals(7890, state.vpnOptions?.port)
         assertEquals("gvisor", state.vpnOptions?.stack)
         assertEquals(
