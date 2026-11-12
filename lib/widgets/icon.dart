@@ -58,10 +58,23 @@ class _IconBytesCache {
   void remove(String key) {
     _bytes -= _entries.remove(key)?.lengthInBytes ?? 0;
   }
+
+  void clear() {
+    _entries.clear();
+    _bytes = 0;
+  }
 }
 
 final _decodedIcons = _IconBytesCache(_maxCachedIconBytes);
 final _remoteIcons = _IconBytesCache(_maxCachedIconBytes);
+
+/// Drop the icon bytes held for the lifetime of the process. Icons re-decode
+/// on demand, so this is safe to call whenever the platform asks for memory
+/// back; it is the UI side of the trim the service already does for the Core.
+void clearIconCaches() {
+  _decodedIcons.clear();
+  _remoteIcons.clear();
+}
 
 Uint8List? _decodeIcon(String src) {
   if (!src.contains('base64,')) {
