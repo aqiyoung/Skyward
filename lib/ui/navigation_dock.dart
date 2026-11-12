@@ -1749,7 +1749,13 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final color = colorScheme.onSurfaceVariant;
+    // Glass off paints one steady copy of the items. Wear the accent
+    // outright when selected: the sweeping lens used to tint whichever
+    // neighbour it passed for a single frame, flashing on both sides of a
+    // tab switch.
+    final color = widget.part == _LensPart.both && widget.selected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
     var tint = colorScheme.primary;
     if (widget.part == _LensPart.inside &&
         LiquidGlassScope.qualityOf(context) == LiquidGlassQuality.standard) {
@@ -2135,6 +2141,19 @@ class _RenderLensTint extends RenderProxyBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (child == null) {
+      return;
+    }
+    if (_part == _LensPart.both) {
+      // Glass off: one steady copy of every destination, never split into
+      // clipped, tinted and magnified panes. Parking the layers and painting
+      // once keeps a tab switch to a single colour change in the widget
+      // above, instead of a clip + colour-filter stack appearing over each
+      // neighbour for a frame as the lens slid past.
+      _outside.layer = null;
+      _inside.layer = null;
+      _tint.layer = null;
+      _insideMotion.layer = null;
+      _paintMoved(context, offset, _motion(1), _outsideMotion);
       return;
     }
     final rest = _motion(1);

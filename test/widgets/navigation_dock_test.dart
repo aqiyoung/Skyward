@@ -757,4 +757,48 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'without glass a tab switch never tints a neighbour',
+    (tester) async {
+      // Glass off draws one copy of each destination (LensPart.both). The
+      // lens used to tint, clip and magnify whichever neighbour its edges
+      // swept past on the way to the new tab, so both sides flashed once.
+      // The selected accent is now a steady property of the item itself.
+      final container = await _pumpHome(tester);
+      final bar = find.byType(FloatingNavigationBar);
+      final glyphs = find.descendant(
+        of: bar,
+        matching: find.byType(GlyphIcon),
+      );
+      expect(glyphs, findsNWidgets(3));
+      Color colorAt(int index) =>
+          tester.widget<GlyphIcon>(glyphs.at(index)).color!;
+
+      final idle = colorAt(1);
+      expect(colorAt(2), idle, reason: 'unselected destinations share a colour');
+      expect(
+        colorAt(0),
+        isNot(idle),
+        reason: 'the selected destination wears the accent outright',
+      );
+
+      container
+          .read(currentPageLabelProvider.notifier)
+          .toPage(PageLabel.tools);
+      for (var frame = 0; frame < 40; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(
+          colorAt(1),
+          idle,
+          reason: 'neighbour was tinted on frame $frame of the switch',
+        );
+      }
+      await tester.pumpAndSettle();
+
+      expect(colorAt(2), isNot(idle), reason: 'tools is now selected');
+      expect(colorAt(0), idle, reason: 'dashboard is no longer selected');
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
