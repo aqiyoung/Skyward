@@ -306,3 +306,63 @@ scripts/build-xcframework.sh  (gomobile → Skyward.xcframework)
 
 - beta/main 上 5 个因 `b5bb9c2`（分隔线默认值翻转）而失效的测试，需要逐个判定"改测试"还是"改代码"。
 - 一次性 workflow `.github/workflows/format-fix.yaml` 验证后需删除。
+
+## 13. 复核记录（2026-11-12）
+
+> 本节是对上文 §2 / §3 / P4 / P6 的一次带证据复核。**不删改原判断**，只把需要重评的地方单独列出；证据取自公开仓库、官方页面与本仓库 CI artifact，非记忆。
+
+### 13.1 数字口径：万兆不是实际带宽，我们本来就在同一量级
+
+- Clash 官方核心页（[clash.md/zh/core](https://clash.md/zh/core)）：Mac mini M4 Pro **14.16** Gbit/s 下载 / 11.58 上传，iPhone 17 Pro Max 12.29 / 9.55，iPad Pro M2 11.00 / 8.62，Apple TV 4K 8.32 / 6.62。
+- 同页原文：「测速的收发两端都在同一台设备上……**但不经过外部网络，所以测的是 Clash 自己的处理能力，不是上网速度**……实际网速取决于你的网络和节点。」官方推文补充说明「直连和 SOCKS5、HTTP 节点提升最明显，加密节点的速度主要看节点本身和线路」。即万兆是**隧道处理上限**，不是公网吞吐。
+- 我们的 `bench/tunnel_bench.sh` 注释已写明测法与 Clash 对齐（单连接、同机回环、不出外网），报告单位是 **MiB/s**。换算 `1 MiB/s = 0.00839 Gbit/s` 后，5 次成功 run 的 tunnel/legacy 均值 **10.03 Gbit/s**（最高 12.67），relay/legacy 均值 11.73，与 Clash 的 8.32–14.16 同一量级。
+- 因此上文 P4 里「对标 14 Gbit/s」的措辞容易误导：差距不是数量级的，真正待解释的是 **go ÷ legacy ≈ 0.81 的相对回退**。
+
+### 13.2 §2 表格：换栈提交统计数字不符
+
+- 文档写「525 files, +57,782 / −121,720」（`git show --stat 8904fe29`）。
+- 实测 `ProjectClash/Clash@8904fe29`（2026-11-07T08:41Z）为 **300 files, +32,438 / −109,073**，标题 `feat(tun): one TCP/IP stack on Apple, sing-box 1.15's go stack, reading the tunnel's own utun`。
+- 两者口径不一致，需注明是「单个提交」还是「某区间合计」，否则后续引用会失真。
+
+### 13.3 §2 / P6：`readsTheTunnelDirectly = false` 是版本错位，不是「线上未启用」
+
+- 该常量确实存在于 `ProjectClash/Clash-Client` 的 `apple/ClashClient/Extension/ExtensionProvider.swift:2601`；`systemTunnelDescriptor()` 被 `#if os(iOS)` 包裹，`guard readsTheTunnelDirectly` 后返回 nil → 走 `NEPacketTunnelFlow` 桥兜底。文档这一行的**代码观察没错**。
+- 但 `Clash-Client` 仓库最后一次提交是 **2026-10-28 `e3e647283b`**，标题自述「the Apple clients as of **iOS 1.0.13 (151)**」；而 10G 数字来自 **10-30 TestFlight iOS 1.0.14 (157) / 11-07 App Store 正式版 1.0.14**。开源客户端仓库**滞后于发布版本**，11-10 的核查看到的是旧客户端快照。
+- 内核侧反证：
+  - `bind/clash/tun_descriptor.go` 的 `handOverTunDescriptor()`：拿到 fd → `tun.RecvMsgX = err == nil`（是 utun 就开批量收）→ **`tun.Stack = C.TunGo`**。
+  - `listener/sing_tun/tun_name_darwin.go` 用 `tun.UtunControlName(fd)` 校验。
+  - tag `v1.19.33-clash.5` → commit `1d3a8a04b0`（11-07 09:18），在 `8904fe29`（08:41）之后，即换栈 + utun 直读**确实进了发布 SDK**。
+  - 官网 01：「直接读写系统为这条隧道建立的虚拟网卡……读不到时改用系统公开的 `NEPacketTunnelFlow`」，即直读优先、桥兜底；两条路径都跑 go stack。
+- 建议把 P6 的「直读路径在其线上版本并未启用」改为 **「开源客户端快照停在其启用前；发布版采用直读优先 + PacketFlow 兜底」**。P6 仍可后置，但理由应换成「我们没有 Apple 客户端」（ADR-1），而不是「上游没开」。
+
+### 13.4 §3-J1：「杠杆在栈不在包路径」被上游提交说明推翻
+
+`8904fe29` 的提交正文逐条列出了**同一提交内**的包路径优化：
+
+| 上游做法 | 我们现状 |
+| --- | --- |
+| tun 恒走 go stack，gVisor / mips / system / mixed 从 tun 移除 | P1/P2 已接，默认关闭（ADR-6） |
+| utun 批量读、**32 KiB 块、绕开 Go runtime poller**；桥走普通读 | P6 未开始 |
+| 裸 TCP outbound 按 sing-box 方式 **splice** | 未做 |
+| 跟得上的 relay 方向**拷贝块 2 KiB → 16 KiB** | 未做 |
+| relay goroutine 停在更小的栈上 | 未做 |
+| `x-clash-ip-rewrite` / `tun.loopback-address` 在 go stack 上重新生效 | 语义适配进行中 |
+
+- 上游把**换栈与包路径优化做成一套组合拳**，并未分开。我们的实测与之吻合：relay 路径（splice / copy blocks）两栈基本持平（G/L ≈ 0.99），tunnel 路径（走栈）go 反而慢约 19%（G/L ≈ 0.81）。只换栈、不动包路径，拿不到红利。
+- 外部旁证：sing-box 同机 iperf3，MTU 1500 → 4064 → 65535 让 gVisor 从 2.90/4.68 → 7.54/12.2 → 39.8/34.7 Gbit/s，提升来自 Darwin `multiPendingPackets` 与 MTU 而非换栈（GSO 已在 v1.11 因透明代理无收益弃用）；[Xray-core #7145](https://github.com/XTLS/Xray-core/issues/7145) 靠批量 TUN I/O + 消除热路径分配拿到 +180%~+534%。
+- **J1 应重评为**：栈与包路径是一体的；在拿到可信基线前，不预设红利来自哪一侧。
+
+### 13.5 P4：内存红利也不来自换栈
+
+`d3bc29d9d8`（2026-10-28，`v1.19.33-clash.4` 时代）说明 14 MiB 类数字来自 iOS/tvOS 专属内存管理：MRS 规则集 mmap 不进堆、DNS cache 4096 → 1024、空闲时归还 Go heap 页、释放 mips 栈为复用连接保留的存储。这些与换栈正交；P4 若只盯吞吐与 CPU，会漏掉真正的收益面。
+
+### 13.6 两个动手前的硬约束（新增）
+
+1. **`SendMsgX` A/B 不能在现有 CI 做**。`config/config.go:326` 标注 `// darwin special config`，`RecvMsgX` / `SendMsgX` 仅 Darwin 生效；`benchmark.yaml` 跑 `ubuntu-latest`，往 `bench/tun/*.yaml` 注入 `sendmsgx: true` 在 Linux 上不会有任何效果。且 `config.go:554` 明确告警：开启后「多线程下载时内核可能冻结」，默认 `false` 有硬理由。要验证需 macOS runner / 真机，并先解决冻结。
+2. **P0 基线仍不可信**。`benchmark.yaml` 为 `runs-on: ubuntu-latest`、`--size 64 --runs 3`、tunnel 取 `best`；单次 run 内 3 遍波动达 52%，跨 run 近 2 倍，与 §5-P0「同机两遍差异 <5%」差一个数量级。短期可行：提高 runs、**改取 median**、输出方差；固定 runner 需 self-hosted。
+
+### 13.7 对阶段判断的影响
+
+- P2 状态：差分测试文件已落（`go_stack_parity_flow_test.go` / `go_stack_parity_test.go`），`kernel check` / `benchmark` / `size` 全绿；但规则命中 / 出向 / DNS 应答 / fake-ip 四类 harness 仍缺，维持「进行中」。
+- P3/P4 不提前开；按上文 R6，可信复测后若仍 <1.5× 应暂停复盘。
+- 优先级建议：**先修 P0 基线 → 再重评 J1 → 最后才谈 P6 / Apple**。
