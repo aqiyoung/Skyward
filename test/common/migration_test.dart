@@ -308,7 +308,7 @@ void main() {
       });
 
       test(
-        'settles the flashing floating glass dock onto the capsule bar, once',
+        'upgrade 5 leaves every dock style and glass tier untouched',
         () async {
           Future<Config> upgraded(
             int from, {
@@ -316,10 +316,11 @@ void main() {
             required Object glass,
           }) async {
             final configMap = _createConfigMap();
-            (configMap['appSettingProps']! as Map<String, Object?>)[
-              'navigationBarStyle'] = style;
-            (configMap['themeProps']! as Map<String, Object?>)[
-              'liquidGlass'] = glass;
+            (configMap['appSettingProps']!
+                    as Map<String, Object?>)['navigationBarStyle'] =
+                style;
+            (configMap['themeProps']! as Map<String, Object?>)['liquidGlass'] =
+                glass;
             final store = _FakeMigrationStore(
               configMap: configMap,
               version: Migration.currentVersion,
@@ -328,41 +329,59 @@ void main() {
             return Migration(store: store).run();
           }
 
-          // The legacy default that still flashes: floating + glass on.
-          final legacy = await upgraded(4, style: 'floating', glass: 'ultra');
-          expect(legacy.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.capsule);
-          expect(legacy.themeProps.liquidGlass, LiquidGlassMode.none);
+          // Slot 5 is a no-op: the withdrawn "settle the flashing dock" guess
+          // pointed at floating + glass on, while the flash actually came from
+          // floating + glass off. The renderer fixes it for every combination,
+          // so an upgrade must never rewrite a choice the user made.
+          Future<void> expectUnchanged(
+            int from, {
+            required String style,
+            required Object glass,
+            required NavigationBarStyle expectedStyle,
+            required LiquidGlassMode expectedGlass,
+          }) async {
+            final config = await upgraded(from, style: style, glass: glass);
+            expect(config.appSettingProps.navigationBarStyle, expectedStyle);
+            expect(config.themeProps.liquidGlass, expectedGlass);
+          }
 
-          // The boolean glass flag older configs stored maps to standard and
-          // is settled the same way.
-          final boolean = await upgraded(4, style: 'floating', glass: true);
-          expect(boolean.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.capsule);
-          expect(boolean.themeProps.liquidGlass, LiquidGlassMode.none);
-
-          // Choices the user made are left alone: glass already off, a capsule
-          // or docked bar, or a glass tier picked on purpose.
-          final noGlass = await upgraded(4, style: 'floating', glass: 'none');
-          expect(noGlass.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.floating);
-          expect(noGlass.themeProps.liquidGlass, LiquidGlassMode.none);
-
-          final capsule = await upgraded(4, style: 'capsule', glass: 'ultra');
-          expect(capsule.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.capsule);
-          expect(capsule.themeProps.liquidGlass, LiquidGlassMode.ultra);
-
-          final docked = await upgraded(4, style: 'docked', glass: 'ultra');
-          expect(docked.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.docked);
-          expect(docked.themeProps.liquidGlass, LiquidGlassMode.ultra);
-
-          // Once only: a config already at this upgrade keeps its setting.
-          final once = await upgraded(5, style: 'floating', glass: 'ultra');
-          expect(once.appSettingProps.navigationBarStyle,
-              NavigationBarStyle.floating);
-          expect(once.themeProps.liquidGlass, LiquidGlassMode.ultra);
+          for (final from in [4, 5]) {
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: 'none',
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.none,
+            );
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: true,
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.standard,
+            );
+            await expectUnchanged(
+              from,
+              style: 'capsule',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.capsule,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+            await expectUnchanged(
+              from,
+              style: 'docked',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.docked,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+          }
         },
       );
 

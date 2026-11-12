@@ -98,7 +98,7 @@ class Migration {
     2: _keepGlassLook,
     3: _followSystemColors,
     4: _turnOffSidebarBlur,
-    5: _settleFlashingGlassDock,
+    5: _keepDockAndGlassChoices,
   };
 
   Future<Config> run() async {
@@ -239,26 +239,15 @@ Config _followSystemColors(Config config) {
 Config _turnOffSidebarBlur(Config config) =>
     config.copyWith(themeProps: config.themeProps.copyWith(sidebarBlur: false));
 
-// A floating dock with glass on draws a lens copy of the bar. Picking a tab
-// slides that lens across its two neighbours and they flash mid-flight. New
-// installs default to the steady capsule bar with glass off, but upgrades
-// kept their stored floating + glass setting, so existing users still saw the
-// flash. Settle only that legacy combination onto the new default, once; any
-// style or glass tier the user chose afterwards is left untouched.
-Config _settleFlashingGlassDock(Config config) {
-  final app = config.appSettingProps;
-  final theme = config.themeProps;
-  if (app.navigationBarStyle != NavigationBarStyle.floating ||
-      theme.liquidGlass == LiquidGlassMode.none) {
-    return config;
-  }
-  return config.copyWith(
-    appSettingProps: app.copyWith(
-      navigationBarStyle: NavigationBarStyle.capsule,
-    ),
-    themeProps: theme.copyWith(liquidGlass: LiquidGlassMode.none),
-  );
-}
+// Slot 5 is deliberately a no-op. It once tried to settle a "flashing"
+// floating + glass dock onto the capsule bar, but that guess was backwards:
+// the flash came from a floating dock with glass *off*, and the real fix lives
+// in the renderer (see navigation_dock.dart). Dev builds already handed out
+// upgrade version 5, so the slot must stay occupied and the version must stay
+// at 5 -- dropping or renumbering it would replay the transform for anyone
+// still below 5, or crash on a missing map entry. Leave every user choice
+// untouched instead.
+Config _keepDockAndGlassChoices(Config config) => config;
 
 bool _isV0(Map<String, Object?>? configMap) =>
     configMap?['proxiesStyle'] != null;
