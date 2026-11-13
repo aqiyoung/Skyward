@@ -1,0 +1,80 @@
+name: notify-telegram
+
+# 把「已发布」的 Rust 安卓 APK 推送到 Dev 预览 Telegram（个人 chat），沿用旧
+# dev-preview.yaml 的 secrets 与 chat 回落规则：
+#   TELEGRAM_PREVIEW_CHAT_ID（Dev 预览 / 个人）优先，未设置则回落 TELEGRAM_CHAT_ID。
+#
+# 仅 workflow_dispatch：TG 消息不可撤回，禁止任何自动触发（不挂 push / schedule）。
+# 不构建、不打 tag、不改默认分支、不进公共频道。APK 仅 0.35 MB，直接走官方
+# api.telegram.org/sendDocument（无需旧版那个绕 50 MB 上限的本地 Bot API server）。
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '已发布的 Release tag'
+        required: true
+        default: 'rust-0.1.0.4-dev'
+      asset:
+        description: 'Release 里的 APK 文件名'
+        required: true
+        default: 'Skyward-Rust-PoC-0.1.0.4-dev-arm64-v8a.apk'
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAG: ${{ inputs.tag }}
+      ASSET: ${{ inputs.asset }}
+      REPO: ${{ github.repository }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+    steps:
+      - name: Download published APK
+        run: |
+          set -euo pipefail
+          url="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
+          echo "fetching ${url}"
+          curl -fsSL --max-time 300 -o app.apk "$url"
+          ls -l app.apk
+          unzip -l app.apk | grep -E "AndroidManifest.xml|classes.dex|libskyward_core.so"
+          test -s app.apk
+
+      - name: Send document to Dev preview chat
+        run: |
+          set -euo pipefail
+          chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-${TELEGRAM_CHAT_ID:-}}"
+          if [ -z "$chat_id" ] || [ -z "${TELEGRAM_BOT_TOKEN:-}" ]; then
+            echo "::error::Telegram secrets not configured"
+            exit 1
+          fi
+          size=$(stat -c%s app.apk)
+          mb=$(awk "BEGIN{printf \"%.2f\", ${size}/1048576}")
+          cat > /tmp/caption.txt << CAP
+          Skyward Rust 安卓 PoC · ${TAG}
+          仅 arm64-v8a · ${mb} MB（现行 Flutter 版 60.30 MB）
+          versionCode=4 / versionName=0.1.0.4-dev
+          12 个 JNI 符号 · debug 签名 · 装机需允许未知来源
+          包名 com.threely.skyward.poc，与现行 Flutter 版可并存不覆盖
+
+          注意：这是 PoC 验证包，不含协议栈 / geo 数据 / 真实 tun 转发，不能连代理；
+          VpnService 仅声明、不触发，装机不会误断网。
+
+          Release: https://github.com/${REPO}/releases/tag/${TAG}
+          来源：rust-android 独立分支（非默认分支）· workflow_dispatch run #4
+          CAP
+          http=$(curl -sS --max-time 180 -o /tmp/tg_resp.json -w "%{http_code}" \
+            -F "chat_id=${chat_id}" \
+            -F "document=@app.apk;filename=${ASSET}" \
+            -F "caption=$(cat /tmp/caption.txt)" \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument")
+          resp=$(cat /tmp/tg_resp.json)
+          if [ "$http" != "200" ] || ! grep -q '"ok":true' <<< "$resp"; then
+            echo "::error::Telegram HTTP ${http}: ${resp}"
+            exit 1
+          fi
+          echo "Telegram sendDocument ok (HTTP ${http})"
