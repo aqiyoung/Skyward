@@ -80,6 +80,10 @@ dist/                  产物
 35 + NDK r28c → `./build.sh` → 验签+验架构 → 上传 artifact。刻意**不推 Telegram、
 不打 Release tag、不构建 desktop 或其它平台**。
 
+runner（ubuntu-latest）自带 Android SDK，CI 直接用预装的 `sdkmanager`，**不依赖
+`android-actions/setup-android`**（该 action 内部跑 `sdkmanager tools`，而 Google 已
+下线旧 `tools` 包，会报 "Failed to find package 'tools'" 退出 1）。
+
 `build.sh` 的所有路径、toolchain、版本号都可以用环境变量覆盖，因此本机与干净的
 CI runner 用同一份脚本：
 

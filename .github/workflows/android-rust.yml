@@ -63,18 +63,23 @@ jobs:
             core/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('core/Cargo.lock') }}
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
+      # ubuntu-latest 自带 Android SDK（/usr/local/lib/android/sdk + cmdline-tools），
+      # 直接用即可。不要用 android-actions/setup-android：它内部跑 `sdkmanager tools`，
+      # 而 Google 已下线旧 tools 包，会报 "Failed to find package 'tools'" 并退出 1。
       - name: Install SDK components (arm64 only)
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager --install \
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          echo "SDK = $SDK"
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+          "$SDKM" --install \
             "platforms;android-35" \
             "build-tools;35.0.0" \
-            "ndk;28.2.13676358" > /dev/null
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo "ANDROID_HOME=$ANDROID_HOME"
+            "ndk;28.2.13676358" || true
+          # 装完校验关键目录存在；NDK 具体版本由 build.sh 自动探测兜底
+          ls -d "$SDK"/platforms/android-35 "$SDK"/build-tools/35.0.0 "$SDK"/ndk/*/
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
 
       - name: Build arm64 APK
         run: |
