@@ -18,11 +18,11 @@ on:
       tag:
         description: '已发布的 Release tag'
         required: true
-        default: 'rust-0.1.0.4-dev'
+        default: 'rust-0.1.0.N-dev'
       asset:
         description: 'Release 里的 APK 文件名'
         required: true
-        default: 'Skyward-Rust-PoC-0.1.0.4-dev-arm64-v8a.apk'
+        default: 'Skyward-Rust-PoC-0.1.0.N-dev-arm64-v8a.apk'
   push:
     branches: [ rust-android ]
     paths:
@@ -72,12 +72,17 @@ jobs:
           size=$(stat -c%s app.apk)
           mb=$(awk "BEGIN{printf \"%.2f\", ${size}/1048576}")
           cat > /tmp/caption.txt << CAP
-          Skyward Rust 安卓 PoC · ${TAG}
+          Skyward Rust 安卓 · ${TAG}（UI 骨架版）
           仅 arm64-v8a · ${mb} MB（现行 Flutter 版 60.30 MB）
           12 个 JNI 符号 · debug 签名 · 装机需允许未知来源
           包名 com.threely.skyward.poc，与现行 Flutter 版可并存不覆盖
 
-          注意：这是 PoC 验证包，不含协议栈 / geo 数据 / 真实 tun 转发，不能连代理；
+          本版补齐界面骨架：底部 4 Tab（首页/代理/配置/我的）+ 分组卡片，
+          状态卡、流量、节点列表、订阅、设置中心都有内容；液态玻璃默认关闭。
+          基准改为按需点击、分段刷新，不再启动时卡在 running。
+          内核读数走 Rust JNI 实时值；节点/流量/配置为演示数据。
+
+          注意：仍是 PoC，不含协议栈 / geo / 真实 tun 转发，不能连代理；
           VpnService 仅声明、不触发，装机不会误断网。
 
           Release: https://github.com/${REPO}/releases/tag/${TAG}

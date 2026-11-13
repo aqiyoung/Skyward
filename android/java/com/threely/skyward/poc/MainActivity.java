@@ -3,136 +3,155 @@ package com.threely.skyward.poc;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Process;
 import android.view.Gravity;
-import android.widget.Button;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /**
- * PoC-1 主界面：纯原生 View，无 XML 布局、无 Compose、无 Flutter。
- * 只负责展示 Rust 内核的实测数字，Java 侧不含任何业务逻辑。
+ * PoC-2 主壳：底部 4 Tab（首页 / 代理 / 配置 / 我的）+ 分组卡片内容页。
+ *
+ * 纯原生 View，无 XML 布局 / 无 Compose / 无 Flutter / 无第三方依赖。
+ * 与 PoC-1 的区别：
+ *  - 启动不再跑全量基准（真机上 5 万规则档会卡住界面，截图里 "running..." 即此问题）；
+ *    基准移到「我的 → 工具 → 运行性能基准」，规模下调、子线程分段、逐段刷新。
+ *  - 界面按现行 Flutter 版信息架构铺开：4 Tab + 状态卡 + 分组卡片，模块边界清晰。
+ *  - 液态玻璃默认关闭（沿用既定规则），仅在设置里提供开关占位。
+ *  - 内核真值全部经 JNI 取自 Rust core；产品数据明确标注「演示」。
  */
 public class MainActivity extends Activity {
 
-    private TextView out;
+    private static final String[] TABS = {"首页", "代理", "配置", "我的"};
+    private static final IconView.Glyph[] TAB_ICONS = {
+            IconView.Glyph.HOME, IconView.Glyph.GLOBE,
+            IconView.Glyph.PROFILE, IconView.Glyph.PERSON
+    };
+
+    private int current = 0;
+    private LinearLayout root;
+    private FrameLayout content;
+    private LinearLayout dock;
+    private final TextView[] tabLabels = new TextView[4];
+    private final IconView[] tabIcons = new IconView[4];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout root = new LinearLayout(this);
+        // 浅色状态栏 + 深色图标，避免内容顶到状态栏
+        Window w = getWindow();
+        w.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        w.setStatusBarColor(Ui.PAGE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            View decor = w.getDecorView();
+            decor.setSystemUiVisibility(decor.getSystemUiVisibility()
+                    | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+        w.setNavigationBarColor(Ui.CARD);
+
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(28, 40, 28, 28);
-        root.setBackgroundColor(Color.parseColor("#F7F8FA"));
+        root.setBackgroundColor(Ui.PAGE);
+        root.setFitsSystemWindows(true);
 
-        TextView title = new TextView(this);
-        title.setText("Skyward · Rust Core PoC-1");
-        title.setTextSize(20);
-        title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextColor(Color.parseColor("#1A1A1A"));
-        root.addView(title);
+        content = new FrameLayout(this);
+        content.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        root.addView(content);
 
-        TextView sub = new TextView(this);
-        sub.setText("Rust 内核 + 原生 Android 壳（零 UI 运行时）");
-        sub.setTextSize(13);
-        sub.setTextColor(Color.parseColor("#6B7280"));
-        sub.setPadding(0, 6, 0, 20);
-        root.addView(sub);
-
-        Button run = new Button(this);
-        run.setText("运行基准测试");
-        run.setAllCaps(false);
-        root.addView(run);
-
-        out = new TextView(this);
-        out.setTextSize(13);
-        out.setTypeface(Typeface.MONOSPACE);
-        out.setTextColor(Color.parseColor("#111827"));
-        out.setPadding(0, 24, 0, 0);
-        out.setGravity(Gravity.START);
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(out);
-        root.addView(scroll);
+        dock = buildDock();
+        root.addView(dock);
 
         setContentView(root);
-        run.setOnClickListener(v -> runBench());
-        runBench();
+
+        // 轻量预热：只触发 Rust OnceLock 初始化，不做任何重基准
+        AppState.get().warmUp();
+        render();
     }
 
-    private void runBench() {
-        out.setText("running...\n");
-        new Thread(() -> {
-            StringBuilder b = new StringBuilder();
+    private LinearLayout buildDock() {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setBackgroundColor(Ui.CARD);
+        int padTop = Ui.dp(this, 8);
+        int padBottom = Ui.dp(this, 10);
+        bar.setPadding(Ui.dp(this, 10), padTop, Ui.dp(this, 10), padBottom);
 
-            // 冷启动：首次 JNI 调用会触发 Rust OnceLock 初始化
-            long t0 = System.nanoTime();
-            int version = RustCore.nativeVersion();
-            long warmNs = System.nanoTime() - t0;
-            long initNs = RustCore.nativeInitNs();
+        // 顶部分隔线用一张卡片背景描边实现
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Ui.CARD);
+        bg.setStroke(1, Ui.SEP);
+        bar.setBackground(bg);
 
-            b.append("== 内核 ==\n");
-            b.append(String.format("core version      : %d%n", version));
-            b.append(String.format("Rust init         : %,.0f us%n", initNs / 1000.0));
-            b.append(String.format("first JNI call    : %,.0f us%n", warmNs / 1000.0));
-            b.append("no GC / no runtime / no VM\n\n");
+        for (int i = 0; i < TABS.length; i++) {
+            final int idx = i;
+            LinearLayout item = new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setGravity(Gravity.CENTER);
+            item.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 2));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            item.setLayoutParams(lp);
 
-            // 规则引擎吞吐
-            b.append("== 规则引擎（Rust，含 Mutex 查表）==\n");
-            int[] ruleSizes = {9, 1000, 10000, 50000};
-            int iters = 200000;
-            for (int n : ruleSizes) {
-                RustCore.nativeLoadRules(n);
-                double ms = RustCore.nativeBenchMatches(iters);
-                b.append(String.format(
-                        "rules=%-6d %8.2f ms  %8.2f Mops/s%n",
-                        n, ms, (iters / 1e6) / (ms / 1000.0)));
-            }
-            b.append('\n');
+            IconView iv = new IconView(this, TAB_ICONS[i], Ui.TEXT3);
+            int s = Ui.dp(this, 23);
+            iv.setLayoutParams(new LinearLayout.LayoutParams(s, s));
+            tabIcons[i] = iv;
+            item.addView(iv);
 
-            // 数据面模拟吞吐
-            int packets = 1_000_000;
-            int size = 1500;
-            RustCore.nativeLoadRules(1000);
-            double pms = RustCore.nativeBenchPackets(packets, size);
-            b.append("== 数据面（内存模拟，不接管 tun）==\n");
-            b.append(String.format("%d x %d B = %.1f MB%n", packets, size,
-                    packets * size / 1048576.0));
-            b.append(String.format("%8.2f ms  %.2f Mpps  %.2f GB/s%n",
-                    pms, (packets / 1e6) / (pms / 1000.0),
-                    (packets * (double) size / 1e9) / (pms / 1000.0)));
-            b.append(String.format("connections       : %d%n", RustCore.nativeConnCount()));
-            b.append(String.format("loopback bytes    : %d%n\n", RustCore.nativeLoopbackBytes()));
+            TextView label = new TextView(this);
+            label.setText(TABS[i]);
+            label.setTextSize(10.5f);
+            label.setTextColor(Ui.TEXT3);
+            label.setGravity(Gravity.CENTER);
+            label.setPadding(0, Ui.dp(this, 2), 0, 0);
+            tabLabels[i] = label;
+            item.addView(label);
 
-            // 内存
-            long rss = RustCore.nativeRssBytes();
-            long logical = RustCore.nativeLogicalBytes();
-            int pid = Process.myPid();
-            android.app.ActivityManager am =
-                    (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
-            android.os.Debug.MemoryInfo[] mem =
-                    am.getProcessMemoryInfo(new int[]{pid});
-            long pssKb = mem.length > 0 ? mem[0].getTotalPss() : 0;
+            item.setClickable(true);
+            item.setOnClickListener(v -> {
+                if (current == idx) return;
+                current = idx;
+                render();
+            });
+            bar.addView(item);
+        }
+        return bar;
+    }
 
-            b.append("== 内存 ==\n");
-            b.append(String.format("process RSS       : %.2f MB%n", rss / 1048576.0));
-            b.append(String.format("process PSS       : %.2f MB%n", pssKb / 1024.0));
-            b.append(String.format("Rust logical state: %d B%n", logical));
-            b.append("(Go 内核基线: 常驻 runtime + GC 显著更高)\n\n");
+    private void syncDock() {
+        for (int i = 0; i < TABS.length; i++) {
+            int c = (i == current) ? Ui.BLUE : Ui.TEXT3;
+            tabIcons[i].setTint(c);
+            tabLabels[i].setTextColor(c);
+            tabLabels[i].setTypeface(i == current ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+        }
+    }
 
-            b.append("== 体积基线（对照现行 Flutter 版）==\n");
-            b.append("Flutter+Go  : 60.30 MB\n");
-            b.append("  Go core   : 23.62 MB\n");
-            b.append("  Flutter   : 11.72 MB\n");
-            b.append("  geo data  : 15.55 MB\n");
-            b.append("本 PoC 不含 geo / 内核协议栈，\n");
-            b.append("仅用于量架构开销，见报告。\n");
-
-            final String text = b.toString();
-            runOnUiThread(() -> out.setText(text));
-        }, "bench").start();
+    private void render() {
+        // 玻璃开启时页面底色转冷，半透明卡片才有可透的层次；默认关闭时为标准灰
+        boolean glass = AppState.get().liquidGlass;
+        root.setBackgroundColor(glass ? Color.parseColor("#DDE7F2") : Ui.PAGE);
+        dock.setBackgroundColor(glass ? Color.parseColor("#CCFFFFFF") : Ui.CARD);
+        syncDock();
+        content.removeAllViews();
+        Runnable refresh = this::render;
+        View v;
+        switch (current) {
+            case 1:  v = Pages.proxies(this, refresh); break;
+            case 2:  v = Pages.profiles(this, refresh); break;
+            case 3:  v = Pages.mine(this, refresh); break;
+            default: v = Pages.home(this, refresh); break;
+        }
+        content.addView(v, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 }
