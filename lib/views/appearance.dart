@@ -4,7 +4,6 @@ import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/theme.dart';
-import 'package:skyward/views/theme_preview.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +47,6 @@ class AppearanceView extends ConsumerWidget {
           bottom: 24 + context.bottomInset,
         ),
         children: [
-          const _CollapsiblePreview(),
           const _Section(
             items: [_LanguageItem(), _ThemeModeItem(), _PureBlackItem()],
           ),
@@ -90,104 +88,6 @@ class AppearanceView extends ConsumerWidget {
           _Section(
             title: appLocalizations.textSection,
             items: const [FontFamilyRow(), TextScaleCard()],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The full-screen live preview, folded behind a single row.
-///
-/// [ThemeLivePreview] is a 9/17 card that used to occupy nearly half of the
-/// first screen while carrying no setting of its own. It now stays collapsed
-/// by default and is built only when the user asks to see it, keeping the
-/// actual settings visible and leaving its animation controllers idle until
-/// needed. Tapping the row toggles it; no setting or capability is removed.
-class _CollapsiblePreview extends StatefulWidget {
-  const _CollapsiblePreview();
-
-  @override
-  State<_CollapsiblePreview> createState() => _CollapsiblePreviewState();
-}
-
-class _CollapsiblePreviewState extends State<_CollapsiblePreview> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _Section(
-          items: [
-            ListItem(
-              key: const ValueKey('themePreviewToggle'),
-              leading: const _PreviewThumb(),
-              title: Text(appLocalizations.preview),
-              subtitle: Text(
-                _expanded
-                    ? appLocalizations.showLess
-                    : appLocalizations.showMore,
-              ),
-              trailing: GlyphIcon(
-                _expanded ? AppGlyphs.chevronDown : AppGlyphs.chevronForward,
-              ),
-              onTap: () => setState(() => _expanded = !_expanded),
-            ),
-          ],
-        ),
-        if (_expanded) const ThemeLivePreview(),
-      ],
-    );
-  }
-}
-
-/// A tiny page pictogram for the collapsed row. It is the preview itself
-/// rather than a leading mark, so it stays even though the icon wells were
-/// dropped from the setting rows.
-class _PreviewThumb extends StatelessWidget {
-  const _PreviewThumb();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return Container(
-      width: 40,
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
-      decoration: BoxDecoration(
-        color: colorScheme.onSurface.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 26,
-            height: 3,
-            decoration: BoxDecoration(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Container(
-            width: 20,
-            height: 3,
-            decoration: BoxDecoration(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Container(
-            width: 14,
-            height: 3,
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.circular(2),
-            ),
           ),
         ],
       ),

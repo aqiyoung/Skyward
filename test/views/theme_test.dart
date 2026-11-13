@@ -12,7 +12,6 @@ import 'package:skyward/state.dart';
 import 'package:skyward/views/appearance.dart';
 import 'package:skyward/views/font_family.dart';
 import 'package:skyward/views/theme.dart';
-import 'package:skyward/views/theme_preview.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -350,27 +349,6 @@ void main() {
       expect(readSetting().tabAnimation, TabAnimation.fade);
     });
 
-    testWidgets('the preview switches to the destination tapped', (
-      tester,
-    ) async {
-      await pumpThemeView(tester);
-      // The full live preview now lives behind a collapsed row; open it
-      // before reaching into it. It stays a tap away, nothing was removed.
-      await tester.tap(find.byKey(const ValueKey('themePreviewToggle')));
-      await tester.pumpAndSettle();
-      Finder inPreview(Type type) => find.descendant(
-        of: find.byType(ThemeLivePreview),
-        matching: find.byType(type),
-      );
-      int selected() =>
-          tester.widget<MiniScreen>(inPreview(MiniScreen)).selected;
-
-      for (final destination in [2, 1]) {
-        await tester.tap(inPreview(GestureDetector).at(destination));
-        await tester.pumpAndSettle();
-        expect(selected(), destination);
-      }
-    });
   });
 
   group('font family', () {
