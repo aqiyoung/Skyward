@@ -16,7 +16,13 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-/** 四个页面的内容骨架：首页 / 代理 / 配置 / 我的。纯原生 View，分组卡片边界清晰。 */
+/**
+ * 四个页面的内容骨架：首页 / 代理 / 配置 / 我的。纯原生 View，分组卡片边界清晰。
+ *
+ * 0.1.0.6：连接后的时长、上传/下载、实时速率、活动连接改由 Rust 内核会话真值
+ * 提供（每秒 tick 刷新，靠 pageEpoch 自动退出）；所有开关与选中项改动即落盘。
+ * 节点 / 配置 / 订阅仍是界面演示占位，界面上明确标注。
+ */
 public final class Pages {
 
     private Pages() {}
@@ -75,30 +81,35 @@ public final class Pages {
 
         TextView sub = new TextView(c);
         sub.setText(s.connected
-                ? "规则模式 · " + AppState.NODE_REGION[s.selectedNode] + " · 演示状态"
-                : "点击下方按钮开始 · 演示状态，内核未接管真实流量");
+                ? s.ruleModeLabel() + " · " + AppState.NODE_REGION[s.selectedNode] + " · 内核会话"
+                : "点击下方按钮开始 · 内核未接管真实流量");
         sub.setTextSize(12);
         sub.setTextColor(Color.parseColor("#CCFFFFFF"));
         sub.setPadding(0, 0, 0, Ui.dp(c, 16));
         hero.addView(sub);
 
-        // 流量/时长三栏
+        // 流量/时长三栏（数值来自 Rust 会话，每秒刷新）
         LinearLayout stats = new LinearLayout(c);
         stats.setOrientation(LinearLayout.HORIZONTAL);
-        String[][] cells = s.connected
-                ? new String[][]{{"↑ 上传", "186 MB"}, {"↓ 下载", "1.24 GB"}, {"运行时长", "00:42:18"}}
-                : new String[][]{{"↑ 上传", "—"}, {"↓ 下载", "—"}, {"运行时长", "—"}};
-        for (String[] cell : cells) {
+        final TextView[] statVals = new TextView[3];
+        String[] keys = {"↑ 上传", "↓ 下载", "运行时长"};
+        String[] vals = s.connected
+                ? new String[]{AppState.humanBytes(s.upBytes()),
+                              AppState.humanBytes(s.downBytes()),
+                              AppState.humanDuration(s.uptimeSec())}
+                : new String[]{"—", "—", "—"};
+        for (int i = 0; i < keys.length; i++) {
             LinearLayout col = new LinearLayout(c);
             col.setOrientation(LinearLayout.VERTICAL);
             col.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             TextView v = new TextView(c);
-            v.setText(cell[1]);
+            v.setText(vals[i]);
             v.setTextSize(16);
             v.setTypeface(Typeface.DEFAULT_BOLD);
             v.setTextColor(Color.WHITE);
+            statVals[i] = v;
             TextView k = new TextView(c);
-            k.setText(cell[0]);
+            k.setText(keys[i]);
             k.setTextSize(11);
             k.setTextColor(Color.parseColor("#B8FFFFFF"));
             col.addView(v); col.addView(k);
@@ -109,8 +120,7 @@ public final class Pages {
         TextView btn = Ui.primaryButton(c, s.connected ? "断开连接" : "连接",
                 s.connected ? Color.parseColor("#FFFFFF") : Color.parseColor("#007AFF"),
                 v -> {
-                    s.connected = !s.connected;
-                    s.connectSinceMs = s.connected ? System.currentTimeMillis() : 0L;
+                    if (s.connected) s.disconnect(); else s.connect();
                     refresh.run();
                 });
         if (s.connected) btn.setTextColor(Color.parseColor("#1C1C1E"));
@@ -124,33 +134,36 @@ public final class Pages {
         body.addView(Ui.groupTitle(c, "网络控制"));
         LinearLayout ctrl = Ui.newCard(c);
         Switch swSys = Ui.toggle(c, s.systemProxy);
-        swSys.setOnCheckedChangeListener((b, on) -> s.systemProxy = on);
+        swSys.setOnCheckedChangeListener((b, on) -> { s.systemProxy = on; s.save(); });
         ctrl.addView(Ui.row(c, IconView.Glyph.SWITCH, Ui.BLUE, "系统代理",
                 "演示开关 · 不修改系统设置", swSys, null));
         ctrl.addView(Ui.separator(c));
         Switch swTun = Ui.toggle(c, s.tunMode);
-        swTun.setOnCheckedChangeListener((b, on) -> s.tunMode = on);
+        swTun.setOnCheckedChangeListener((b, on) -> { s.tunMode = on; s.save(); });
         ctrl.addView(Ui.row(c, IconView.Glyph.TUN, Ui.PURPLE, "TUN 模式",
                 "PoC 未建立真实 tun，开关仅作界面占位", swTun, null));
         body.addView(ctrl);
 
-        body.addView(Ui.groupTitle(c, "网络概览"));
+        body.addView(Ui.groupTitle(c, "网络概览（内核真值）"));
         LinearLayout net = Ui.newCard(c);
+        final TextView rateUpV = Ui.valueText(c, "0 B/s");
         net.addView(Ui.row(c, IconView.Glyph.ARROW_UP, Ui.GREEN, "实时上传",
-                "演示数值", Ui.valueText(c, s.connected ? "128 KB/s" : "0 KB/s"), null));
+                "内核模拟数据面 · JNI 实时", rateUpV, null));
         net.addView(Ui.separator(c));
+        final TextView rateDownV = Ui.valueText(c, "0 B/s");
         net.addView(Ui.row(c, IconView.Glyph.ARROW_DOWN, Ui.BLUE, "实时下载",
-                "演示数值", Ui.valueText(c, s.connected ? "1.8 MB/s" : "0 KB/s"), null));
+                "内核模拟数据面 · JNI 实时", rateDownV, null));
         net.addView(Ui.separator(c));
+        final TextView connV = Ui.valueText(c, RustCore.nativeConnCount() + " 条");
         net.addView(Ui.row(c, IconView.Glyph.LIST, Ui.ORANGE, "活动连接",
-                "来自 Rust 连接表", Ui.valueText(c, RustCore.nativeConnCount() + " 条"), null));
+                "Rust 连接表（JNI 实时）", connV, null));
         body.addView(net);
 
         body.addView(Ui.groupTitle(c, "路由与配置"));
         LinearLayout route = Ui.newCard(c);
         route.addView(Ui.row(c, IconView.Glyph.ROUTE, Ui.TEAL, "路由模式",
                 "点击切换", Ui.valueText(c, s.ruleModeLabel()),
-                v -> { s.ruleMode = (s.ruleMode + 1) % 3; refresh.run(); }));
+                v -> { s.ruleMode = (s.ruleMode + 1) % 3; s.save(); refresh.run(); }));
         route.addView(Ui.separator(c));
         route.addView(Ui.row(c, IconView.Glyph.LAYERS, Ui.BLUE, "代理组",
                 AppState.GROUPS[s.selectedGroup] + " · 演示", null,
@@ -165,8 +178,34 @@ public final class Pages {
         mem.addView(Ui.monoBlock(c, s.coreInfo()));
         body.addView(mem);
 
-        body.addView(note(c, "说明：状态、流量、节点、配置均为界面演示数据；"
-                + "本版 Rust 内核只跑规则/连接表/数据面模拟，未接管真实流量。内核信息栏为 JNI 真值。"));
+        // 秒级刷新：只更新数字 TextView，不重建整页（避免滚动跳动）。
+        // 切页 / 断开 / 退后台时 pageEpoch 变化，本 Runnable 自动退出，不泄漏。
+        final int epoch = s.pageEpoch;
+        final long[] prev = { s.upBytes(), s.downBytes(), System.currentTimeMillis() };
+        final View anchor = body;
+        final Runnable ticker = new Runnable() {
+            @Override public void run() {
+                if (!s.connected || s.pageEpoch != epoch) return;
+                s.tick();
+                long now = System.currentTimeMillis();
+                long dt = Math.max(1L, now - prev[2]);
+                long up = s.upBytes(), down = s.downBytes();
+                long rUp = (up - prev[0]) * 1000L / dt;
+                long rDown = (down - prev[1]) * 1000L / dt;
+                prev[0] = up; prev[1] = down; prev[2] = now;
+                statVals[0].setText(AppState.humanBytes(up));
+                statVals[1].setText(AppState.humanBytes(down));
+                statVals[2].setText(AppState.humanDuration(s.uptimeSec()));
+                rateUpV.setText(AppState.rate(rUp));
+                rateDownV.setText(AppState.rate(rDown));
+                connV.setText(RustCore.nativeConnCount() + " 条");
+                anchor.postDelayed(this, 1000);
+            }
+        };
+        if (s.connected) anchor.postDelayed(ticker, 1000);
+
+        body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、规则与内存均由 Rust 内核计算"
+                + "（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"));
         return page(c, body);
     }
 
@@ -198,7 +237,7 @@ public final class Pages {
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.rightMargin = Ui.dp(c, 8);
             t.setLayoutParams(lp);
-            t.setOnClickListener(v -> { s.selectedGroup = idx; refresh.run(); });
+            t.setOnClickListener(v -> { s.selectedGroup = idx; s.save(); refresh.run(); });
             tabs.addView(t);
         }
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c);
@@ -226,7 +265,7 @@ public final class Pages {
                     AppState.NODE_NAMES[i],
                     AppState.NODE_REGION[i] + " · " + AppState.latencyLabel(ms),
                     trailing,
-                    v -> { s.selectedNode = idx; refresh.run(); }));
+                    v -> { s.selectedNode = idx; s.save(); refresh.run(); }));
             if (i != AppState.NODE_NAMES.length - 1) list.addView(Ui.separator(c));
         }
         body.addView(list);
@@ -242,7 +281,7 @@ public final class Pages {
         body.addView(gset);
 
         body.addView(note(c, "节点与延迟为演示数据，用于验证列表骨架与选中交互；"
-                + "真实节点来自订阅解析，属后续阶段。"));
+                + "选中结果已落盘，重启后保留。真实节点来自订阅解析，属后续阶段。"));
         return page(c, body);
     }
 
@@ -261,6 +300,10 @@ public final class Pages {
         cur.addView(Ui.separator(c));
         cur.addView(Ui.row(c, IconView.Glyph.LIST, Ui.TEXT2, "规则条数",
                 "来自 Rust 内核", Ui.valueText(c, RustCore.nativeRuleCount() + " 条"), null));
+        cur.addView(Ui.separator(c));
+        cur.addView(Ui.row(c, IconView.Glyph.LAYERS, Ui.TEAL, "规则引擎",
+                "索引 trie / 关键词分桶 / CIDR",
+                Ui.valueText(c, RustCore.nativeIndexNodes() + " 节点"), null));
         body.addView(cur);
 
         body.addView(Ui.groupTitle(c, "订阅（演示）"));
@@ -301,8 +344,8 @@ public final class Pages {
         body.addView(Ui.groupTitle(c, "外观与主题"));
         LinearLayout appearance = Ui.newCard(c);
         appearance.addView(Ui.row(c, IconView.Glyph.PALETTE, Ui.PURPLE, "主题",
-                "点击切换", Ui.valueText(c, s.themeLabel()),
-                v -> { s.themeMode = (s.themeMode + 1) % 3; refresh.run(); }));
+                "点击切换 · 已落盘", Ui.valueText(c, s.themeLabel()),
+                v -> { s.themeMode = (s.themeMode + 1) % 3; s.save(); refresh.run(); }));
         appearance.addView(Ui.separator(c));
         appearance.addView(Ui.row(c, IconView.Glyph.HOME, Ui.BLUE, "语言",
                 "简体中文", Ui.valueText(c, "跟随系统"), null));
@@ -310,37 +353,42 @@ public final class Pages {
         Switch swGlass = Ui.toggle(c, s.liquidGlass);
         swGlass.setOnCheckedChangeListener((b, on) -> {
             s.liquidGlass = on;
+            s.save();
             refresh.run();   // 重绘：卡片转半透明 + 页面底色转冷
             Ui.toast(c, on ? "液态玻璃：开" : "液态玻璃：关（默认）");
         });
         appearance.addView(Ui.row(c, IconView.Glyph.LAYERS, Ui.TEAL, "液态玻璃效果",
-                "默认关闭 · 需手动开启", swGlass, null));
+                "默认关闭 · 需手动开启 · 已落盘", swGlass, null));
         body.addView(appearance);
 
         body.addView(Ui.groupTitle(c, "通用与内核"));
         LinearLayout general = Ui.newCard(c);
         general.addView(Ui.row(c, IconView.Glyph.ROUTE, Ui.ORANGE, "路由模式",
-                "点击切换", Ui.valueText(c, s.ruleModeLabel()),
-                v -> { s.ruleMode = (s.ruleMode + 1) % 3; refresh.run(); }));
+                "点击切换 · 已落盘", Ui.valueText(c, s.ruleModeLabel()),
+                v -> { s.ruleMode = (s.ruleMode + 1) % 3; s.save(); refresh.run(); }));
         general.addView(Ui.separator(c));
         Switch swV6 = Ui.toggle(c, s.ipv6);
-        swV6.setOnCheckedChangeListener((b, on) -> s.ipv6 = on);
+        swV6.setOnCheckedChangeListener((b, on) -> { s.ipv6 = on; s.save(); });
         general.addView(Ui.row(c, IconView.Glyph.GLOBE, Ui.BLUE, "IPv6",
-                "演示开关", swV6, null));
+                "演示开关 · 已落盘", swV6, null));
         general.addView(Ui.separator(c));
         Switch swAuto = Ui.toggle(c, s.autoUpdate);
-        swAuto.setOnCheckedChangeListener((b, on) -> s.autoUpdate = on);
+        swAuto.setOnCheckedChangeListener((b, on) -> { s.autoUpdate = on; s.save(); });
         general.addView(Ui.row(c, IconView.Glyph.ARROW_DOWN, Ui.GREEN, "订阅自动更新",
-                "演示开关", swAuto, null));
+                "演示开关 · 已落盘", swAuto, null));
         general.addView(Ui.separator(c));
         general.addView(Ui.row(c, IconView.Glyph.MEMORY, Ui.TEAL, "内核版本",
                 "Rust core（JNI 实时）", Ui.valueText(c, "v" + RustCore.nativeVersion()), null));
+        general.addView(Ui.separator(c));
+        general.addView(Ui.row(c, IconView.Glyph.LAYERS, Ui.BLUE, "规则引擎",
+                "索引 trie / 关键词分桶 / CIDR 最长前缀",
+                Ui.valueText(c, RustCore.nativeIndexNodes() + " 节点"), null));
         body.addView(general);
 
         body.addView(Ui.groupTitle(c, "工具"));
         LinearLayout tools = Ui.newCard(c);
         tools.addView(Ui.row(c, IconView.Glyph.CHART, Ui.BLUE, "性能基准",
-                "按需运行 · 分段刷新，不再启动时全量跑", null,
+                "索引 vs 线性对照 · 按需运行", null,
                 v -> Ui.toast(c, "请点下方「运行性能基准」按钮")));
         tools.addView(Ui.separator(c));
         tools.addView(Ui.row(c, IconView.Glyph.LIST, Ui.ORANGE, "实时连接",
@@ -353,7 +401,7 @@ public final class Pages {
                 "演示入口", null, v -> Ui.toast(c, "日志面板未接入")));
         body.addView(tools);
 
-        // 基准区：按需点击、子线程分段执行、逐段回刷 UI
+        // 基准区：按需点击、子线程分段、逐段回刷 UI；结束后恢复默认规则集
         TextView benchBtn = Ui.primaryButton(c, "运行性能基准", Ui.BLUE, null);
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -372,21 +420,21 @@ public final class Pages {
         LinearLayout about = Ui.newCard(c);
         about.addView(Ui.row(c, IconView.Glyph.INFO, Ui.BLUE, "关于 Skyward",
                 "Rust 内核 + 原生 Android 壳", null,
-                v -> Ui.toast(c, "PoC-2 UI 骨架版 · 非可用代理客户端")));
+                v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.6-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
         body.addView(about);
 
         body.addView(note(c, "边界：本版仍不含协议栈、geo、订阅解析与真实 tun 转发，不能连代理；"
-                + "此页用于验证设置中心分组、开关与基准交互。"));
+                + "会话时长与流量是 Rust 内核模拟数据面计数，不是真实网卡字节。"));
         return page(c, body);
     }
 
-    /** 基准：规模下调 + 子线程分段 + 逐段 post，避免 ANR 与长期空白。 */
+    /** 基准：索引 vs 线性对照 + 规模下调 + 子线程分段 + 逐段 post，避免 ANR。 */
     private static void runBench(Context c, TextView btn, TextView out) {
         btn.setEnabled(false);
         btn.setText("运行中…");
@@ -396,50 +444,66 @@ public final class Pages {
             try {
                 int ver = RustCore.nativeVersion();
                 long warmUs = RustCore.nativeInitNs() / 1000;
+                int nodes = RustCore.nativeIndexNodes();
                 b.append(String.format(Locale.getDefault(),
-                        "== 内核 ==\ncore version   : %d\n首次 JNI 冷启动: %,d us\nno GC / no runtime / no VM\n\n",
-                        ver, warmUs));
+                        "== 内核 ==\ncore version   : %d (PoC-2)\n规则引擎       : 索引 trie\ntrie 节点      : %d\n首次 JNI 冷启动: %,d us\nno GC / no runtime / no VM\n\n",
+                        ver, nodes, warmUs));
             } catch (Throwable t) {
                 b.append("内核调用失败: ").append(t).append('\n');
             }
             post(out, b.toString());
 
-            int[][] stages = {{9, 200000}, {1000, 50000}, {10000, 5000}};
-            b.append("== 规则引擎（Rust，含 Mutex 查表）==\n");
+            // 索引化 vs PoC-1 线性扫描，同一份规则、同一批 host
+            b.append("== 规则引擎：索引 vs 线性 ==\n");
+            b.append(String.format("%-8s %9s %9s | %9s %9s%n",
+                    "rules", "idx(ms)", "idx Mops", "lin(ms)", "lin Mops"));
             post(out, b.toString());
+            // {规则数, 索引迭代, 线性迭代}（线性档刻意缩小，避免真机长卡）
+            int[][] stages = {
+                    {9, 100000, 100000}, {1000, 100000, 20000},
+                    {10000, 50000, 2000}, {50000, 50000, 500}
+            };
             for (int[] st : stages) {
                 try {
                     RustCore.nativeLoadRules(st[0]);
-                    double ms = RustCore.nativeBenchMatches(st[1]);
-                    double mops = (st[1] / 1e6) / (ms / 1000.0);
+                    double ims = RustCore.nativeBenchMatches(st[1]);
+                    double lms = RustCore.nativeBenchMatchesLinear(st[2]);
+                    double imops = (st[1] / 1e6) / (ims / 1000.0);
+                    double lmops = (st[2] / 1e6) / (lms / 1000.0);
                     b.append(String.format(Locale.getDefault(),
-                            "rules=%-6d %8.2f ms  %8.2f Mops/s\n", st[0], ms, mops));
+                            "%-8d %9.2f %9.2f | %9.2f %9.2f%n",
+                            st[0], ims, imops, lms, lmops));
                 } catch (Throwable t) {
                     b.append("stage failed: ").append(t).append('\n');
                 }
                 post(out, b.toString());
             }
+            b.append("索引吞吐随规则数持平；线性按 O(n) 塌方（PoC-1 缺陷）。\n");
+            post(out, b.toString());
 
             try {
                 RustCore.nativeLoadRules(1000);
                 double pms = RustCore.nativeBenchPackets(100000, 1500);
                 b.append(String.format(Locale.getDefault(),
-                        "\n== 数据面（内存模拟，不接管 tun）==\n100000 x 1500 B = 143.1 MB\n%8.2f ms  %.2f Mpps  %.2f GB/s\n",
+                        "\n== 数据面（内存模拟，不接管 tun）==\n100000 x 1500 B = 143.1 MB\n%8.2f ms  %.2f Mpps  %.2f GB/s\nconnections : %d\n",
                         pms, (100000 / 1e6) / (pms / 1000.0),
-                        (100000.0 * 1500 / 1e9) / (pms / 1000.0)));
-                b.append(String.format(Locale.getDefault(),
-                        "connections : %d\n", RustCore.nativeConnCount()));
+                        (100000.0 * 1500 / 1e9) / (pms / 1000.0),
+                        RustCore.nativeConnCount()));
             } catch (Throwable t) {
                 b.append("packet stage failed: ").append(t).append('\n');
             }
             try {
+                // 恢复默认规则集，避免首页「规则条数 / trie 节点」被基准污染
+                int n = RustCore.nativeResetRules();
+                b.append(String.format(Locale.getDefault(),
+                        "\n规则集已恢复默认：%d 条 / %d trie 节点\n", n, RustCore.nativeIndexNodes()));
                 b.append(String.format(Locale.getDefault(),
                         "\n== 内存 ==\nprocess RSS        : %.2f MB\nRust logical state: %,d B\n",
                         RustCore.nativeRssBytes() / 1048576.0, RustCore.nativeLogicalBytes()));
             } catch (Throwable t) {
                 b.append("mem read failed: ").append(t).append('\n');
             }
-            b.append("\nDONE · 规模已下调（最高 1 万规则 / 5 千次），避免真机卡顿。");
+            b.append("\nDONE · 规模已下调，避免真机卡顿。");
             post(out, b.toString());
             MAIN.post(() -> { btn.setEnabled(true); btn.setText("运行性能基准"); });
         }, "bench").start();

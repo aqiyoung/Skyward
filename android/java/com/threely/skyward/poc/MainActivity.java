@@ -19,12 +19,12 @@ import android.widget.TextView;
  * PoC-2 主壳：底部 4 Tab（首页 / 代理 / 配置 / 我的）+ 分组卡片内容页。
  *
  * 纯原生 View，无 XML 布局 / 无 Compose / 无 Flutter / 无第三方依赖。
- * 与 PoC-1 的区别：
- *  - 启动不再跑全量基准（真机上 5 万规则档会卡住界面，截图里 "running..." 即此问题）；
- *    基准移到「我的 → 工具 → 运行性能基准」，规模下调、子线程分段、逐段刷新。
- *  - 界面按现行 Flutter 版信息架构铺开：4 Tab + 状态卡 + 分组卡片，模块边界清晰。
- *  - 液态玻璃默认关闭（沿用既定规则），仅在设置里提供开关占位。
- *  - 内核真值全部经 JNI 取自 Rust core；产品数据明确标注「演示」。
+ * 0.1.0.6 相对上一版：
+ *  - 状态持久化：attach(Application Context) 读回 SharedPreferences；连接态按原
+ *    连接时刻恢复内核会话，累计字节作种子，读数连续。
+ *  - 会话真值：首页时长 / 上下行 / 速率 / 连接数由 Rust 内核计算，不再写死；
+ *    onStop 落盘，页面代次 pageEpoch 用于干净地停掉首页秒级刷新。
+ *  - 液态玻璃默认关闭（沿用既定规则），状态栏 / 导航栏颜色随之联动。
  */
 public class MainActivity extends Activity {
 
@@ -57,6 +57,9 @@ public class MainActivity extends Activity {
         }
         w.setNavigationBarColor(Ui.CARD);
 
+        // 读回持久化状态；若上次是连接态，恢复内核会话（时长 / 累计字节连续）
+        AppState.get().attach(this);
+
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Ui.PAGE);
@@ -71,10 +74,21 @@ public class MainActivity extends Activity {
         root.addView(dock);
 
         setContentView(root);
-
-        // 轻量预热：只触发 Rust OnceLock 初始化，不做任何重基准
-        AppState.get().warmUp();
         render();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        render();
+    }
+
+    @Override
+    protected void onStop() {
+        // 退后台：停掉首页秒级刷新并落盘最新会话累计字节
+        AppState.get().pageEpoch++;
+        AppState.get().save();
+        super.onStop();
     }
 
     private LinearLayout buildDock() {
@@ -85,7 +99,6 @@ public class MainActivity extends Activity {
         int padBottom = Ui.dp(this, 10);
         bar.setPadding(Ui.dp(this, 10), padTop, Ui.dp(this, 10), padBottom);
 
-        // 顶部分隔线用一张卡片背景描边实现
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(Ui.CARD);
         bg.setStroke(1, Ui.SEP);
@@ -137,10 +150,16 @@ public class MainActivity extends Activity {
     }
 
     private void render() {
-        // 玻璃开启时页面底色转冷，半透明卡片才有可透的层次；默认关闭时为标准灰
-        boolean glass = AppState.get().liquidGlass;
-        root.setBackgroundColor(glass ? Color.parseColor("#DDE7F2") : Ui.PAGE);
-        dock.setBackgroundColor(glass ? Color.parseColor("#CCFFFFFF") : Ui.CARD);
+        final AppState s = AppState.get();
+        // 页面代次递增：旧页挂的秒级刷新会在下一次 tick 时自动退出
+        s.pageEpoch++;
+        boolean glass = s.liquidGlass;
+        int pageBg = glass ? Color.parseColor("#DDE7F2") : Ui.PAGE;
+        int barBg  = glass ? Color.parseColor("#CCFFFFFF") : Ui.CARD;
+        root.setBackgroundColor(pageBg);
+        dock.setBackgroundColor(barBg);
+        getWindow().setStatusBarColor(pageBg);
+        getWindow().setNavigationBarColor(barBg);
         syncDock();
         content.removeAllViews();
         Runnable refresh = this::render;

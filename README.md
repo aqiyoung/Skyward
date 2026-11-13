@@ -1,29 +1,59 @@
-# Skyward Rust Core · PoC-2（UI 骨架版）
+# Skyward Rust Core · PoC-2（0.1.0.6-dev · 会话真值 / 索引引擎版）
 
 一版可装机的最小骨架，用来回答三个问题：
 
 1. 安卓客户端能不能尽量用 Rust 写 → 能，但 `VpnService` 必须留几十行 Java 壳。
 2. 换成 Rust 后体积能压到多少 → 量架构开销，见构建产物。
-3. 性能会不会变差 → 规则引擎 / 数据面基准按需在「我的 → 工具」里跑。
+3. 性能会不会变差 → 规则引擎 / 数据面基准按需在「我的 → 工具」里跑，并带索引 / 线性对照。
 
-## PoC-2 相对 PoC-1 的变化
+## 版本线
 
-PoC-1 装机后只有一个「运行基准测试」按钮，且**启动即全量跑基准**（5 万规则档在
-真机上要几十秒，界面卡在 `running...` 一片空白）。PoC-2 修掉并铺开界面骨架：
+| 版本 | 内容 | APK |
+|---|---|---:|
+| `0.1.0.4-dev` | PoC-1：单按钮基准面板，验证架构体积下限 | 0.35 MB |
+| `0.1.0.5-dev` | 4 Tab 原生 View UI 骨架，修掉启动卡 `running...` | 0.36 MB |
+| `0.1.0.6-dev` | 索引引擎修 O(n) 塌方 + 会话真值 + 状态持久化（本版） | 0.37 MB 级 |
 
-- **按现行 Flutter 版的信息架构做原生 UI**：底部 4 Tab（首页 / 代理 / 配置 / 我的）
-  + 分组卡片，模块边界清晰；状态大卡、流量、节点列表、订阅、设置中心都有内容。
-- **液态玻璃默认关闭**，仅在「我的 → 外观与主题」提供开关，开启后卡片转半透明、
-  页面底色转冷（近似效果，非真实 backdrop blur）。
-- **基准改为按需点击**：移到「我的 → 工具」，规模下调（最高 1 万规则 / 5 千次迭代），
-  子线程分段执行、逐段刷新，不再启动时阻塞界面。
-- **数据分两类并明确标注**：内核读数（版本 / 规则数 / 连接表 / 逻辑状态 / RSS / 冷启动）
-  经 JNI 取自 Rust core 实时值；节点、流量、配置、订阅等为**演示数据**，用于验证
-  界面骨架与交互，不代表真实功能。
-- 状态栏避让 + 深色状态栏图标，修掉标题被状态栏压住的问题。
-- 图标全部用 Canvas 线条自绘（`IconView`），零图片 / 零字体 / 零矢量资源。
+## 0.1.0.6 相对上一版做了什么
 
-体积代价：`classes.dex` 8 KB → 42 KB，APK 0.35 MB → **0.36 MB**，仍是同一量级。
+**一、修掉内核里实测抓到的设计缺陷。** PoC-1 的 `match_host()` 逐条线性扫描，
+规则从 9 条涨到 5 万条时吞吐从 50.97 塌到 0.01 Mops/s。本版改成三类索引：
+
+| 规则类型 | PoC-1 | 本版 |
+|---|---|---|
+| DOMAIN-SUFFIX | 逐条 `ends_with` | 反转标签 trie，`rsplit` 零分配，O(标签数) |
+| DOMAIN-KEYWORD | 逐条 `contains` | 按首字节分桶，只比对同桶候选 |
+| IP-CIDR | 字符串前缀近似 | 解析 IPv4 + 按前缀长度分桶 + 桶内二分，最长前缀匹配 |
+
+命中优先级仍按「规则原始序号最小者」，与逐条首次命中语义一致，host 基准
+12/12 host 结果完全相同。线性实现保留为 `bench_matches_linear()`，仅用于同机对照，
+不参与线上查询。
+
+宿主实测（x86_64，同一份 engine）：
+
+```
+   rules      idx(ms)   idx Mops/s |      lin(ms)   lin Mops/s
+       9        16.57        12.07 |         3.92        50.97
+    1000        17.26        11.59 |        94.06         0.53
+   10000        16.56        12.07 |        99.77         0.05
+   50000        16.50        12.12 |       200.70         0.01
+```
+
+索引吞吐随规则数持平；线性按 O(n) 塌方。要说明的是：**索引化用固定成本换规模无关**，
+小规则集下绝对吞吐仍低于线性，但真实 geo 规则量是万级，索引才有意义。
+数据面同步受益：100 万包 × 1500 B 从 4.88 提到 **8.47 Mpps / 12.70 GB/s**。
+
+**二、界面数字改成内核真值。** 新增会话状态（运行时长 / 上行 / 下行 / 包数 /
+连接表）全部由 Rust core 计算累加，首页每秒 tick 刷新，不再写死
+`186 MB` / `00:42:18` 这类演示常量。数据面仍是**内存模拟**，不接管真实网卡。
+
+**三、状态落盘。** 所有开关、主题、路由、节点 / 组选中、连接态与会话累计字节写入
+`SharedPreferences`，进程重启后恢复；连接态以原连接时刻为起点恢复内核会话，
+时长与累计字节连续。液态玻璃**默认关闭**的规则不变。
+
+**四、基准升级。** 「我的 → 工具」的性能基准改为索引 / 线性双引擎对照，跑完自动
+`nativeResetRules()` 恢复默认规则集，避免污染首页「规则条数」。规模下调、子线程
+分段、逐段刷新，不会卡界面。
 
 ## 架构分层
 
@@ -32,27 +62,28 @@ PoC-1 装机后只有一个「运行基准测试」按钮，且**启动即全量
 | 平台壳（不可省） | Java | `VpnService` 子类、Manifest、Activity 生命周期 |
 | UI | Android 原生 View | 纯代码构建，无 XML 布局、无 Compose、无 Flutter、无 WebView |
 | JNI 边界 | C ABI | 只传 `int/long/double`，零对象分配、零字符串跨语言拷贝 |
-| **内核 / 全部逻辑** | **Rust** | 配置、规则引擎、连接状态表、数据面统计、内存读数、基准 |
+| **内核 / 全部逻辑** | **Rust** | 规则索引、连接状态表、会话统计、数据面模拟、内存读数、基准 |
 
 `core/` 是纯 `std`、零第三方依赖的 crate：`cdylib` 出 `libskyward_core.so`（arm64），
 `rlib` 供宿主侧跑同一份逻辑的基准（无真机也能量 CPU/内存量级）。
+JNI 导出从 12 个增至 **23 个**。
 
 ## 目录
 
 ```
 core/
   Cargo.toml          release: opt-level=s / lto / codegen-units=1 / panic=abort / strip
-  src/engine.rs       规则引擎、连接表、数据面模拟、RSS 读数
-  src/lib.rs          JNI 导出（12 个函数，全部原始类型）
-  examples/bench.rs   宿主侧基准
+  src/engine.rs       规则索引（trie / 关键词分桶 / CIDR）、连接表、会话、数据面、RSS
+  src/lib.rs          JNI 导出（23 个函数，全部原始类型）
+  examples/bench.rs   宿主侧基准：语义一致性 + 索引/线性对照 + 会话真值
 android/
   AndroidManifest.xml 纯原生，含 VpnService 声明
-  java/.../RustCore.java          native 声明（12 个 JNI 函数）
-  java/.../MainActivity.java      4 Tab 主壳 + 状态栏 + dock
-  java/.../Pages.java             四个页面的分组卡片内容 + 按需基准
+  java/.../RustCore.java          native 声明（23 个 JNI 函数）
+  java/.../MainActivity.java      4 Tab 主壳 + 状态恢复 + 页面代次管理
+  java/.../Pages.java             四个页面的分组卡片内容 + 对照基准
   java/.../Ui.java                通用 UI 构建器（iOS 分组卡片风格）
   java/.../IconView.java          Canvas 自绘线性图标（零资源）
-  java/.../AppState.java          UI 状态 + JNI 内核读数
+  java/.../AppState.java          UI 状态 + 会话真值 + SharedPreferences 持久化
   java/.../SkywardVpnService.java 那几十行无法省掉的壳
 build.sh               手工组装 APK（不经 Gradle）
 dist/                  产物
@@ -69,8 +100,8 @@ dist/                  产物
 ```bash
 # 环境：Android SDK platform-35 / build-tools 35 / NDK r28c / JDK 17+ /
 #       rustup target aarch64-linux-android
-./build.sh
-# 产物：dist/Skyward-RustCore-PoC1-arm64-v8a.apk
+VERSION_CODE=6 VERSION_NAME="0.1.0.6-dev" ./build.sh
+# 产物：dist/Skyward-RustCore-PoC1-arm64-v8a.apk（默认名，可用 OUT_APK 覆盖）
 ```
 
 注意：本机 android 的 `libstd` 装在 `1.99.0` toolchain，默认 `stable`(1.93)
@@ -80,14 +111,15 @@ dist/                  产物
 ## PoC 边界（诚实说明）
 
 - **不含真实代理协议栈**：不含 Clash.Meta / clash-rs 的 VLESS Reality、Hysteria2、
-  TUIC、WireGuard 等实现，也没有 tun2socks。数据面基准是**内存模拟**。
-- **不含 geo 数据**（现行版 15.55MB）、不含订阅解析、不含配置持久化。
+  TUIC、WireGuard 等实现，也没有 tun2socks。数据面基准与会话计数都是**内存模拟**。
+- **不含 geo 数据**（现行版 15.55MB）、不含订阅解析、不含真实配置导入 / 编辑。
 - **不接管真实流量**：`SkywardVpnService` 有 `establishTun()` 但 UI 不触发，
-  避免装机后误触断网。真实 tun fd 交给 Rust 是下一阶段。
-- **UI 是骨架**：4 Tab / 分组卡片 / 交互都在，但节点、流量、配置、订阅是演示数据，
-  设置开关不落盘、不改系统，"连接"按钮只切界面状态，不建 VPN 会话。
+  避免装机后误触断网。真实 tun fd 交给 Rust 是阶段 2。
+- **已落盘的只是界面状态**：开关、主题、路由、选中项、连接态与模拟会话累计字节；
+  节点、配置、订阅仍是界面演示占位，"连接"按钮不建 VPN 会话、不改系统设置。
 - 因此这一版**不能用来连接代理**，只用于看：界面骨架与信息架构对齐程度、架构体积
-  下限、冷启动、规则匹配与数据面吞吐、常驻内存。真实转发性能必须等内核补齐后再测。
+  下限、规则引擎规模特性、数据面吞吐、常驻内存。真实转发性能必须等内核补齐后再测。
+- 内存量级（host 实测）：基线 RSS 1.89 MB，跑完 100 万包 6.54 MB，逻辑状态约 3 KB。
 
 ## 与现行 Flutter 版的对照基线（实测 60.30 MB）
 
@@ -98,11 +130,15 @@ dist/                  产物
 | geo 数据 | 15.55 MB | 无 |
 | MLKit 扫码 | 2.84 MB | 无 |
 
+真正该压的是 **Go 内核 + geo 共 39 MB**；本版 0.37 MB 只是架构壳的地板，
+不是「完整 App 能这么小」。接上协议栈与 geo 后真实预估 15–22 MB。
+
 ## CI 工作流（目前只开发安卓端）
 
 `.github/workflows/android-rust.yml` 只出一个 arm64 安卓 APK：装 JDK 17 / Rust
 `aarch64-linux-android` / SDK platform-35 + build-tools 35 + NDK r28c → `./build.sh`
 → 验签+验架构 → 上传 artifact。刻意**不打 Release tag、不构建 desktop 或其它平台**。
+`build.sh` 现在会在符号数异常偏少（< 12）时直接失败，防止漏编 JNI。
 
 `.github/workflows/notify-telegram.yml` 是独立的补推工作流：Release 发布后手动
 `workflow_dispatch` 派发，下载 Release asset 并 `sendDocument` 到 Dev 预览个人 chat。
@@ -119,7 +155,7 @@ CI runner 用同一份脚本：
 | 变量 | 作用 | 本机默认 | CI 设置 |
 |---|---|---|---|
 | `SKYWARD_ROOT` | 工程根 | 脚本所在目录 | checkout 根 |
-| `ANDROID_SDK_ROOT` / `ANDROID_HOME` | SDK 位置 | `/tmp/rust_android_env/sdk` | 由 setup-android 注入 |
+| `ANDROID_SDK_ROOT` / `ANDROID_HOME` | SDK 位置 | `/tmp/rust_android_env/sdk` | runner 预装 SDK |
 | `NDK_VERSION` / `BT_VERSION` | NDK / build-tools 版本 | `28.2.13676358` / `35.0.0` | 同左 |
 | `RUST_TC` | 显式 toolchain | `+1.99.0` | `''`（用默认 stable，已装 android target） |
 | `VERSION_CODE` / `VERSION_NAME` | aapt2 版本 | `1` / `0.1.0-poc1` | `${{ github.run_number }}` 等 |
@@ -131,8 +167,7 @@ CI runner 用同一份脚本：
 版本号注入：`VERSION_CODE` / `VERSION_NAME` 由 CI 传 run number。因为 `aapt2 link` 的
 `--version-code` **不会覆盖** manifest 里已硬编码的值，`build.sh` 会先生成一份替换过
 `android:versionCode` / `android:versionName` 的临时 manifest 再 link，确保版本号真正
-进入 APK（CI 实测 `versionCode='3' versionName='0.1.0.3-dev'`）。不带变量时默认
-`1 / 0.1.0-poc1`。
+进入 APK。不带变量时默认 `1 / 0.1.0-poc1`。
 
 ## 旧版 Flutter 工作流：保留但暂停
 

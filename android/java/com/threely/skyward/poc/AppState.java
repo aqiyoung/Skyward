@@ -1,14 +1,21 @@
 package com.threely.skyward.poc;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import java.util.Locale;
 
 /**
- * UI 状态层。
+ * UI 状态层（PoC-2）。
  *
  * 数据分两类，界面上明确区分，避免把 PoC 演示成"能用的客户端"：
- *  - 内核真值：全部经 JNI 取自 Rust core（版本 / 规则数 / 内存 / 连接表 / 冷启动）。
- *  - 演示数据：产品结构占位（节点 / 配置 / 流量 / 开关），PoC 阶段未接入真实协议栈，
- *    仅用于把界面骨架与交互跑通。所有展示它的地方都标注"演示"。
+ *  - 内核真值：全部经 JNI 取自 Rust core（版本 / 规则 / 索引 / 内存 / 连接表 /
+ *    会话时长 / 上下行字节 / 包数）。连接后的时长与流量不再写死常量。
+ *  - 演示数据：产品结构占位（节点 / 配置 / 订阅），未接入真实协议栈与订阅解析。
+ *
+ * 状态持久化：开关、主题、路由、选中项、会话种子写入 SharedPreferences，
+ * 进程重启后可恢复；连接态恢复时以原连接时刻为起点，累计字节作种子，读数连续。
+ * 液态玻璃默认关闭（既定规则）。
  */
 public final class AppState {
 
@@ -16,7 +23,10 @@ public final class AppState {
     public static AppState get() { return I; }
     private AppState() {}
 
-    // ---- 可交互的产品状态（演示） ----
+    private static final String PREF = "skyward_state";
+    private SharedPreferences prefs;
+
+    // ---- 可交互的产品状态 ----
     public boolean connected = false;
     public boolean systemProxy = true;
     public boolean tunMode = false;
@@ -29,6 +39,11 @@ public final class AppState {
     public int selectedNode = 0;
     public int selectedGroup = 0;
     public long connectSinceMs = 0L;
+    public long sessionUp = 0L;           // 落盘的累计上行字节（会话种子）
+    public long sessionDown = 0L;
+
+    /** 页面代次：每次 render 递增，首页秒级刷新据此自动退出，避免切页后空转 / 泄漏。 */
+    public int pageEpoch = 0;
 
     public static final String[] NODE_NAMES = {
             "HK-01 · 自动选择", "Tokyo-02", "Singapore-03", "US-West-04",
@@ -59,7 +74,132 @@ public final class AppState {
         return new String[]{"规则模式", "全局代理", "直连模式"}[ruleMode];
     }
 
-    // ---- 内核真值（JNI） ----
+    // ================= 持久化 =================
+
+    /** 绑定 Application Context，读回状态并恢复内核会话。由 MainActivity.onCreate 调用。 */
+    public void attach(Context c) {
+        prefs = c.getApplicationContext().getSharedPreferences(PREF, Context.MODE_PRIVATE);
+        load();
+        warmUp();
+        if (connected && connectSinceMs > 0L) {
+            try {
+                RustCore.nativeSessionStart(connectSinceMs, sessionUp, sessionDown);
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private void load() {
+        if (prefs == null) return;
+        SharedPreferences p = prefs;
+        connected      = p.getBoolean("connected", false);
+        systemProxy    = p.getBoolean("systemProxy", true);
+        tunMode        = p.getBoolean("tunMode", false);
+        ipv6           = p.getBoolean("ipv6", false);
+        autoUpdate     = p.getBoolean("autoUpdate", true);
+        liquidGlass    = p.getBoolean("liquidGlass", false);
+        pureBlack      = p.getBoolean("pureBlack", false);
+        themeMode      = p.getInt("themeMode", 0);
+        ruleMode       = p.getInt("ruleMode", 0);
+        selectedNode   = p.getInt("selectedNode", 0);
+        selectedGroup  = p.getInt("selectedGroup", 0);
+        connectSinceMs = p.getLong("connectSinceMs", 0L);
+        sessionUp      = p.getLong("sessionUp", 0L);
+        sessionDown    = p.getLong("sessionDown", 0L);
+        // 防御：越界值兜底，避免旧数据把数组索引打崩
+        if (themeMode < 0 || themeMode > 2) themeMode = 0;
+        if (ruleMode < 0 || ruleMode > 2) ruleMode = 0;
+        if (selectedNode < 0 || selectedNode >= NODE_NAMES.length) selectedNode = 0;
+        if (selectedGroup < 0 || selectedGroup >= GROUPS.length) selectedGroup = 0;
+    }
+
+    /** 落盘；会话进行中时先同步内核累计字节，保证重启后读数不丢。 */
+    public void save() {
+        if (prefs == null) return;
+        if (connected) syncSessionFromCore();
+        prefs.edit()
+                .putBoolean("connected", connected)
+                .putBoolean("systemProxy", systemProxy)
+                .putBoolean("tunMode", tunMode)
+                .putBoolean("ipv6", ipv6)
+                .putBoolean("autoUpdate", autoUpdate)
+                .putBoolean("liquidGlass", liquidGlass)
+                .putBoolean("pureBlack", pureBlack)
+                .putInt("themeMode", themeMode)
+                .putInt("ruleMode", ruleMode)
+                .putInt("selectedNode", selectedNode)
+                .putInt("selectedGroup", selectedGroup)
+                .putLong("connectSinceMs", connectSinceMs)
+                .putLong("sessionUp", sessionUp)
+                .putLong("sessionDown", sessionDown)
+                .apply();
+    }
+
+    private void syncSessionFromCore() {
+        if (!connected) return;
+        try {
+            sessionUp = RustCore.nativeSessionUpBytes();
+            sessionDown = RustCore.nativeSessionDownBytes();
+        } catch (Throwable ignored) {}
+    }
+
+    // ================= 会话（内核真值） =================
+
+    public void connect() {
+        if (connected) return;
+        connected = true;
+        connectSinceMs = System.currentTimeMillis();
+        try {
+            RustCore.nativeSessionStart(connectSinceMs, sessionUp, sessionDown);
+        } catch (Throwable ignored) {}
+        save();
+    }
+
+    public void disconnect() {
+        if (!connected) return;
+        syncSessionFromCore();
+        try { RustCore.nativeSessionStop(); } catch (Throwable ignored) {}
+        connected = false;
+        save();
+    }
+
+    /** 每秒由首页调用：让内核跑一小段模拟数据面，累加会话真值。 */
+    public void tick() {
+        if (!connected) return;
+        try { RustCore.nativeSessionTick(200, 1500); } catch (Throwable ignored) {}
+    }
+
+    public long uptimeSec() {
+        try {
+            return RustCore.nativeSessionUptimeSec(System.currentTimeMillis());
+        } catch (Throwable t) { return 0L; }
+    }
+
+    public long upBytes() {
+        try { return RustCore.nativeSessionUpBytes(); } catch (Throwable t) { return sessionUp; }
+    }
+
+    public long downBytes() {
+        try { return RustCore.nativeSessionDownBytes(); } catch (Throwable t) { return sessionDown; }
+    }
+
+    public static String humanBytes(long b) {
+        if (b < 1024L) return b + " B";
+        if (b < 1048576L) return String.format(Locale.getDefault(), "%.1f KB", b / 1024.0);
+        if (b < 1073741824L) return String.format(Locale.getDefault(), "%.1f MB", b / 1048576.0);
+        return String.format(Locale.getDefault(), "%.2f GB", b / 1073741824.0);
+    }
+
+    public static String humanDuration(long sec) {
+        long h = sec / 3600, m = (sec % 3600) / 60, s = sec % 60;
+        return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s);
+    }
+
+    public static String rate(long bytesPerSec) {
+        return humanBytes(bytesPerSec) + "/s";
+    }
+
+    // ================= 内核读数 =================
+
     public String coreInfo() {
         try {
             int ver = RustCore.nativeVersion();
@@ -67,19 +207,22 @@ public final class AppState {
             long rss = RustCore.nativeRssBytes();
             long logical = RustCore.nativeLogicalBytes();
             int rules = RustCore.nativeRuleCount();
+            int nodes = RustCore.nativeIndexNodes();
             int conns = RustCore.nativeConnCount();
-            long bytes = RustCore.nativeLoopbackBytes();
+            long pkts = RustCore.nativeSessionPackets();
             return String.format(Locale.getDefault(),
-                    "core version   : %d%n" +
+                    "core version   : %d (PoC-2)%n" +
+                    "规则引擎       : 索引 trie / 关键词分桶 / CIDR%n" +
+                    "trie 节点      : %d%n" +
                     "首次 JNI 冷启动 : %,d us%n" +
                     "规则条数       : %d%n" +
                     "连接表         : %d 条%n" +
+                    "会话累计包数   : %,d%n" +
                     "逻辑状态       : %,d B%n" +
-                    "进程 RSS       : %.2f MB%n" +
-                    "模拟数据面字节 : %,d B%n%n" +
+                    "进程 RSS       : %.2f MB%n%n" +
                     "no GC / no runtime / no VM%n" +
                     "以上读数来自 Rust core（JNI 实时）",
-                    ver, initUs, rules, conns, logical, rss / 1048576.0, bytes);
+                    ver, nodes, initUs, rules, conns, pkts, logical, rss / 1048576.0);
         } catch (Throwable t) {
             return "内核读数不可用：" + t;
         }

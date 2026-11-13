@@ -1,8 +1,11 @@
-//! Skyward Rust core - JNI 边界层（PoC 1）
+//! Skyward Rust core - JNI 边界层（PoC 2）
 //!
 //! 全部用 C ABI 手工导出，不依赖 jni crate：Java 侧只传/收原始类型
 //! (int/long/double)，因此不需要构造 Java 对象，边界零分配。
 //! 所有真实逻辑在 engine.rs；这里只做 OnceLock 单例与数值转换。
+//!
+//! PoC-2 新增会话类接口：连接时长 / 上下行字节 / 包数由内核计算并累加，
+//! 界面不再写死演示常量。另有索引/线性双引擎对照接口供工具页基准使用。
 
 pub mod engine;
 
@@ -38,7 +41,7 @@ fn core() -> &'static Core {
     c
 }
 
-/// 内核版本（整数）。
+/// 内核版本（整数）。PoC-2 = 2。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeVersion(
     _env: *mut JNIEnv,
@@ -68,6 +71,15 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadRules(
     core().load_rules(count.max(0) as usize) as jint
 }
 
+/// 恢复默认规则集（基准跑完后调用，避免污染首页读数）。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeResetRules(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    core().reset_rules() as jint
+}
+
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleCount(
     _env: *mut JNIEnv,
@@ -76,7 +88,16 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleCount(
     core().rule_count() as jint
 }
 
-/// 规则匹配吞吐基准，返回耗时毫秒。
+/// 反转域名 trie 的节点数，用于展示索引规模。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeIndexNodes(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    core().index_nodes() as jint
+}
+
+/// 索引引擎匹配吞吐基准，返回耗时毫秒。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatches(
     _env: *mut JNIEnv,
@@ -84,6 +105,16 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatches(
     iterations: jint,
 ) -> jdouble {
     core().bench_matches(iterations.max(0) as usize)
+}
+
+/// 线性引擎对照基准（PoC-1 实现），返回耗时毫秒。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatchesLinear(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    iterations: jint,
+) -> jdouble {
+    core().bench_matches_linear(iterations.max(0) as usize)
 }
 
 /// 模拟数据面吞吐基准，返回耗时毫秒。
@@ -106,7 +137,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRssBytes(
     Core::rss_bytes() as jlong
 }
 
-/// 逻辑状态占用（规则 + 连接表，字节）。
+/// 逻辑状态占用（规则真源 + 索引 + 连接表，字节）。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLogicalBytes(
     _env: *mut JNIEnv,
@@ -147,4 +178,85 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoopbackBytes(
     _cls: jclassRef,
 ) -> jlong {
     core().loopback_bytes() as jlong
+}
+
+// ---------------- 会话真值（PoC-2 新增） ----------------
+
+/// 启动 / 恢复会话。now_ms 由 Java 传 System.currentTimeMillis()，
+/// seed_up / seed_down 是上次落盘的累计字节，保证重启后读数连续。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStart(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    now_ms: jlong,
+    seed_up: jlong,
+    seed_down: jlong,
+) -> jint {
+    core().session_start(
+        now_ms.max(0) as u64,
+        seed_up.max(0) as u64,
+        seed_down.max(0) as u64,
+    );
+    1
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStop(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    core().session_stop();
+    1
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionRunning(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    if core().session_running() { 1 } else { 0 }
+}
+
+/// 跑一小段模拟数据面并累加会话计数，返回本次处理字节数。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionTick(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    packets: jint,
+    size: jint,
+) -> jlong {
+    core().session_tick(packets.max(0) as usize, size.max(0) as usize) as jlong
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUptimeSec(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    now_ms: jlong,
+) -> jlong {
+    core().session_uptime_sec(now_ms.max(0) as u64) as jlong
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUpBytes(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jlong {
+    core().session_up() as jlong
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionDownBytes(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jlong {
+    core().session_down() as jlong
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionPackets(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jlong {
+    core().session_packets() as jlong
 }

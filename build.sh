@@ -97,7 +97,11 @@ say "so: $(stat -c%s "$SO") bytes ($(du -h "$SO" | cut -f1))"
 say "== 2b. 校验 JNI 导出符号 =="
 if [ -x "$NDK_NM" ]; then
   SYMS=$("$NDK_NM" -D --defined-only "$SO" | grep -c "Java_com_threely_skyward_poc_RustCore_" || true)
-  say "exported JNI symbols: $SYMS (expected 12)"
+  # PoC-1 为 12 个；PoC-2 起新增会话真值 / 索引对照 / 规则集重置接口，当前 23 个。
+  say "exported JNI symbols: $SYMS (PoC-2 expected 23)"
+  if [ "$SYMS" -lt 12 ]; then
+    say "FAIL: JNI 导出符号异常偏少"; exit 1
+  fi
   "$NDK_NM" -D --defined-only "$SO" | grep "Java_com_threely" | tee -a "$LOG"
 else
   say "llvm-nm not found, skip symbol check"
