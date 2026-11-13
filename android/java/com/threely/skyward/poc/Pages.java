@@ -454,7 +454,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.7-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.8-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
