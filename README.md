@@ -99,6 +99,12 @@ CI runner 用同一份脚本：
 本机 / CI / 任意次构建签名一致、APK 可直接覆盖安装。正式发版前须换成 release key
 且**不要**提交进仓库。
 
+版本号注入：`VERSION_CODE` / `VERSION_NAME` 由 CI 传 run number。因为 `aapt2 link` 的
+`--version-code` **不会覆盖** manifest 里已硬编码的值，`build.sh` 会先生成一份替换过
+`android:versionCode` / `android:versionName` 的临时 manifest 再 link，确保版本号真正
+进入 APK（CI 实测 `versionCode='3' versionName='0.1.0.3-dev'`）。不带变量时默认
+`1 / 0.1.0-poc1`。
+
 ## 旧版 Flutter 工作流：保留但暂停
 
 `aqiyoung/Skyward` 上原有 12 条工作流（多平台构建、preview、发版、core 检查等）
