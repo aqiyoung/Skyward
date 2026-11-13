@@ -1,23 +1,22 @@
 import 'package:skyward/ui/icons/glyph.dart';
 import 'package:skyward/ui/icons/glyph_icon.dart';
 import 'package:skyward/ui/shape.dart';
-import 'package:skyward/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A row's leading mark, set in the well `.agents/surfaces.md` gives one.
+/// A row's leading glyph, with no well behind it.
 ///
-/// A mark that only identifies, a page's or a service's glyph, takes a neutral
-/// well rather than a colour of its own: colour in this app says something is
-/// selected, on, failing, or the one action a screen is for, and a list where
-/// every row carried a hue would spend that meaning on decoration. The well
-/// steps one level below the surface it sits on, so the same square reads on a
-/// page and inside a card, and the glyph stays `onSurfaceVariant`.
+/// Option B of the simplification pass: the 28 dp square remains only as a
+/// spacer, so a page's rows still line up on one rhythm, but the raised neutral
+/// well it used to sit in is no longer painted. A mark that only identifies is
+/// left in `onSurfaceVariant` with no colour of its own -- colour in this app
+/// says something is selected, on, failing, or the one action a screen is for.
 ///
-/// The square itself is Clash for Apple Platforms' setting: its client leads
-/// every destination row with a 29 dp well at radius 9, which lines a list up
-/// on one rhythm instead of leaving a column of glyphs floating at their own
-/// weights. Only the fill differs, because a coloured well would be the one
-/// thing this app reserves.
+/// The spacing follows Clash for Apple Platforms' setting, whose client leads
+/// every destination row with a 29 dp mark at one rhythm. Keeping the square
+/// while dropping its fill is what makes every list read a step lighter: the
+/// glyph still distinguishes a page, a tool or a setting, but the column of
+/// grey boxes under it -- and the white card behind that -- no longer stacks
+/// into a third layer.
 class IconWell extends StatelessWidget {
   /// A 28 dp square holds a 17 dp glyph: the size Clash's row sets its symbol
   /// at, and large enough that a 1.5 dp stroke keeps its weight.
@@ -43,10 +42,11 @@ class IconWell extends StatelessWidget {
       width: side,
       height: side,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        shape: shape,
-        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-      ),
+      // Option B of the simplification pass: the well's raised, neutral
+      // fill is gone. The square stays only as a 28 dp spacer so rows keep
+      // their shared rhythm, and the shape is no longer painted. The glyph
+      // alone identifies the row, in `onSurfaceVariant` as before.
+      decoration: ShapeDecoration(shape: shape),
       child: GlyphIcon(
         glyph,
         size: glyphSize,
