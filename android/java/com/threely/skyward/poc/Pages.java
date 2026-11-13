@@ -210,6 +210,12 @@ public final class Pages {
     }
 
     // ===================== 代理 =====================
+
+    /** 已解析节点数（0 = 内核未载入配置）。 */
+    private static int nodeCount() {
+        try { return RustCore.nativeNodeCount(); } catch (Throwable t) { return 0; }
+    }
+
     public static View proxies(Context c, Runnable refresh) {
         final AppState s = AppState.get();
         LinearLayout body = Ui.pageBody(c);
@@ -245,28 +251,46 @@ public final class Pages {
         hs.addView(tabs);
         body.addView(hs);
 
-        body.addView(Ui.groupTitle(c, AppState.GROUPS[s.selectedGroup] + " · 节点列表（演示）"));
+        int n = nodeCount();
+        body.addView(Ui.groupTitle(c,
+                AppState.GROUPS[s.selectedGroup] + " · 节点列表（已解析 " + n + " 个）"));
         LinearLayout list = Ui.newCard(c);
-        for (int i = 0; i < AppState.NODE_NAMES.length; i++) {
+        int shown = n > 0 ? n : AppState.NODE_NAMES.length;
+        for (int i = 0; i < shown; i++) {
             final int idx = i;
-            int ms = AppState.NODE_LATENCY[i];
-            TextView lat = new TextView(c);
-            lat.setText(AppState.latencyLabel(ms));
-            lat.setTextSize(13);
-            lat.setTextColor(AppState.latencyColor(ms));
-            lat.setTypeface(Typeface.DEFAULT_BOLD);
-            View trailing = (i == s.selectedNode)
-                    ? new IconView(c, IconView.Glyph.CHECK, Ui.BLUE) : lat;
-            if (i == s.selectedNode) {
-                trailing.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20)));
+            String name, addr;
+            int ms, tint;
+            if (n > 0) {
+                name = RustCore.nativeNodeName(i);
+                int typeCode = RustCore.nativeNodeType(i);
+                String server = RustCore.nativeNodeServer(i);
+                int port = RustCore.nativeNodePort(i);
+                ms = RustCore.nativeNodeDelay(i);
+                addr = (port > 0 ? server + ":" + port : server)
+                        + " · " + AppState.nodeTypeLabel(typeCode);
+                tint = AppState.nodeTypeColor(typeCode);
+            } else {
+                name = AppState.NODE_NAMES[i];
+                ms = AppState.NODE_LATENCY[i];
+                addr = AppState.NODE_REGION[i] + " · " + AppState.latencyLabel(ms);
+                tint = AppState.latencyColor(ms);
             }
-            list.addView(Ui.row(c, IconView.Glyph.GLOBE,
-                    AppState.latencyColor(ms),
-                    AppState.NODE_NAMES[i],
-                    AppState.NODE_REGION[i] + " · " + AppState.latencyLabel(ms),
-                    trailing,
+            View trailing;
+            if (i == s.selectedNode) {
+                IconView chk = new IconView(c, IconView.Glyph.CHECK, Ui.BLUE);
+                chk.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20)));
+                trailing = chk;
+            } else {
+                TextView lat = new TextView(c);
+                lat.setText(AppState.latencyLabel(ms));
+                lat.setTextSize(13);
+                lat.setTextColor(AppState.latencyColor(ms));
+                lat.setTypeface(Typeface.DEFAULT_BOLD);
+                trailing = lat;
+            }
+            list.addView(Ui.row(c, IconView.Glyph.GLOBE, tint, name, addr, trailing,
                     v -> { s.selectedNode = idx; s.save(); refresh.run(); }));
-            if (i != AppState.NODE_NAMES.length - 1) list.addView(Ui.separator(c));
+            if (i != shown - 1) list.addView(Ui.separator(c));
         }
         body.addView(list);
 
@@ -276,12 +300,52 @@ public final class Pages {
                 "绿 < 80ms · 橙 < 150ms · 红 ≥ 150ms", null, null));
         gset.addView(Ui.separator(c));
         gset.addView(Ui.row(c, IconView.Glyph.CLOCK, Ui.ORANGE, "延迟测速",
-                "演示入口 · 未发起真实探测", null,
-                v -> Ui.toast(c, "PoC 阶段未接入真实延迟探测")));
+                n > 0 ? "已解析 " + n + " 个节点" : "演示入口", null,
+                v -> Ui.toast(c, "PoC 阶段未接入真实延迟探测（当前为模拟值）")));
         body.addView(gset);
 
-        body.addView(note(c, "节点与延迟为演示数据，用于验证列表骨架与选中交互；"
-                + "选中结果已落盘，重启后保留。真实节点来自订阅解析，属后续阶段。"));
+        // 路由规则测试：输入域名，查命中规则与动作（来自 Rust 索引引擎）
+        body.addView(Ui.groupTitle(c, "路由规则测试"));
+        LinearLayout routeTest = Ui.newCard(c);
+        final android.widget.EditText input = new android.widget.EditText(c);
+        input.setHint("输入域名，如 www.google.com");
+        input.setText("www.google.com");
+        input.setTextSize(14);
+        input.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+        input.setBackgroundResource(0);
+        routeTest.addView(input);
+        routeTest.addView(Ui.separator(c));
+        final TextView result = new TextView(c);
+        result.setTextSize(13);
+        result.setTextColor(Ui.TEXT);
+        result.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+        routeTest.addView(result);
+        View probe = Ui.primaryButton(c, "查询命中规则", Ui.BLUE, v -> {
+            String h = input.getText().toString().trim();
+            if (h.isEmpty()) { Ui.toast(c, "请输入域名"); return; }
+            long packed = RustCore.nativeDecide(h);
+            int matched = (int) (packed >>> 63);
+            if (matched == 0) {
+                result.setText("未命中任何规则 → 动作：直连（DIRECT）\n（域名不在规则集内）");
+                return;
+            }
+            int order = (int) ((packed >>> 16) & 0x7FFFFFFF);
+            int kind = (int) ((packed >>> 8) & 0xFF);
+            int action = (int) (packed & 0xFF);
+            String[] kindName = {"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR"};
+            String[] actName = {"直连 DIRECT", "代理 PROXY", "拒绝 REJECT"};
+            result.setText("命中规则 #" + (order + 1) + " · 类型 " + kindName[kind]
+                    + "\n动作：" + actName[action]);
+        });
+        LinearLayout btnWrap = new LinearLayout(c);
+        btnWrap.setPadding(Ui.dp(c, 14), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 10));
+        btnWrap.addView(probe);
+        routeTest.addView(btnWrap);
+        body.addView(routeTest);
+
+        body.addView(note(c, "节点由 Rust 内核解析示例订阅得到（非界面占位）；"
+                + "延迟为模拟值，真实探测属后续阶段。路由测试直接调用内核索引引擎，"
+                + "与「工具」页基准同源。"));
         return page(c, body);
     }
 
@@ -306,32 +370,33 @@ public final class Pages {
                 Ui.valueText(c, RustCore.nativeIndexNodes() + " 节点"), null));
         body.addView(cur);
 
-        body.addView(Ui.groupTitle(c, "订阅（演示）"));
+        body.addView(Ui.groupTitle(c, "订阅"));
+        int nc = nodeCount();
         LinearLayout subs = Ui.newCard(c);
-        String[][] items = {
-                {"订阅 A · 主线路", "8 个节点 · 2 小时前更新 · 演示"},
-                {"订阅 B · 备用", "5 个节点 · 昨天更新 · 演示"},
-        };
-        for (int i = 0; i < items.length; i++) {
-            subs.addView(Ui.row(c, IconView.Glyph.GLOBE, i == 0 ? Ui.GREEN : Ui.TEAL,
-                    items[i][0], items[i][1], null,
-                    v -> Ui.toast(c, "订阅解析未接入，本版为界面占位")));
-            if (i != items.length - 1) subs.addView(Ui.separator(c));
+        if (nc > 0) {
+            subs.addView(Ui.row(c, IconView.Glyph.GLOBE, Ui.GREEN, "示例订阅 · 已载入",
+                    nc + " 个节点 · Rust 内核解析", Ui.valueText(c, "已解析"), null));
+        } else {
+            subs.addView(Ui.row(c, IconView.Glyph.GLOBE, Ui.TEAL, "示例订阅（未载入）",
+                    "点击载入真实节点", null,
+                    v -> { int k = RustCore.nativeLoadSampleConfig();
+                           Ui.toast(c, "已解析 " + k + " 个节点"); refresh.run(); }));
         }
+        subs.addView(Ui.separator(c));
+        subs.addView(Ui.row(c, IconView.Glyph.PLUS, Ui.BLUE, "添加订阅",
+                "从链接导入 · 演示入口", null,
+                v -> Ui.toast(c, "订阅导入未接入，本版为界面占位")));
         body.addView(subs);
 
         body.addView(Ui.groupTitle(c, "添加"));
         LinearLayout add = Ui.newCard(c);
-        add.addView(Ui.row(c, IconView.Glyph.PLUS, Ui.BLUE, "添加订阅",
-                "从链接导入 · 演示入口", null,
-                v -> Ui.toast(c, "订阅导入未接入，本版为界面占位")));
-        add.addView(Ui.separator(c));
         add.addView(Ui.row(c, IconView.Glyph.PROFILE, Ui.ORANGE, "新建配置",
                 "本地空白配置 · 演示入口", null,
                 v -> Ui.toast(c, "配置编辑未接入，本版为界面占位")));
         body.addView(add);
 
-        body.addView(note(c, "配置与订阅均为界面演示数据；真实解析、落盘与切换属后续阶段。"));
+        body.addView(note(c, "示例订阅由 Rust 内核按 Clash 风格解析（真实节点，非占位）；"
+                + "订阅链接导入、落盘与切换属后续阶段。"));
         return page(c, body);
     }
 

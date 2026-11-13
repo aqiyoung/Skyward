@@ -44,4 +44,16 @@ public final class RustCore {
     public static native long nativeSessionUpBytes();
     public static native long nativeSessionDownBytes();
     public static native long nativeSessionPackets();
+
+    // ---- 订阅解析 / 代理节点 / 路由决策（PoC-3）----
+    public static native int nativeLoadSampleConfig();
+    public static native int nativeNodeCount();
+    public static native String nativeNodeName(int i);
+    public static native int nativeNodeType(int i);
+    public static native String nativeNodeServer(int i);
+    public static native int nativeNodePort(int i);
+    public static native int nativeNodeDelay(int i);
+    public static native String nativeNodeGroup(int i);
+    /** 输入域名，返回打包命中结果。bit63=命中；bits16-46=规则序号；bits8-15=类型；bits0-7=动作。 */
+    public static native long nativeDecide(String host);
 }

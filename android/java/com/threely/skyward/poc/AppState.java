@@ -67,6 +67,36 @@ public final class AppState {
         return Ui.RED;
     }
 
+    /** 节点类型整型编码 → 展示标签（与 Rust 侧 node_type_code 对应）。 */
+    public static String nodeTypeLabel(int code) {
+        switch (code) {
+            case 0:  return "SS";
+            case 1:  return "SSR";
+            case 2:  return "VMess";
+            case 3:  return "VLESS";
+            case 4:  return "Trojan";
+            case 5:  return "Hysteria";
+            case 6:  return "Hysteria2";
+            case 7:  return "Socks5";
+            case 8:  return "HTTP";
+            case 9:  return "TUIC";
+            case 10: return "WireGuard";
+            case 11: return "Snell";
+            case 12: return "ShadowQUIC";
+            case 13: return "直连";
+            default: return "?";
+        }
+    }
+
+    /** 节点类型 → 图标井着色。 */
+    public static int nodeTypeColor(int code) {
+        if (code == 13) return Ui.TEXT3;
+        if (code == 7 || code == 8) return Ui.ORANGE;
+        if (code == 0 || code == 1) return Ui.GREEN;
+        if (code == 3 || code == 4) return Ui.BLUE;
+        return Ui.TEAL;
+    }
+
     public String themeLabel() {
         return new String[]{"跟随系统", "浅色", "深色"}[themeMode];
     }
@@ -81,6 +111,8 @@ public final class AppState {
         prefs = c.getApplicationContext().getSharedPreferences(PREF, Context.MODE_PRIVATE);
         load();
         warmUp();
+        // 启动即解析内置示例订阅，让「代理」页首屏即为真实节点（非演示占位）。
+        try { RustCore.nativeLoadSampleConfig(); } catch (Throwable ignored) {}
         if (connected && connectSinceMs > 0L) {
             try {
                 RustCore.nativeSessionStart(connectSinceMs, sessionUp, sessionDown);

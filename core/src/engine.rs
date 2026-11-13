@@ -46,7 +46,7 @@ pub static HOSTS: [&str; 12] = [
     "192.168.1.20",
 ];
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RuleKind {
     DomainSuffix,
     DomainKeyword,
@@ -63,6 +63,212 @@ pub struct Connection {
     pub bytes: u64,
     pub action: u8,
 }
+
+// ============================ 代理节点（Clash 配置解析） ============================
+
+/// 从 Clash 风格配置解析出的单节点（仅取展示所需字段；凭据仅保存样例明文用于演示）。
+pub struct ProxyNode {
+    pub name: String,
+    pub ptype: String,   // ss / trojan / vmess / vless / hysteria2 / tuic / socks5 / direct ...
+    pub server: String,
+    pub port: u16,
+    pub group: String,
+    pub delay_ms: i32,   // 延迟；-1 = 未测
+}
+
+/// 节点类型 → 稳定整型编码，供 Java 侧着色 / 徽标，避免跨语言传字符串类型。
+pub fn node_type_code(t: &str) -> u8 {
+    match t {
+        "ss" => 0, "ssr" => 1, "vmess" => 2, "vless" => 3, "trojan" => 4,
+        "hysteria" => 5, "hysteria2" => 6, "socks5" => 7, "http" => 8, "tuic" => 9,
+        "wireguard" => 10, "snell" => 11, "shadowquic" => 12, "direct" => 13,
+        _ => 99,
+    }
+}
+
+struct NodeBuilder {
+    name: String,
+    ptype: String,
+    server: String,
+    port: u16,
+    group: String,
+    delay_ms: i32,
+}
+
+impl NodeBuilder {
+    fn new() -> Self {
+        NodeBuilder {
+            name: String::new(),
+            ptype: String::new(),
+            server: String::new(),
+            port: 0,
+            group: String::new(),
+            delay_ms: -1,
+        }
+    }
+}
+
+fn strip_quotes(v: &str) -> String {
+    let t = v.trim();
+    if (t.starts_with('"') && t.ends_with('"')) || (t.starts_with('\'') && t.ends_with('\'')) {
+        if t.len() >= 2 {
+            return t[1..t.len() - 1].to_string();
+        }
+    }
+    t.to_string()
+}
+
+fn parse_kv(line: &str, b: &mut NodeBuilder) {
+    let Some((k, v)) = line.split_once(':') else { return };
+    let key = k.trim().to_ascii_lowercase();
+    let val = strip_quotes(v.trim());
+    match key.as_str() {
+        "name" => b.name = val,
+        "type" => b.ptype = val,
+        "server" => b.server = val,
+        "port" => {
+            if let Ok(p) = val.parse::<u16>() {
+                b.port = p;
+            }
+        }
+        _ => {}
+    }
+}
+
+/// 极简 Clash 风格解析器：扫描 `proxies:` 序列，提取 name/type/server/port。
+/// 零三方依赖（不引入 yaml 库）。支持缩进的 `- item` 列表与 `key: value` 子字段；
+/// 映射/列表型值（如 plug-opts、...,）整体跳过，只取标量字段。
+/// 区分「顶层键」与「节点子字段」靠缩进：顶层键出现在 proxies 同级或更浅处。
+pub fn parse_clash_proxies(text: &str) -> Vec<ProxyNode> {
+    let mut nodes: Vec<ProxyNode> = Vec::new();
+    let mut in_proxies = false;
+    let mut proxies_indent: usize = 0;
+    let mut cur: Option<NodeBuilder> = None;
+
+    for raw in text.lines() {
+        let indent = raw.len() - raw.trim_start().len();
+        let trimmed = raw.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        // 顶层键判定：非列表项、含冒号、且缩进不超过 proxies 块基准。
+        if !trimmed.starts_with('-') && trimmed.contains(':') {
+            let key = trimmed.split(':').next().unwrap_or("").trim();
+            if key == "proxies" {
+                in_proxies = true;
+                proxies_indent = indent;
+                if let Some(b) = cur.take() {
+                    flush(&mut nodes, b);
+                }
+                continue;
+            }
+            if indent <= proxies_indent {
+                // 遇到另一个顶层键（如 proxy-groups:），离开 proxies 块
+                in_proxies = false;
+                if let Some(b) = cur.take() {
+                    flush(&mut nodes, b);
+                }
+                continue;
+            }
+            // 否则是节点子字段（缩进更深），落到下面的子字段处理
+        }
+
+        if !in_proxies {
+            continue;
+        }
+
+        if let Some(rest) = trimmed.strip_prefix("- ") {
+            // 新节点；`- ` 之后可能直接跟首个 key: value
+            if let Some(b) = cur.take() {
+                flush(&mut nodes, b);
+            }
+            let mut b = NodeBuilder::new();
+            parse_kv(rest, &mut b);
+            cur = Some(b);
+        } else if trimmed == "-" {
+            if let Some(b) = cur.take() {
+                flush(&mut nodes, b);
+            }
+            cur = Some(NodeBuilder::new());
+        } else if indent > proxies_indent {
+            // 当前节点的子字段
+            if let Some(b) = cur.as_mut() {
+                parse_kv(trimmed, b);
+            }
+        }
+    }
+    if let Some(b) = cur.take() {
+        flush(&mut nodes, b);
+    }
+    nodes
+}
+
+fn flush(out: &mut Vec<ProxyNode>, b: NodeBuilder) {
+    if b.name.is_empty() {
+        return;
+    }
+    out.push(ProxyNode {
+        name: b.name,
+        ptype: b.ptype,
+        server: b.server,
+        port: b.port,
+        group: b.group,
+        delay_ms: b.delay_ms,
+    });
+}
+
+/// 内置示例订阅：一份真实感的 Clash/Mihomo 风格配置，覆盖常见协议类型。
+/// 解析逻辑与真实订阅完全一致，仅内容为本仓库自带样例。
+pub const SAMPLE_CONFIG: &str = r#"
+proxies:
+  - name: "HK · 专线 01"
+    type: ss
+    server: 103.45.12.7
+    port: 8388
+    cipher: aes-256-gcm
+    password: "sample-ss-pass-001"
+  - name: "Tokyo · BGP 02"
+    type: trojan
+    server: 45.76.88.19
+    port: 443
+    password: "sample-trojan-pass-002"
+    sni: hk.example.com
+  - name: "Singapore · IEPL 03"
+    type: vmess
+    server: 194.233.10.5
+    port: 10086
+    uuid: "b0c4f1a2-3d5e-4f6a-8b9c-0d1e2f3a4b5c"
+    alterId: 0
+    cipher: auto
+  - name: "US-West · 04"
+    type: vless
+    server: 162.159.192.4
+    port: 443
+    uuid: "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f"
+    flow: xtls-rprx-vision
+  - name: "HK · CN2 05"
+    type: hysteria2
+    server: 103.45.12.33
+    port: 8443
+    password: "sample-hy2-pass-005"
+  - name: "Taiwan · 06"
+    type: tuic
+    server: 211.23.88.10
+    port: 10443
+    uuid: "d2e3f4a5-b6c7-4d8e-9f0a-1b2c3d4e5f6a"
+    password: "sample-tuic-pass-006"
+  - name: "London · 07"
+    type: socks5
+    server: 185.12.4.9
+    port: 1080
+    username: "user07"
+    password: "pass07"
+  - name: "DIRECT 直连"
+    type: direct
+    server: localhost
+    port: 0
+"#;
 
 // ============================ 规则索引 ============================
 
@@ -190,9 +396,12 @@ impl RuleIndex {
         idx
     }
 
-    /// 索引化查询：与规则条数基本无关，返回 action。
-    fn lookup(&self, host: &str) -> u8 {
-        let mut best: (usize, u8) = (usize::MAX, ACTION_DIRECT);
+    /// 索引化查询：返回命中的 (规则序号, 动作, 类型)，未命中 None。
+    /// 保持「按序首次命中」语义——沿路记录序号最小的命中。
+    fn lookup_detail(&self, host: &str) -> Option<(usize, u8, RuleKind)> {
+        let mut best_order: usize = usize::MAX;
+        let mut best_action: u8 = ACTION_DIRECT;
+        let mut best_kind: RuleKind = RuleKind::DomainSuffix;
 
         // 1) 反转域名 trie：O(标签数)。沿路记录序号最小的命中，保持原始优先级。
         // 用 rsplit 直接从最右标签往左走，避免 split().collect() 的堆分配。
@@ -201,8 +410,10 @@ impl RuleIndex {
             match node.children.get(label) {
                 Some(child) => {
                     if let Some(cand) = child.action {
-                        if cand.0 < best.0 {
-                            best = cand;
+                        if cand.0 < best_order {
+                            best_order = cand.0;
+                            best_action = cand.1;
+                            best_kind = RuleKind::DomainSuffix;
                         }
                     }
                     node = child;
@@ -217,8 +428,10 @@ impl RuleIndex {
             for (i, _) in host.char_indices() {
                 if let Some(cands) = self.keywords.get(&bytes[i]) {
                     for (pat, order, action) in cands {
-                        if *order < best.0 && host[i..].starts_with(pat.as_str()) {
-                            best = (*order, *action);
+                        if *order < best_order && host[i..].starts_with(pat.as_str()) {
+                            best_order = *order;
+                            best_action = *action;
+                            best_kind = RuleKind::DomainKeyword;
                         }
                     }
                 }
@@ -231,13 +444,25 @@ impl RuleIndex {
                 let net = ip & prefix_mask(p);
                 if let Ok(pos) = self.cidrs[p].binary_search_by_key(&net, |e| e.0) {
                     let e = self.cidrs[p][pos];
-                    if e.1 < best.0 {
-                        best = (e.1, e.2);
+                    if e.1 < best_order {
+                        best_order = e.1;
+                        best_action = e.2;
+                        best_kind = RuleKind::IpCidr;
                     }
                 }
             }
         }
-        best.1
+
+        if best_order == usize::MAX {
+            None
+        } else {
+            Some((best_order, best_action, best_kind))
+        }
+    }
+
+    /// 索引化查询：返回 action；未命中 DIRECT。
+    fn lookup(&self, host: &str) -> u8 {
+        self.lookup_detail(host).map(|x| x.1).unwrap_or(ACTION_DIRECT)
     }
 
     /// 逻辑状态占用估算（规则真源 + 索引结构），不是进程 RSS。
@@ -359,6 +584,8 @@ pub struct Core {
     rules: Mutex<Vec<Rule>>,
     /// 线上查询走的索引
     index: Mutex<RuleIndex>,
+    /// 从 Clash 风格配置解析出的代理节点（订阅解析，PoC-3 新增）
+    nodes: Mutex<Vec<ProxyNode>>,
     connections: Mutex<HashMap<u64, Connection>>,
     next_id: AtomicU64,
     loopback_bytes: AtomicU64,
@@ -372,6 +599,7 @@ impl Core {
         Core {
             rules: Mutex::new(rules),
             index: Mutex::new(index),
+            nodes: Mutex::new(Vec::new()),
             connections: Mutex::new(HashMap::new()),
             next_id: AtomicU64::new(1),
             loopback_bytes: AtomicU64::new(0),
@@ -425,6 +653,95 @@ impl Core {
     /// 线性实现查询，供基准做语义一致性校验（确认索引化没改变命中结果）。
     pub fn match_host_linear(&self, host: &str) -> u8 {
         linear_match(self.rules.lock().unwrap().as_slice(), host)
+    }
+
+    // ================= 订阅解析 / 代理节点（PoC-3） =================
+
+    /// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
+    pub fn load_sample_config(&self) -> usize {
+        let mut nodes = parse_clash_proxies(SAMPLE_CONFIG);
+        // 确定性模拟延迟（非真实探测），用于验证按延迟着色逻辑。
+        for (i, n) in nodes.iter_mut().enumerate() {
+            n.delay_ms = ((i as i32 * 37) % 210 + 18) as i32;
+        }
+        let cnt = nodes.len();
+        *self.nodes.lock().unwrap() = nodes;
+        cnt
+    }
+
+    /// 解析任意 Clash 风格配置文本，返回节点数。
+    pub fn parse_text_config(&self, text: &str) -> usize {
+        let nodes = parse_clash_proxies(text);
+        let cnt = nodes.len();
+        *self.nodes.lock().unwrap() = nodes;
+        cnt
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.nodes.lock().unwrap().len()
+    }
+
+    pub fn node_name(&self, i: usize) -> String {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| n.name.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn node_type(&self, i: usize) -> String {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| n.ptype.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn node_type_code(&self, i: usize) -> u8 {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| node_type_code(&n.ptype))
+            .unwrap_or(99)
+    }
+
+    pub fn node_server(&self, i: usize) -> String {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| n.server.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn node_port(&self, i: usize) -> u16 {
+        self.nodes.lock().unwrap().get(i).map(|n| n.port).unwrap_or(0)
+    }
+
+    pub fn node_delay(&self, i: usize) -> i32 {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| n.delay_ms)
+            .unwrap_or(-1)
+    }
+
+    pub fn node_group(&self, i: usize) -> String {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .map(|n| n.group.clone())
+            .unwrap_or_default()
+    }
+
+    /// 路由决策：返回命中规则 (序号, 动作, 类型)，未命中 None。
+    pub fn decide(&self, host: &str) -> Option<(usize, u8, RuleKind)> {
+        self.index.lock().unwrap().lookup_detail(host)
     }
 
     /// 索引引擎匹配吞吐基准，返回耗时毫秒。
@@ -563,5 +880,40 @@ impl Core {
 impl Default for Core {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_sample_config_node_count_and_fields() {
+        let nodes = parse_clash_proxies(SAMPLE_CONFIG);
+        assert_eq!(nodes.len(), 8);
+        // 第一个节点：HK · 专线 01 / ss / 103.45.12.7:8388
+        assert_eq!(nodes[0].name, "HK · 专线 01");
+        assert_eq!(nodes[0].ptype, "ss");
+        assert_eq!(nodes[0].server, "103.45.12.7");
+        assert_eq!(nodes[0].port, 8388);
+        // direct 节点 port 0
+        assert_eq!(nodes[7].ptype, "direct");
+        assert_eq!(nodes[7].port, 0);
+    }
+
+    #[test]
+    fn decide_returns_expected_rule_for_known_host() {
+        let rules = default_rules();
+        let idx = RuleIndex::build(&rules);
+        // google.com 命中 DOMAIN-SUFFIX google.com -> PROXY(1)
+        let d = idx.lookup_detail("www.google.com").expect("should match");
+        assert_eq!(d.1, ACTION_PROXY);
+        assert_eq!(d.2, RuleKind::DomainSuffix);
+        // 未知域名不命中
+        assert!(idx.lookup_detail("example.invalid").is_none());
+        // IP-CIDR 命中 192.168.x
+        let d2 = idx.lookup_detail("192.168.5.5").expect("cidr match");
+        assert_eq!(d2.1, ACTION_DIRECT);
+        assert_eq!(d2.2, RuleKind::IpCidr);
     }
 }

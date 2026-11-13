@@ -9,8 +9,8 @@
 
 pub mod engine;
 
-use engine::{Core, CORE_VERSION};
-use std::ffi::c_void;
+use engine::{Core, CORE_VERSION, RuleKind};
+use std::ffi::{c_char, c_void, CStr, CString};
 use std::sync::OnceLock;
 use std::time::Instant;
 
@@ -30,6 +30,53 @@ type JNIEnv = c_void;
 type jclass = c_void;
 #[allow(non_camel_case_types)]
 type jclassRef = *mut jclass;
+
+// JNI 函数表（仅取用到的槽位）。C 侧 JNIEnv* 即 `struct JNINativeInterface**`，
+// 故先解一次引用得到 iface 指针，再经函数表调用。偏移由 NDK jni.h 实测：
+// NewStringUTF=1336(÷8=167) / GetStringUTFChars=1352 / ReleaseStringUTFChars=1360。
+// 这样回传 / 读取字符串时无需引入 jni crate，保持零三方依赖。
+#[repr(C)]
+#[allow(non_snake_case)]
+struct JNINativeInterface {
+    _pad: [usize; 167],
+    NewStringUTF:
+        Option<unsafe extern "system" fn(*mut c_void, *const c_char) -> *mut c_void>,
+    _p1: usize, // GetStringUTFLength
+    GetStringUTFChars:
+        Option<unsafe extern "system" fn(*mut c_void, *mut c_void, *mut u8) -> *const c_char>,
+    ReleaseStringUTFChars:
+        Option<unsafe extern "system" fn(*mut c_void, *mut c_void, *const c_char)>,
+}
+
+#[inline]
+unsafe fn iface(env: *mut JNIEnv) -> *mut JNINativeInterface {
+    *(env as *mut *mut JNINativeInterface)
+}
+
+/// Rust String → Java jstring（零拷贝 CString 经 NewStringUTF）。
+fn new_jstring(env: *mut JNIEnv, s: &str) -> *mut c_void {
+    let c = CString::new(s).unwrap_or_else(|_| CString::new("").unwrap());
+    let i = unsafe { iface(env) };
+    let f = unsafe { (*i).NewStringUTF }.expect("NewStringUTF missing");
+    unsafe { f(env as *mut c_void, c.as_ptr()) }
+}
+
+/// Java jstring → Rust String（GetStringUTFChars / ReleaseStringUTFChars 配对）。
+fn read_jstring(env: *mut JNIEnv, js: *mut c_void) -> String {
+    if js.is_null() {
+        return String::new();
+    }
+    let i = unsafe { iface(env) };
+    let get = unsafe { (*i).GetStringUTFChars }.expect("GetStringUTFChars missing");
+    let cstr = unsafe { get(env as *mut c_void, js, std::ptr::null_mut()) };
+    if cstr.is_null() {
+        return String::new();
+    }
+    let s = unsafe { CStr::from_ptr(cstr) }.to_string_lossy().into_owned();
+    let rel = unsafe { (*i).ReleaseStringUTFChars }.expect("ReleaseStringUTFChars missing");
+    unsafe { rel(env as *mut c_void, js, cstr) };
+    s
+}
 
 static CORE: OnceLock<Core> = OnceLock::new();
 static INIT_NS: OnceLock<u128> = OnceLock::new();
@@ -259,4 +306,104 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionPackets(
     _cls: jclassRef,
 ) -> jlong {
     core().session_packets() as jlong
+}
+
+// ---------------- 订阅解析 / 代理节点 / 路由决策（PoC-3） ----------------
+
+/// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadSampleConfig(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    core().load_sample_config() as jint
+}
+
+/// 已解析节点数（0 = 尚未载入配置，UI 回退演示数据）。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeCount(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    core().node_count() as jint
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeName(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_name(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeType(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    core().node_type_code(i.max(0) as usize) as jint
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeServer(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_server(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodePort(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    core().node_port(i.max(0) as usize) as jint
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeDelay(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    core().node_delay(i.max(0) as usize) as jint
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeGroup(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_group(i.max(0) as usize))
+}
+
+/// 路由决策：输入域名，返回打包的命中结果。
+/// 位布局：bit63=matched, bits16-46=规则序号, bits8-15=类型(0 suffix/1 keyword/2 cidr),
+/// bits0-7=动作(0 直连/1 代理/2 拒绝)。未命中返回 0。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeDecide(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    host: *mut c_void,
+) -> jlong {
+    let h = read_jstring(env, host);
+    match core().decide(&h) {
+        Some((order, action, kind)) => {
+            let k: u64 = match kind {
+                RuleKind::DomainSuffix => 0,
+                RuleKind::DomainKeyword => 1,
+                RuleKind::IpCidr => 2,
+            };
+            (((1u64) << 63)
+                | ((order as u64 & 0x7FFF_FFFF) << 16)
+                | ((k & 0xFF) << 8)
+                | (action as u64 & 0xFF)) as jlong
+        }
+        None => 0,
+    }
 }
