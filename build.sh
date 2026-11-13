@@ -120,13 +120,20 @@ s = re.sub(r'android:versionName="[^"]*"',
 open(dst, "w", encoding="utf-8").write(s)
 print(f"injected versionCode={code} versionName={name}")
 PY
-"$BT/aapt2" compile --dir "$AND/res" -o "$BUILD/res.flata" >/dev/null 2>>"$LOG" || true
+# 编译全部 res（mipmap 图标 / adaptive icon xml / values），逐个 .flat 交给 link。
+# 旧版只 compile 不 link，导致 resources.arsc 为空、Manifest 引用不到图标。
+rm -rf "$BUILD/compiled"; mkdir -p "$BUILD/compiled"
+"$BT/aapt2" compile --dir "$AND/res" -o "$BUILD/compiled" >>"$LOG" 2>&1
+FLATS=$(find "$BUILD/compiled" -name '*.flat' | sort)
+[ -n "$FLATS" ] || { say "FAIL: 没有编译出任何资源"; exit 1; }
+say "compiled resources: $(echo "$FLATS" | wc -l) flat files"
 "$BT/aapt2" link -o "$BUILD/base.apk" \
   -I "$ANDROID_JAR" \
   --manifest "$BUILD/AndroidManifest.xml" \
   --min-sdk-version "$API_LEVEL" --target-sdk-version "$TARGET_SDK" \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
-  --auto-add-overlay >>"$LOG" 2>&1
+  --auto-add-overlay \
+  $FLATS >>"$LOG" 2>&1
 say "base.apk: $(stat -c%s "$BUILD/base.apk") bytes"
 "$BT/aapt2" dump badging "$BUILD/base.apk" 2>/dev/null | grep "^package:" | tee -a "$LOG"
 

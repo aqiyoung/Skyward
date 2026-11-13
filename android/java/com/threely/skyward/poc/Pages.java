@@ -416,6 +416,37 @@ public final class Pages {
 
         benchBtn.setOnClickListener(v -> runBench(c, benchBtn, benchOut));
 
+        // --- 品牌区：应用图标 + 名称 + 定位（图标来自 res/drawable-nodpi/ic_logo.png） ---
+        LinearLayout brand = new LinearLayout(c);
+        brand.setOrientation(LinearLayout.VERTICAL);
+        brand.setGravity(Gravity.CENTER_HORIZONTAL);
+        brand.setPadding(0, Ui.dp(c, 26), 0, Ui.dp(c, 8));
+        int logoId = c.getResources().getIdentifier("ic_logo", "drawable", c.getPackageName());
+        if (logoId != 0) {
+            android.widget.ImageView logo = new android.widget.ImageView(c);
+            logo.setImageResource(logoId);
+            int px = Ui.dp(c, 78);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(px, px);
+            lp.bottomMargin = Ui.dp(c, 13);
+            logo.setLayoutParams(lp);
+            brand.addView(logo);
+        }
+        TextView brandName = new TextView(c);
+        brandName.setText("Skyward");
+        brandName.setTextSize(20);
+        brandName.setTypeface(Typeface.DEFAULT_BOLD);
+        brandName.setTextColor(Ui.TEXT);
+        brandName.setGravity(Gravity.CENTER);
+        brand.addView(brandName);
+        TextView brandSub = new TextView(c);
+        brandSub.setText("Rust 内核 · 原生 Android 壳");
+        brandSub.setTextSize(12);
+        brandSub.setTextColor(Ui.TEXT2);
+        brandSub.setGravity(Gravity.CENTER);
+        brandSub.setPadding(0, Ui.dp(c, 3), 0, 0);
+        brand.addView(brandSub);
+        body.addView(brand);
+
         body.addView(Ui.groupTitle(c, "关于"));
         LinearLayout about = Ui.newCard(c);
         about.addView(Ui.row(c, IconView.Glyph.INFO, Ui.BLUE, "关于 Skyward",
@@ -423,7 +454,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.6-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.7-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));

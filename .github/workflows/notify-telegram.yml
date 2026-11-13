@@ -18,11 +18,11 @@ on:
       tag:
         description: '已发布的 Release tag'
         required: true
-        default: 'rust-0.1.0.6-dev'
+        default: 'rust-0.1.0.7-dev'
       asset:
         description: 'Release 里的 APK 文件名'
         required: true
-        default: 'Skyward-Rust-PoC-0.1.0.6-dev-arm64-v8a.apk'
+        default: 'Skyward-Rust-PoC-0.1.0.7-dev-arm64-v8a.apk'
   push:
     branches: [ rust-android ]
     paths:
@@ -53,7 +53,7 @@ jobs:
           echo "fetching ${url}"
           curl -fsSL --max-time 300 -o app.apk "$url"
           ls -l app.apk
-          unzip -l app.apk | grep -E "AndroidManifest.xml|classes.dex|libskyward_core.so"
+          unzip -l app.apk | grep -E "AndroidManifest.xml|classes.dex|libskyward_core.so|resources.arsc"
           test -s app.apk
 
       - name: Send document to Dev preview chat
@@ -72,20 +72,20 @@ jobs:
           size=$(stat -c%s app.apk)
           mb=$(awk "BEGIN{printf \"%.2f\", ${size}/1048576}")
           cat > /tmp/caption.txt << CAP
-          Skyward Rust 安卓 · ${TAG}（会话真值 / 索引引擎版）
+          Skyward Rust 安卓 · ${TAG}（App 图标 / logo 版）
           仅 arm64-v8a · ${mb} MB（现行 Flutter 版 60.30 MB）
           23 个 JNI 符号 · debug 签名 · 装机需允许未知来源
           包名 com.threely.skyward.poc，与现行 Flutter 版可并存不覆盖
 
-          本版把界面数字做实：连接时长、上传/下载、实时速率、活动连接
-          均由 Rust 内核计算（模拟数据面）；开关、主题、选中项与连接态
-          已落盘，重启保留。规则引擎改为索引 trie + 关键词分桶 + CIDR
-          最长前缀，5 万规则吞吐不再塌方；工具页基准新增「索引 vs 线性」
-          对照，跑完自动恢复默认规则集。液态玻璃默认关闭。
+          本版补上真正的 App 图标：品牌 teal 底 + 白色向上箭头，桌面不再是
+          默认机器人。自适应图标（minSdk 26 全机型生效）+ 传统/圆形 PNG 兜底，
+          「我的 → 关于」页也露出 logo。顺带修掉一个真 bug：build.sh 原来
+          只编译 res 却没把 .flat 传给 aapt2 link，resources.arsc 一直是空的
+          40 字节，任何图片都不可能进包；现已接通，资源表 2716 字节。
 
           注意：仍是 PoC，不含协议栈 / geo / 真实 tun 转发，不能连代理；
           VpnService 仅声明、不触发，装机不会误断网。节点、配置、
-          订阅为界面演示占位。
+          订阅为界面演示占位。液态玻璃默认关闭。
 
           Release: https://github.com/${REPO}/releases/tag/${TAG}
           来源：rust-android 独立分支（非默认分支）· 手动派发

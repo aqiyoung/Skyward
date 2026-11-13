@@ -1,4 +1,4 @@
-# Skyward Rust Core · PoC-2（0.1.0.6-dev · 会话真值 / 索引引擎版）
+# Skyward Rust Core · PoC-2（0.1.0.7-dev · App 图标 / logo 版）
 
 一版可装机的最小骨架，用来回答三个问题：
 
@@ -12,7 +12,36 @@
 |---|---|---:|
 | `0.1.0.4-dev` | PoC-1：单按钮基准面板，验证架构体积下限 | 0.35 MB |
 | `0.1.0.5-dev` | 4 Tab 原生 View UI 骨架，修掉启动卡 `running...` | 0.36 MB |
-| `0.1.0.6-dev` | 索引引擎修 O(n) 塌方 + 会话真值 + 状态持久化（本版） | 0.37 MB 级 |
+| `0.1.0.6-dev` | 索引引擎修 O(n) 塌方 + 会话真值 + 状态持久化 | 0.39 MB |
+| `0.1.0.7-dev` | App 图标 / logo + 修复资源链路（本版） | 0.42 MB |
+
+## 0.1.0.7 相对上一版做了什么（本版）
+
+**补上真正的 App 图标 / logo，并修掉一个让任何图片都进不了包的构建链 bug。**
+
+之前桌面一直显示安卓默认机器人图标，原因有两层：`AndroidManifest.xml` 里没有
+`android:icon`；而且 `build.sh` 虽然用 `aapt2 compile --dir res` 编译了资源，却
+**从没把编译出的 `.flat` 文件传给 `aapt2 link`**——所以 `resources.arsc` 一直是空的
+40 字节，任何 drawable 都不可能被打包。
+
+| 改动 | 内容 |
+|---|---|
+| `scripts/gen_icons.py` | 可复现图标生成脚本（cairosvg，仅构建期依赖）；品牌 teal `#2AA6BC` + 白色「向上箭头 + 起飞地平线」，圆角线帽与 App 内 `IconView` 一致 |
+| res 资源 | 5 密度 × {`ic_launcher`, `ic_launcher_round`, `ic_launcher_foreground`} PNG、`mipmap-anydpi-v26` 自适应图标 XML、`values/colors.xml` 背景色、`drawable-nodpi/ic_logo.png` |
+| `AndroidManifest.xml` | 挂 `android:icon` / `android:roundIcon` → `@mipmap/ic_launcher`；`label` 改 `@string/app_name` |
+| `build.sh` | `aapt2 compile --dir res -o compiled/` 后把每个 `.flat` 传给 `aapt2 link`，资源数为 0 直接失败；`resources.arsc` 40 B → 2716 B |
+| `Pages.java` | 「我的 → 关于」页顶部露出 logo + 名称 + 定位（`getIdentifier`，无需 R 类） |
+
+`minSdk 26`，所以**自适应图标是所有目标机型的主显示路径**，传统 / 圆形 PNG 兜底。
+图标是**新画的品牌占位图形**，非现行 Flutter 版正式图标，替换只需改生成脚本重跑：
+
+```bash
+python3 scripts/gen_icons.py    # 重新生成 android/res 下全部图标资源
+```
+
+内核与运行时逻辑**零改动**：仍是 23 个 JNI 符号、索引引擎、会话真值、状态落盘；
+液态玻璃默认关闭、模块边界清晰不变。APK 从 0.39 → 0.42 MB，增量全是图标资源，
+`classes.dex` / `libskyward_core.so` 未变。
 
 ## 0.1.0.6 相对上一版做了什么
 
@@ -77,7 +106,9 @@ core/
   src/lib.rs          JNI 导出（23 个函数，全部原始类型）
   examples/bench.rs   宿主侧基准：语义一致性 + 索引/线性对照 + 会话真值
 android/
-  AndroidManifest.xml 纯原生，含 VpnService 声明
+  AndroidManifest.xml 纯原生，含 VpnService 声明 + icon / roundIcon / label
+  res/                 图标资源：5 密度 PNG + anydpi-v26 adaptive icon + colors.xml
+                       + drawable-nodpi/ic_logo.png（由 scripts/gen_icons.py 生成）
   java/.../RustCore.java          native 声明（23 个 JNI 函数）
   java/.../MainActivity.java      4 Tab 主壳 + 状态恢复 + 页面代次管理
   java/.../Pages.java             四个页面的分组卡片内容 + 对照基准
@@ -85,7 +116,8 @@ android/
   java/.../IconView.java          Canvas 自绘线性图标（零资源）
   java/.../AppState.java          UI 状态 + 会话真值 + SharedPreferences 持久化
   java/.../SkywardVpnService.java 那几十行无法省掉的壳
-build.sh               手工组装 APK（不经 Gradle）
+scripts/gen_icons.py   可复现的 App 图标 / logo 生成脚本（cairosvg，仅构建期）
+build.sh               手工组装 APK（不经 Gradle），aapt2 compile 后把 .flat 全传给 link
 dist/                  产物
 ```
 
@@ -100,7 +132,7 @@ dist/                  产物
 ```bash
 # 环境：Android SDK platform-35 / build-tools 35 / NDK r28c / JDK 17+ /
 #       rustup target aarch64-linux-android
-VERSION_CODE=6 VERSION_NAME="0.1.0.6-dev" ./build.sh
+VERSION_CODE=7 VERSION_NAME="0.1.0.7-dev" ./build.sh
 # 产物：dist/Skyward-RustCore-PoC1-arm64-v8a.apk（默认名，可用 OUT_APK 覆盖）
 ```
 
