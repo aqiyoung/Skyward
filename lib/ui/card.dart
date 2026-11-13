@@ -113,6 +113,7 @@ class CommonCard extends StatelessWidget {
     this.statesController,
     this.inert = false,
     this.fillsSelection = false,
+    this.backgroundColor,
     required this.child,
   }) : isSelected = isSelected ?? false;
 
@@ -127,6 +128,12 @@ class CommonCard extends StatelessWidget {
   final bool isError;
   final void Function()? onPressed;
   final Widget child;
+
+  /// When set, overrides the surface-derived fill (used by list rows that want
+  /// to read as glass behind them instead of an opaque card). `null` keeps the
+  /// original surface colour, so every other caller -- buttons, chips, dialogs
+  /// -- is untouched. Selected and error fills still win over this.
+  final Color? backgroundColor;
   final EdgeInsets? padding;
   final double? radius;
   final OutlinedBorder? shape;
@@ -154,6 +161,9 @@ class CommonCard extends StatelessWidget {
     }
     if (_filled) {
       return colorScheme.primary;
+    }
+    if (backgroundColor != null) {
+      return backgroundColor!;
     }
     return level.colorOf(colorScheme);
   }

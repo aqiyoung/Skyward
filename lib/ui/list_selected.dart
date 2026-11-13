@@ -41,6 +41,8 @@ class _DecorationListItemState extends State<DecorationListItem> {
 
   @override
   Widget build(BuildContext context) {
+    final glass = LiquidGlassScope.of(context);
+    final colorScheme = context.colorScheme;
     final proxy = ProxyDecoratorProvider.of(context);
     final proxyDecorator = proxy?.isProxyDecorator ?? false;
     final sortable = SortableItem.maybeOf(context);
@@ -69,6 +71,12 @@ class _DecorationListItemState extends State<DecorationListItem> {
         shape: AppShape.of(borderRadius),
         isError: widget.invalid,
         isSelected: widget.isSelected,
+        backgroundColor: glass
+            ? (colorScheme.brightness == Brightness.dark
+                      ? colorScheme.surfaceContainerHigh
+                      : colorScheme.surfaceContainer)
+                  .withValues(alpha: 0.72)
+            : null,
         padding: EdgeInsets.zero,
         statesController: _states,
         inert: sorting,
