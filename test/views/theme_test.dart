@@ -354,6 +354,10 @@ void main() {
       tester,
     ) async {
       await pumpThemeView(tester);
+      // The full live preview now lives behind a collapsed row; open it
+      // before reaching into it. It stays a tap away, nothing was removed.
+      await tester.tap(find.byKey(const ValueKey('themePreviewToggle')));
+      await tester.pumpAndSettle();
       Finder inPreview(Type type) => find.descendant(
         of: find.byType(ThemeLivePreview),
         matching: find.byType(type),

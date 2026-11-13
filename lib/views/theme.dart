@@ -160,7 +160,6 @@ class ColorStyleItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.colorStyle),
     );
     return ListItem<ColorStyle>.options(
-      leading: const IconWell(AppGlyphs.palette),
       title: Text(context.appLocalizations.colorStyle),
       options: ColorStyle.values,
       value: style,
@@ -462,7 +461,6 @@ class FontFamilyRow extends ConsumerWidget {
       themeSettingProvider.select((state) => state.fontFamily),
     );
     return ListItem(
-      leading: const IconWell(AppGlyphs.font),
       title: Text(appLocalizations.fontFamily),
       subtitle: Text(
         fontFamily ?? appLocalizations.defaultText,

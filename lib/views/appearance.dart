@@ -48,7 +48,7 @@ class AppearanceView extends ConsumerWidget {
           bottom: 24 + context.bottomInset,
         ),
         children: [
-          const ThemeLivePreview(),
+          const _CollapsiblePreview(),
           const _Section(
             items: [_LanguageItem(), _ThemeModeItem(), _PureBlackItem()],
           ),
@@ -97,6 +97,104 @@ class AppearanceView extends ConsumerWidget {
   }
 }
 
+/// The full-screen live preview, folded behind a single row.
+///
+/// [ThemeLivePreview] is a 9/17 card that used to occupy nearly half of the
+/// first screen while carrying no setting of its own. It now stays collapsed
+/// by default and is built only when the user asks to see it, keeping the
+/// actual settings visible and leaving its animation controllers idle until
+/// needed. Tapping the row toggles it; no setting or capability is removed.
+class _CollapsiblePreview extends StatefulWidget {
+  const _CollapsiblePreview();
+
+  @override
+  State<_CollapsiblePreview> createState() => _CollapsiblePreviewState();
+}
+
+class _CollapsiblePreviewState extends State<_CollapsiblePreview> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Section(
+          items: [
+            ListItem(
+              key: const ValueKey('themePreviewToggle'),
+              leading: const _PreviewThumb(),
+              title: Text(appLocalizations.preview),
+              subtitle: Text(
+                _expanded
+                    ? appLocalizations.showLess
+                    : appLocalizations.showMore,
+              ),
+              trailing: GlyphIcon(
+                _expanded ? AppGlyphs.chevronDown : AppGlyphs.chevronForward,
+              ),
+              onTap: () => setState(() => _expanded = !_expanded),
+            ),
+          ],
+        ),
+        if (_expanded) const ThemeLivePreview(),
+      ],
+    );
+  }
+}
+
+/// A tiny page pictogram for the collapsed row. It is the preview itself
+/// rather than a leading mark, so it stays even though the icon wells were
+/// dropped from the setting rows.
+class _PreviewThumb extends StatelessWidget {
+  const _PreviewThumb();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Container(
+      width: 40,
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.onSurface.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 3,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Container(
+            width: 20,
+            height: 3,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Container(
+            width: 14,
+            height: 3,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// One card of rows, set in from the page edge, with an optional title that
 /// also carries the section's action.
 class _Section extends StatelessWidget {
@@ -134,7 +232,6 @@ class _LanguageItem extends ConsumerWidget {
     );
     final currentLocale = getLocaleForString(locale);
     return ListItem<Locale?>.options(
-      leading: const IconWell(AppGlyphs.language),
       title: Text(appLocalizations.language),
       options: [null, ...AppLocalizations.delegate.supportedLocales],
       onChanged: (Locale? locale) {
@@ -159,7 +256,6 @@ class _ThemeModeItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.themeMode),
     );
     return ListItem<ThemeMode>.options(
-      leading: const IconWell(AppGlyphs.sun),
       title: Text(appLocalizations.theme),
       options: ThemeMode.values,
       onChanged: (ThemeMode mode) {
@@ -187,7 +283,6 @@ class _PureBlackItem extends ConsumerWidget {
     );
     final isDark = ref.watch(currentBrightnessProvider) == Brightness.dark;
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.pureBlack),
       title: Text(context.appLocalizations.pureBlackMode),
       value: pureBlack,
       onChanged: (value) {
@@ -216,7 +311,6 @@ class _NavigationBarItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.navigationBarStyle),
     );
     return ListItem<NavigationBarStyle>.options(
-      leading: const IconWell(AppGlyphs.layers),
       title: Text(appLocalizations.navigationBarStyle),
       options: NavigationBarStyle.values,
       value: style,
@@ -268,7 +362,6 @@ class _DockScaleItemState extends ConsumerState<_DockScaleItem> {
                 _DockScaleItem._step)
             .round();
     return ListItem(
-      leading: const IconWell(AppGlyphs.textSize),
       title: Text(context.appLocalizations.dockScale),
       padding: const EdgeInsets.only(left: 16, right: 8),
       trailing: Row(
@@ -317,7 +410,6 @@ class _DockLabelItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.motion),
       title: Text(appLocalizations.hideLabelOnScroll),
       subtitle: Text(appLocalizations.hideLabelOnScrollDesc),
       value: hideLabelOnScroll,
@@ -340,7 +432,6 @@ class _TabAnimationItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.tabAnimation),
     );
     return ListItem<TabAnimation>.options(
-      leading: const IconWell(AppGlyphs.motion),
       title: Text(appLocalizations.tabAnimation),
       options: TabAnimation.values,
       value: tabAnimation,
@@ -367,7 +458,6 @@ class _LiquidGlassItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.liquidGlass),
     );
     return ListItem<LiquidGlassMode>.options(
-      leading: const IconWell(AppGlyphs.liquidGlass),
       title: Text(appLocalizations.liquidGlass),
       options: LiquidGlassMode.values,
       value: mode,
@@ -394,7 +484,6 @@ class _SidebarBlurItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.sidebarBlur),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.blur),
       title: Text(context.appLocalizations.backgroundBlur),
       subtitle: Text(context.appLocalizations.sidebarBlurDesc),
       value: blur,
@@ -416,7 +505,6 @@ class _HapticFeedbackItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.hapticFeedback),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.devices),
       title: Text(context.appLocalizations.hapticFeedback),
       subtitle: Text(context.appLocalizations.hapticFeedbackDesc),
       value: enabled,
