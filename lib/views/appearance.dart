@@ -48,7 +48,12 @@ class AppearanceView extends ConsumerWidget {
         ),
         children: [
           const _Section(
-            items: [_LanguageItem(), _ThemeModeItem(), _PureBlackItem()],
+            items: [
+              _LiquidGlassItem(),
+              _LanguageItem(),
+              _ThemeModeItem(),
+              _PureBlackItem(),
+            ],
           ),
           _Section(
             title: appLocalizations.colorsSection,
@@ -80,7 +85,6 @@ class AppearanceView extends ConsumerWidget {
             title: appLocalizations.motionSection,
             items: [
               const _TabAnimationItem(),
-              const _LiquidGlassItem(),
               const _HapticFeedbackItem(),
               if (system.isMacOS || system.isWindows) const _SidebarBlurItem(),
             ],

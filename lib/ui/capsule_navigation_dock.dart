@@ -1,10 +1,11 @@
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/ui/navigation_dock.dart' show NavigationDockDestination;
+import 'package:skyward/ui/liquid_glass.dart';
+import 'package:skyward/ui/navigation_dock.dart'
+    show NavigationDockDestination, dockGlassShadows, dockShadows;
 import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
@@ -133,9 +134,11 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
       _bottomMargin * s,
       MediaQuery.paddingOf(context).bottom,
     );
-    final floating = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
     final dark = colorScheme.brightness == Brightness.dark;
     final selected = widget.destinations[widget.selectedIndex];
+    final glass = LiquidGlassScope.of(context);
+    final ultra =
+        LiquidGlassScope.qualityOf(context) == LiquidGlassQuality.ultra;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -163,82 +166,75 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                 height: widget.collapsed ? ball : height,
                 decoration: ShapeDecoration(
                   shape: AppShape.full,
-                  shadows: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.22),
-                      blurRadius: 26 * s,
-                      offset: Offset(0, 10 * s),
-                    ),
-                  ],
+                  // Glass draws its own depth through the pane; when it is off
+                  // the bar takes the same light lift as the other docks,
+                  // never a second heavy shadow on top of a backdrop blur.
+                  shadows: glass ? const [] : dockShadows(colorScheme),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: ClipRSuperellipse(
                   borderRadius: radius,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                    child: DecoratedBox(
-                      decoration: ShapeDecoration(
-                        color: floating.withValues(alpha: dark ? 0.80 : 0.90),
-                        shape: AppShape.full.copyWith(
-                          side: BorderSide(
-                            color: colorScheme.outlineVariant.withValues(
-                              alpha: dark ? 0.30 : 0.72,
+                  child: _CapsuleSurface(
+                    glass: glass,
+                    style: LiquidGlassStyle.pill(colorScheme),
+                    shadows: ultra ? dockGlassShadows(colorScheme) : const [],
+                    colorScheme: colorScheme,
+                    dark: dark,
+                    scale: s,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // A fixed width keeps the glyphs from being squeezed
+                        // while the bar narrows; the clip hides the rest.
+                        AnimatedOpacity(
+                          opacity: widget.collapsed ? 0 : 1,
+                          duration: _fade,
+                          child: IgnorePointer(
+                            ignoring: widget.collapsed,
+                            child: SizedBox(
+                              width: full,
+                              child: Row(
+                                children: [
+                                  for (var i = 0; i < _count; i++)
+                                    Expanded(
+                                      child: _Destination(
+                                        glyph: widget.destinations[i].glyph,
+                                        label: widget.destinations[i].label,
+                                        selected: i == widget.selectedIndex,
+                                        onTap: () {
+                                          hapticTap(context);
+                                          widget.onSelected(i);
+                                        },
+                                        scale: s,
+                                        colorScheme: colorScheme,
+                                        glass: glass,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                            width: _borderWidth * s,
                           ),
                         ),
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // A fixed width keeps the glyphs from being squeezed
-                          // while the bar narrows; the clip hides the rest.
-                          AnimatedOpacity(
-                            opacity: widget.collapsed ? 0 : 1,
-                            duration: _fade,
-                            child: IgnorePointer(
-                              ignoring: widget.collapsed,
-                              child: SizedBox(
-                                width: full,
-                                child: Row(
-                                  children: [
-                                    for (var i = 0; i < _count; i++)
-                                      Expanded(
-                                        child: _Destination(
-                                          glyph: widget.destinations[i].glyph,
-                                          label: widget.destinations[i].label,
-                                          selected: i == widget.selectedIndex,
-                                          onTap: () {
-                                            hapticTap(context);
-                                            widget.onSelected(i);
-                                          },
-                                          scale: s,
-                                          colorScheme: colorScheme,
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                        AnimatedOpacity(
+                          opacity: widget.collapsed ? 1 : 0,
+                          duration: _fade,
+                          child: IgnorePointer(
+                            ignoring: !widget.collapsed,
+                            child: Center(
+                              child: _Destination(
+                                glyph: selected.glyph,
+                                label: selected.label,
+                                selected: true,
+                                onTap: () => widget.onExpand?.call(),
+                                scale: s * 0.8,
+                                colorScheme: colorScheme,
+                                showChip: false,
+                                glass: glass,
                               ),
                             ),
                           ),
-                          AnimatedOpacity(
-                            opacity: widget.collapsed ? 1 : 0,
-                            duration: _fade,
-                            child: IgnorePointer(
-                              ignoring: !widget.collapsed,
-                              child: Center(
-                                child: _Destination(
-                                  glyph: selected.glyph,
-                                  label: selected.label,
-                                  selected: true,
-                                  onTap: () => widget.onExpand?.call(),
-                                  scale: s * 0.8,
-                                  colorScheme: colorScheme,
-                                  showChip: false,
-                                ),
-                              ),
-                            ),
-                          ),
+                        ),
+                        if (!glass)
                           IgnorePointer(
                             child: DecoratedBox(
                               decoration: ShapeDecoration(
@@ -257,6 +253,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                               ),
                             ),
                           ),
+                        if (!glass)
                           IgnorePointer(
                             child: DecoratedBox(
                               decoration: ShapeDecoration(
@@ -274,8 +271,7 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -284,6 +280,53 @@ class _CapsuleNavigationDockState extends State<CapsuleNavigationDock> {
           },
         ),
       ),
+    );
+  }
+}
+
+/// What the capsule stands on: the same glass pane as the other docks, or a
+/// plain opaque surface when glass is off. The old fixed `blur(18)` painted a
+/// blur no switch could turn off, which is why the bar kept flickering and
+/// cost memory on low-end devices.
+class _CapsuleSurface extends StatelessWidget {
+  const _CapsuleSurface({
+    required this.glass,
+    required this.style,
+    required this.shadows,
+    required this.colorScheme,
+    required this.dark,
+    required this.scale,
+    required this.child,
+  });
+
+  final bool glass;
+  final LiquidGlassStyle style;
+  final List<BoxShadow> shadows;
+  final ColorScheme colorScheme;
+  final bool dark;
+  final double scale;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (glass) {
+      // The pane supplies tint, haze, rim and dispersion. Anything painted
+      // behind it would only muddy the refraction.
+      return LiquidGlass(style: style, shadows: shadows, child: child);
+    }
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
+        shape: AppShape.full.copyWith(
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(
+              alpha: dark ? 0.30 : 0.72,
+            ),
+            width: _borderWidth * scale,
+          ),
+        ),
+      ),
+      child: child,
     );
   }
 }
@@ -297,6 +340,7 @@ class _Destination extends StatelessWidget {
     required this.scale,
     required this.colorScheme,
     this.showChip = true,
+    this.glass = false,
   });
 
   final Glyph glyph;
@@ -306,6 +350,7 @@ class _Destination extends StatelessWidget {
   final double scale;
   final ColorScheme colorScheme;
   final bool showChip;
+  final bool glass;
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +378,9 @@ class _Destination extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: selected && showChip
-                        ? colorScheme.onSurface.withValues(alpha: 0.14)
+                        ? colorScheme.onSurface.withValues(
+                            alpha: glass ? 0.06 : 0.14,
+                          )
                         : Colors.transparent,
                   ),
                 ),
