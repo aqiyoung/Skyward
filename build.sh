@@ -104,14 +104,27 @@ else
 fi
 
 say "== 3. aapt2 编译 Manifest / 生成基础 APK =="
+# aapt2 link 的 --version-code/--version-name 不会覆盖 manifest 里已硬编码的值，
+# 所以先生成一份把版本号替换掉的临时 manifest，再交给 link。
+python3 - "$AND/AndroidManifest.xml" "$BUILD/AndroidManifest.xml" "$VERSION_CODE" "$VERSION_NAME" <<'PY'
+import sys, re, html
+src, dst, code, name = sys.argv[1:5]
+s = open(src, encoding="utf-8").read()
+s = re.sub(r'android:versionCode="\d+"', f'android:versionCode="{int(code)}"', s)
+s = re.sub(r'android:versionName="[^"]*"',
+           f'android:versionName="{html.escape(name, quote=True)}"', s)
+open(dst, "w", encoding="utf-8").write(s)
+print(f"injected versionCode={code} versionName={name}")
+PY
 "$BT/aapt2" compile --dir "$AND/res" -o "$BUILD/res.flata" >/dev/null 2>>"$LOG" || true
 "$BT/aapt2" link -o "$BUILD/base.apk" \
   -I "$ANDROID_JAR" \
-  --manifest "$AND/AndroidManifest.xml" \
+  --manifest "$BUILD/AndroidManifest.xml" \
   --min-sdk-version "$API_LEVEL" --target-sdk-version "$TARGET_SDK" \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
   --auto-add-overlay >>"$LOG" 2>&1
 say "base.apk: $(stat -c%s "$BUILD/base.apk") bytes"
+"$BT/aapt2" dump badging "$BUILD/base.apk" 2>/dev/null | grep "^package:" | tee -a "$LOG"
 
 say "== 4. javac -> class -> d8 -> dex =="
 rm -rf "$BUILD/classes" "$BUILD/dex"; mkdir -p "$BUILD/classes" "$BUILD/dex"
