@@ -7,7 +7,6 @@ import 'package:skyward/ui/dialog.dart';
 import 'package:skyward/ui/focus.dart';
 import 'package:skyward/ui/haptic.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/ui/liquid_glass.dart';
 import 'package:skyward/ui/inherited.dart';
 import 'package:skyward/ui/input.dart';
 import 'package:skyward/ui/item_position.dart';
