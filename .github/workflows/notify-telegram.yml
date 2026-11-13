@@ -4,7 +4,12 @@ name: notify-telegram
 # dev-preview.yaml 的 secrets 与 chat 回落规则：
 #   TELEGRAM_PREVIEW_CHAT_ID（Dev 预览 / 个人）优先，未设置则回落 TELEGRAM_CHAT_ID。
 #
-# 仅 workflow_dispatch：TG 消息不可撤回，禁止任何自动触发（不挂 push / schedule）。
+# 推送的唯一路径是 workflow_dispatch（手动派发）。TG 消息不可撤回，因此：
+#   * 不挂 schedule，不挂 PR；
+#   * 下面那个 push 触发器仅用于「让 GitHub 注册这个工作流」——非默认分支上
+#     只挂 workflow_dispatch 的工作流不会被登记，dispatch API 会返回 404。
+#     它的 paths 只包含本文件自身，且 job 有硬拦截 if，push 产生的 run 一定
+#     被跳过，绝不会发送任何消息。
 # 不构建、不打 tag、不改默认分支、不进公共频道。APK 仅 0.35 MB，直接走官方
 # api.telegram.org/sendDocument（无需旧版那个绕 50 MB 上限的本地 Bot API server）。
 on:
@@ -18,18 +23,25 @@ on:
         description: 'Release 里的 APK 文件名'
         required: true
         default: 'Skyward-Rust-PoC-0.1.0.4-dev-arm64-v8a.apk'
+  push:
+    branches: [ rust-android ]
+    paths:
+      - '.github/workflows/notify-telegram.yml'
 
 permissions:
   contents: read
 
 jobs:
   send:
+    # 硬拦截：只有手动派发才真正发送。push 那次 run 只为完成工作流注册。
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       TAG: ${{ inputs.tag }}
       ASSET: ${{ inputs.asset }}
       REPO: ${{ github.repository }}
+      EVENT_NAME: ${{ github.event_name }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
@@ -47,6 +59,11 @@ jobs:
       - name: Send document to Dev preview chat
         run: |
           set -euo pipefail
+          # 双保险：即便 job 级 if 被误改，非 dispatch 事件也绝不发送。
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "skip: event=${EVENT_NAME} is not workflow_dispatch"
+            exit 0
+          fi
           chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-${TELEGRAM_CHAT_ID:-}}"
           if [ -z "$chat_id" ] || [ -z "${TELEGRAM_BOT_TOKEN:-}" ]; then
             echo "::error::Telegram secrets not configured"
@@ -57,7 +74,6 @@ jobs:
           cat > /tmp/caption.txt << CAP
           Skyward Rust 安卓 PoC · ${TAG}
           仅 arm64-v8a · ${mb} MB（现行 Flutter 版 60.30 MB）
-          versionCode=4 / versionName=0.1.0.4-dev
           12 个 JNI 符号 · debug 签名 · 装机需允许未知来源
           包名 com.threely.skyward.poc，与现行 Flutter 版可并存不覆盖
 
@@ -65,7 +81,7 @@ jobs:
           VpnService 仅声明、不触发，装机不会误断网。
 
           Release: https://github.com/${REPO}/releases/tag/${TAG}
-          来源：rust-android 独立分支（非默认分支）· workflow_dispatch run #4
+          来源：rust-android 独立分支（非默认分支）· 手动派发
           CAP
           http=$(curl -sS --max-time 180 -o /tmp/tg_resp.json -w "%{http_code}" \
             -F "chat_id=${chat_id}" \
