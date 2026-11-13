@@ -1,0 +1,114 @@
+name: android-rust
+
+# 目前只开发安卓端：这是本工程唯一的工作流，只出 arm64 安卓 APK。
+#
+# 旧的 Flutter 多平台 / 发版工作流（ci.yaml、dev-preview.yaml、preview.yaml、
+# preview-desktop.yaml、build*.yaml、publish-release.yaml、core-*、*-check 等）
+# 已在 aqiyoung/Skyward 仓库用 Actions disable 接口「整体暂停」：文件全部保留、
+# 内容一个字节未改，随时可精确恢复。恢复见 scripts/resume-legacy-workflows.py。
+#
+# 本工作流刻意不推送 Telegram、不打 Release tag、不构建 desktop / 其它平台。
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ rust-android, main, master, dev ]
+    paths:
+      - 'core/**'
+      - 'android/**'
+      - 'scripts/**'
+      - 'build.sh'
+      - '.github/workflows/android-rust.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # CI 用默认 stable toolchain（已装 aarch64-linux-android target），
+      # 空字符串表示「不走本机特有的 +1.99.0」。
+      RUST_TC: ''
+      ANDROID_API_LEVEL: '26'
+      ANDROID_TARGET_SDK: '35'
+      ANDROID_PLATFORM: android-35
+      NDK_VERSION: 28.2.13676358
+      BT_VERSION: 35.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Rust (aarch64-linux-android)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            core/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('core/Cargo.lock') }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK components (arm64 only)
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358" > /dev/null
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
+      - name: Build arm64 APK
+        run: |
+          chmod +x build.sh
+          VERSION_CODE="${{ github.run_number }}" \
+          VERSION_NAME="0.1.0.${{ github.run_number }}-dev" \
+          ./build.sh
+
+      - name: Verify APK
+        run: |
+          APK=$(ls dist/*.apk | head -1)
+          echo "APK = $APK"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" dump badging "$APK" | head -6
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK" | head -12
+          echo "--- arm64 native + dex ---"
+          unzip -l "$APK" | grep -E "lib/arm64-v8a/libskyward_core.so|classes.dex"
+
+      - name: Size report
+        run: |
+          {
+            echo "## Skyward Rust · arm64 安卓包"
+            echo ""
+            echo "- commit: \`${{ github.sha }}\`"
+            echo "- versionCode: \`${{ github.run_number }}\`"
+            echo "- APK: \`$(stat -c%s dist/*.apk) bytes\`"
+            echo ""
+            echo '```'
+            cat build/apk_breakdown.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload arm64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: skyward-rust-android-arm64-${{ github.run_number }}
+          path: dist/*.apk
+          if-no-files-found: error

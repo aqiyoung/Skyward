@@ -1,0 +1,19 @@
+[package]
+name = "skyward-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "skyward_core"
+crate-type = ["cdylib", "rlib"]
+
+[[example]]
+name = "bench"
+path = "examples/bench.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
