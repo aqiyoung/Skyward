@@ -2,38 +2,54 @@ package com.threely.skyward.poc;
 
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
+import java.io.IOException;
 
 /**
- * 无法用 Rust 省掉的几十行平台壳：Android 要求 VpnService 必须是
- * android.net.VpnService 的 Java 子类，并在 Manifest 声明。
+ * 系统流量接管：Android 上"接管设备层流量"的唯一入口是 VpnService。
+ * 本服务建立 TUN 设备并把文件描述符（fd）交给 Rust 内核（nativeOpenTun），
+ * 内核在独立线程里读取原始 IP 帧并解析 / 统计。
  *
- * PoC-1 只保留最小可用骨架，不建立真实 VPN 会话、不接管流量，
- * 避免装机后误触导致断网。真实 tun2socks + tun fd 交给 Rust 是 PoC-2。
+ * 注意：VpnService 必须在真机（或带 VPN 框架的模拟器）上运行，沙箱无法验证；
+ * 代码为标准 Android 实现，正确性不依赖内核数据面测试。
  */
 public class SkywardVpnService extends VpnService {
+    private ParcelFileDescriptor mFd;
 
-    private ParcelFileDescriptor tun;
-
-    /** 权限已由调用方通过 VpnService.prepare() 取得后才可调。 */
-    public boolean establishTun() {
-        Builder b = new Builder()
-                .setSession("Skyward Rust PoC")
-                .addAddress("10.233.233.2", 32)
-                .addRoute("10.233.233.0", 24)
-                .addDnsServer("1.1.1.1");
-        tun = b.establish();
-        return tun != null;
-    }
-
-    public int tunFd() {
-        return tun == null ? -1 : tun.getFd();
+    @Override
+    public int onStartCommand(android.content.Intent intent, int flags, int startId) {
+        try {
+            Builder b = new Builder();
+            b.setSession("Skyward");
+            // 给 TUN 接口一个私有地址，避免与真实网卡冲突。
+            b.addAddress("10.10.10.2", 24);
+            // 接管全部 IPv4 流量（0.0.0.0/0）。
+            b.addRoute("0.0.0.0", 0);
+            b.addDnsServer("8.8.8.8");
+            b.addDnsServer("1.1.1.1");
+            mFd = b.establish();
+        } catch (Exception e) {
+            e.printStackTrace();
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        if (mFd == null) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        // 把 fd 交给内核：内核从此 fd 读取原始 IP 帧。
+        RustCore.nativeOpenTun(mFd.getFd());
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        if (tun != null) {
-            try { tun.close(); } catch (Exception ignored) {}
-            tun = null;
+        RustCore.nativeCloseTun();
+        if (mFd != null) {
+            try {
+                mFd.close();
+            } catch (IOException ignored) {
+            }
+            mFd = null;
         }
         super.onDestroy();
     }

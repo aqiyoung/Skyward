@@ -68,4 +68,19 @@ public final class RustCore {
     /** 真实 TCP 探针（PoC-5）：内核经 tokio 做 DNS 解析 + 建连 + 收发试探字节。
      *  返回 CSV：ok,ms,ip,tx,rx,err。与 session_tick 模拟计数不是一回事。 */
     public static native String nativeProbe(String host, int port, long timeoutMs);
+
+    // ---- 真实代理入口 / TUN 接管（PoC-6：内核开始真转发）----
+
+    /** 启动本地 SOCKS5 入口：port 本地端口、ssServer 远端 SS 地址、ssPort 远端端口、password。返回 1/0。 */
+    public static native int nativeStartProxy(int port, String ssServer, int ssPort, String password);
+    /** 停止 SOCKS5 入口。返回 1/0。 */
+    public static native int nativeStopProxy();
+    /** 真实代理吞吐 CSV：tx,rx（字节）。区别于 nativeSessionBreakdown 的模拟会话。 */
+    public static native String nativeProxyStats();
+    /** 打开 TUN 接管：fd 由 VpnService 提供。返回 1/0。 */
+    public static native int nativeOpenTun(int fd);
+    /** 关闭 TUN 接管。返回 1/0。 */
+    public static native int nativeCloseTun();
+    /** TUN 真实流量统计 CSV：bytes,packets,tcp,udp。 */
+    public static native String nativeTunStats();
 }

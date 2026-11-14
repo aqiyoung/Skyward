@@ -42,6 +42,12 @@ public final class AppState {
     public long sessionUp = 0L;           // 落盘的累计上行字节（会话种子）
     public long sessionDown = 0L;
 
+    // ---- PoC-6：真实 SS 出站配置（本地 SOCKS5 入口把目标经此转发）----
+    public String ssServer = "1.2.3.4";   // 远端 SS 服务器（示例占位，真机需替换）
+    public int ssPort = 8388;
+    public String ssPassword = "skyward-poc";
+    public int socksPort = 1080;          // 本地 SOCKS5 入口端口
+
     /** 页面代次：每次 render 递增，首页秒级刷新据此自动退出，避免切页后空转 / 泄漏。 */
     public int pageEpoch = 0;
 
@@ -137,6 +143,10 @@ public final class AppState {
         connectSinceMs = p.getLong("connectSinceMs", 0L);
         sessionUp      = p.getLong("sessionUp", 0L);
         sessionDown    = p.getLong("sessionDown", 0L);
+        ssServer       = p.getString("ssServer", "1.2.3.4");
+        ssPort         = p.getInt("ssPort", 8388);
+        ssPassword     = p.getString("ssPassword", "skyward-poc");
+        socksPort      = p.getInt("socksPort", 1080);
         // 防御：越界值兜底，避免旧数据把数组索引打崩
         if (themeMode < 0 || themeMode > 2) themeMode = 0;
         if (ruleMode < 0 || ruleMode > 2) ruleMode = 0;
@@ -163,6 +173,10 @@ public final class AppState {
                 .putLong("connectSinceMs", connectSinceMs)
                 .putLong("sessionUp", sessionUp)
                 .putLong("sessionDown", sessionDown)
+                .putString("ssServer", ssServer)
+                .putInt("ssPort", ssPort)
+                .putString("ssPassword", ssPassword)
+                .putInt("socksPort", socksPort)
                 .apply();
     }
 

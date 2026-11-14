@@ -1,9 +1,12 @@
 package com.threely.skyward.poc;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -40,6 +43,35 @@ public class MainActivity extends Activity {
     private LinearLayout dock;
     private final TextView[] tabLabels = new TextView[5];
     private final IconView[] tabIcons = new IconView[5];
+
+    public static final int VPN_REQ = 9001;
+
+    /** 请求 VPN 权限并启动系统流量接管（VpnService）。首次需用户授权。
+     *  接受 Context（调用方多为页面里的 Context，运行时即 Activity）。 */
+    public static void requestVpn(Context a) {
+        Intent intent = VpnService.prepare(a);
+        if (intent != null) {
+            if (a instanceof Activity) {
+                ((Activity) a).startActivityForResult(intent, VPN_REQ);
+            } else {
+                a.startActivity(intent);
+            }
+        } else {
+            a.startService(new Intent(a, SkywardVpnService.class));
+        }
+    }
+
+    /** 停止系统流量接管。 */
+    public static void stopVpn(Context a) {
+        a.stopService(new Intent(a, SkywardVpnService.class));
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, android.content.Intent data) {
+        if (req == VPN_REQ && res == Activity.RESULT_OK) {
+            startService(new Intent(this, SkywardVpnService.class));
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

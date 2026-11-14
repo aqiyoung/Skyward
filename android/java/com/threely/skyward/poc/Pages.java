@@ -195,6 +195,23 @@ public final class Pages {
                 "%s · %s 包 · %d 连接", AppState.humanBytes(b0[6]), humanK(b0[7]), b0[8]));
         body.addView(dist);
 
+        // 真实代理流量（PoC-6）：内核经 SS 出站真实转发的字节，区别于上方模拟会话。
+        body.addView(Ui.groupTitle(c, "真实代理流量（PoC-6 · 非模拟）"));
+        LinearLayout proxyCard = Ui.newCard(c);
+        final TextView[] proxyVals = new TextView[2];
+        String[] pKeys = {"↑ 代理上行", "↓ 代理下行"};
+        for (int i = 0; i < 2; i++) {
+            final TextView v = Ui.valueText(c, "0 B");
+            proxyVals[i] = v;
+            proxyCard.addView(Ui.row(c, i == 0 ? IconView.Glyph.ARROW_UP : IconView.Glyph.ARROW_DOWN,
+                    i == 0 ? Ui.GREEN : Ui.BLUE, pKeys[i], "内核 SS 真实转发", v, null));
+            if (i == 0) proxyCard.addView(Ui.separator(c));
+        }
+        long[] pv0 = parseCsv2(RustCore.nativeProxyStats());
+        proxyVals[0].setText(AppState.humanBytes(pv0[0]));
+        proxyVals[1].setText(AppState.humanBytes(pv0[1]));
+        body.addView(proxyCard);
+
         // 真实数据面探针：内核经 tokio 运行时做真实 DNS 解析 + TCP 建连 + 收发试探字节。
         // 这是内核「真能收发字节」的实测证据，与上方由 session_tick 模拟出来的流量计数不是一回事。
         body.addView(Ui.groupTitle(c, "数据面验证（真实 socket · 非模拟）"));
@@ -232,40 +249,45 @@ public final class Pages {
         final View anchor = body;
         final Runnable ticker = new Runnable() {
             @Override public void run() {
-                if (!s.connected || s.pageEpoch != epoch) return;
-                s.tick();
-                long now = System.currentTimeMillis();
-                long dt = Math.max(1L, now - prev[2]);
-                long up = s.upBytes(), down = s.downBytes();
-                long rUp = (up - prev[0]) * 1000L / dt;
-                long rDown = (down - prev[1]) * 1000L / dt;
-                prev[0] = up; prev[1] = down; prev[2] = now;
-                statVals[0].setText(AppState.humanBytes(up));
-                statVals[1].setText(AppState.humanBytes(down));
-                statVals[2].setText(AppState.humanDuration(s.uptimeSec()));
-                rateUpV.setText(AppState.rate(rUp));
-                rateDownV.setText(AppState.rate(rDown));
-                connV.setText(RustCore.nativeConnCount() + " 条");
-                // 按动作分桶：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxC,rejBytes,rejPkts,rejConns
-                String b = RustCore.nativeSessionBreakdown();
-                long[] v = parseCsv9(b);
-                distVals[0].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[0]), humanK(v[1]), v[2]));
-                distVals[1].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[3]), humanK(v[4]), v[5]));
-                distVals[2].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[6]), humanK(v[7]), v[8]));
+                if (s.pageEpoch != epoch) return;
+                if (s.connected) {
+                    s.tick();
+                    long now = System.currentTimeMillis();
+                    long dt = Math.max(1L, now - prev[2]);
+                    long up = s.upBytes(), down = s.downBytes();
+                    long rUp = (up - prev[0]) * 1000L / dt;
+                    long rDown = (down - prev[1]) * 1000L / dt;
+                    prev[0] = up; prev[1] = down; prev[2] = now;
+                    statVals[0].setText(AppState.humanBytes(up));
+                    statVals[1].setText(AppState.humanBytes(down));
+                    statVals[2].setText(AppState.humanDuration(s.uptimeSec()));
+                    rateUpV.setText(AppState.rate(rUp));
+                    rateDownV.setText(AppState.rate(rDown));
+                    connV.setText(RustCore.nativeConnCount() + " 条");
+                    // 按动作分桶：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxC,rejBytes,rejPkts,rejConns
+                    long[] v = parseCsv9(RustCore.nativeSessionBreakdown());
+                    distVals[0].setText(String.format(Locale.getDefault(),
+                            "%s · %s 包 · %d 连接",
+                            AppState.humanBytes(v[0]), humanK(v[1]), v[2]));
+                    distVals[1].setText(String.format(Locale.getDefault(),
+                            "%s · %s 包 · %d 连接",
+                            AppState.humanBytes(v[3]), humanK(v[4]), v[5]));
+                    distVals[2].setText(String.format(Locale.getDefault(),
+                            "%s · %s 包 · %d 连接",
+                            AppState.humanBytes(v[6]), humanK(v[7]), v[8]));
+                }
+                // 真实代理吞吐始终刷新（内核 SS 真实转发，不依赖「连接」开关）
+                long[] p = parseCsv2(RustCore.nativeProxyStats());
+                proxyVals[0].setText(AppState.humanBytes(p[0]));
+                proxyVals[1].setText(AppState.humanBytes(p[1]));
                 anchor.postDelayed(this, 1000);
             }
         };
-        if (s.connected) anchor.postDelayed(ticker, 1000);
+        anchor.postDelayed(ticker, 1000);
 
-        body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、按动作分桶流量、规则与内存"
-                + "均由 Rust 内核计算（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"
-                + "其中「数据面验证」卡片是内核经 tokio 的真实 socket 探测（真实 DNS + TCP 收发字节，非模拟）。"));
+        body.addView(note(c, "说明：上方「网络概览 / 流量分配」是内核模拟会话（不接管真实网卡）；"
+                + "「真实代理流量」与「数据面验证」是内核经 tokio + SS 的真实 socket 收发字节（非模拟）。"
+                + "节点、配置、订阅为界面演示占位。TUN 接管需系统 VPN 授权，真机验证。"));
         return page(c, body);
     }
 
@@ -418,6 +440,53 @@ public final class Pages {
                 n > 0 ? "已解析 " + n + " 个节点" : "演示入口", null,
                 v -> Ui.toast(c, "PoC 阶段未接入真实延迟探测（当前为模拟值）")));
         body.addView(gset);
+
+        // ===== 本地代理入口（PoC-6）：真实 SOCKS5 → SS 转发，需系统 VPN 授权 =====
+        body.addView(Ui.groupTitle(c, "本地代理入口（PoC-6 · 真实转发）"));
+        LinearLayout entryCard = Ui.newCard(c);
+        Switch swEntry = Ui.toggle(c, false);
+        swEntry.setOnCheckedChangeListener((b, on) -> {
+            if (on) {
+                // 先向系统申请 VPN 权限（首授权后由 onActivityResult 拉起 VpnService）；
+                // VpnService 建立 tun 并 nativeOpenTun 后，内核即可在独立线程读帧。
+                MainActivity.requestVpn(c);
+                // 拉起 SOCKS5 入口 + SS 出站（即使 tun fd 未到位，SOCKS5 端口也已就绪）
+                try {
+                    RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort, s.ssPassword);
+                    Ui.toast(c, "本地代理入口已开启 · SOCKS5:" + s.socksPort
+                            + " → SS:" + s.ssServer + ":" + s.ssPort);
+                } catch (Throwable t) {
+                    Ui.toast(c, "开启失败：" + t.getClass().getSimpleName());
+                }
+            } else {
+                try { RustCore.nativeStopProxy(); } catch (Throwable ignored) {}
+                try { MainActivity.stopVpn(c); } catch (Throwable ignored) {}
+                Ui.toast(c, "本地代理入口已关闭");
+            }
+        });
+        entryCard.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "本地代理入口",
+                "SOCKS5 → SS 真实转发 · 需 VPN 授权", swEntry, null));
+
+        // 远端 SS 配置 + 本地 SOCKS5 端口（改动即落盘）
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "远端 SS 服务器", s.ssServer, v -> {
+            s.ssServer = v.trim(); s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "远端 SS 端口", String.valueOf(s.ssPort), v -> {
+            try { s.ssPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.ssPort = 8388; }
+            s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "SS 密码", s.ssPassword, v -> {
+            s.ssPassword = v; s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "本地 SOCKS5 端口", String.valueOf(s.socksPort), v -> {
+            try { s.socksPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.socksPort = 1080; }
+            s.save();
+        }));
+        body.addView(entryCard);
 
         // 路由规则测试：输入域名，查命中规则与动作（来自 Rust 索引引擎）
         body.addView(Ui.groupTitle(c, "路由规则测试"));
@@ -671,7 +740,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.11-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.12-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
@@ -767,6 +836,51 @@ public final class Pages {
         if (s == null) return out;
         String[] p = s.split(",");
         for (int i = 0; i < 9 && i < p.length; i++) {
+            try { out[i] = Long.parseLong(p[i].trim()); } catch (Throwable t) { out[i] = 0; }
+        }
+        return out;
+    }
+
+    /** 可编辑文本行：左标签 + 右 EditText，失焦/回车时回传文本并落盘。 */
+    private static View editRow(Context c, String label, String value,
+                                OnValueChange cb) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+        TextView lab = new TextView(c);
+        lab.setText(label);
+        lab.setTextSize(12);
+        lab.setTextColor(Ui.TEXT2);
+        row.addView(lab);
+        final android.widget.EditText et = new android.widget.EditText(c);
+        et.setText(value);
+        et.setTextSize(14);
+        et.setTextColor(Ui.TEXT);
+        et.setPadding(0, Ui.dp(c, 4), 0, 0);
+        et.setBackgroundResource(0);
+        et.setSingleLine(true);
+        et.setOnEditorActionListener((v, actionId, event) -> {
+            cb.onChange(et.getText().toString());
+            return false;
+        });
+        et.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) cb.onChange(et.getText().toString());
+        });
+        row.addView(et);
+        return row;
+    }
+
+    /** 可编辑文本行的回调：失焦 / 回车时把最新文本交回调用方落盘。 */
+    private interface OnValueChange {
+        void onChange(String value);
+    }
+
+    /** 解析 2 段逗号分隔的 long 序列（tx,rx），缺段补 0。 */
+    private static long[] parseCsv2(String s) {
+        long[] out = new long[2];
+        if (s == null) return out;
+        String[] p = s.split(",");
+        for (int i = 0; i < 2 && i < p.length; i++) {
             try { out[i] = Long.parseLong(p[i].trim()); } catch (Throwable t) { out[i] = 0; }
         }
         return out;

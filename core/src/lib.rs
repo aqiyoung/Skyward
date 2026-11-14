@@ -9,11 +9,19 @@
 
 pub mod engine;
 pub mod net;
+pub mod socks5;
+pub mod ss;
+pub mod tun;
 
 use engine::{Core, CORE_VERSION, RuleKind};
+use socks5::{run_socks5, ProxyConfig};
 use std::ffi::{c_char, c_void, CStr, CString};
+use std::os::fd::RawFd;
 use std::sync::OnceLock;
 use std::time::Instant;
+use std::sync::Mutex as StdMutex;
+use tokio::task::JoinHandle;
+use tun::{run_tun_blocking, TunStats};
 
 // JNI 原始类型别名（与 jni.h 一致）。
 #[allow(non_camel_case_types)]
@@ -470,4 +478,117 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProbe(
     let rt = net::runtime();
     let probe = rt.block_on(net::tcp_probe(&h, p, t));
     new_jstring(env, &probe.to_csv())
+}
+
+// ---------------- 真实代理入口 / TUN 接管（PoC-6：内核开始真转发） ----------------
+
+/// SOCKS5 监听任务句柄（用于 stop）。
+static PROXY_TASK: OnceLock<StdMutex<Option<JoinHandle<()>>>> = OnceLock::new();
+fn proxy_task() -> &'static StdMutex<Option<JoinHandle<()>>> {
+    PROXY_TASK.get_or_init(|| StdMutex::new(None))
+}
+
+/// TUN 真实流量统计句柄（VpnService 提供 fd 后由 `run_tun_blocking` 返回）。
+static TUN_STATS: OnceLock<StdMutex<Option<std::sync::Arc<StdMutex<TunStats>>>>> = OnceLock::new();
+fn tun_stats() -> &'static StdMutex<Option<std::sync::Arc<StdMutex<TunStats>>>> {
+    TUN_STATS.get_or_init(|| StdMutex::new(None))
+}
+
+/// 启动本地 SOCKS5 入口（默认 1080），把目标经 SS 出站协议转发到远端。
+/// 参数：port 本地监听端口、ssServer 远端 SS 地址、ssPort 远端 SS 端口、password。
+/// 返回 1=已启动 / 0=参数无效。内核自此具备「真实代理入口」，外部 App 可把代理指向本机。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStartProxy(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    port: jint,
+    ss_server: *mut c_void,
+    ss_port: jint,
+    password: *mut c_void,
+) -> jint {
+    if port <= 0 || ss_port <= 0 {
+        return 0;
+    }
+    let server = read_jstring(env, ss_server);
+    let pwd = read_jstring(env, password);
+    let cfg = std::sync::Arc::new(ProxyConfig {
+        ss_server: server,
+        ss_port: ss_port as u16,
+        password: pwd,
+    });
+    let rt = net::runtime();
+    let handle = rt.spawn(async move {
+        let _ = run_socks5(port as u16, cfg).await;
+    });
+    *proxy_task().lock().unwrap() = Some(handle);
+    ss::reset_proxy_stats();
+    1
+}
+
+/// 停止 SOCKS5 入口。返回 1=已停止 / 0=本就未运行。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStopProxy(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    if let Some(h) = proxy_task().lock().unwrap().take() {
+        h.abort();
+        1
+    } else {
+        0
+    }
+}
+
+/// 真实代理吞吐统计 CSV：tx,rx（字节）。区别于 `nativeSessionBreakdown` 的模拟会话。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProxyStats(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> *mut c_void {
+    let s = ss::proxy_stats().lock().unwrap();
+    new_jstring(env, &format!("{},{}", s.tx, s.rx))
+}
+
+/// 打开 TUN 接管：Android `VpnService` 建立 tun 后将 fd 传给内核，内核在独立线程里
+/// 读取原始 IP 帧、解析并累计真实流量。返回 1=已开启 / 0=fd 无效。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenTun(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    fd: jint,
+) -> jint {
+    let _ = env;
+    if fd <= 0 {
+        return 0;
+    }
+    let stats = run_tun_blocking(fd as RawFd);
+    *tun_stats().lock().unwrap() = Some(stats);
+    1
+}
+
+/// 关闭 TUN 接管（关闭 fd，读取线程自然退出）。返回 1=已关闭 / 0=本就未开启。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseTun(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> jint {
+    if tun_stats().lock().unwrap().take().is_some() {
+        1
+    } else {
+        0
+    }
+}
+
+/// TUN 真实流量统计 CSV：bytes,packets,tcp,udp。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeTunStats(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> *mut c_void {
+    if let Some(s) = tun_stats().lock().unwrap().as_ref() {
+        let s = s.lock().unwrap();
+        new_jstring(env, &format!("{},{},{},{}", s.bytes, s.packets, s.tcp, s.udp))
+    } else {
+        new_jstring(env, "0,0,0,0")
+    }
 }
