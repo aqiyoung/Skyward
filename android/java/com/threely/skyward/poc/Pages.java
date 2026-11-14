@@ -234,7 +234,6 @@ public final class Pages {
         // 出站模式：规则 / 全局 / 直连
         LinearLayout seg = new LinearLayout(c);
         seg.setOrientation(LinearLayout.HORIZONTAL);
-        seg.setPadding(0, Ui.dp(c, 12), 0, 0);
         GradientDrawable segBg = new GradientDrawable();
         segBg.setColor(Color.parseColor("#F2F2F7"));
         segBg.setCornerRadius(Ui.dp(c, 12));
@@ -263,7 +262,10 @@ public final class Pages {
             seg.addView(t, new LinearLayout.LayoutParams(0,
                     ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         }
-        card2.addView(seg);
+        LinearLayout.LayoutParams segLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        segLp.topMargin = Ui.dp(c, 12);
+        card2.addView(seg, segLp);
 
         // VPN / 局域网：两块并排（手机版原样：无开关，点块切换）
         LinearLayout tiles = new LinearLayout(c);
@@ -292,29 +294,70 @@ public final class Pages {
         card2.addView(tiles);
         body.addView(card2, cardGap(c));
 
-        // ===== 卡 3 · 网络概览（服务状态网格）=====
+        // ===== 卡 3 · 网络概览（服务格 2×2：36dp 徽章 + 名称 / 延迟，格高 50）=====
         LinearLayout card3 = lcard(c);
-        card3.addView(cardHead(c, IconView.Glyph.GLOBE, "网络概览", null));
-        LinearLayout grid1 = new LinearLayout(c);
-        grid1.setOrientation(LinearLayout.HORIZONTAL);
-        grid1.setPadding(0, Ui.dp(c, 12), 0, 0);
-        grid1.addView(tile(c, "GitHub", "—"),
-                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout.LayoutParams g1 = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        g1.leftMargin = Ui.dp(c, 8);
-        grid1.addView(tile(c, "Google", "—"), g1);
-        card3.addView(grid1);
-        LinearLayout grid2 = new LinearLayout(c);
-        grid2.setOrientation(LinearLayout.HORIZONTAL);
-        grid2.setPadding(0, Ui.dp(c, 8), 0, 0);
-        grid2.addView(tile(c, "Cloudflare", "—"),
-                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout.LayoutParams g2 = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        g2.leftMargin = Ui.dp(c, 8);
-        grid2.addView(tile(c, "本机网关", "—"), g2);
-        card3.addView(grid2);
+        final TextView verdict3 = chip(c, "", Ui.GREEN, Color.parseColor("#1400A94F"));
+        verdict3.setVisibility(View.GONE);
+        card3.addView(cardHead(c, IconView.Glyph.GLOBE, "网络概览", verdict3));
+
+        final String gwIp = NetProbe.gateway(c);
+        final String[] svcName = {"GitHub", "Google", "Cloudflare", "本机网关"};
+        final String[] svcHost = {"github.com", "www.google.com", "1.1.1.1", gwIp};
+        final int[] svcPort = {443, 443, 443, 80};
+        final IconView.Glyph[] svcGlyph = {IconView.Glyph.LAYERS, IconView.Glyph.GLOBE,
+                IconView.Glyph.BOLT, IconView.Glyph.ROUTE};
+        final TextView[] svcState = new TextView[4];
+        final boolean[] svcOk = new boolean[4];
+        final int[] doneCount = {0};
+
+        LinearLayout grid3 = new LinearLayout(c);
+        grid3.setOrientation(LinearLayout.VERTICAL);
+        grid3.setPadding(0, Ui.dp(c, 12), 0, 0);
+        for (int r = 0; r < 2; r++) {
+            LinearLayout svcLine = new LinearLayout(c);
+            svcLine.setOrientation(LinearLayout.HORIZONTAL);
+            if (r > 0) svcLine.setPadding(0, Ui.dp(c, 8), 0, 0);
+            for (int col = 0; col < 2; col++) {
+                int idx = r * 2 + col;
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        0, Ui.dp(c, 50), 1f);
+                if (col > 0) lp.leftMargin = Ui.dp(c, 8);
+                svcLine.addView(svcCell(c, svcGlyph[idx], svcName[idx], svcState, idx), lp);
+            }
+            grid3.addView(svcLine);
+        }
+        card3.addView(grid3);
+
+        // 四路并发探测，结果回主线程写格子；全部回来后再给标题补结论芯片。
+        for (int i = 0; i < 4; i++) {
+            final int idx = i;
+            NetProbe.probe(svcHost[i], svcPort[i], 1800, new NetProbe.Cb() {
+                @Override public void onResult(final int ms, final boolean ok) {
+                    card3.post(new Runnable() {
+                        @Override public void run() {
+                            svcOk[idx] = ok;
+                            svcState[idx].setText(ok ? ms + " ms" : "不可达");
+                            svcState[idx].setTextColor(ok
+                                    ? (ms < 250 ? Ui.GREEN : Ui.ORANGE) : Ui.TEXT3);
+                            doneCount[0]++;
+                            if (doneCount[0] < 4) return;
+                            int bad = 0;
+                            for (boolean b : svcOk) if (!b) bad++;
+                            verdict3.setVisibility(View.VISIBLE);
+                            if (bad > 0) {
+                                verdict3.setText(bad + " 项异常");
+                                verdict3.setTextColor(Ui.ORANGE);
+                                verdict3.setBackground(chipBg(c, "#1AFF9F0A"));
+                            } else {
+                                verdict3.setText("全部可用");
+                                verdict3.setTextColor(Ui.GREEN);
+                                verdict3.setBackground(chipBg(c, "#1400A94F"));
+                            }
+                        }
+                    });
+                }
+            });
+        }
         body.addView(card3, cardGap(c));
 
         // ===== 卡 4 · 路由看板（线框地球 + 本机→节点→目的地）=====
@@ -323,13 +366,13 @@ public final class Pages {
         Dash.GlobeView globe = new Dash.GlobeView(c);
         LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(c, 150));
-        glp.topMargin = Ui.dp(c, 6);
+        glp.topMargin = Ui.dp(c, 14);
         globe.setLayoutParams(glp);
         card4.addView(globe);
         LinearLayout cols = new LinearLayout(c);
         cols.setOrientation(LinearLayout.HORIZONTAL);
         cols.setGravity(Gravity.CENTER_VERTICAL);
-        cols.setPadding(0, Ui.dp(c, 6), 0, 0);
+        cols.setPadding(0, Ui.dp(c, 16), 0, 0);
         String nodeName = "";
         try { nodeName = RustCore.nativeNodeName(s.selectedNode); } catch (Throwable ignored) {}
         cols.addView(rcol(c, "本机", "本设备", "局域网"),
@@ -475,6 +518,59 @@ public final class Pages {
         return row;
     }
 
+    /**
+     * 服务格（原版 _ServiceCell）：浅灰底、16 圆角、高 50，
+     * 左侧 36dp 白底徽章 + 19dp 图标，右侧名称 12sp / 延迟 11sp。
+     * 状态 TextView 回填到 sink，供探测结果后续改写。
+     */
+    private static LinearLayout svcCell(Context c, IconView.Glyph glyph, String name,
+                                        TextView[] sink, int idx) {
+        LinearLayout t = new LinearLayout(c);
+        t.setOrientation(LinearLayout.HORIZONTAL);
+        t.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Ui.TONE);
+        g.setCornerRadius(Ui.dp(c, 16));
+        t.setBackground(g);
+        t.setPadding(Ui.dp(c, 7), 0, Ui.dp(c, 12), 0);
+
+        FrameLayout badge = new FrameLayout(c);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(Ui.dp(c, 9));
+        badge.setBackground(bg);
+        IconView ic = new IconView(c, glyph, Ui.TEXT2);
+        int is = Ui.dp(c, 19);
+        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(is, is);
+        ilp.gravity = Gravity.CENTER;
+        badge.addView(ic, ilp);
+        t.addView(badge, new LinearLayout.LayoutParams(Ui.dp(c, 36), Ui.dp(c, 36)));
+
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        clp.leftMargin = Ui.dp(c, 8);
+        TextView n = new TextView(c);
+        n.setText(name);
+        n.setTextSize(12);
+        n.setTextColor(Ui.TEXT2);
+        n.setSingleLine(true);
+        n.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        col.addView(n);
+        TextView st = new TextView(c);
+        st.setText("检测中…");
+        st.setTextSize(11);
+        st.setTextColor(Ui.TEXT3);
+        st.setSingleLine(true);
+        st.setPadding(0, Ui.dp(c, 1), 0, 0);
+        col.addView(st);
+        t.addView(col, clp);
+
+        if (sink != null && idx >= 0 && idx < sink.length) sink[idx] = st;
+        return t;
+    }
+
     private static GradientDrawable chipBg(Context c, String hex) {
         GradientDrawable g = new GradientDrawable();
         g.setColor(Color.parseColor(hex));
@@ -535,7 +631,7 @@ public final class Pages {
         t.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable g = new GradientDrawable();
         g.setColor(Color.parseColor("#F2F2F7"));
-        g.setCornerRadius(Ui.dp(c, 22));
+        g.setCornerRadius(Ui.dp(c, 20));
         t.setBackground(g);
         t.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 12));
         TextView a = new TextView(c);
