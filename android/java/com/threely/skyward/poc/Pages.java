@@ -264,7 +264,21 @@ public final class Pages {
         LinearLayout tiles = new LinearLayout(c);
         tiles.setOrientation(LinearLayout.HORIZONTAL);
         tiles.setPadding(0, Ui.dp(c, 10), 0, 0);
-        tiles.addView(tile(c, "VPN", s.tunMode ? "已接管" : "未接管"),
+        LinearLayout vpnTile = tile(c, "VPN", s.tunMode ? "已接管" : "未接管");
+        vpnTile.setClickable(true);
+        vpnTile.setOnClickListener(v -> {
+            if (AppState.get().tunMode) {
+                try { RustCore.nativeCloseTun(); } catch (Throwable ignored) {}
+                MainActivity.stopVpn(c);
+                AppState.get().tunMode = false;
+            } else {
+                MainActivity.requestVpn(c);
+                AppState.get().tunMode = true;
+            }
+            AppState.get().save();
+            refresh.run();
+        });
+        tiles.addView(vpnTile,
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         LinearLayout.LayoutParams tlp2 = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
@@ -511,7 +525,7 @@ public final class Pages {
         a.setTextColor(up ? Ui.ORANGE : Ui.BLUE);
         top.addView(a);
         rate.setText("0 B/s");
-        rate.setTextSize(14);
+        rate.setTextSize(13);
         rate.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         rate.setTextColor(Ui.TEXT);
         LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
@@ -521,7 +535,7 @@ public final class Pages {
         top.addView(rate);
         col.addView(top);
         total.setText("累计 0 B");
-        total.setTextSize(11);
+        total.setTextSize(10);
         total.setTextColor(Ui.TEXT3);
         total.setPadding(0, Ui.dp(c, 1), 0, 0);
         col.addView(total);
@@ -765,6 +779,53 @@ public final class Pages {
                 n > 0 ? "已解析 " + n + " 个节点" : "演示入口", null,
                 v -> Ui.toast(c, "PoC 阶段未接入真实延迟探测（当前为模拟值）")));
         body.addView(gset);
+
+        // ===== 本地代理入口（PoC-6）：真实 SOCKS5 → SS 转发，需系统 VPN 授权 =====
+        body.addView(Ui.groupTitle(c, "本地代理入口（真实转发）"));
+        LinearLayout entryCard = Ui.newCard(c);
+        Switch swEntry = Ui.toggle(c, false);
+        swEntry.setOnCheckedChangeListener((b, on) -> {
+            if (on) {
+                // 先向系统申请 VPN 权限（首授权后由 onActivityResult 拉起 VpnService）；
+                // VpnService 建立 tun 并 nativeOpenTun 后，内核即可在独立线程读帧。
+                MainActivity.requestVpn(c);
+                // 拉起 SOCKS5 入口 + SS 出站（即使 tun fd 未到位，SOCKS5 端口也已就绪）
+                try {
+                    RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort, s.ssPassword);
+                    Ui.toast(c, "本地代理入口已开启 · SOCKS5:" + s.socksPort
+                            + " → SS:" + s.ssServer + ":" + s.ssPort);
+                } catch (Throwable t) {
+                    Ui.toast(c, "开启失败：" + t.getClass().getSimpleName());
+                }
+            } else {
+                try { RustCore.nativeStopProxy(); } catch (Throwable ignored) {}
+                try { MainActivity.stopVpn(c); } catch (Throwable ignored) {}
+                Ui.toast(c, "本地代理入口已关闭");
+            }
+        });
+        entryCard.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "本地代理入口",
+                "SOCKS5 → SS 转发 · 需 VPN 授权", swEntry, null));
+
+        // 远端 SS 配置 + 本地 SOCKS5 端口（改动即落盘）
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "远端 SS 服务器", s.ssServer, v -> {
+            s.ssServer = v.trim(); s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "远端 SS 端口", String.valueOf(s.ssPort), v -> {
+            try { s.ssPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.ssPort = 8388; }
+            s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "SS 密码", s.ssPassword, v -> {
+            s.ssPassword = v; s.save();
+        }));
+        entryCard.addView(Ui.separator(c));
+        entryCard.addView(editRow(c, "本地 SOCKS5 端口", String.valueOf(s.socksPort), v -> {
+            try { s.socksPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.socksPort = 1080; }
+            s.save();
+        }));
+        body.addView(entryCard);
 
         // 路由规则测试：输入域名，查命中规则与动作（来自 Rust 索引引擎）
         body.addView(Ui.groupTitle(c, "路由规则测试"));
@@ -1018,7 +1079,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-6 · SOCKS5 + SS 真实转发 · TUN 接管版")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.16-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.17-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
@@ -1195,5 +1256,38 @@ public final class Pages {
 
     private static long safeLong(String s) {
         try { return Long.parseLong(s.trim()); } catch (Throwable t) { return 0; }
+    }
+
+    /** 可编辑行：上标签 + 下输入框（失焦或回车即回调，用于 SS 配置落盘）。 */
+    private static View editRow(Context c, String label, String value,
+                                OnValueChange cb) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(Ui.dp(c, 16), Ui.dp(c, 11), Ui.dp(c, 16), Ui.dp(c, 11));
+        TextView lab = new TextView(c);
+        lab.setText(label);
+        lab.setTextSize(12);
+        lab.setTextColor(Ui.TEXT2);
+        row.addView(lab);
+        final android.widget.EditText et = new android.widget.EditText(c);
+        et.setText(value);
+        et.setTextSize(14);
+        et.setTextColor(Ui.TEXT);
+        et.setPadding(0, Ui.dp(c, 4), 0, 0);
+        et.setBackgroundResource(0);
+        et.setSingleLine(true);
+        et.setOnEditorActionListener((v, actionId, event) -> {
+            cb.onChange(et.getText().toString());
+            return false;
+        });
+        et.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) cb.onChange(et.getText().toString());
+        });
+        row.addView(et);
+        return row;
+    }
+
+    private interface OnValueChange {
+        void onChange(String value);
     }
 }

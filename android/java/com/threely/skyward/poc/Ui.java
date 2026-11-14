@@ -43,14 +43,14 @@ public final class Ui {
 
     public static float sp(Context c, float v) { return v; }
 
-    /** 分组卡片背景：默认不透明白 + 细描边，保证模块边界可区分（玻璃默认关闭）。
-     *  手动开启液态玻璃后改为半透明 + 高光描边，透出页面冷色底。 */
+    /** 分组卡片背景：圆角取自原工程 mobile 卡片（34）；不画描边，靠浮起分层，
+     *  与首页仪表盘卡一致。开启液态玻璃后改为半透明 + 高光描边，透出页面冷色底。 */
     public static GradientDrawable cardBg(Context c) {
         GradientDrawable g = new GradientDrawable();
         boolean glass = AppState.get().liquidGlass;
         g.setColor(glass ? Color.parseColor("#E6FFFFFF") : CARD);
-        g.setCornerRadius(dp(c, 14));
-        g.setStroke(1, glass ? Color.parseColor("#99FFFFFF") : Color.parseColor("#E8E8ED"));
+        g.setCornerRadius(dp(c, 34));
+        if (glass) g.setStroke(1, Color.parseColor("#99FFFFFF"));
         return g;
     }
 
@@ -82,7 +82,7 @@ public final class Ui {
         t.setTextSize(12.5f);
         t.setTypeface(Typeface.DEFAULT_BOLD);
         t.setTextColor(TEXT2);
-        t.setPadding(dp(c, 4), dp(c, 18), dp(c, 4), dp(c, 7));
+        t.setPadding(dp(c, 4), dp(c, 16), dp(c, 4), dp(c, 8));
         return t;
     }
 
@@ -90,6 +90,7 @@ public final class Ui {
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackground(cardBg(c));
+        card.setElevation(dp(c, 3));
         return card;
     }
 
@@ -99,7 +100,7 @@ public final class Ui {
         v.setBackgroundColor(SEP);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
-        lp.leftMargin = dp(c, 56);
+        lp.leftMargin = dp(c, 58);
         v.setLayoutParams(lp);
         return v;
     }
@@ -132,7 +133,7 @@ public final class Ui {
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setMinimumHeight(dp(c, 52));
-        r.setPadding(dp(c, 14), dp(c, 10), dp(c, 14), dp(c, 10));
+        r.setPadding(dp(c, 16), dp(c, 11), dp(c, 16), dp(c, 11));
 
         r.addView(iconWell(c, glyph, tint));
 
