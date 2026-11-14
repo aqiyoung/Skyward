@@ -1,11 +1,9 @@
 package com.threely.skyward.poc;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -15,61 +13,39 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 /**
- * 主壳：5 个页面（仪表盘 / 代理 / 规则 / 配置 / 我的）+ 悬浮液态玻璃胶囊 dock。
+ * PoC-2 主壳：底部 4 Tab（首页 / 代理 / 配置 / 我的）+ 分组卡片内容页。
  *
- * 对齐 4tab 定稿设计：底部为浮在内容之上的半透明胶囊 dock（仅图标，5 项），
- * 页面背景 #F2F2F7、白色 22 圆角卡片。纯原生 View，零 XML / 零依赖。
+ * 纯原生 View，无 XML 布局 / 无 Compose / 无 Flutter / 无第三方依赖。
+ * 0.1.0.6 相对上一版：
+ *  - 状态持久化：attach(Application Context) 读回 SharedPreferences；连接态按原
+ *    连接时刻恢复内核会话，累计字节作种子，读数连续。
+ *  - 会话真值：首页时长 / 上下行 / 速率 / 连接数由 Rust 内核计算，不再写死；
+ *    onStop 落盘，页面代次 pageEpoch 用于干净地停掉首页秒级刷新。
+ *  - 液态玻璃默认关闭（沿用既定规则），状态栏 / 导航栏颜色随之联动。
  */
 public class MainActivity extends Activity {
 
-    private static final String[] TABS = {"仪表盘", "代理", "规则", "配置", "我的"};
+    private static final String[] TABS = {"首页", "代理", "规则", "配置", "我的"};
     private static final IconView.Glyph[] TAB_ICONS = {
             IconView.Glyph.HOME, IconView.Glyph.GLOBE, IconView.Glyph.RULES,
             IconView.Glyph.PROFILE, IconView.Glyph.PERSON
     };
 
     private int current = 0;
-    private FrameLayout root;
+    private LinearLayout root;
     private FrameLayout content;
     private LinearLayout dock;
-    private final FrameLayout[] dockItems = new FrameLayout[5];
+    private final TextView[] tabLabels = new TextView[5];
     private final IconView[] tabIcons = new IconView[5];
-
-    public static final int VPN_REQ = 9001;
-
-    /** 请求 VPN 权限并启动系统流量接管（VpnService）。首次需用户授权。
-     *  接受 Context（调用方多为页面里的 Context，运行时即 Activity）。 */
-    public static void requestVpn(Context a) {
-        Intent intent = VpnService.prepare(a);
-        if (intent != null) {
-            if (a instanceof Activity) {
-                ((Activity) a).startActivityForResult(intent, VPN_REQ);
-            } else {
-                a.startActivity(intent);
-            }
-        } else {
-            a.startService(new Intent(a, SkywardVpnService.class));
-        }
-    }
-
-    /** 停止系统流量接管。 */
-    public static void stopVpn(Context a) {
-        a.stopService(new Intent(a, SkywardVpnService.class));
-    }
-
-    @Override
-    protected void onActivityResult(int req, int res, android.content.Intent data) {
-        if (req == VPN_REQ && res == Activity.RESULT_OK) {
-            startService(new Intent(this, SkywardVpnService.class));
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // 浅色状态栏 + 深色图标，避免内容顶到状态栏
         Window w = getWindow();
         w.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -79,26 +55,24 @@ public class MainActivity extends Activity {
             decor.setSystemUiVisibility(decor.getSystemUiVisibility()
                     | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
-        w.setNavigationBarColor(Ui.PAGE);
+        w.setNavigationBarColor(Ui.CARD);
 
+        // 读回持久化状态；若上次是连接态，恢复内核会话（时长 / 累计字节连续）
+        CrashGuard.install(getApplicationContext());
         AppState.get().attach(this);
 
-        root = new FrameLayout(this);
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Ui.PAGE);
         root.setFitsSystemWindows(true);
 
         content = new FrameLayout(this);
-        content.setLayoutParams(new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        content.setPadding(0, 0, 0, Ui.dp(this, 84));   // 底部给悬浮 dock 留白
+        content.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         root.addView(content);
 
         dock = buildDock();
-        FrameLayout.LayoutParams dlp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dlp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        dlp.bottomMargin = Ui.dp(this, 18);
-        root.addView(dock, dlp);
+        root.addView(dock);
 
         setContentView(root);
         render();
@@ -112,39 +86,49 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onStop() {
+        // 退后台：停掉首页秒级刷新并落盘最新会话累计字节
         AppState.get().pageEpoch++;
         AppState.get().save();
         super.onStop();
     }
 
-    /** 悬浮液态玻璃胶囊 dock：仅图标，5 项，当前项蓝色高亮圆角底。 */
     private LinearLayout buildDock() {
-        LinearLayout pill = new LinearLayout(this);
-        pill.setOrientation(LinearLayout.HORIZONTAL);
-        pill.setGravity(Gravity.CENTER);
-        pill.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
-        applyDockBg(pill, false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            pill.setElevation(Ui.dp(this, 14));
-        }
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setBackgroundColor(Ui.CARD);
+        int padTop = Ui.dp(this, 8);
+        int padBottom = Ui.dp(this, 10);
+        bar.setPadding(Ui.dp(this, 10), padTop, Ui.dp(this, 10), padBottom);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Ui.CARD);
+        bg.setStroke(1, Ui.SEP);
+        bar.setBackground(bg);
 
         for (int i = 0; i < TABS.length; i++) {
             final int idx = i;
-            FrameLayout item = new FrameLayout(this);
-            LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(
-                    Ui.dp(this, 50), Ui.dp(this, 46));
-            ilp.leftMargin = Ui.dp(this, 2);
-            ilp.rightMargin = Ui.dp(this, 2);
-            item.setLayoutParams(ilp);
+            LinearLayout item = new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setGravity(Gravity.CENTER);
+            item.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 2));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            item.setLayoutParams(lp);
 
             IconView iv = new IconView(this, TAB_ICONS[i], Ui.TEXT3);
             int s = Ui.dp(this, 23);
-            FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(s, s);
-            ip.gravity = Gravity.CENTER;
-            iv.setLayoutParams(ip);
-            item.addView(iv);
+            iv.setLayoutParams(new LinearLayout.LayoutParams(s, s));
             tabIcons[i] = iv;
-            dockItems[i] = item;
+            item.addView(iv);
+
+            TextView label = new TextView(this);
+            label.setText(TABS[i]);
+            label.setTextSize(10.5f);
+            label.setTextColor(Ui.TEXT3);
+            label.setGravity(Gravity.CENTER);
+            label.setPadding(0, Ui.dp(this, 2), 0, 0);
+            tabLabels[i] = label;
+            item.addView(label);
 
             item.setClickable(true);
             item.setOnClickListener(v -> {
@@ -152,44 +136,31 @@ public class MainActivity extends Activity {
                 current = idx;
                 render();
             });
-            pill.addView(item);
+            bar.addView(item);
         }
-        return pill;
-    }
-
-    private void applyDockBg(LinearLayout pill, boolean glass) {
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(glass ? Color.parseColor("#D9FFFFFF") : Color.parseColor("#EAF2F2F7"));
-        bg.setCornerRadius(Ui.dp(this, 28));
-        bg.setStroke(1, Color.parseColor("#40FFFFFF"));
-        pill.setBackground(bg);
-    }
-
-    private void itemBg(FrameLayout item, boolean active) {
-        if (!active) { item.setBackground(null); return; }
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(Color.parseColor("#1A007AFF"));
-        g.setCornerRadius(Ui.dp(this, 16));
-        item.setBackground(g);
+        return bar;
     }
 
     private void syncDock() {
         for (int i = 0; i < TABS.length; i++) {
-            boolean on = (i == current);
-            tabIcons[i].setTint(on ? Ui.BLUE : Ui.TEXT3);
-            itemBg(dockItems[i], on);
+            int c = (i == current) ? Ui.BLUE : Ui.TEXT3;
+            tabIcons[i].setTint(c);
+            tabLabels[i].setTextColor(c);
+            tabLabels[i].setTypeface(i == current ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
         }
     }
 
     private void render() {
         final AppState s = AppState.get();
+        // 页面代次递增：旧页挂的秒级刷新会在下一次 tick 时自动退出
         s.pageEpoch++;
         boolean glass = s.liquidGlass;
         int pageBg = glass ? Color.parseColor("#DDE7F2") : Ui.PAGE;
+        int barBg  = glass ? Color.parseColor("#CCFFFFFF") : Ui.CARD;
         root.setBackgroundColor(pageBg);
-        applyDockBg(dock, glass);
+        dock.setBackgroundColor(barBg);
         getWindow().setStatusBarColor(pageBg);
-        getWindow().setNavigationBarColor(pageBg);
+        getWindow().setNavigationBarColor(barBg);
         syncDock();
         content.removeAllViews();
         Runnable refresh = this::render;

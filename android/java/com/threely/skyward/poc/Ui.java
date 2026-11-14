@@ -49,51 +49,27 @@ public final class Ui {
         GradientDrawable g = new GradientDrawable();
         boolean glass = AppState.get().liquidGlass;
         g.setColor(glass ? Color.parseColor("#E6FFFFFF") : CARD);
-        g.setCornerRadius(dp(c, 22));          // 与定稿设计稿一致：22 圆角白卡
-        g.setStroke(1, glass ? Color.parseColor("#99FFFFFF") : Color.parseColor("#EEEFF2"));
+        g.setCornerRadius(dp(c, 14));
+        g.setStroke(1, glass ? Color.parseColor("#99FFFFFF") : Color.parseColor("#E8E8ED"));
         return g;
-    }
-
-    /** 小胶囊标签（DEV 徽章 / 状态胶囊），圆角底 + 粗体小字。 */
-    public static TextView badge(Context c, String text, int fg, String bgHex) {
-        TextView t = new TextView(c);
-        t.setText(text);
-        t.setTextSize(11);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        t.setTextColor(fg);
-        t.setPadding(dp(c, 9), dp(c, 4), dp(c, 9), dp(c, 4));
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(Color.parseColor(bgHex));
-        g.setCornerRadius(dp(c, 9));
-        t.setBackground(g);
-        return t;
     }
 
     /** 页面头部：iOS Large Title + 副标题。 */
     public static LinearLayout pageHeader(Context c, String title, String sub) {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(c, 2), dp(c, 16), dp(c, 2), dp(c, 2));
-
-        // 标题行：32sp 大标题 + 右侧 DEV 徽章（与仪表盘首页同一套标题规格）
-        LinearLayout titleRow = new LinearLayout(c);
-        titleRow.setOrientation(LinearLayout.HORIZONTAL);
-        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        box.setPadding(dp(c, 20), dp(c, 8), dp(c, 20), dp(c, 6));
         TextView t = new TextView(c);
         t.setText(title);
-        t.setTextSize(32);
+        t.setTextSize(28);
         t.setTypeface(Typeface.DEFAULT_BOLD);
         t.setTextColor(TEXT);
-        titleRow.addView(t, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        titleRow.addView(badge(c, "DEV", Color.WHITE, "#7C5CFF"));
-        box.addView(titleRow);
-
+        box.addView(t);
         TextView s = new TextView(c);
         s.setText(sub);
-        s.setTextSize(13.5f);
+        s.setTextSize(12.5f);
         s.setTextColor(TEXT2);
-        s.setPadding(0, dp(c, 8), 0, dp(c, 2));
+        s.setPadding(0, dp(c, 3), 0, 0);
         box.addView(s);
         return box;
     }
@@ -102,10 +78,10 @@ public final class Ui {
     public static TextView groupTitle(Context c, String text) {
         TextView t = new TextView(c);
         t.setText(text);
-        t.setTextSize(13);
+        t.setTextSize(12.5f);
         t.setTypeface(Typeface.DEFAULT_BOLD);
         t.setTextColor(TEXT2);
-        t.setPadding(dp(c, 4), dp(c, 20), dp(c, 4), dp(c, 7));
+        t.setPadding(dp(c, 4), dp(c, 18), dp(c, 4), dp(c, 7));
         return t;
     }
 
@@ -266,8 +242,7 @@ public final class Ui {
     public static LinearLayout pageBody(Context c) {
         LinearLayout body = new LinearLayout(c);
         body.setOrientation(LinearLayout.VERTICAL);
-        // 左右 18 对齐首页；底部 130 留出悬浮液态玻璃 dock 的空间
-        body.setPadding(dp(c, 18), 0, dp(c, 18), dp(c, 130));
+        body.setPadding(dp(c, 16), 0, dp(c, 16), dp(c, 24));
         return body;
     }
 }
