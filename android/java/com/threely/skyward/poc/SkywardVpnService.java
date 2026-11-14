@@ -36,8 +36,10 @@ public class SkywardVpnService extends VpnService {
             stopSelf();
             return START_NOT_STICKY;
         }
-        // 把 fd 交给内核：内核从此 fd 读取原始 IP 帧。
-        RustCore.nativeOpenTun(mFd.getFd());
+        // 把 fd 交给内核：内核从 fd 读原始 IP 帧，按 TCP / DNS 分流后经 SS 出站转发。
+        // 上游配置取用户已保存的那份；没填真实节点时连接会立刻收到 RST，不会静默挂死。
+        AppState st = AppState.get();
+        RustCore.nativeOpenTun(mFd.getFd(), st.ssServer, st.ssPort, st.ssPassword);
         return START_STICKY;
     }
 

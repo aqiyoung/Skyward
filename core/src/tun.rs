@@ -1,16 +1,33 @@
-//! TUN 设备接管（PoC-6）。
+//! TUN 设备接管（PoC-7：真实转发闭环）。
 //!
-//! 这是"接管设备层流量"的入口。Android 上由 `VpnService` 建立 TUN 并把 fd 传给内核；
-//! 内核从 fd 读出原始 IP 帧，解析 IPv4 / TCP / UDP 头做分流与真实统计。
+//! Android 上由 `VpnService` 建立 TUN 并把 fd 传给内核。本模块做三件事：
 //!
-//! 注意：沙箱无 `/dev/net/tun`，"设备读取"只能在安卓真机经 VpnService 验证；
-//! 本文件的 `parse_ipv4` 帧解析为纯逻辑，可由单元测试真验证。
+//! 1. 从 fd 读原始 IP 帧，按协议分流（TCP / UDP:53 / 其它）；
+//! 2. TCP 交给 [`crate::tcpstack`] 的用户态栈，栈吐出的事件再驱动上游
+//!    （SS 出站）拨号，回程数据重新封包写回 TUN；
+//! 3. UDP:53 交给 [`crate::dnsrelay`]，经代理链路解析后封 UDP 包写回。
+//!
+//! 这是 "0.1.0.19 之前只读不写" 的终点：现在 tun 里的包真的会被转发出去，
+//! 回来的字节也真的会被写回设备。
+//!
+//! 沙箱无 `/dev/net/tun`，设备读写只能在安卓真机经 VpnService 验证；
+//! 帧解析、TCP 状态机、DNS 报文封装均有单元测试覆盖。
 
-use std::io;
+use crate::dnsrelay;
+use crate::net;
+use crate::socks5::ProxyConfig;
+use crate::ss::{master_key, read_chunk, ss_client_connect, SsTarget};
+use crate::tcpstack::{Event, FlowKey, TcpStack};
+use std::collections::HashMap;
 use std::fs::File;
+use std::io::{Read, Write};
 use std::net::Ipv4Addr;
 use std::os::fd::{FromRawFd, RawFd};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tokio::io::AsyncWriteExt;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 /// 四层协议类型与端口。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,17 +46,17 @@ pub struct ParsedV4 {
 }
 
 /// 解析一个 IPv4 数据包（含以太网偏移由调用方裁掉；此处只认裸 IP 帧）。
-pub fn parse_ipv4(pkt: &[u8]) -> io::Result<ParsedV4> {
+pub fn parse_ipv4(pkt: &[u8]) -> std::io::Result<ParsedV4> {
     if pkt.len() < 20 {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "ipv4 too short"));
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "ipv4 too short"));
     }
     let ver_ihl = pkt[0];
     if ver_ihl >> 4 != 4 {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "not ipv4"));
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "not ipv4"));
     }
     let ihl = (ver_ihl & 0x0f) as usize * 4;
     if ihl < 20 || pkt.len() < ihl {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "bad ihl"));
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "bad ihl"));
     }
     let proto = pkt[9];
     let src_ip = Ipv4Addr::new(pkt[12], pkt[13], pkt[14], pkt[15]);
@@ -49,7 +66,7 @@ pub fn parse_ipv4(pkt: &[u8]) -> io::Result<ParsedV4> {
         6 => {
             // TCP
             if pkt.len() < ihl + 20 {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "tcp too short"));
+                return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "tcp too short"));
             }
             let src = u16::from_be_bytes([pkt[ihl], pkt[ihl + 1]]);
             let dst = u16::from_be_bytes([pkt[ihl + 2], pkt[ihl + 3]]);
@@ -58,7 +75,7 @@ pub fn parse_ipv4(pkt: &[u8]) -> io::Result<ParsedV4> {
         17 => {
             // UDP
             if pkt.len() < ihl + 8 {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "udp too short"));
+                return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "udp too short"));
             }
             let src = u16::from_be_bytes([pkt[ihl], pkt[ihl + 1]]);
             let dst = u16::from_be_bytes([pkt[ihl + 2], pkt[ihl + 3]]);
@@ -81,38 +98,313 @@ pub struct TunStats {
     pub packets: u64,
     pub tcp: u64,
     pub udp: u64,
+    /// 当前活跃连接数（TCP 栈视角）。
+    pub conns: u64,
+    /// 写回 tun 的字节数，用于确认闭环真的在工作。
+    pub tx_bytes: u64,
 }
 
-/// 在独立 OS 线程里从 TUN fd 阻塞读取原始帧、解析并累计真实统计。
+/// 一条活跃连接的上游句柄。
+struct Upstream {
+    tx: UnboundedSender<Vec<u8>>,
+    alive: Arc<AtomicBool>,
+}
+
+/// 写一个完整的 IP 包回 TUN。
+fn write_tun(w: &Arc<Mutex<File>>, pkt: &[u8], stats: &Arc<Mutex<TunStats>>) {
+    let mut f = match w.lock() {
+        Ok(f) => f,
+        Err(e) => e.into_inner(),
+    };
+    if f.write_all(pkt).is_ok() {
+        if let Ok(mut s) = stats.lock() {
+            s.tx_bytes += pkt.len() as u64;
+        }
+    }
+}
+
+/// 在独立 OS 线程里从 TUN fd 阻塞读取原始帧，驱动 TCP 栈与 DNS 转发，并把回程包写回设备。
 /// 返回的统计句柄供 JNI 查询。设备读取本身只能在安卓真机（VpnService 提供 fd）验证。
-pub fn run_tun_blocking(fd: RawFd) -> Arc<Mutex<TunStats>> {
+pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>> {
     let stats = Arc::new(Mutex::new(TunStats::default()));
     let s2 = stats.clone();
+
     std::thread::spawn(move || {
-        // fd 由调用方保证是有效的 TUN 字符设备；File 接管所有权，drop 时关闭。
-        let mut file = unsafe { File::from_raw_fd(fd) };
+        // fd 由调用方保证是有效的 TUN 字符设备。读用一份、写用一份：
+        // 单个 File 被读阻塞时无法写，必须 try_clone 出独立的 fd。
+        let file = unsafe { File::from_raw_fd(fd) };
+        let mut reader = match file.try_clone() {
+            Ok(f) => f,
+            Err(_) => return,
+        };
+        let writer = Arc::new(Mutex::new(file));
+        let stack = Arc::new(Mutex::new(TcpStack::new()));
+        let ups: Arc<Mutex<HashMap<FlowKey, Upstream>>> = Arc::new(Mutex::new(HashMap::new()));
+        let master = master_key(&cfg.password);
+        let rt = net::runtime();
+
+        // 重传定时器：每 100ms 推一次栈内的超时段。
+        {
+            let stack = stack.clone();
+            let writer = writer.clone();
+            let stats = s2.clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(Duration::from_millis(100));
+                let pkts = {
+                    let mut st = match stack.lock() {
+                        Ok(g) => g,
+                        Err(e) => e.into_inner(),
+                    };
+                    st.tick()
+                };
+                for p in pkts {
+                    write_tun(&writer, &p, &stats);
+                }
+            });
+        }
+
         let mut buf = vec![0u8; 65536];
-        use std::io::Read;
         loop {
-            match file.read(&mut buf) {
-                Ok(0) => break, // EOF：对端关闭（如 VPN 断开）
-                Ok(n) => {
-                    if let Ok(p) = parse_ipv4(&buf[..n]) {
-                        let mut s = s2.lock().unwrap();
-                        s.bytes += n as u64;
-                        s.packets += 1;
-                        match p.l4 {
-                            Some(L4::Tcp { .. }) => s.tcp += 1,
-                            Some(L4::Udp { .. }) => s.udp += 1,
-                            None => {}
-                        }
+            let n = match reader.read(&mut buf) {
+                Ok(0) => break, // EOF：VPN 断开
+                Ok(n) => n,
+                Err(_) => break,
+            };
+            let pkt = &buf[..n];
+            let parsed = match parse_ipv4(pkt) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
+
+            {
+                let mut s = match s2.lock() {
+                    Ok(g) => g,
+                    Err(e) => e.into_inner(),
+                };
+                s.bytes += n as u64;
+                s.packets += 1;
+                match parsed.l4 {
+                    Some(L4::Tcp { .. }) => s.tcp += 1,
+                    Some(L4::Udp { .. }) => s.udp += 1,
+                    None => {}
+                }
+            }
+
+            match parsed.l4 {
+                Some(L4::Tcp { .. }) => {
+                    let (out, events) = {
+                        let mut st = match stack.lock() {
+                            Ok(g) => g,
+                            Err(e) => e.into_inner(),
+                        };
+                        st.on_packet(pkt)
+                    };
+                    for p in out {
+                        write_tun(&writer, &p, &s2);
+                    }
+                    for ev in events {
+                        handle_event(ev, &rt, &stack, &writer, &ups, &cfg, &master, &s2);
+                    }
+                    if let Ok(mut s) = s2.lock() {
+                        s.conns = stack
+                            .lock()
+                            .map(|g| g.conn_count() as u64)
+                            .unwrap_or(0);
                     }
                 }
-                Err(_) => break,
+                Some(L4::Udp { dst, .. }) if dst == 53 => {
+                    // DNS：经代理链路解析后封 UDP 包回写
+                    let dg = match dnsrelay::parse_udp(pkt) {
+                        Some(d) => d,
+                        None => continue,
+                    };
+                    let writer2 = writer.clone();
+                    let stats2 = s2.clone();
+                    let server2 = cfg.ss_server.clone();
+                    let port2 = cfg.ss_port;
+                    let query = dg.payload;
+                    let src_ip = dg.dst; // 应答来自客户端查询的那个 DNS 服务器
+                    let dst_ip = dg.src;
+                    let sport = dg.sport;
+                    let m2 = master;
+                    rt.spawn(async move {
+                        if let Ok(resp) = dnsrelay::resolve(&m2, &server2, port2, &query).await {
+                            let reply = dnsrelay::build_udp_reply(src_ip, dst_ip, 53, sport, &resp);
+                            write_tun(&writer2, &reply, &stats2);
+                        }
+                    });
+                }
+                _ => {
+                    // 其它 UDP（QUIC 等）本版不转发，客户端会自行回退到 TCP
+                }
+            }
+        }
+
+        // TUN 关闭：清掉所有上游句柄，让任务退出
+        {
+            let mut m = match ups.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            for (_, u) in m.drain() {
+                u.alive.store(false, Ordering::Relaxed);
             }
         }
     });
+
     stats
+}
+
+/// 处理 TCP 栈吐出的事件。
+#[allow(clippy::too_many_arguments)]
+fn handle_event(
+    ev: Event,
+    rt: &'static tokio::runtime::Runtime,
+    stack: &Arc<Mutex<TcpStack>>,
+    writer: &Arc<Mutex<File>>,
+    ups: &Arc<Mutex<HashMap<FlowKey, Upstream>>>,
+    cfg: &Arc<ProxyConfig>,
+    master: &[u8; 32],
+    stats: &Arc<Mutex<TunStats>>,
+) {
+    match ev {
+        Event::Opened(key) => {
+            let (tx, rx) = unbounded_channel();
+            let alive = Arc::new(AtomicBool::new(true));
+            {
+                let mut m = match ups.lock() {
+                    Ok(g) => g,
+                    Err(e) => e.into_inner(),
+                };
+                m.insert(key, Upstream { tx, alive: alive.clone() });
+            }
+            let stack = stack.clone();
+            let writer = writer.clone();
+            let stats = stats.clone();
+            let cfg = cfg.clone();
+            let master = *master;
+            rt.spawn(async move {
+                upstream_task(key, rx, alive, cfg, master, stack, writer, stats).await;
+            });
+        }
+        Event::Data(key, data) => {
+            let m = match ups.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            if let Some(u) = m.get(&key) {
+                let _ = u.tx.send(data);
+            }
+        }
+        Event::PeerFin(key) => {
+            // drop sender，让上游写方向收尾
+            let mut m = match ups.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            m.remove(&key);
+        }
+        Event::Aborted(key) => {
+            let mut m = match ups.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            if let Some(u) = m.remove(&key) {
+                u.alive.store(false, Ordering::Relaxed);
+            }
+        }
+    }
+}
+
+/// 单条连接的上游任务：拨号 → 双向搬运。
+#[allow(clippy::too_many_arguments)]
+async fn upstream_task(
+    key: FlowKey,
+    mut rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
+    alive: Arc<AtomicBool>,
+    cfg: Arc<ProxyConfig>,
+    master: [u8; 32],
+    stack: Arc<Mutex<TcpStack>>,
+    writer: Arc<Mutex<File>>,
+    stats: Arc<Mutex<TunStats>>,
+) {
+    let target = SsTarget { host: key.dst.to_string(), port: key.dport };
+    let (enc, sess) = match ss_client_connect(&master, &cfg.ss_server, cfg.ss_port, &target).await {
+        Ok(x) => x,
+        Err(_) => {
+            // 拨号失败：给客户端 RST，别让它干等
+            let pkts = {
+                let mut st = match stack.lock() {
+                    Ok(g) => g,
+                    Err(e) => e.into_inner(),
+                };
+                st.abort(&key)
+            };
+            for p in pkts {
+                write_tun(&writer, &p, &stats);
+            }
+            return;
+        }
+    };
+
+    let (mut r, mut w) = tokio::io::split(enc);
+
+    // 下行：SS → TUN
+    {
+        let stack = stack.clone();
+        let writer = writer.clone();
+        let stats = stats.clone();
+        let sess = sess.clone();
+        tokio::spawn(async move {
+            loop {
+                match read_chunk(&mut r, &sess).await {
+                    Ok(data) => {
+                        if data.is_empty() {
+                            continue;
+                        }
+                        let pkts = {
+                            let mut st = match stack.lock() {
+                                Ok(g) => g,
+                                Err(e) => e.into_inner(),
+                            };
+                            st.on_upstream(&key, &data)
+                        };
+                        for p in pkts {
+                            write_tun(&writer, &p, &stats);
+                        }
+                    }
+                    Err(_) => {
+                        let pkts = {
+                            let mut st = match stack.lock() {
+                                Ok(g) => g,
+                                Err(e) => e.into_inner(),
+                            };
+                            st.on_upstream_closed(&key)
+                        };
+                        for p in pkts {
+                            write_tun(&writer, &p, &stats);
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    // 上行：TUN → SS
+    while let Some(data) = rx.recv().await {
+        if !alive.load(Ordering::Relaxed) {
+            break;
+        }
+        let chunk = {
+            let mut s = sess.lock().await;
+            s.seal(&data)
+        };
+        if w.write_all(&chunk).await.is_err() {
+            break;
+        }
+    }
+    let _ = w.shutdown().await;
 }
 
 #[cfg(test)]
@@ -157,6 +449,119 @@ mod tests {
         let parsed = parse_ipv4(&p).unwrap();
         assert_eq!(parsed.proto, 17);
         assert_eq!(parsed.l4, Some(L4::Udp { src: 5353, dst: 53 }));
+    }
+
+    /// 端到端：模拟客户端 SYN → 栈回 SYN-ACK → 上行经真实 SS 链路到 echo 目标
+    /// → 下行回到栈 → 封包写回。这条测试覆盖「TUN 侧 TCP ↔ SS 出站」的接缝。
+    #[tokio::test(flavor = "multi_thread")]
+    async fn tun_tcp_flow_reaches_upstream_and_back() {
+        use crate::ss::{master_key, ss_proxy, ss_server_accept, SsTarget};
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::net::{TcpListener, TcpStream};
+
+        let mk = master_key("tun-test");
+
+        // echo 目标
+        let echo = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let echo_port = echo.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            loop {
+                let (mut s, _) = match echo.accept().await {
+                    Ok(x) => x,
+                    Err(_) => break,
+                };
+                tokio::spawn(async move {
+                    let mut buf = [0u8; 1024];
+                    loop {
+                        match s.read(&mut buf).await {
+                            Ok(0) | Err(_) => break,
+                            Ok(n) => {
+                                if s.write_all(&buf[..n]).await.is_err() {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // SS 服务端
+        let ss = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let ss_port = ss.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            loop {
+                let (enc, _) = match ss.accept().await {
+                    Ok(x) => x,
+                    Err(_) => break,
+                };
+                tokio::spawn(async move {
+                    let (enc, sess, target) = match ss_server_accept(enc, &mk).await {
+                        Ok(x) => x,
+                        Err(_) => return,
+                    };
+                    let tc = match TcpStream::connect((target.host.as_str(), target.port)).await {
+                        Ok(c) => c,
+                        Err(_) => return,
+                    };
+                    ss_proxy(tc, enc, sess).await;
+                });
+            }
+        });
+
+        // 客户端侧：SYN / ACK / 数据
+        let key = FlowKey::new(Ipv4Addr::new(10, 10, 10, 2), 51000, Ipv4Addr::new(127, 0, 0, 1), echo_port);
+        let rev = FlowKey::new(key.dst, key.dport, key.src, key.sport);
+
+        let mut stack = TcpStack::new();
+        let syn = crate::tcpstack::build_packet(&rev, 1000, 0, crate::tcpstack::SYN, &[]);
+        let (out, ev) = stack.on_packet(&syn);
+        assert_eq!(out.len(), 1, "应回 SYN-ACK");
+        assert!(ev.is_empty());
+        let seg = crate::tcpstack::parse_segment(&out[0]).unwrap();
+        assert_eq!(seg.flags & crate::tcpstack::SYN, crate::tcpstack::SYN);
+        let our_isn = seg.seq;
+
+        let ack = crate::tcpstack::build_packet(
+            &rev, 1001, our_isn.wrapping_add(1), crate::tcpstack::ACK, &[]);
+        let (_, ev) = stack.on_packet(&ack);
+        assert!(matches!(ev[0], Event::Opened(_)), "握手后应通知上游拨号");
+
+        // 上游拨号（真实的 SS 客户端 → SS 服务端 → echo）
+        let (mut enc, sess) = ss_client_connect(
+            &mk, "127.0.0.1", ss_port, &SsTarget { host: "127.0.0.1".into(), port: echo_port })
+            .await
+            .expect("SS 拨号应成功");
+
+        // 上行：客户端数据 → 栈提取 → 加密发出
+        let data_seg = crate::tcpstack::build_packet(
+            &rev, 1001, our_isn.wrapping_add(1), crate::tcpstack::ACK | crate::tcpstack::PSH, b"ping-through-tun");
+        let (ack_out, ev) = stack.on_packet(&data_seg);
+        assert_eq!(ack_out.len(), 1, "应回 ACK");
+        match &ev[0] {
+            Event::Data(_, d) => assert_eq!(d, b"ping-through-tun"),
+            other => panic!("期望 Data，得到 {other:?}"),
+        }
+        let chunk = { sess.lock().await.seal(b"ping-through-tun") };
+        enc.write_all(&chunk).await.unwrap();
+        enc.flush().await.unwrap();
+
+        // 下行：echo 回来 → 解密 → 栈封包
+        let echoed = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            read_chunk(&mut enc, &sess),
+        )
+        .await
+        .expect("下行超时")
+        .expect("下行解密失败");
+        assert_eq!(echoed, b"ping-through-tun", "echo 应原样回来");
+
+        let back = stack.on_upstream(&key, &echoed);
+        assert_eq!(back.len(), 1);
+        let seg = crate::tcpstack::parse_segment(&back[0]).unwrap();
+        assert_eq!(seg.payload, b"ping-through-tun");
+        assert_eq!(seg.key.dport, 51000, "回程包应发回客户端端口");
+        assert_eq!(seg.flags & crate::tcpstack::PSH, crate::tcpstack::PSH);
     }
 
     #[test]

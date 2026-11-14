@@ -78,7 +78,7 @@ public final class RustCore {
     /** 真实代理吞吐 CSV：tx,rx（字节）。区别于 nativeSessionBreakdown 的模拟会话。 */
     public static native String nativeProxyStats();
     /** 打开 TUN 接管：fd 由 VpnService 提供。返回 1/0。 */
-    public static native int nativeOpenTun(int fd);
+    public static native int nativeOpenTun(int fd, String server, int port, String password);
     /** 关闭 TUN 接管。返回 1/0。 */
     public static native int nativeCloseTun();
     /** TUN 真实流量统计 CSV：bytes,packets,tcp,udp。 */

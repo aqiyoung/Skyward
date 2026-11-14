@@ -695,6 +695,29 @@ public final class Pages {
     }
 
     /** 内存卡的一格：上标签 + 下数值。 */
+    /** 键值列，value 的 TextView 回填到 sink[idx]，供秒级刷新改写。 */
+    private static LinearLayout kvLive(Context c, String label, TextView[] sink, int idx) {
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        TextView l = new TextView(c);
+        l.setText(label);
+        l.setTextSize(11);
+        l.setTextColor(Ui.TEXT3);
+        l.setSingleLine(true);
+        col.addView(l);
+        TextView v = new TextView(c);
+        v.setText("0");
+        v.setTextSize(14);
+        v.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        v.setTextColor(Ui.TEXT);
+        v.setSingleLine(true);
+        v.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        v.setPadding(0, Ui.dp(c, 2), 0, 0);
+        col.addView(v);
+        if (sink != null && idx >= 0 && idx < sink.length) sink[idx] = v;
+        return col;
+    }
+
     private static LinearLayout kv(Context c, String label, String value) {
         LinearLayout col = new LinearLayout(c);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -779,6 +802,54 @@ public final class Pages {
         final AppState s = AppState.get();
         LinearLayout body = Ui.pageBody(c);
         body.addView(Ui.pageHeader(c, "代理", "代理组 · 节点延迟"));
+
+        // ===== 数据面：TUN 是否真的在转发，只有这里有数 =====
+        LinearLayout dpCard = lcard(c);
+        LinearLayout.LayoutParams dpLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dpLp.bottomMargin = Ui.dp(c, 12);
+        final TextView dpChip = chip(c, s.tunMode ? "已接管" : "未接管",
+                s.tunMode ? Ui.GREEN : Ui.TEXT2,
+                s.tunMode ? Color.parseColor("#1400A94F") : Color.parseColor("#14000000"));
+        dpCard.addView(cardHead(c, IconView.Glyph.SHIELD, "数据面", dpChip));
+
+        LinearLayout dpRow = new LinearLayout(c);
+        dpRow.setOrientation(LinearLayout.HORIZONTAL);
+        dpRow.setPadding(0, Ui.dp(c, 12), 0, 0);
+        final TextView[] live = new TextView[3];
+        dpRow.addView(kvLive(c, "读入（TUN）", live, 0),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams l1 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        l1.leftMargin = Ui.dp(c, 8);
+        dpRow.addView(kvLive(c, "写回（TUN）", live, 1), l1);
+        LinearLayout.LayoutParams l2 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        l2.leftMargin = Ui.dp(c, 8);
+        dpRow.addView(kvLive(c, "活跃连接", live, 2), l2);
+        dpCard.addView(dpRow);
+        body.addView(dpCard, dpLp);
+
+        // 秒级刷新读数：页面切走即停（靠 pageEpoch）
+        final int dpEpoch = s.pageEpoch;
+        MAIN.post(new Runnable() {
+            @Override public void run() {
+                if (s.pageEpoch != dpEpoch) return;
+                String csv = "0,0,0,0,0,0";
+                try { csv = RustCore.nativeTunStats(); } catch (Throwable ignored) {}
+                String[] p = csv.split(",");
+                if (p.length >= 6) {
+                    long bytes = safeLong(p[0]);
+                    long packets = safeLong(p[1]);
+                    long tx = safeLong(p[4]);
+                    long conns = safeLong(p[5]);
+                    if (live[0] != null) live[0].setText(packets + " 包 / " + AppState.humanBytes(bytes));
+                    if (live[1] != null) live[1].setText(AppState.humanBytes(tx));
+                    if (live[2] != null) live[2].setText(String.valueOf(conns));
+                }
+                MAIN.postDelayed(this, 800);
+            }
+        });
 
         // 组选择（横向胶囊）
         LinearLayout tabs = new LinearLayout(c);

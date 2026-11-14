@@ -229,7 +229,7 @@ pub async fn ss_client_connect(
 }
 
 /// 从加密流读一个完整 chunk：先读 18 字节长度块解密得长度，再读 `len+16` 字节载荷块解密得 payload。
-async fn read_chunk<R>(r: &mut R, sess: &Arc<Mutex<SsSession>>) -> io::Result<Vec<u8>>
+pub(crate) async fn read_chunk<R>(r: &mut R, sess: &Arc<Mutex<SsSession>>) -> io::Result<Vec<u8>>
 where
     R: AsyncRead + Unpin,
 {

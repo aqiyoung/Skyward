@@ -7,10 +7,12 @@
 //! PoC-2 新增会话类接口：连接时长 / 上下行字节 / 包数由内核计算并累加，
 //! 界面不再写死演示常量。另有索引/线性双引擎对照接口供工具页基准使用。
 
+pub mod dnsrelay;
 pub mod engine;
 pub mod net;
 pub mod socks5;
 pub mod ss;
+pub mod tcpstack;
 pub mod tun;
 
 use engine::{Core, CORE_VERSION, RuleKind};
@@ -556,12 +558,21 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenTun(
     env: *mut JNIEnv,
     _cls: jclassRef,
     fd: jint,
+    ss_server: *mut c_void,
+    ss_port: jint,
+    password: *mut c_void,
 ) -> jint {
-    let _ = env;
     if fd <= 0 {
         return 0;
     }
-    let stats = run_tun_blocking(fd as RawFd);
+    let server = read_jstring(env, ss_server);
+    let pwd = read_jstring(env, password);
+    let cfg = std::sync::Arc::new(ProxyConfig {
+        ss_server: server,
+        ss_port: ss_port.max(1) as u16,
+        password: pwd,
+    });
+    let stats = run_tun_blocking(fd as RawFd, cfg);
     *tun_stats().lock().unwrap() = Some(stats);
     1
 }
@@ -587,8 +598,14 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeTunStats(
 ) -> *mut c_void {
     if let Some(s) = tun_stats().lock().unwrap().as_ref() {
         let s = s.lock().unwrap();
-        new_jstring(env, &format!("{},{},{},{}", s.bytes, s.packets, s.tcp, s.udp))
+        new_jstring(
+            env,
+            &format!(
+                "{},{},{},{},{},{}",
+                s.bytes, s.packets, s.tcp, s.udp, s.tx_bytes, s.conns
+            ),
+        )
     } else {
-        new_jstring(env, "0,0,0,0")
+        new_jstring(env, "0,0,0,0,0,0")
     }
 }
