@@ -18,6 +18,7 @@ use crate::net;
 use crate::socks5::ProxyConfig;
 use crate::ss::{master_key, read_chunk, ss_client_connect, SsTarget};
 use crate::tcpstack::{Event, FlowKey, TcpStack};
+use crate::udpstack::{FlowKey as UdpKey, Sink, UdpRelay};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -100,6 +101,8 @@ pub struct TunStats {
     pub udp: u64,
     /// 当前活跃连接数（TCP 栈视角）。
     pub conns: u64,
+    /// 当前活跃 UDP 会话数（SS UDP relay 视角）。
+    pub udp_flows: u64,
     /// 写回 tun 的字节数，用于确认闭环真的在工作。
     pub tx_bytes: u64,
 }
@@ -109,6 +112,14 @@ struct Upstream {
     tx: UnboundedSender<Vec<u8>>,
     alive: Arc<AtomicBool>,
 }
+
+/// 服务端 UDP relay 是否可用。一旦确认不可用（DNS 查询 1.2s 无回程），
+/// 后续 DNS 直接走 DNS-over-TCP，避免每个查询都白等一次超时。
+/// 每次开启 TUN 时重置为 true。
+static DNS_UDP_OK: AtomicBool = AtomicBool::new(true);
+
+/// DNS 走 UDP relay 时的等待上限：超过即判定 UDP 不可用并回退 TCP。
+const DNS_FALLBACK_WAIT: Duration = Duration::from_millis(1200);
 
 /// 写一个完整的 IP 包回 TUN。
 fn write_tun(w: &Arc<Mutex<File>>, pkt: &[u8], stats: &Arc<Mutex<TunStats>>) {
@@ -142,6 +153,16 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
         let ups: Arc<Mutex<HashMap<FlowKey, Upstream>>> = Arc::new(Mutex::new(HashMap::new()));
         let master = master_key(&cfg.password);
         let rt = net::runtime();
+        DNS_UDP_OK.store(true, Ordering::Relaxed);
+
+        // UDP 全量转发：所有 UDP（含 DNS）先走 SS UDP relay。
+        // 服务器未开 udp relay 时 DNS 会回退 TCP，见下面的分支。
+        let sink: Sink = {
+            let w = writer.clone();
+            let s = s2.clone();
+            Arc::new(move |pkt: &[u8]| write_tun(&w, pkt, &s))
+        };
+        let udp = UdpRelay::new(master, cfg.ss_server.clone(), cfg.ss_port, sink);
 
         // 重传定时器：每 100ms 推一次栈内的超时段。
         {
@@ -212,30 +233,59 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
                             .unwrap_or(0);
                     }
                 }
-                Some(L4::Udp { dst, .. }) if dst == 53 => {
-                    // DNS：经代理链路解析后封 UDP 包回写
+                Some(L4::Udp { src, dst }) => {
+                    // 抓出 UDP 载荷（非首片 / 非法长度直接丢）
                     let dg = match dnsrelay::parse_udp(pkt) {
                         Some(d) => d,
                         None => continue,
                     };
+                    let key = UdpKey::new(parsed.src_ip, src, parsed.dst_ip, dst);
+                    let payload = dg.payload;
+                    let is_dns = dst == 53;
+
+                    let relay = udp.clone();
                     let writer2 = writer.clone();
                     let stats2 = s2.clone();
                     let server2 = cfg.ss_server.clone();
                     let port2 = cfg.ss_port;
-                    let query = dg.payload;
-                    let src_ip = dg.dst; // 应答来自客户端查询的那个 DNS 服务器
-                    let dst_ip = dg.src;
-                    let sport = dg.sport;
-                    let m2 = master;
+                    let client_ip = parsed.src_ip;
+                    let client_port = src;
+                    let dns_ip = parsed.dst_ip;
                     rt.spawn(async move {
-                        if let Ok(resp) = dnsrelay::resolve(&m2, &server2, port2, &query).await {
-                            let reply = dnsrelay::build_udp_reply(src_ip, dst_ip, 53, sport, &resp);
-                            write_tun(&writer2, &reply, &stats2);
+                        // 已知服务端 UDP relay 不可用：DNS 直接走 TCP
+                        if is_dns && !DNS_UDP_OK.load(Ordering::Relaxed) {
+                            dns_over_tcp(
+                                master, &server2, port2, client_ip, client_port, dns_ip,
+                                &payload, &writer2, &stats2,
+                            )
+                            .await;
+                            return;
+                        }
+
+                        match relay.send(key, &payload).await {
+                            Ok(before) if is_dns => {
+                                // DNS 兜底：UDP 没回来就改用 DNS-over-TCP
+                                tokio::time::sleep(DNS_FALLBACK_WAIT).await;
+                                let after = relay.rx_total(&key).unwrap_or(before);
+                                if after == before {
+                                    DNS_UDP_OK.store(false, Ordering::Relaxed);
+                                    dns_over_tcp(
+                                        master, &server2, port2, client_ip, client_port, dns_ip,
+                                        &payload, &writer2, &stats2,
+                                    )
+                                    .await;
+                                }
+                            }
+                            _ => {}
                         }
                     });
+
+                    if let Ok(mut s) = s2.lock() {
+                        s.udp_flows = udp.flow_count() as u64;
+                    }
                 }
-                _ => {
-                    // 其它 UDP（QUIC 等）本版不转发，客户端会自行回退到 TCP
+                None => {
+                    // 非 TCP/UDP（ICMP 等）本版不转发
                 }
             }
         }
@@ -253,6 +303,26 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
     });
 
     stats
+}
+
+/// DNS 回退通道：UDP relay 不可用时，用 DNS-over-TCP（2 字节长度前缀）经 SS 出去。
+#[allow(clippy::too_many_arguments)]
+async fn dns_over_tcp(
+    master: [u8; 32],
+    server: &str,
+    port: u16,
+    client_ip: Ipv4Addr,
+    client_port: u16,
+    dns_ip: Ipv4Addr,
+    query: &[u8],
+    writer: &Arc<Mutex<File>>,
+    stats: &Arc<Mutex<TunStats>>,
+) {
+    if let Ok(resp) = dnsrelay::resolve(&master, server, port, query).await {
+        // 应答源地址必须是客户端查询的那个 DNS，否则系统解析器会丢弃
+        let reply = dnsrelay::build_udp_reply(dns_ip, client_ip, 53, client_port, &resp);
+        write_tun(writer, &reply, stats);
+    }
 }
 
 /// 处理 TCP 栈吐出的事件。

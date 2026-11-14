@@ -19,6 +19,9 @@ tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "io-util"
 # 在 aarch64-linux-android 可干净交叉编译。
 chacha20poly1305 = "0.10"
 sha2 = "0.10"
+# AEAD 子密钥派生必须用 HKDF-SHA1（SS 规范与 shadowsocks-rust 一致），
+# 这里只引 sha1，HKDF 自身按 RFC 5869 内联实现，避免多一个三方依赖。
+sha1 = "0.10"
 hmac = "0.12"
 getrandom = "0.2"
 

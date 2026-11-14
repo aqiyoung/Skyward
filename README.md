@@ -1,4 +1,4 @@
-# Skyward Rust Core · PoC-7（0.1.0.20-dev · TUN 真实转发闭环）
+# Skyward Rust Core · PoC-8（0.1.0.21-dev · UDP 全量转发 + 修 SS 握手）
 
 一版可装机的最小骨架，用来回答三个问题：
 
@@ -31,6 +31,39 @@
 | `0.1.0.18-dev` | 修 `Pages.home` 重复 addView 的启动闪退；胶囊 dock / 16dp 页边距 / 8dp 卡距 / 定宽速率区 | 1.02 MB |
 | `0.1.0.19-dev` | **网络概览按 `service_status.dart` 做成 2×2 服务格 + TCP 握手探测真实延迟 + 结论芯片** | 1.02 MB |
 | `0.1.0.20-dev` | **TUN 真实转发闭环**：用户态最小 TCP 栈 + DNS over TCP via SS，开 VPN 不再断网；代理页加「数据面」卡 | 1.08 MB |
+| `0.1.0.21-dev` | **修 SS 子密钥派生（HKDF-SHA1）+ UDP 全量转发**：QUIC/游戏/DNS 走 SS UDP relay，DNS 双通道自动回退 | 1.12 MB |
+
+## 0.1.0.21 相对上一版做了什么（本版）
+
+**一、修掉一个会让真实节点完全连不上的错误。**
+
+上一版 SS 子密钥用的是 `HMAC-SHA256(master, salt)`，而 Shadowsocks AEAD 规范（以及
+shadowsocks-rust 实现）要求 `HKDF-SHA1(ikm=master, salt=salt, info="ss-subkey")`。
+差别在于：错误算法下客户端发出的第一个 chunk 服务端就解不开，连接会被直接断开。
+之所以上一版的端到端测试能过，是因为测试里的 SS 服务端也是同一份代码，两端同错、自洽。
+
+本版按 RFC 5869 内联实现 HKDF（只多引 `sha1` 一个 crate），并加了一条**独立向量测试**：
+用 Python `hashlib/hmac` 算出的期望值硬编码进测试，任何人把算法改回去都会立刻红。
+
+**二、UDP 全量转发（SS UDP relay）。**
+
+上一版只转发 TCP + DNS，QUIC（HTTP/3）、游戏、NTP、WebRTC 全部黑洞，真机表现是
+「网页能开、视频卡死、部分 App 超时」。
+
+| 改动 | 内容 |
+|---|---|
+| `core/src/udpstack.rs` | 新增：按四元组维护 UDP 会话，每会话一个连到 SS 的 UDP socket；回程解密后重新封装 IPv4/UDP 帧写回 TUN |
+| 报文格式 | `[salt(32)] ‖ AEAD(subkey, nonce=0, [addr][payload])`，与 shadowsocks-rust 的 UDP relay 一致 |
+| 生命周期 | 空闲 90s 自动回收（socket 关闭 / 任务退出 / 表项移除），不会长跑泄漏 |
+| 回程校验 | 解密后校验地址头与请求目标一致才写回，避免服务器回错包串流 |
+| DNS 双通道 | DNS 优先走 UDP relay；1.2s 无回程判定服务端未开 udp，自动回落 DNS-over-TCP，并记住该状态不再逐次白等 |
+| 数据面卡 | 从 3 列改成 2×2：读入 / 写回 / TCP 连接 / **UDP 流** |
+
+`nativeTunStats` 的 CSV 追加第 7 个字段 `udp_flows`；Java 侧 `split` 后按索引取值，
+旧格式仍可解析，不存在版本耦合。
+
+**三、仍然没做的**：UDP 分片重组（MTU 内正常，超大包丢弃）、UDP 会话的 NAT 超时对齐
+（当前固定 90s）、Trojan / VMess / VLESS 出站、订阅导入、真实测速。
 
 ## 0.1.0.8 相对上一版做了什么（本版）
 

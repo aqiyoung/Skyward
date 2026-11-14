@@ -14,6 +14,7 @@ use chacha20poly1305::aead::generic_array::GenericArray;
 use chacha20poly1305::aead::Aead;
 use chacha20poly1305::{ChaCha20Poly1305, KeyInit};
 use hmac::{Hmac, Mac};
+use sha1::Sha1;
 use sha2::{Digest, Sha256};
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
@@ -48,7 +49,7 @@ pub fn reset_proxy_stats() {
     }
 }
 
-type HmacSha256 = Hmac<Sha256>;
+type HmacSha1 = Hmac<Sha1>;
 
 /// 由密码派生主密钥（SHA-256）。
 pub fn master_key(password: &str) -> [u8; 32] {
@@ -58,6 +59,36 @@ pub fn master_key(password: &str) -> [u8; 32] {
     let mut k = [0u8; 32];
     k.copy_from_slice(&out);
     k
+}
+
+/// SS AEAD 子密钥派生：`HKDF-SHA1(ikm = master, salt = salt, info = "ss-subkey")`。
+///
+/// 这里必须与 shadowsocks-rust / 规范完全一致，否则真实服务端在解第一个 chunk 时
+/// 就会 AEAD 校验失败并直接断开。早期版本误用 `HMAC-SHA256(master, salt)`，
+/// 自建回环两端同错所以测试能过，但对真实服务器必然连不上。
+pub fn subkey(master: &[u8; 32], salt: &[u8]) -> [u8; 32] {
+    // HKDF-Extract：PRK = HMAC-SHA1(salt, master)
+    let mut mac = <HmacSha1 as Mac>::new_from_slice(salt).expect("hkdf salt");
+    mac.update(master);
+    let prk = mac.finalize().into_bytes();
+
+    // HKDF-Expand：T(i) = HMAC-SHA1(PRK, T(i-1) || info || i)
+    let mut out = [0u8; 32];
+    let mut prev: Vec<u8> = Vec::new();
+    let mut filled = 0usize;
+    let mut counter: u8 = 1;
+    while filled < out.len() {
+        let mut m = <HmacSha1 as Mac>::new_from_slice(&prk).expect("hkdf prk");
+        m.update(&prev);
+        m.update(b"ss-subkey");
+        m.update(&[counter]);
+        prev = m.finalize().into_bytes().to_vec();
+        let take = (out.len() - filled).min(prev.len());
+        out[filled..filled + take].copy_from_slice(&prev[..take]);
+        filled += take;
+        counter = counter.wrapping_add(1);
+    }
+    out
 }
 
 /// 生成一次连接的随机 salt。
@@ -76,13 +107,9 @@ pub struct SsSession {
 }
 
 impl SsSession {
-    /// 从主密钥 + 本次连接 salt 派生子密钥。
+    /// 从主密钥 + 本次连接 salt 派生子密钥（HKDF-SHA1）。
     pub fn new(master: &[u8; 32], salt: &[u8; SALT_LEN]) -> Self {
-        let mut mac = <HmacSha256 as Mac>::new_from_slice(master).expect("hmac key len");
-        mac.update(salt);
-        let sub = mac.finalize().into_bytes();
-        let mut skey = [0u8; 32];
-        skey.copy_from_slice(&sub);
+        let skey = subkey(master, salt);
         let key = GenericArray::from_slice(&skey);
         let cipher = ChaCha20Poly1305::new(key);
         SsSession {
@@ -143,7 +170,7 @@ pub struct SsTarget {
 }
 
 /// 构造 SS 请求头：`[atype][addr][port(2)]`。
-fn build_header(target: &SsTarget) -> Vec<u8> {
+pub(crate) fn build_header(target: &SsTarget) -> Vec<u8> {
     let mut h = Vec::new();
     if let Ok(ip) = target.host.parse::<Ipv4Addr>() {
         h.push(1);
@@ -162,7 +189,7 @@ fn build_header(target: &SsTarget) -> Vec<u8> {
 }
 
 /// 解析 SS 请求头（逆向 `build_header`）。
-fn parse_header(buf: &[u8]) -> io::Result<SsTarget> {
+pub(crate) fn parse_header(buf: &[u8]) -> io::Result<SsTarget> {
     if buf.len() < 1 {
         return Err(io::Error::new(io::ErrorKind::InvalidData, "empty header"));
     }
@@ -206,6 +233,71 @@ fn parse_header(buf: &[u8]) -> io::Result<SsTarget> {
     }
     let port = u16::from_be_bytes([rest[0], rest[1]]);
     Ok(SsTarget { host, port })
+}
+
+/// SS 地址头长度（用于从 UDP 明文里切出真实载荷）。
+pub(crate) fn header_len(buf: &[u8]) -> io::Result<usize> {
+    match buf.first().copied() {
+        Some(1) => Ok(7),  // atype=1 → 1 + 4 + 2
+        Some(4) => Ok(19), // atype=4 → 1 + 16 + 2
+        Some(3) => {
+            if buf.len() < 2 {
+                return Err(io::Error::new(io::ErrorKind::InvalidData, "domain short"));
+            }
+            Ok(2 + buf[1] as usize + 2)
+        }
+        Some(t) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("bad atype {t}"),
+        )),
+        None => Err(io::Error::new(io::ErrorKind::InvalidData, "empty header")),
+    }
+}
+
+/// SS AEAD UDP 加密（shadowsocks UDP relay 的客户端封装）：
+/// `[salt(32)] || AEAD(subkey, nonce = 0, [addr][payload])`。
+///
+/// 与 TCP 的区别：UDP 每个报文独立加盐、nonce 恒为 0、只加密一段明文，
+/// 不需要长度前缀的两段式结构。服务器未开启 udp 时该报文会被直接丢弃。
+pub fn seal_udp(master: &[u8; 32], target: &SsTarget, payload: &[u8]) -> Vec<u8> {
+    let salt = random_salt();
+    let skey = subkey(master, &salt);
+    let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(&skey));
+
+    let mut plain = build_header(target);
+    plain.extend_from_slice(payload);
+
+    let nonce = [0u8; 12];
+    let ct = cipher
+        .encrypt(GenericArray::from_slice(&nonce), plain.as_slice())
+        .expect("ss udp seal");
+
+    let mut out = Vec::with_capacity(SALT_LEN + ct.len());
+    out.extend_from_slice(&salt);
+    out.extend_from_slice(&ct);
+    out
+}
+
+/// SS AEAD UDP 解密：返回（来源地址, 载荷）。来源地址是服务器回包时写入的目标，
+/// 客户端应校验它与请求目标一致，避免串包。
+pub fn open_udp(master: &[u8; 32], pkt: &[u8]) -> io::Result<(SsTarget, Vec<u8>)> {
+    if pkt.len() < SALT_LEN + TAG_LEN {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "ss udp too short"));
+    }
+    let (salt, ct) = pkt.split_at(SALT_LEN);
+    let skey = subkey(master, salt);
+    let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(&skey));
+    let nonce = [0u8; 12];
+    let plain = cipher
+        .decrypt(GenericArray::from_slice(&nonce), ct)
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "ss udp decrypt failed"))?;
+
+    let target = parse_header(&plain)?;
+    let hlen = header_len(&plain)?;
+    if plain.len() < hlen {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "ss udp header short"));
+    }
+    Ok((target, plain[hlen..].to_vec()))
 }
 
 /// SS 客户端：连远端服务器、发送 salt + 加密头，返回（加密流, 会话）。
@@ -319,6 +411,23 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn subkey_matches_hkdf_sha1_vector() {
+        // 独立向量（Python hashlib/hmac 按 RFC 5869 计算）：
+        // master = SHA256("test-password")，salt = 0x00..0x1f，info = "ss-subkey"
+        // 这个断言的作用是钉死算法：一旦有人把派生改回 HMAC-SHA256 或漏掉 info，
+        // 真实服务器会立刻解不开，而自建回环测试却察觉不到。
+        let mk = master_key("test-password");
+        let salt: [u8; 32] = core::array::from_fn(|i| i as u8);
+        let sk = subkey(&mk, &salt);
+        let hex: String = sk.iter().map(|b| format!("{b:02x}")).collect();
+        assert_eq!(
+            hex,
+            "70e4f9110de361fd01d3323dbdddb87e0cbc961a9b7c3eb323c8dd1860e46a9c",
+            "子密钥必须等于 HKDF-SHA1(master, salt, \"ss-subkey\")"
+        );
+    }
 
     #[test]
     fn seal_open_roundtrip() {

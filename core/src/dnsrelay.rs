@@ -11,7 +11,6 @@
 //! 后续会把这里换成 SS 的 UDP relay，省掉 TCP 建连开销；接口不变。
 
 use crate::ss::{read_chunk, ss_client_connect, SsTarget};
-use crate::tcpstack::checksum;
 use std::collections::HashMap;
 use std::io;
 use std::net::Ipv4Addr;
@@ -73,34 +72,7 @@ pub fn parse_udp(pkt: &[u8]) -> Option<UdpDatagram> {
 
 /// 构造从 `src:53` 回到 `dst:sport` 的 UDP 应答包。
 pub fn build_udp_reply(src: Ipv4Addr, dst: Ipv4Addr, sport: u16, dport: u16, payload: &[u8]) -> Vec<u8> {
-    let udp_len = 8 + payload.len();
-    let mut pkt = vec![0u8; 20 + udp_len];
-    pkt[0] = 0x45;
-    pkt[2..4].copy_from_slice(&((20 + udp_len) as u16).to_be_bytes());
-    pkt[6..8].copy_from_slice(&0x4000u16.to_be_bytes());
-    pkt[8] = 64;
-    pkt[9] = 17;
-    pkt[12..16].copy_from_slice(&src.octets());
-    pkt[16..20].copy_from_slice(&dst.octets());
-    let ip_sum = checksum(&[&pkt[..20]]);
-    pkt[10..12].copy_from_slice(&ip_sum.to_be_bytes());
-
-    let u = &mut pkt[20..];
-    u[0..2].copy_from_slice(&sport.to_be_bytes());
-    u[2..4].copy_from_slice(&dport.to_be_bytes());
-    u[4..6].copy_from_slice(&(udp_len as u16).to_be_bytes());
-    u[8..].copy_from_slice(payload);
-
-    // UDP 校验和（IPv4 下计算，伪头 + UDP 段）
-    let s = src.octets();
-    let d = dst.octets();
-    let pseudo = [s[0], s[1], s[2], s[3], d[0], d[1], d[2], d[3], 0, 17,
-        (udp_len >> 8) as u8, udp_len as u8];
-    let sum = checksum(&[&pseudo, &pkt[20..]]);
-    // 0 表示"未计算"，计算值恰好为 0 时按规范写 0xFFFF
-    let sum = if sum == 0 { 0xffff } else { sum };
-    pkt[20 + 6..20 + 8].copy_from_slice(&sum.to_be_bytes());
-    pkt
+    crate::udpstack::build_udp_packet(src, dst, sport, dport, payload)
 }
 
 fn cache() -> &'static Mutex<HashMap<Vec<u8>, (Vec<u8>, Instant)>> {
@@ -198,6 +170,7 @@ pub async fn resolve(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tcpstack::checksum;
 
     fn sample_query() -> Vec<u8> {
         // 一个最小的 A 查询：id=0x1234, flags=0x0100, qd=1,

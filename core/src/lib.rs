@@ -14,6 +14,7 @@ pub mod socks5;
 pub mod ss;
 pub mod tcpstack;
 pub mod tun;
+pub mod udpstack;
 
 use engine::{Core, CORE_VERSION, RuleKind};
 use socks5::{run_socks5, ProxyConfig};
@@ -590,7 +591,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseTun(
     }
 }
 
-/// TUN 真实流量统计 CSV：bytes,packets,tcp,udp。
+/// TUN 真实流量统计 CSV：bytes,packets,tcp,udp,tx_bytes,conns,udp_flows。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeTunStats(
     env: *mut JNIEnv,
@@ -601,11 +602,11 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeTunStats(
         new_jstring(
             env,
             &format!(
-                "{},{},{},{},{},{}",
-                s.bytes, s.packets, s.tcp, s.udp, s.tx_bytes, s.conns
+                "{},{},{},{},{},{},{}",
+                s.bytes, s.packets, s.tcp, s.udp, s.tx_bytes, s.conns, s.udp_flows
             ),
         )
     } else {
-        new_jstring(env, "0,0,0,0,0,0")
+        new_jstring(env, "0,0,0,0,0,0,0")
     }
 }

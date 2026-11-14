@@ -816,18 +816,25 @@ public final class Pages {
         LinearLayout dpRow = new LinearLayout(c);
         dpRow.setOrientation(LinearLayout.HORIZONTAL);
         dpRow.setPadding(0, Ui.dp(c, 12), 0, 0);
-        final TextView[] live = new TextView[3];
+        final TextView[] live = new TextView[4];
         dpRow.addView(kvLive(c, "读入（TUN）", live, 0),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         LinearLayout.LayoutParams l1 = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         l1.leftMargin = Ui.dp(c, 8);
         dpRow.addView(kvLive(c, "写回（TUN）", live, 1), l1);
-        LinearLayout.LayoutParams l2 = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        l2.leftMargin = Ui.dp(c, 8);
-        dpRow.addView(kvLive(c, "活跃连接", live, 2), l2);
         dpCard.addView(dpRow);
+
+        LinearLayout dpRow2 = new LinearLayout(c);
+        dpRow2.setOrientation(LinearLayout.HORIZONTAL);
+        dpRow2.setPadding(0, Ui.dp(c, 12), 0, 0);
+        dpRow2.addView(kvLive(c, "TCP 连接", live, 2),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams l3 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        l3.leftMargin = Ui.dp(c, 8);
+        dpRow2.addView(kvLive(c, "UDP 流", live, 3), l3);
+        dpCard.addView(dpRow2);
         body.addView(dpCard, dpLp);
 
         // 秒级刷新读数：页面切走即停（靠 pageEpoch）
@@ -835,17 +842,19 @@ public final class Pages {
         MAIN.post(new Runnable() {
             @Override public void run() {
                 if (s.pageEpoch != dpEpoch) return;
-                String csv = "0,0,0,0,0,0";
+                String csv = "0,0,0,0,0,0,0";
                 try { csv = RustCore.nativeTunStats(); } catch (Throwable ignored) {}
                 String[] p = csv.split(",");
-                if (p.length >= 6) {
+                if (p.length >= 7) {
                     long bytes = safeLong(p[0]);
                     long packets = safeLong(p[1]);
                     long tx = safeLong(p[4]);
                     long conns = safeLong(p[5]);
+                    long udpFlows = safeLong(p[6]);
                     if (live[0] != null) live[0].setText(packets + " 包 / " + AppState.humanBytes(bytes));
                     if (live[1] != null) live[1].setText(AppState.humanBytes(tx));
                     if (live[2] != null) live[2].setText(String.valueOf(conns));
+                    if (live[3] != null) live[3].setText(String.valueOf(udpFlows));
                 }
                 MAIN.postDelayed(this, 800);
             }
