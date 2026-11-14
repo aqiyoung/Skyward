@@ -5,7 +5,7 @@ package com.threely.skyward.poc;
  * 边界只走原始类型 int/long/double，零对象分配、零字符串跨语言拷贝。
  *
  * PoC-2 新增：会话真值（时长 / 上下行 / 包数由内核计算）、索引引擎对照、
- * 规则集重置。共 23 个导出符号。
+ * 规则集重置。PoC-4 新增：按动作分桶会话汇总、规则枚举。共 37 个导出符号。
  */
 public final class RustCore {
     static {
@@ -44,6 +44,13 @@ public final class RustCore {
     public static native long nativeSessionUpBytes();
     public static native long nativeSessionDownBytes();
     public static native long nativeSessionPackets();
+    /** 按动作分桶会话汇总：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxConns,rejBytes,rejPkts,rejConns */
+    public static native String nativeSessionBreakdown();
+
+    // ---- 规则枚举（PoC-4）----
+    public static native String nativeRulePattern(int i);
+    public static native int nativeRuleKind(int i);
+    public static native int nativeRuleAction(int i);
 
     // ---- 订阅解析 / 代理节点 / 路由决策（PoC-3）----
     public static native int nativeLoadSampleConfig();

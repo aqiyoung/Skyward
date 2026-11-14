@@ -28,9 +28,9 @@ import android.widget.TextView;
  */
 public class MainActivity extends Activity {
 
-    private static final String[] TABS = {"首页", "代理", "配置", "我的"};
+    private static final String[] TABS = {"首页", "代理", "规则", "配置", "我的"};
     private static final IconView.Glyph[] TAB_ICONS = {
-            IconView.Glyph.HOME, IconView.Glyph.GLOBE,
+            IconView.Glyph.HOME, IconView.Glyph.GLOBE, IconView.Glyph.RULES,
             IconView.Glyph.PROFILE, IconView.Glyph.PERSON
     };
 
@@ -38,8 +38,8 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private FrameLayout content;
     private LinearLayout dock;
-    private final TextView[] tabLabels = new TextView[4];
-    private final IconView[] tabIcons = new IconView[4];
+    private final TextView[] tabLabels = new TextView[5];
+    private final IconView[] tabIcons = new IconView[5];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,8 +166,9 @@ public class MainActivity extends Activity {
         View v;
         switch (current) {
             case 1:  v = Pages.proxies(this, refresh); break;
-            case 2:  v = Pages.profiles(this, refresh); break;
-            case 3:  v = Pages.mine(this, refresh); break;
+            case 2:  v = Pages.rules(this, refresh); break;
+            case 3:  v = Pages.profiles(this, refresh); break;
+            case 4:  v = Pages.mine(this, refresh); break;
             default: v = Pages.home(this, refresh); break;
         }
         content.addView(v, new FrameLayout.LayoutParams(

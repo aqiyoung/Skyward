@@ -535,6 +535,13 @@ pub struct Session {
     up_bytes: AtomicU64,
     down_bytes: AtomicU64,
     packets: AtomicU64,
+    /// 按动作分桶的累计：直连 / 代理 / 拒绝 各自的字节与包数。
+    dir_bytes: AtomicU64,
+    dir_pkts: AtomicU64,
+    prx_bytes: AtomicU64,
+    prx_pkts: AtomicU64,
+    rej_bytes: AtomicU64,
+    rej_pkts: AtomicU64,
 }
 
 impl Session {
@@ -545,15 +552,28 @@ impl Session {
             up_bytes: AtomicU64::new(0),
             down_bytes: AtomicU64::new(0),
             packets: AtomicU64::new(0),
+            dir_bytes: AtomicU64::new(0),
+            dir_pkts: AtomicU64::new(0),
+            prx_bytes: AtomicU64::new(0),
+            prx_pkts: AtomicU64::new(0),
+            rej_bytes: AtomicU64::new(0),
+            rej_pkts: AtomicU64::new(0),
         }
     }
 
     /// 启动或恢复会话；seed_up / seed_down 来自上次落盘，保证重启后读数连续。
+    /// 分桶累计一并清零，避免跨会话污染。
     fn start(&self, now_ms: u64, seed_up: u64, seed_down: u64) {
         self.start_ms.store(now_ms, Ordering::Relaxed);
         self.up_bytes.store(seed_up, Ordering::Relaxed);
         self.down_bytes.store(seed_down, Ordering::Relaxed);
         self.packets.store(0, Ordering::Relaxed);
+        self.dir_bytes.store(0, Ordering::Relaxed);
+        self.dir_pkts.store(0, Ordering::Relaxed);
+        self.prx_bytes.store(0, Ordering::Relaxed);
+        self.prx_pkts.store(0, Ordering::Relaxed);
+        self.rej_bytes.store(0, Ordering::Relaxed);
+        self.rej_pkts.store(0, Ordering::Relaxed);
         self.running.store(true, Ordering::Relaxed);
     }
 
@@ -639,6 +659,30 @@ impl Core {
 
     pub fn rule_count(&self) -> usize {
         self.rules.lock().unwrap().len()
+    }
+
+    /// 规则 #i 的匹配模式串（域名 / 关键词 / CIDR 文本）。
+    pub fn rule_pattern(&self, i: usize) -> String {
+        self.rules.lock().unwrap().get(i).map(|r| r.pattern.clone()).unwrap_or_default()
+    }
+
+    /// 规则 #i 的类型：0=DOMAIN-SUFFIX / 1=DOMAIN-KEYWORD / 2=IP-CIDR。
+    pub fn rule_kind_code(&self, i: usize) -> u8 {
+        self.rules.lock().unwrap().get(i).map(|r| match r.kind {
+            RuleKind::DomainSuffix => 0,
+            RuleKind::DomainKeyword => 1,
+            RuleKind::IpCidr => 2,
+        }).unwrap_or(0)
+    }
+
+    /// 规则 #i 的动作：0=DIRECT / 1=PROXY / 2=REJECT。
+    pub fn rule_action(&self, i: usize) -> u8 {
+        self.rules.lock().unwrap().get(i).map(|r| r.action).unwrap_or(0)
+    }
+
+    /// 规则 #i 在规则集中的原始序号（即其插入顺序）。
+    pub fn rule_order(&self, i: usize) -> usize {
+        i
     }
 
     pub fn index_nodes(&self) -> usize {
@@ -790,7 +834,8 @@ impl Core {
         start.elapsed().as_secs_f64() * 1000.0
     }
 
-    /// 会话 tick：连接状态下跑一小段模拟数据面，累加上下行字节 / 包数 / 连接表。
+    /// 会话 tick：连接状态下跑一小段模拟数据面，累加上下行字节 / 包数 / 连接表，
+    /// 并同步按动作（直连 / 代理 / 拒绝）分桶累计，供首页「流量分配」展示。
     /// UI 每秒调一次，界面上的时长与流量因此是内核真值，不是写死常量。
     pub fn session_tick(&self, packets: usize, size: usize) -> u64 {
         if !self.session.running() {
@@ -806,6 +851,23 @@ impl Core {
             let c = conns.entry(id).or_insert(Connection { bytes: 0, action });
             c.bytes += size as u64;
             acc += size as u64;
+            // 按动作分桶：字节（上行 1/3、下行 2/3，沿用既有语义）与包数分别累加
+            let up = (size as u64) / 3;
+            let down = (size as u64) - up;
+            match action {
+                ACTION_DIRECT => {
+                    self.session.dir_bytes.fetch_add(up + down, Ordering::Relaxed);
+                    self.session.dir_pkts.fetch_add(1, Ordering::Relaxed);
+                }
+                ACTION_PROXY => {
+                    self.session.prx_bytes.fetch_add(up + down, Ordering::Relaxed);
+                    self.session.prx_pkts.fetch_add(1, Ordering::Relaxed);
+                }
+                _ => {
+                    self.session.rej_bytes.fetch_add(up + down, Ordering::Relaxed);
+                    self.session.rej_pkts.fetch_add(1, Ordering::Relaxed);
+                }
+            }
         }
         black_box(acc);
         drop(conns);
@@ -816,6 +878,29 @@ impl Core {
         self.session.packets.fetch_add(packets as u64, Ordering::Relaxed);
         self.loopback_bytes.fetch_add(acc, Ordering::Relaxed);
         acc
+    }
+
+    /// 按动作统计当前活动连接数（连接表最多 64 条，扫描成本可忽略）。
+    pub fn conn_count_by_action(&self, action: u8) -> usize {
+        self.connections.lock().unwrap().values().filter(|c| c.action == action).count()
+    }
+
+    /// 会话按动作分桶汇总：逗号分隔
+    /// dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxConns,rejBytes,rejPkts,rejConns
+    pub fn session_breakdown(&self) -> String {
+        let s = &self.session;
+        format!(
+            "{},{},{},{},{},{},{},{},{}",
+            s.dir_bytes.load(Ordering::Relaxed),
+            s.dir_pkts.load(Ordering::Relaxed),
+            self.conn_count_by_action(ACTION_DIRECT),
+            s.prx_bytes.load(Ordering::Relaxed),
+            s.prx_pkts.load(Ordering::Relaxed),
+            self.conn_count_by_action(ACTION_PROXY),
+            s.rej_bytes.load(Ordering::Relaxed),
+            s.rej_pkts.load(Ordering::Relaxed),
+            self.conn_count_by_action(ACTION_REJECT),
+        )
     }
 
     pub fn session_start(&self, now_ms: u64, seed_up: u64, seed_down: u64) {
@@ -899,6 +984,44 @@ mod tests {
         // direct 节点 port 0
         assert_eq!(nodes[7].ptype, "direct");
         assert_eq!(nodes[7].port, 0);
+    }
+
+    #[test]
+    fn rule_enumeration_matches_default_rules() {
+        let c = Core::new();
+        assert_eq!(c.rule_count(), 9);
+        // google.com -> DOMAIN-SUFFIX(0) / PROXY(1)
+        assert_eq!(c.rule_pattern(0), "google.com");
+        assert_eq!(c.rule_kind_code(0), 0);
+        assert_eq!(c.rule_action(0), ACTION_PROXY);
+        // 192.168.0.0/16 -> IP-CIDR(2) / DIRECT(0)
+        assert_eq!(c.rule_kind_code(7), 2);
+        assert_eq!(c.rule_action(7), ACTION_DIRECT);
+        // ads keyword -> REJECT(2)
+        assert_eq!(c.rule_pattern(5), "ads");
+        assert_eq!(c.rule_action(5), ACTION_REJECT);
+    }
+
+    #[test]
+    fn session_tick_buckets_by_action() {
+        let c = Core::new();
+        c.session_start(0, 0, 0);
+        c.session_tick(200, 1500);
+        let b = c.session_breakdown();
+        let v: Vec<&str> = b.split(',').collect();
+        assert_eq!(v.len(), 9);
+        // 三桶包数之和 = 200（每条包恰好归入一个动作）
+        let pkts: u64 = v[1].parse::<u64>().unwrap()
+            + v[4].parse::<u64>().unwrap()
+            + v[7].parse::<u64>().unwrap();
+        assert_eq!(pkts, 200);
+        // 三桶字节之和 > 0
+        let total: u64 = v[0].parse::<u64>().unwrap()
+            + v[3].parse::<u64>().unwrap()
+            + v[6].parse::<u64>().unwrap();
+        assert!(total > 0);
+        // 会话总字节应与分桶合计一致
+        assert_eq!(c.session_up() + c.session_down(), total);
     }
 
     #[test]

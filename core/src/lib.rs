@@ -308,6 +308,16 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionPackets(
     core().session_packets() as jlong
 }
 
+/// 会话按动作分桶汇总（内核真值）：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxConns,
+/// rejBytes,rejPkts,rejConns。逗号分隔一次返回，首页「流量分配」每秒取一次。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionBreakdown(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> *mut c_void {
+    new_jstring(env, &core().session_breakdown())
+}
+
 // ---------------- 订阅解析 / 代理节点 / 路由决策（PoC-3） ----------------
 
 /// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
@@ -406,4 +416,36 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeDecide(
         }
         None => 0,
     }
+}
+
+// ---------------- 规则总览（PoC-4：首页内核化 + 规则页） ----------------
+
+/// 规则 #i 的匹配模式串（域名 / 关键词 / CIDR 文本）。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRulePattern(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().rule_pattern(i.max(0) as usize))
+}
+
+/// 规则 #i 的类型：0=DOMAIN-SUFFIX / 1=DOMAIN-KEYWORD / 2=IP-CIDR。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleKind(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    core().rule_kind_code(i.max(0) as usize) as jint
+}
+
+/// 规则 #i 的动作：0=DIRECT / 1=PROXY / 2=REJECT。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleAction(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    core().rule_action(i.max(0) as usize) as jint
 }

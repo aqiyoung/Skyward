@@ -16,7 +16,7 @@ public class IconView extends View {
     public enum Glyph {
         HOME, GLOBE, LAYERS, PERSON, BOLT, SHIELD, GEAR, CHEVRON,
         POWER, ARROW_UP, ARROW_DOWN, CHART, LIST, INFO, PLUS, SWITCH,
-        ROUTE, DNS, CLOCK, MEMORY, CHECK, PALETTE, TUN, PROFILE
+        ROUTE, DNS, CLOCK, MEMORY, CHECK, PALETTE, TUN, PROFILE, RULES
     }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -183,6 +183,12 @@ public class IconView extends View {
                 c.drawLine(7.5f, 8, 16.5f, 8, paint);
                 c.drawLine(7.5f, 12, 16.5f, 12, paint);
                 c.drawLine(7.5f, 16, 13, 16, paint); break;
+            case RULES:
+                // 漏斗 / 筛选：上宽下窄，中部收口，下方引出两道分支
+                p.moveTo(4.5f, 4); p.lineTo(19.5f, 4); p.lineTo(14, 12); p.lineTo(14, 17);
+                p.lineTo(10, 17); p.lineTo(10, 12); p.close();
+                c.drawPath(p, paint);
+                c.drawLine(10, 17, 6, 21, paint); c.drawLine(14, 17, 18, 21, paint); break;
             default:
                 c.drawCircle(cx, cy, 8, paint);
         }

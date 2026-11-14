@@ -173,6 +173,28 @@ public final class Pages {
                 "本地配置 · 已启用 · 2 个订阅", Ui.valueText(c, "演示"), null));
         body.addView(route);
 
+        body.addView(Ui.groupTitle(c, "流量分配（内核真值 · 按动作分桶）"));
+        LinearLayout dist = Ui.newCard(c);
+        final TextView[] distVals = new TextView[3];
+        String[] actName = {"直连 DIRECT", "代理 PROXY", "拒绝 REJECT"};
+        int[] actTint = {Ui.TEXT2, Ui.BLUE, Ui.RED};
+        for (int i = 0; i < 3; i++) {
+            final TextView v = Ui.valueText(c, "—");
+            distVals[i] = v;
+            dist.addView(Ui.row(c, IconView.Glyph.LIST, actTint[i], actName[i],
+                    "内核会话分桶计数", v, null));
+            if (i != 2) dist.addView(Ui.separator(c));
+        }
+        // 初次进入即填充一次内核真值（未连接时为 0）
+        long[] b0 = parseCsv9(RustCore.nativeSessionBreakdown());
+        distVals[0].setText(String.format(Locale.getDefault(),
+                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[0]), humanK(b0[1]), b0[2]));
+        distVals[1].setText(String.format(Locale.getDefault(),
+                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[3]), humanK(b0[4]), b0[5]));
+        distVals[2].setText(String.format(Locale.getDefault(),
+                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[6]), humanK(b0[7]), b0[8]));
+        body.addView(dist);
+
         body.addView(Ui.groupTitle(c, "内核信息（Rust 实时读数）"));
         LinearLayout mem = Ui.newCard(c);
         mem.addView(Ui.monoBlock(c, s.coreInfo()));
@@ -199,13 +221,80 @@ public final class Pages {
                 rateUpV.setText(AppState.rate(rUp));
                 rateDownV.setText(AppState.rate(rDown));
                 connV.setText(RustCore.nativeConnCount() + " 条");
+                // 按动作分桶：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxC,rejBytes,rejPkts,rejConns
+                String b = RustCore.nativeSessionBreakdown();
+                long[] v = parseCsv9(b);
+                distVals[0].setText(String.format(Locale.getDefault(),
+                        "%s · %s 包 · %d 连接",
+                        AppState.humanBytes(v[0]), humanK(v[1]), v[2]));
+                distVals[1].setText(String.format(Locale.getDefault(),
+                        "%s · %s 包 · %d 连接",
+                        AppState.humanBytes(v[3]), humanK(v[4]), v[5]));
+                distVals[2].setText(String.format(Locale.getDefault(),
+                        "%s · %s 包 · %d 连接",
+                        AppState.humanBytes(v[6]), humanK(v[7]), v[8]));
                 anchor.postDelayed(this, 1000);
             }
         };
         if (s.connected) anchor.postDelayed(ticker, 1000);
 
-        body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、规则与内存均由 Rust 内核计算"
-                + "（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"));
+        body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、按动作分桶流量、规则与内存"
+                + "均由 Rust 内核计算（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"));
+        return page(c, body);
+    }
+
+    // ===================== 规则总览（内核真值） =====================
+    public static View rules(Context c, Runnable refresh) {
+        final AppState s = AppState.get();
+        LinearLayout body = Ui.pageBody(c);
+        body.addView(Ui.pageHeader(c, "规则", "路由规则总览 · 来自 Rust 内核"));
+
+        int n = 0;
+        try { n = RustCore.nativeRuleCount(); } catch (Throwable t) { }
+        body.addView(Ui.groupTitle(c,
+                "规则集（" + n + " 条）· 命中优先级按列表顺序"));
+
+        LinearLayout list = Ui.newCard(c);
+        if (n == 0) {
+            list.addView(Ui.row(c, IconView.Glyph.INFO, Ui.TEXT3, "暂无规则",
+                    "内核未载入规则集", null, null));
+        }
+        for (int i = 0; i < n; i++) {
+            final int idx = i;
+            String pattern, kindLabel;
+            int action;
+            try {
+                pattern = RustCore.nativeRulePattern(i);
+                int kind = RustCore.nativeRuleKind(i);
+                action = RustCore.nativeRuleAction(i);
+                kindLabel = new String[]{"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR"}[kind];
+            } catch (Throwable t) {
+                pattern = "—"; kindLabel = "—"; action = 0;
+            }
+            String[] actName = {"直连 DIRECT", "代理 PROXY", "拒绝 REJECT"};
+            int[] actTint = {Ui.TEXT2, Ui.BLUE, Ui.RED};
+            // 标题行：规则序号 + 动作（着色）
+            TextView title = new TextView(c);
+            title.setText("#" + (idx + 1) + "  " + pattern);
+            title.setTextSize(14);
+            title.setTextColor(Ui.TEXT);
+            title.setTypeface(Typeface.DEFAULT_BOLD);
+            title.setPadding(Ui.dp(c, 14), Ui.dp(c, 12), Ui.dp(c, 14), 0);
+            // 副信息行：类型 + 动作徽标
+            TextView sub = new TextView(c);
+            sub.setTextSize(12);
+            sub.setTextColor(actTint[action]);
+            sub.setPadding(Ui.dp(c, 14), Ui.dp(c, 2), Ui.dp(c, 14), Ui.dp(c, 12));
+            sub.setText(kindLabel + " → " + actName[action]);
+            list.addView(title);
+            list.addView(sub);
+            if (i != n - 1) list.addView(Ui.separator(c));
+        }
+        body.addView(list);
+
+        body.addView(note(c, "以上规则由 Rust 内核索引引擎真实持有（反转域名 trie / 关键词分桶 / "
+                + "CIDR 最长前缀）。「代理」页的路由测试、首页的流量分配均与这里同源；"
+                + "命中优先级按列表自上而下，首条命中生效。"));
         return page(c, body);
     }
 
@@ -519,7 +608,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.8-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.10-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
@@ -607,5 +696,23 @@ public final class Pages {
 
     private static void post(TextView out, String text) {
         MAIN.post(() -> out.setText(text));
+    }
+
+    /** 解析 9 段逗号分隔的 long 序列（按动作分桶汇总），缺段补 0。 */
+    private static long[] parseCsv9(String s) {
+        long[] out = new long[9];
+        if (s == null) return out;
+        String[] p = s.split(",");
+        for (int i = 0; i < 9 && i < p.length; i++) {
+            try { out[i] = Long.parseLong(p[i].trim()); } catch (Throwable t) { out[i] = 0; }
+        }
+        return out;
+    }
+
+    /** 大整数千分位 / K 缩写，用于展示包数等计数。 */
+    private static String humanK(long v) {
+        if (v < 1000L) return String.valueOf(v);
+        if (v < 1_000_000L) return String.format(Locale.getDefault(), "%.1fK", v / 1000.0);
+        return String.format(Locale.getDefault(), "%.2fM", v / 1_000_000.0);
     }
 }
