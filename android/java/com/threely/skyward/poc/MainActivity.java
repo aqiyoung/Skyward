@@ -28,7 +28,7 @@ import android.widget.TextView;
  */
 public class MainActivity extends Activity {
 
-    private static final String[] TABS = {"首页", "代理", "规则", "配置", "我的"};
+    private static final String[] TABS = {"仪表盘", "代理", "规则", "配置", "我的"};
     private static final IconView.Glyph[] TAB_ICONS = {
             IconView.Glyph.HOME, IconView.Glyph.GLOBE, IconView.Glyph.RULES,
             IconView.Glyph.PROFILE, IconView.Glyph.PERSON

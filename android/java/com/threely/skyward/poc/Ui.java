@@ -58,16 +58,17 @@ public final class Ui {
     public static LinearLayout pageHeader(Context c, String title, String sub) {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(c, 20), dp(c, 8), dp(c, 20), dp(c, 6));
+        box.setPadding(dp(c, 0), dp(c, 12), dp(c, 0), dp(c, 4));
         TextView t = new TextView(c);
         t.setText(title);
-        t.setTextSize(28);
+        t.setTextSize(34);
         t.setTypeface(Typeface.DEFAULT_BOLD);
         t.setTextColor(TEXT);
+        t.setLetterSpacing(-0.02f);
         box.addView(t);
         TextView s = new TextView(c);
         s.setText(sub);
-        s.setTextSize(12.5f);
+        s.setTextSize(13.5f);
         s.setTextColor(TEXT2);
         s.setPadding(0, dp(c, 3), 0, 0);
         box.addView(s);
@@ -242,7 +243,7 @@ public final class Ui {
     public static LinearLayout pageBody(Context c) {
         LinearLayout body = new LinearLayout(c);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(c, 16), 0, dp(c, 16), dp(c, 24));
+        body.setPadding(dp(c, 22), 0, dp(c, 22), dp(c, 28));
         return body;
     }
 }

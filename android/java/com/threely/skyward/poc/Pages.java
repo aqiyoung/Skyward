@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -49,224 +50,570 @@ public final class Pages {
     }
 
     // ===================== 首页 / 仪表盘 =====================
+    // ===================== 首页 · 仪表盘（对齐原 Flutter 版布局） =====================
+    // 结构照搬 lib/views/dashboard：大标题 + 状态行，下面 7 张卡（状态 / 网络控制 /
+    // 网络概览 / 路由看板 / 配置 / 代理组 / 内存），mobile 卡片圆角 34、内边距 20/18。
     public static View home(Context c, Runnable refresh) {
         final AppState s = AppState.get();
-        LinearLayout body = Ui.pageBody(c);
-        body.addView(Ui.pageHeader(c, "首页", "仪表盘 · 当前状态一览"));
 
-        // --- 主状态大卡 ---
-        LinearLayout hero = new LinearLayout(c);
-        hero.setOrientation(LinearLayout.VERTICAL);
-        GradientDrawable hg = new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                s.connected ? new int[]{Color.parseColor("#00A94F"), Color.parseColor("#0B8A6B")}
-                            : new int[]{Color.parseColor("#3A3A3C"), Color.parseColor("#636366")});
-        hg.setCornerRadius(Ui.dp(c, 18));
-        hero.setBackground(hg);
-        hero.setPadding(Ui.dp(c, 20), Ui.dp(c, 20), Ui.dp(c, 20), Ui.dp(c, 18));
+        ScrollView sv = new ScrollView(c);
+        sv.setFillViewport(true);
+        sv.setVerticalScrollBarEnabled(false);
+        final LinearLayout body = new LinearLayout(c);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(Ui.dp(c, 22), 0, Ui.dp(c, 22), Ui.dp(c, 28));
+        sv.addView(body, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        TextView stateLabel = new TextView(c);
-        stateLabel.setText(s.connected ? "●  已连接" : "○  未连接");
-        stateLabel.setTextSize(13);
-        stateLabel.setTextColor(Color.parseColor("#E8FFFFFF"));
-        hero.addView(stateLabel);
+        // ---- 大标题 ----
+        TextView h1 = new TextView(c);
+        h1.setText("仪表盘");
+        h1.setTextSize(34);
+        h1.setTypeface(Typeface.DEFAULT_BOLD);
+        h1.setTextColor(Ui.TEXT);
+        h1.setLetterSpacing(-0.02f);
+        h1.setPadding(0, Ui.dp(c, 10), 0, 0);
+        body.addView(h1);
 
-        TextView outbound = new TextView(c);
-        outbound.setText(s.connected ? AppState.NODE_NAMES[s.selectedNode] : "尚未连接");
-        outbound.setTextSize(24);
-        outbound.setTypeface(Typeface.DEFAULT_BOLD);
-        outbound.setTextColor(Color.WHITE);
-        outbound.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 2));
-        hero.addView(outbound);
+        // ---- 状态行：● 已连接 · 00:00:00 ----
+        LinearLayout line = new LinearLayout(c);
+        line.setOrientation(LinearLayout.HORIZONTAL);
+        line.setGravity(Gravity.CENTER_VERTICAL);
+        line.setPadding(0, Ui.dp(c, 10), 0, 0);
+        final View dot = new View(c);
+        GradientDrawable dg = new GradientDrawable();
+        dg.setShape(GradientDrawable.OVAL);
+        dg.setColor(s.connected ? Ui.GREEN : Ui.TEXT3);
+        dot.setBackground(dg);
+        dot.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 8), Ui.dp(c, 8)));
+        line.addView(dot);
+        final TextView stateV = new TextView(c);
+        stateV.setText(s.connected ? "已连接" : "未连接");
+        stateV.setTextSize(15);
+        stateV.setTextColor(Ui.TEXT2);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        slp.leftMargin = Ui.dp(c, 8);
+        stateV.setLayoutParams(slp);
+        line.addView(stateV);
+        final TextView timerV = new TextView(c);
+        timerV.setText(s.connected ? "  ·  " + AppState.humanDuration(s.uptimeSec()) : "");
+        timerV.setTextSize(15);
+        timerV.setTextColor(Ui.TEXT2);
+        line.addView(timerV);
+        body.addView(line);
 
-        TextView sub = new TextView(c);
-        sub.setText(s.connected
-                ? s.ruleModeLabel() + " · " + AppState.NODE_REGION[s.selectedNode] + " · 内核会话"
-                : "点击下方按钮开始 · 内核未接管真实流量");
-        sub.setTextSize(12);
-        sub.setTextColor(Color.parseColor("#CCFFFFFF"));
-        sub.setPadding(0, 0, 0, Ui.dp(c, 16));
-        hero.addView(sub);
-
-        // 流量/时长三栏（数值来自 Rust 会话，每秒刷新）
-        LinearLayout stats = new LinearLayout(c);
-        stats.setOrientation(LinearLayout.HORIZONTAL);
-        final TextView[] statVals = new TextView[3];
-        String[] keys = {"↑ 上传", "↓ 下载", "运行时长"};
-        String[] vals = s.connected
-                ? new String[]{AppState.humanBytes(s.upBytes()),
-                              AppState.humanBytes(s.downBytes()),
-                              AppState.humanDuration(s.uptimeSec())}
-                : new String[]{"—", "—", "—"};
-        for (int i = 0; i < keys.length; i++) {
-            LinearLayout col = new LinearLayout(c);
-            col.setOrientation(LinearLayout.VERTICAL);
-            col.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-            TextView v = new TextView(c);
-            v.setText(vals[i]);
-            v.setTextSize(16);
-            v.setTypeface(Typeface.DEFAULT_BOLD);
-            v.setTextColor(Color.WHITE);
-            statVals[i] = v;
-            TextView k = new TextView(c);
-            k.setText(keys[i]);
-            k.setTextSize(11);
-            k.setTextColor(Color.parseColor("#B8FFFFFF"));
-            col.addView(v); col.addView(k);
-            stats.addView(col);
-        }
-        hero.addView(stats);
-
-        TextView btn = Ui.primaryButton(c, s.connected ? "断开连接" : "连接",
-                s.connected ? Color.parseColor("#FFFFFF") : Color.parseColor("#007AFF"),
-                v -> {
-                    if (s.connected) s.disconnect(); else s.connect();
-                    refresh.run();
-                });
-        if (s.connected) btn.setTextColor(Color.parseColor("#1C1C1E"));
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+        // ===== 卡 1 · 状态（含启动按钮，原版唯一不可移除的卡）=====
+        FrameLayout card1 = card34(c);
+        LinearLayout.LayoutParams c1lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        blp.topMargin = Ui.dp(c, 18);
-        btn.setLayoutParams(blp);
-        hero.addView(btn);
-        body.addView(hero);
+        c1lp.topMargin = Ui.dp(c, 12);
+        card1.setLayoutParams(c1lp);
+        Dash.SparklineView wave = new Dash.SparklineView(c);
+        card1.addView(wave, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        body.addView(Ui.groupTitle(c, "网络控制"));
-        LinearLayout ctrl = Ui.newCard(c);
-        Switch swSys = Ui.toggle(c, s.systemProxy);
-        swSys.setOnCheckedChangeListener((b, on) -> { s.systemProxy = on; s.save(); });
-        ctrl.addView(Ui.row(c, IconView.Glyph.SWITCH, Ui.BLUE, "系统代理",
-                "演示开关 · 不修改系统设置", swSys, null));
-        ctrl.addView(Ui.separator(c));
-        Switch swTun = Ui.toggle(c, s.tunMode);
-        swTun.setOnCheckedChangeListener((b, on) -> { s.tunMode = on; s.save(); });
-        ctrl.addView(Ui.row(c, IconView.Glyph.TUN, Ui.PURPLE, "TUN 模式",
-                "PoC 未建立真实 tun，开关仅作界面占位", swTun, null));
-        body.addView(ctrl);
+        LinearLayout c1 = new LinearLayout(c);
+        c1.setOrientation(LinearLayout.VERTICAL);
+        c1.setPadding(Ui.dp(c, 20), Ui.dp(c, 18), Ui.dp(c, 16), Ui.dp(c, 18));
+        card1.addView(c1, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        body.addView(Ui.groupTitle(c, "网络概览（内核真值）"));
-        LinearLayout net = Ui.newCard(c);
-        final TextView rateUpV = Ui.valueText(c, "0 B/s");
-        net.addView(Ui.row(c, IconView.Glyph.ARROW_UP, Ui.GREEN, "实时上传",
-                "内核模拟数据面 · JNI 实时", rateUpV, null));
-        net.addView(Ui.separator(c));
-        final TextView rateDownV = Ui.valueText(c, "0 B/s");
-        net.addView(Ui.row(c, IconView.Glyph.ARROW_DOWN, Ui.BLUE, "实时下载",
-                "内核模拟数据面 · JNI 实时", rateDownV, null));
-        net.addView(Ui.separator(c));
-        final TextView connV = Ui.valueText(c, RustCore.nativeConnCount() + " 条");
-        net.addView(Ui.row(c, IconView.Glyph.LIST, Ui.ORANGE, "活动连接",
-                "Rust 连接表（JNI 实时）", connV, null));
-        body.addView(net);
+        // 头部：图标 + 状态 + 芯片 | 右侧上下行速率
+        LinearLayout r1 = new LinearLayout(c);
+        r1.setOrientation(LinearLayout.HORIZONTAL);
+        r1.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout hd = new LinearLayout(c);
+        hd.setOrientation(LinearLayout.HORIZONTAL);
+        hd.setGravity(Gravity.CENTER_VERTICAL);
+        IconView stIc = new IconView(c, IconView.Glyph.CHART, Ui.TEXT2);
+        stIc.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 18), Ui.dp(c, 18)));
+        hd.addView(stIc);
+        TextView stTx = new TextView(c);
+        stTx.setText("状态");
+        stTx.setTextSize(15);
+        stTx.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        stTx.setTextColor(Ui.TEXT);
+        LinearLayout.LayoutParams stLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        stLp.leftMargin = Ui.dp(c, 7);
+        stTx.setLayoutParams(stLp);
+        hd.addView(stTx);
+        final TextView stChip = chip(c, s.connected ? "运行中" : "未运行",
+                s.connected ? Ui.GREEN : Ui.TEXT2,
+                s.connected ? Color.parseColor("#1400A94F") : Color.parseColor("#14000000"));
+        LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        chipLp.leftMargin = Ui.dp(c, 7);
+        stChip.setLayoutParams(chipLp);
+        hd.addView(stChip);
+        r1.addView(hd, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        body.addView(Ui.groupTitle(c, "路由与配置"));
-        LinearLayout route = Ui.newCard(c);
-        route.addView(Ui.row(c, IconView.Glyph.ROUTE, Ui.TEAL, "路由模式",
-                "点击切换", Ui.valueText(c, s.ruleModeLabel()),
-                v -> { s.ruleMode = (s.ruleMode + 1) % 3; s.save(); refresh.run(); }));
-        route.addView(Ui.separator(c));
-        route.addView(Ui.row(c, IconView.Glyph.LAYERS, Ui.BLUE, "代理组",
-                AppState.GROUPS[s.selectedGroup] + " · 演示", null,
-                v -> Ui.toast(c, "代理组列表请到「代理」页查看")));
-        route.addView(Ui.separator(c));
-        route.addView(Ui.row(c, IconView.Glyph.PROFILE, Ui.ORANGE, "当前配置",
-                "本地配置 · 已启用 · 2 个订阅", Ui.valueText(c, "演示"), null));
-        body.addView(route);
+        final TextView upRate = new TextView(c), upTot = new TextView(c);
+        final TextView dnRate = new TextView(c), dnTot = new TextView(c);
+        r1.addView(rateCol(c, "↑", true, upRate, upTot));
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp.leftMargin = Ui.dp(c, 12);
+        r1.addView(rateCol(c, "↓", false, dnRate, dnTot), rlp);
+        c1.addView(r1);
 
-        body.addView(Ui.groupTitle(c, "流量分配（内核真值 · 按动作分桶）"));
-        LinearLayout dist = Ui.newCard(c);
-        final TextView[] distVals = new TextView[3];
-        String[] actName = {"直连 DIRECT", "代理 PROXY", "拒绝 REJECT"};
-        int[] actTint = {Ui.TEXT2, Ui.BLUE, Ui.RED};
-        for (int i = 0; i < 3; i++) {
-            final TextView v = Ui.valueText(c, "—");
-            distVals[i] = v;
-            dist.addView(Ui.row(c, IconView.Glyph.LIST, actTint[i], actName[i],
-                    "内核会话分桶计数", v, null));
-            if (i != 2) dist.addView(Ui.separator(c));
-        }
-        // 初次进入即填充一次内核真值（未连接时为 0）
-        long[] b0 = parseCsv9(RustCore.nativeSessionBreakdown());
-        distVals[0].setText(String.format(Locale.getDefault(),
-                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[0]), humanK(b0[1]), b0[2]));
-        distVals[1].setText(String.format(Locale.getDefault(),
-                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[3]), humanK(b0[4]), b0[5]));
-        distVals[2].setText(String.format(Locale.getDefault(),
-                "%s · %s 包 · %d 连接", AppState.humanBytes(b0[6]), humanK(b0[7]), b0[8]));
-        body.addView(dist);
+        // 出口 IP + 组织 | 启动按钮
+        LinearLayout r2 = new LinearLayout(c);
+        r2.setOrientation(LinearLayout.HORIZONTAL);
+        r2.setGravity(Gravity.CENTER_VERTICAL);
+        r2.setPadding(0, Ui.dp(c, 12), 0, 0);
 
-        // 真实数据面探针：内核经 tokio 运行时做真实 DNS 解析 + TCP 建连 + 收发试探字节。
-        // 这是内核「真能收发字节」的实测证据，与上方由 session_tick 模拟出来的流量计数不是一回事。
-        body.addView(Ui.groupTitle(c, "数据面验证（真实 socket · 非模拟）"));
-        LinearLayout probeCard = Ui.newCard(c);
-        final TextView probeOut = new TextView(c);
-        probeOut.setTextSize(13);
-        probeOut.setTextColor(Ui.TEXT2);
-        probeOut.setPadding(Ui.dp(c, 14), Ui.dp(c, 12), Ui.dp(c, 14), Ui.dp(c, 12));
-        probeOut.setText("内核 tokio 真实探针（默认 1.1.1.1:443）· 点「测一次」发起");
-        probeCard.addView(probeOut);
-        LinearLayout probeBtnWrap = new LinearLayout(c);
-        probeBtnWrap.setPadding(Ui.dp(c, 14), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 10));
-        final String PROBE_HOST = "1.1.1.1";
-        final int PROBE_PORT = 443;
-        TextView probeBtn = Ui.primaryButton(c, "测一次", Ui.BLUE, v -> {
-            probeOut.setText("探测中…（内核 tokio socket · 真实 DNS + TCP）");
-            probeOut.setTextColor(Ui.TEXT2);
-            runKernelProbe(PROBE_HOST, PROBE_PORT, probeOut);
+        LinearLayout ipCol = new LinearLayout(c);
+        ipCol.setOrientation(LinearLayout.VERTICAL);
+        String srv = "";
+        try { srv = RustCore.nativeNodeServer(s.selectedNode); } catch (Throwable ignored) {}
+        if (srv == null || srv.isEmpty()) srv = "—";
+        final TextView ipV = new TextView(c);
+        ipV.setText(srv);
+        ipV.setTextSize(22);
+        ipV.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        ipV.setTextColor(s.connected ? Ui.TEXT : Ui.TEXT2);
+        ipV.setLetterSpacing(0f);
+        ipCol.addView(ipV);
+
+        TextView orgLab = new TextView(c);
+        orgLab.setText("IP 组织");
+        orgLab.setTextSize(12);
+        orgLab.setTextColor(Ui.TEXT3);
+        orgLab.setPadding(0, Ui.dp(c, 12), 0, 0);
+        ipCol.addView(orgLab);
+        String grp = "";
+        try { grp = RustCore.nativeNodeGroup(s.selectedNode); } catch (Throwable ignored) {}
+        TextView orgVal = new TextView(c);
+        orgVal.setText(grp == null || grp.isEmpty() ? "—" : grp);
+        orgVal.setTextSize(15);
+        orgVal.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        orgVal.setTextColor(Ui.TEXT);
+        orgVal.setSingleLine(true);
+        orgVal.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        orgVal.setPadding(0, Ui.dp(c, 2), 0, 0);
+        ipCol.addView(orgVal);
+        r2.addView(ipCol, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        // 64dp 圆形启动/停止
+        FrameLayout btn = new FrameLayout(c);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.OVAL);
+        bg.setColor(s.connected ? Ui.GREEN : Color.parseColor("#C7C7CC"));
+        btn.setBackground(bg);
+        IconView bi = new IconView(c, s.connected ? IconView.Glyph.POWER : IconView.Glyph.POWER,
+                Color.WHITE);
+        FrameLayout.LayoutParams bilp = new FrameLayout.LayoutParams(
+                Ui.dp(c, 26), Ui.dp(c, 26));
+        bilp.gravity = Gravity.CENTER;
+        bi.setLayoutParams(bilp);
+        btn.addView(bi);
+        btn.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 64), Ui.dp(c, 64)));
+        btn.setClickable(true);
+        btn.setOnClickListener(v -> {
+            if (AppState.get().connected) AppState.get().disconnect();
+            else AppState.get().connect();
+            refresh.run();
         });
-        probeBtnWrap.addView(probeBtn);
-        probeCard.addView(probeBtnWrap);
-        body.addView(probeCard);
-        // 进入页面即自动跑一次真实探针（后台线程，不阻塞 UI）
-        runKernelProbe(PROBE_HOST, PROBE_PORT, probeOut);
+        r2.addView(btn);
+        c1.addView(r2);
+        body.addView(card1);
 
-        body.addView(Ui.groupTitle(c, "内核信息（Rust 实时读数）"));
-        LinearLayout mem = Ui.newCard(c);
-        mem.addView(Ui.monoBlock(c, s.coreInfo()));
-        body.addView(mem);
+        // ===== 卡 2 · 网络控制（模式 + VPN / 局域网 两块状态）=====
+        LinearLayout card2 = lcard(c);
+        card2.addView(cardHead(c, IconView.Glyph.SWITCH, "网络控制", null));
 
-        // 秒级刷新：只更新数字 TextView，不重建整页（避免滚动跳动）。
-        // 切页 / 断开 / 退后台时 pageEpoch 变化，本 Runnable 自动退出，不泄漏。
+        // 出站模式：规则 / 全局 / 直连
+        LinearLayout seg = new LinearLayout(c);
+        seg.setOrientation(LinearLayout.HORIZONTAL);
+        seg.setPadding(0, Ui.dp(c, 12), 0, 0);
+        GradientDrawable segBg = new GradientDrawable();
+        segBg.setColor(Color.parseColor("#F2F2F7"));
+        segBg.setCornerRadius(Ui.dp(c, 12));
+        seg.setBackground(segBg);
+        seg.setPadding(Ui.dp(c, 3), Ui.dp(c, 3), Ui.dp(c, 3), Ui.dp(c, 3));
+        String[] modes = {"规则", "全局", "直连"};
+        for (int i = 0; i < 3; i++) {
+            final int idx = i;
+            TextView t = new TextView(c);
+            t.setText(modes[i]);
+            t.setTextSize(13);
+            t.setGravity(Gravity.CENTER);
+            t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            t.setPadding(0, Ui.dp(c, 7), 0, Ui.dp(c, 7));
+            boolean on = s.ruleMode == i;
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(on ? Color.WHITE : Color.TRANSPARENT);
+            g.setCornerRadius(Ui.dp(c, 9));
+            t.setBackground(g);
+            t.setTextColor(on ? Ui.TEXT : Ui.TEXT2);
+            t.setOnClickListener(v -> {
+                AppState.get().ruleMode = idx;
+                AppState.get().save();
+                refresh.run();
+            });
+            seg.addView(t, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        card2.addView(seg);
+
+        // VPN / 局域网：两块并排（手机版原样：无开关，点块切换）
+        LinearLayout tiles = new LinearLayout(c);
+        tiles.setOrientation(LinearLayout.HORIZONTAL);
+        tiles.setPadding(0, Ui.dp(c, 10), 0, 0);
+        tiles.addView(tile(c, "VPN", s.tunMode ? "已接管" : "未接管"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams tlp2 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        tlp2.leftMargin = Ui.dp(c, 8);
+        tiles.addView(tile(c, "局域网", "未开启"), tlp2);
+        card2.addView(tiles);
+        body.addView(card2, cardGap(c));
+
+        // ===== 卡 3 · 网络概览（服务状态网格）=====
+        LinearLayout card3 = lcard(c);
+        card3.addView(cardHead(c, IconView.Glyph.GLOBE, "网络概览", null));
+        LinearLayout grid1 = new LinearLayout(c);
+        grid1.setOrientation(LinearLayout.HORIZONTAL);
+        grid1.setPadding(0, Ui.dp(c, 12), 0, 0);
+        grid1.addView(tile(c, "GitHub", "—"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams g1 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        g1.leftMargin = Ui.dp(c, 8);
+        grid1.addView(tile(c, "Google", "—"), g1);
+        card3.addView(grid1);
+        LinearLayout grid2 = new LinearLayout(c);
+        grid2.setOrientation(LinearLayout.HORIZONTAL);
+        grid2.setPadding(0, Ui.dp(c, 8), 0, 0);
+        grid2.addView(tile(c, "Cloudflare", "—"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams g2 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        g2.leftMargin = Ui.dp(c, 8);
+        grid2.addView(tile(c, "本机网关", "—"), g2);
+        card3.addView(grid2);
+        body.addView(card3, cardGap(c));
+
+        // ===== 卡 4 · 路由看板（线框地球 + 本机→节点→目的地）=====
+        LinearLayout card4 = lcard(c);
+        card4.addView(cardHead(c, IconView.Glyph.ROUTE, "路由看板", null));
+        Dash.GlobeView globe = new Dash.GlobeView(c);
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(c, 150));
+        glp.topMargin = Ui.dp(c, 6);
+        globe.setLayoutParams(glp);
+        card4.addView(globe);
+        LinearLayout cols = new LinearLayout(c);
+        cols.setOrientation(LinearLayout.HORIZONTAL);
+        cols.setGravity(Gravity.CENTER_VERTICAL);
+        cols.setPadding(0, Ui.dp(c, 6), 0, 0);
+        String nodeName = "";
+        try { nodeName = RustCore.nativeNodeName(s.selectedNode); } catch (Throwable ignored) {}
+        cols.addView(rcol(c, "本机", "本设备", "局域网"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        cols.addView(rarrow(c));
+        cols.addView(rcol(c, "节点", nodeName == null || nodeName.isEmpty() ? "未选择" : shortName(nodeName),
+                "已选择"), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        cols.addView(rarrow(c));
+        cols.addView(rcol(c, "目的地", "待解析", "按规则分流"),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        card4.addView(cols);
+        body.addView(card4, cardGap(c));
+
+        // ===== 卡 5 · 配置 =====
+        int nc = 0;
+        try { nc = RustCore.nativeNodeCount(); } catch (Throwable ignored) {}
+        LinearLayout card5 = lcard(c);
+        card5.addView(cardHead(c, IconView.Glyph.PROFILE, "配置", null));
+        LinearLayout p5 = new LinearLayout(c);
+        p5.setOrientation(LinearLayout.HORIZONTAL);
+        p5.setGravity(Gravity.CENTER_VERTICAL);
+        p5.setPadding(0, Ui.dp(c, 12), 0, 0);
+        TextView pn = new TextView(c);
+        pn.setText("默认配置");
+        pn.setTextSize(17);
+        pn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        pn.setTextColor(Ui.TEXT);
+        p5.addView(pn, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        p5.addView(chip(c, nc > 0 ? nc + " 节点" : "未载入", Ui.BLUE,
+                Color.parseColor("#14007AFF")));
+        card5.addView(p5);
+        body.addView(card5, cardGap(c));
+
+        // ===== 卡 6 · 代理组 =====
+        LinearLayout card6 = lcard(c);
+        card6.addView(cardHead(c, IconView.Glyph.LAYERS, "代理组", null));
+        LinearLayout p6 = new LinearLayout(c);
+        p6.setOrientation(LinearLayout.HORIZONTAL);
+        p6.setGravity(Gravity.CENTER_VERTICAL);
+        p6.setPadding(0, Ui.dp(c, 12), 0, 0);
+        TextView gn = new TextView(c);
+        gn.setText(AppState.GROUPS[Math.max(0,
+                Math.min(s.selectedGroup, AppState.GROUPS.length - 1))]);
+        gn.setTextSize(17);
+        gn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        gn.setTextColor(Ui.TEXT);
+        p6.addView(gn, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        p6.addView(chip(c, "延迟自动", Ui.GREEN, Color.parseColor("#1400A94F")));
+        card6.addView(p6);
+        body.addView(card6, cardGap(c));
+
+        // ===== 卡 7 · 内存信息（内核 + 进程 heap，真实读数）=====
+        LinearLayout card7 = lcard(c);
+        card7.addView(cardHead(c, IconView.Glyph.MEMORY, "内存信息", null));
+        Runtime rt = Runtime.getRuntime();
+        long used = rt.totalMemory() - rt.freeMemory();
+        LinearLayout p7 = new LinearLayout(c);
+        p7.setOrientation(LinearLayout.HORIZONTAL);
+        p7.setPadding(0, Ui.dp(c, 12), 0, 0);
+        p7.addView(kv(c, "进程 heap", AppState.humanBytes(used)),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams k2 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        k2.leftMargin = Ui.dp(c, 8);
+        p7.addView(kv(c, "上限", AppState.humanBytes(rt.maxMemory())), k2);
+        card7.addView(p7);
+        body.addView(card7, cardGap(c));
+
+        body.addView(note(c, "布局照原 Flutter 版仪表盘（状态 / 网络控制 / 网络概览 / 路由看板 / "
+                + "配置 / 代理组 / 内存）。数据来自 Rust 内核；服务连通性与目的地解析尚未接入，"
+                + "显示为「—」。"));
+
+        // ---- 秒级刷新：时长 / 速率 / 累计 ----
         final int epoch = s.pageEpoch;
         final long[] prev = { s.upBytes(), s.downBytes(), System.currentTimeMillis() };
-        final View anchor = body;
         final Runnable ticker = new Runnable() {
             @Override public void run() {
-                if (!s.connected || s.pageEpoch != epoch) return;
-                s.tick();
+                if (s.pageEpoch != epoch) return;
+                timerV.setText(s.connected
+                        ? "  ·  " + AppState.humanDuration(s.uptimeSec()) : "");
+                stateV.setText(s.connected ? "已连接" : "未连接");
+                GradientDrawable d2 = new GradientDrawable();
+                d2.setShape(GradientDrawable.OVAL);
+                d2.setColor(s.connected ? Ui.GREEN : Ui.TEXT3);
+                dot.setBackground(d2);
+                stChip.setText(s.connected ? "运行中" : "未运行");
+                stChip.setTextColor(s.connected ? Ui.GREEN : Ui.TEXT2);
+                stChip.setBackground(chipBg(c, s.connected ? "#1400A94F" : "#14000000"));
                 long now = System.currentTimeMillis();
                 long dt = Math.max(1L, now - prev[2]);
                 long up = s.upBytes(), down = s.downBytes();
-                long rUp = (up - prev[0]) * 1000L / dt;
-                long rDown = (down - prev[1]) * 1000L / dt;
+                upRate.setText(AppState.rate((up - prev[0]) * 1000L / dt));
+                dnRate.setText(AppState.rate((down - prev[1]) * 1000L / dt));
+                upTot.setText("累计 " + AppState.humanBytes(up));
+                dnTot.setText("累计 " + AppState.humanBytes(down));
                 prev[0] = up; prev[1] = down; prev[2] = now;
-                statVals[0].setText(AppState.humanBytes(up));
-                statVals[1].setText(AppState.humanBytes(down));
-                statVals[2].setText(AppState.humanDuration(s.uptimeSec()));
-                rateUpV.setText(AppState.rate(rUp));
-                rateDownV.setText(AppState.rate(rDown));
-                connV.setText(RustCore.nativeConnCount() + " 条");
-                // 按动作分桶：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxC,rejBytes,rejPkts,rejConns
-                String b = RustCore.nativeSessionBreakdown();
-                long[] v = parseCsv9(b);
-                distVals[0].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[0]), humanK(v[1]), v[2]));
-                distVals[1].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[3]), humanK(v[4]), v[5]));
-                distVals[2].setText(String.format(Locale.getDefault(),
-                        "%s · %s 包 · %d 连接",
-                        AppState.humanBytes(v[6]), humanK(v[7]), v[8]));
-                anchor.postDelayed(this, 1000);
+                body.postDelayed(this, 1000);
             }
         };
-        if (s.connected) anchor.postDelayed(ticker, 1000);
-
-        body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、按动作分桶流量、规则与内存"
-                + "均由 Rust 内核计算（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"
-                + "其中「数据面验证」卡片是内核经 tokio 的真实 socket 探测（真实 DNS + TCP 收发字节，非模拟）。"));
+        body.postDelayed(ticker, 1000);
         return page(c, body);
+    }
+
+    /** 34 圆角白卡（原版 mobile 卡片半径）：FrameLayout，供背景波形铺满。 */
+    private static FrameLayout card34(Context c) {
+        FrameLayout card = new FrameLayout(c);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setCornerRadius(Ui.dp(c, 34));
+        card.setBackground(g);
+        card.setElevation(Ui.dp(c, 3));
+        card.setClipChildren(true);
+        return card;
+    }
+
+    /** 34 圆角白卡（LinearLayout 版），已带 20/18 内边距。 */
+    private static LinearLayout lcard(Context c) {
+        LinearLayout card = new LinearLayout(c);
+        card.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setCornerRadius(Ui.dp(c, 34));
+        card.setBackground(g);
+        card.setElevation(Ui.dp(c, 3));
+        card.setPadding(Ui.dp(c, 20), Ui.dp(c, 18), Ui.dp(c, 20), Ui.dp(c, 18));
+        return card;
+    }
+
+    /** 卡片间距 12dp（原版 cardSpacing）。 */
+    private static LinearLayout.LayoutParams cardGap(Context c) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Ui.dp(c, 12);
+        return lp;
+    }
+
+    /** 卡片标题行：18dp 线性图标 + 15sp 中粗标题 + 可选右侧。 */
+    private static LinearLayout cardHead(Context c, IconView.Glyph glyph, String title,
+                                        View trailing) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        IconView ic = new IconView(c, glyph, Ui.TEXT2);
+        ic.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 18), Ui.dp(c, 18)));
+        row.addView(ic);
+        TextView t = new TextView(c);
+        t.setText(title);
+        t.setTextSize(15);
+        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t.setTextColor(Ui.TEXT);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp.leftMargin = Ui.dp(c, 7);
+        t.setLayoutParams(tlp);
+        row.addView(t);
+        if (trailing != null) {
+            row.addView(new View(c), new LinearLayout.LayoutParams(0, 1, 1f));
+            row.addView(trailing);
+        }
+        return row;
+    }
+
+    private static GradientDrawable chipBg(Context c, String hex) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.parseColor(hex));
+        g.setCornerRadius(Ui.dp(c, 8));
+        return g;
+    }
+
+    /** 状态芯片。 */
+    private static TextView chip(Context c, String text, int fg, int bgColor) {
+        TextView t = new TextView(c);
+        t.setText(text);
+        t.setTextSize(11.5f);
+        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t.setTextColor(fg);
+        t.setPadding(Ui.dp(c, 8), Ui.dp(c, 3), Ui.dp(c, 8), Ui.dp(c, 3));
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(bgColor);
+        g.setCornerRadius(Ui.dp(c, 8));
+        t.setBackground(g);
+        return t;
+    }
+
+    /** 速率列：↑ 1.2 MB/s / 累计 8.6 MB。 */
+    private static LinearLayout rateCol(Context c, String arrow, boolean up,
+                                        TextView rate, TextView total) {
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout top = new LinearLayout(c);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView a = new TextView(c);
+        a.setText(arrow);
+        a.setTextSize(11);
+        a.setTextColor(up ? Ui.ORANGE : Ui.BLUE);
+        top.addView(a);
+        rate.setText("0 B/s");
+        rate.setTextSize(14);
+        rate.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        rate.setTextColor(Ui.TEXT);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp.leftMargin = Ui.dp(c, 3);
+        rate.setLayoutParams(rlp);
+        top.addView(rate);
+        col.addView(top);
+        total.setText("累计 0 B");
+        total.setTextSize(11);
+        total.setTextColor(Ui.TEXT3);
+        total.setPadding(0, Ui.dp(c, 1), 0, 0);
+        col.addView(total);
+        return col;
+    }
+
+    /** 浅灰圆角块：标题 + 副标题（原版 tile）。 */
+    private static LinearLayout tile(Context c, String title, String sub) {
+        LinearLayout t = new LinearLayout(c);
+        t.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.parseColor("#F2F2F7"));
+        g.setCornerRadius(Ui.dp(c, 22));
+        t.setBackground(g);
+        t.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 12));
+        TextView a = new TextView(c);
+        a.setText(title);
+        a.setTextSize(15);
+        a.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        a.setTextColor(Ui.TEXT);
+        a.setSingleLine(true);
+        a.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        t.addView(a);
+        TextView b = new TextView(c);
+        b.setText(sub);
+        b.setTextSize(12);
+        b.setTextColor(Ui.TEXT2);
+        b.setSingleLine(true);
+        b.setPadding(0, Ui.dp(c, 4), 0, 0);
+        t.addView(b);
+        return t;
+    }
+
+    /** 路由看板一列：小标签 + 主值 + 副值。 */
+    private static LinearLayout rcol(Context c, String label, String value, String sub) {
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        TextView l = new TextView(c);
+        l.setText(label);
+        l.setTextSize(12);
+        l.setTextColor(Ui.TEXT3);
+        col.addView(l);
+        TextView v = new TextView(c);
+        v.setText(value);
+        v.setTextSize(15);
+        v.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        v.setTextColor(Ui.TEXT);
+        v.setSingleLine(true);
+        v.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        v.setPadding(0, Ui.dp(c, 3), 0, 0);
+        col.addView(v);
+        TextView s2 = new TextView(c);
+        s2.setText(sub);
+        s2.setTextSize(11);
+        s2.setTextColor(Ui.TEXT3);
+        s2.setSingleLine(true);
+        s2.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        col.addView(s2);
+        return col;
+    }
+
+    private static TextView rarrow(Context c) {
+        TextView t = new TextView(c);
+        t.setText("›");
+        t.setTextSize(18);
+        t.setTextColor(Color.parseColor("#C0C0C6"));
+        t.setPadding(Ui.dp(c, 2), 0, Ui.dp(c, 2), 0);
+        return t;
+    }
+
+    private static String shortName(String name) {
+        if (name == null || name.isEmpty()) return "自动选择";
+        return name.length() > 10 ? name.substring(0, 9) + "…" : name;
+    }
+
+    /** 内存卡的一格：上标签 + 下数值。 */
+    private static LinearLayout kv(Context c, String label, String value) {
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        TextView l = new TextView(c);
+        l.setText(label);
+        l.setTextSize(12);
+        l.setTextColor(Ui.TEXT3);
+        col.addView(l);
+        TextView v = new TextView(c);
+        v.setText(value);
+        v.setTextSize(15);
+        v.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        v.setTextColor(Ui.TEXT);
+        v.setPadding(0, Ui.dp(c, 3), 0, 0);
+        col.addView(v);
+        return col;
     }
 
     // ===================== 规则总览（内核真值） =====================
@@ -671,7 +1018,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-6 · SOCKS5 + SS 真实转发 · TUN 接管版")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.15-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.16-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
