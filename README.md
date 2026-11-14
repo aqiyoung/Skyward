@@ -1,14 +1,16 @@
-# Skyward Rust Core · PoC-9（0.1.0.22-dev · Trojan / VLESS 出站）
+# Skyward · 1.0.0.23-dev
 
-一版可装机的最小骨架，用来回答三个问题：
+安卓客户端，数据面与控制面用 Rust 重写，UI 保持与原 Flutter 版逐像素一致。
 
-1. 安卓客户端能不能尽量用 Rust 写 → 能，但 `VpnService` 必须留几十行 Java 壳。
-2. 换成 Rust 后体积能压到多少 → 量架构开销，见构建产物。
-3. 性能会不会变差 → 规则引擎 / 数据面基准按需在「我的 → 工具」里跑，并带索引 / 线性对照。
+从这一版起脱离 PoC：
 
-> **PoC-6 起内核不再是「模拟数据面」**：本地 SOCKS5 入口 + Shadowsocks AEAD（ChaCha20-Poly1305）
-> 出站 + TUN 接管已在 Rust 侧跑通端到端真实转发（单元 + echo 回环实测），UI 上明确区分
-> 「模拟会话」与「真实代理流量」。
+- **包名** `com.threely.skyward`（不再是 `.poc`），版本线 `1.0.0.x`
+- **Gradle 工程**（AGP 9 + 单 `app` 模块），`build.sh` 保留为 13 秒快速通道，两条路共用同一份源码
+- **UI 按页拆分**：`Pages.java` 1522 行 → `PageHome/PageProxies/PageRules/PageProfiles/PageMine` + `Widgets`
+  （拆分后五页截图逐像素 0 差异，用 Robolectric 对照验证）
+- **数据面**：TUN 接管、用户态 TCP 栈、UDP relay、SS / Trojan / VLESS 三种出站
+
+> 体积仍是单 arm64 APK，约 1.9 MB。原 Flutter 版是 60 MB 量级。
 
 ## 版本线
 
@@ -33,6 +35,53 @@
 | `0.1.0.20-dev` | **TUN 真实转发闭环**：用户态最小 TCP 栈 + DNS over TCP via SS，开 VPN 不再断网；代理页加「数据面」卡 | 1.08 MB |
 | `0.1.0.21-dev` | **修 SS 子密钥派生（HKDF-SHA1）+ UDP 全量转发**：QUIC/游戏/DNS 走 SS UDP relay，DNS 双通道自动回退 | 1.12 MB |
 | `0.1.0.22-dev` | **Trojan / VLESS 出站**：抽协议层，共用一套 TLS（rustls + ring），DNS 跟随协议；代理页加协议选择与 SNI | 2.04 MB |
+| `1.0.0.23-dev` | **正式工程化**：包名去 poc / Gradle 工程 / UI 按页拆分 / 前台服务通知 / Trojan UDP 通道 | 1.86 MB |
+
+## 1.0.0.23 做了什么（本版）
+
+**一、工程化：不再是「手搓 APK 的 PoC」。**
+
+| 项 | 之前 | 现在 |
+|---|---|---|
+| 包名 | `com.threely.skyward.poc` | `com.threely.skyward` |
+| 构建 | 只有 `build.sh`（aapt2/javac/d8 手搓） | Gradle（AGP 9）+ `build.sh` 快速通道 |
+| 内核编译 | 写在 `build.sh` 里 | 抽到 `scripts/build-core.sh`，两条构建路共用 |
+| UI 代码 | `Pages.java` 单文件 1522 行 | 5 个页面类 + `Widgets` 共用控件库 |
+
+`build.sh` 没有删：Gradle 首次构建要下 AGP 依赖（约 3 分钟），而 `build.sh` 稳定 13 秒出包，
+CI 与本地快速验证都还用它。两条路读同一份源码、同一个 `.so`、同一个 keystore。
+
+**二、UI 拆分不改视觉。**
+
+拆法是把原文件里的顶层方法按页搬走，方法体一字未动，只把 `private` 放宽到包内可见，
+再补一个 `Pages` 门面让 `MainActivity` 的调用点保持不变。
+
+验证方式不是「看着差不多」：用 Robolectric 在 390×844dp 下把拆分前后各渲染一遍五页，
+逐像素比对，**五页差异均为 0**。
+
+**三、前台服务 + 常驻通知。**
+
+之前的 VPN 服务没有 `startForeground`。Android 12+ 会随时回收这种进程，用户看到的是
+「用几分钟自己断」。本版补上通知渠道与常驻通知（Android 14 走 `specialUse` 类型），
+并加了 `onRevoke` —— 用户在系统设置里撤销授权时主动收摊，不留半开的 TUN。
+
+另外把自身流量排除出隧道（`addDisallowedApplication`），避免内核出站绕回自己形成环路。
+
+**四、Trojan 的 UDP 通道。**
+
+Trojan 没有独立 UDP 端口，UDP 是在同一条 TLS 流上复用出来的：
+
+```text
+首包：hex(SHA224(pwd)) CRLF | 0x03 | ATYP ADDR PORT CRLF
+之后每包（双向同构）：ATYP | ADDR | PORT | Length(2) | CRLF | Payload
+```
+
+新增 `core/src/udpstream.rs`，按四元组维护会话、每会话一条 TCP，空闲 90s 回收。
+端到端测试覆盖「首包解析 → 逐包分帧 → UDP 转发 → 回程封包」四段接缝。
+
+**五、VLESS 的 UDP 说明。** 裸 VLESS 的 UDP over TCP 没有长度前缀，多个数据报会粘连、
+边界丢失，实践里要靠 XUDP/mux 才能正确分帧。这部分留到 Mux 模块一起做；当前 VLESS 下
+UDP 仅放行 DNS（走 TCP），QUIC 会回退 TCP，网页与视频不受影响。
 
 ## 0.1.0.22 相对上一版做了什么（本版）
 

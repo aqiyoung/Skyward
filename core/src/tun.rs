@@ -20,6 +20,7 @@ use crate::socks5::ProxyConfig;
 use crate::ss::{master_key, read_chunk, ss_client_connect, SsTarget};
 use crate::tcpstack::{Event, FlowKey, TcpStack};
 use crate::udpstack::{FlowKey as UdpKey, Sink, UdpRelay};
+use crate::udpstream::StreamRelay;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -163,7 +164,17 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
             let s = s2.clone();
             Arc::new(move |pkt: &[u8]| write_tun(&w, pkt, &s))
         };
+        let sink2 = sink.clone();
         let udp = UdpRelay::new(master, cfg.ss_server.clone(), cfg.ss_port, sink);
+        // Trojan 的 UDP 走同一条 TLS 流（UDP ASSOCIATE），单独一张会话表。
+        let udp_stream = StreamRelay::new(
+            cfg.ss_server.clone(),
+            cfg.ss_port,
+            cfg.password.clone(),
+            cfg.tls,
+            cfg.sni.clone(),
+            sink2,
+        );
 
         // 重传定时器：每 100ms 推一次栈内的超时段。
         {
@@ -244,60 +255,103 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
                     let payload = dg.payload;
                     let is_dns = dst == 53;
 
-                    let relay = udp.clone();
-                    let writer2 = writer.clone();
-                    let stats2 = s2.clone();
-                    let cfg2 = cfg.clone();
                     let client_ip = parsed.src_ip;
                     let client_port = src;
                     let dns_ip = parsed.dst_ip;
 
-                    // Trojan / VLESS 还没有 UDP 通道：DNS 走 TCP，其余 UDP 丢弃
-                    // （QUIC 会自动回退到 TCP，不会造成整站不可用）。
-                    if cfg.protocol != Protocol::Shadowsocks {
-                        if is_dns {
+                    // 三条通道按协议分流：
+                    //   Shadowsocks → SS UDP relay（独立 UDP socket，逐包加盐）
+                    //   Trojan      → UDP ASSOCIATE（同一条 TLS 流上逐包分帧）
+                    //   VLESS       → 仅 DNS（裸 VLESS 的 UDP 无长度前缀，分帧不可靠）
+                    match cfg.protocol {
+                        Protocol::Shadowsocks => {
+                            let relay = udp.clone();
+                            let writer2 = writer.clone();
+                            let stats2 = s2.clone();
+                            let cfg2 = cfg.clone();
                             rt.spawn(async move {
-                                dns_over_tcp(
-                                    &cfg2, master, client_ip, client_port, dns_ip,
-                                    &payload, &writer2, &stats2,
-                                )
-                                .await;
-                            });
-                        }
-                        continue;
-                    }
-
-                    rt.spawn(async move {
-                        // 已知服务端 UDP relay 不可用：DNS 直接走 TCP
-                        if is_dns && !DNS_UDP_OK.load(Ordering::Relaxed) {
-                            dns_over_tcp(
-                                &cfg2, master, client_ip, client_port, dns_ip,
-                                &payload, &writer2, &stats2,
-                            )
-                            .await;
-                            return;
-                        }
-
-                        match relay.send(key, &payload).await {
-                            Ok(before) if is_dns => {
-                                // DNS 兜底：UDP 没回来就改用 DNS-over-TCP
-                                tokio::time::sleep(DNS_FALLBACK_WAIT).await;
-                                let after = relay.rx_total(&key).unwrap_or(before);
-                                if after == before {
-                                    DNS_UDP_OK.store(false, Ordering::Relaxed);
+                                // 已知服务端 UDP relay 不可用：DNS 直接走 TCP
+                                if is_dns && !DNS_UDP_OK.load(Ordering::Relaxed) {
                                     dns_over_tcp(
                                         &cfg2, master, client_ip, client_port, dns_ip,
                                         &payload, &writer2, &stats2,
                                     )
                                     .await;
+                                    return;
                                 }
-                            }
-                            _ => {}
-                        }
-                    });
 
+                                match relay.send(key, &payload).await {
+                                    Ok(before) if is_dns => {
+                                        // DNS 兜底：UDP 没回来就改用 DNS-over-TCP
+                                        tokio::time::sleep(DNS_FALLBACK_WAIT).await;
+                                        let after = relay.rx_total(&key).unwrap_or(before);
+                                        if after == before {
+                                            DNS_UDP_OK.store(false, Ordering::Relaxed);
+                                            dns_over_tcp(
+                                                &cfg2, master, client_ip, client_port, dns_ip,
+                                                &payload, &writer2, &stats2,
+                                            )
+                                            .await;
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            });
+                        }
+                        Protocol::Trojan => {
+                            let relay = udp_stream.clone();
+                            let writer2 = writer.clone();
+                            let stats2 = s2.clone();
+                            let cfg2 = cfg.clone();
+                            rt.spawn(async move {
+                                if is_dns && !DNS_UDP_OK.load(Ordering::Relaxed) {
+                                    dns_over_tcp(
+                                        &cfg2, master, client_ip, client_port, dns_ip,
+                                        &payload, &writer2, &stats2,
+                                    )
+                                    .await;
+                                    return;
+                                }
+                                match relay.send(key, &payload).await {
+                                    Ok(before) if is_dns => {
+                                        tokio::time::sleep(DNS_FALLBACK_WAIT).await;
+                                        let after = relay.rx_total(&key).unwrap_or(before);
+                                        if after == before {
+                                            DNS_UDP_OK.store(false, Ordering::Relaxed);
+                                            dns_over_tcp(
+                                                &cfg2, master, client_ip, client_port, dns_ip,
+                                                &payload, &writer2, &stats2,
+                                            )
+                                            .await;
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            });
+                        }
+                        Protocol::Vless => {
+                            if is_dns {
+                                let writer2 = writer.clone();
+                                let stats2 = s2.clone();
+                                let cfg2 = cfg.clone();
+                                rt.spawn(async move {
+                                    dns_over_tcp(
+                                        &cfg2, master, client_ip, client_port, dns_ip,
+                                        &payload, &writer2, &stats2,
+                                    )
+                                    .await;
+                                });
+                            }
+                        }
+                    }
+
+                    let flows = match cfg.protocol {
+                        Protocol::Shadowsocks => udp.flow_count(),
+                        Protocol::Trojan => udp_stream.flow_count(),
+                        Protocol::Vless => 0,
+                    };
                     if let Ok(mut s) = s2.lock() {
-                        s.udp_flows = udp.flow_count() as u64;
+                        s.udp_flows = flows as u64;
                     }
                 }
                 None => {

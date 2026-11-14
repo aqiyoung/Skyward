@@ -85,7 +85,7 @@ jobs:
         run: |
           chmod +x build.sh
           VERSION_CODE="${{ github.run_number }}" \
-          VERSION_NAME="0.1.0.${{ github.run_number }}-dev" \
+          VERSION_NAME="1.0.0.${{ github.run_number }}-dev" \
           ./build.sh
 
       - name: Verify APK

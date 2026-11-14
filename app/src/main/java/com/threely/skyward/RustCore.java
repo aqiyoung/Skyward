@@ -1,4 +1,4 @@
-package com.threely.skyward.poc;
+package com.threely.skyward;
 
 /**
  * Java 侧只做 JNI 声明。所有逻辑都在 Rust core（libskyward_core.so）。

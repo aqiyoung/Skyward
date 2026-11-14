@@ -7,7 +7,7 @@ set -euo pipefail
 # 工程根：默认取脚本所在目录（本机 /workspace/skyward-rust，CI 即 checkout 根）
 ROOT=${SKYWARD_ROOT:-$(cd "$(dirname "$0")" && pwd)}
 CORE=$ROOT/core
-AND=$ROOT/android
+AND=$ROOT/app/src/main
 BUILD=${SKYWARD_BUILD:-$ROOT/build}
 DIST=${SKYWARD_DIST:-$ROOT/dist}
 
@@ -47,9 +47,9 @@ LLVM_AR=$LLVM/llvm-ar
 NDK_NM=$LLVM/llvm-nm
 
 # 版本与产物名可由 CI 注入（默认仍是 PoC-1）
-VERSION_CODE=${VERSION_CODE:-1}
-VERSION_NAME=${VERSION_NAME:-0.1.0-poc1}
-OUT_APK=${OUT_APK:-$DIST/Skyward-RustCore-PoC1-arm64-v8a.apk}
+VERSION_CODE=${VERSION_CODE:-23}
+VERSION_NAME=${VERSION_NAME:-1.0.0.23-dev}
+OUT_APK=${OUT_APK:-$DIST/Skyward-1.0.0.23-dev-arm64.apk}
 LOG=$BUILD/build.log
 mkdir -p "$BUILD" "$DIST"
 : > "$LOG"
@@ -96,7 +96,7 @@ say "so: $(stat -c%s "$SO") bytes ($(du -h "$SO" | cut -f1))"
 
 say "== 2b. 校验 JNI 导出符号 =="
 if [ -x "$NDK_NM" ]; then
-  SYMS=$("$NDK_NM" -D --defined-only "$SO" | grep -c "Java_com_threely_skyward_poc_RustCore_" || true)
+  SYMS=$("$NDK_NM" -D --defined-only "$SO" | grep -c "Java_com_threely_skyward_RustCore_" || true)
   # PoC-1 为 12 个；PoC-2 起新增会话真值 / 索引对照 / 规则集重置接口，当前 23 个。
   say "exported JNI symbols: $SYMS (PoC-2 expected 23)"
   if [ "$SYMS" -lt 12 ]; then
@@ -114,6 +114,9 @@ python3 - "$AND/AndroidManifest.xml" "$BUILD/AndroidManifest.xml" "$VERSION_CODE
 import sys, re, html
 src, dst, code, name = sys.argv[1:5]
 s = open(src, encoding="utf-8").read()
+# AGP 用 namespace 而非 manifest 的 package 属性；aapt2 link 仍强制要求 package，这里补回。
+if "package=" not in s.split(">")[0]:
+    s = s.replace("<manifest ", '<manifest package="com.threely.skyward" ', 1)
 s = re.sub(r'android:versionCode="\d+"', f'android:versionCode="{int(code)}"', s)
 s = re.sub(r'android:versionName="[^"]*"',
            f'android:versionName="{html.escape(name, quote=True)}"', s)
@@ -127,7 +130,9 @@ rm -rf "$BUILD/compiled"; mkdir -p "$BUILD/compiled"
 FLATS=$(find "$BUILD/compiled" -name '*.flat' | sort)
 [ -n "$FLATS" ] || { say "FAIL: 没有编译出任何资源"; exit 1; }
 say "compiled resources: $(echo "$FLATS" | wc -l) flat files"
+rm -rf "$BUILD/rgen"
 "$BT/aapt2" link -o "$BUILD/base.apk" \
+  --java "$BUILD/rgen" \
   -I "$ANDROID_JAR" \
   --manifest "$BUILD/AndroidManifest.xml" \
   --min-sdk-version "$API_LEVEL" --target-sdk-version "$TARGET_SDK" \
@@ -141,7 +146,7 @@ say "== 4. javac -> class -> d8 -> dex =="
 rm -rf "$BUILD/classes" "$BUILD/dex"; mkdir -p "$BUILD/classes" "$BUILD/dex"
 javac -nowarn -source 11 -target 11 -encoding UTF-8 \
   -classpath "$ANDROID_JAR" -d "$BUILD/classes" \
-  $(find "$AND/java" -name '*.java') >>"$LOG" 2>&1
+  $(find "$AND/java" "$BUILD/rgen" -name '*.java') >>"$LOG" 2>&1
 CLASSES=$(find "$BUILD/classes" -name '*.class')
 "$BT/d8" --lib "$ANDROID_JAR" --min-api "$API_LEVEL" \
   --output "$BUILD/dex" $CLASSES >>"$LOG" 2>&1

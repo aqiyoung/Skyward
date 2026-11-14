@@ -112,6 +112,11 @@ pub fn parse_uuid(s: &str) -> io::Result<[u8; 16]> {
 
 /// Trojan 请求头：56 字节密码哈希 + CRLF + 命令/地址 + CRLF。
 pub fn trojan_header(password: &str, target: &SsTarget) -> Vec<u8> {
+    trojan_header_cmd(password, target, 0x01)
+}
+
+/// 同 `trojan_header`，但命令字节可指定：0x01 = CONNECT，0x03 = UDP ASSOCIATE。
+pub fn trojan_header_cmd(password: &str, target: &SsTarget, cmd: u8) -> Vec<u8> {
     let mut h = Sha224::new();
     h.update(password.as_bytes());
     let digest = h.finalize();
@@ -120,10 +125,17 @@ pub fn trojan_header(password: &str, target: &SsTarget) -> Vec<u8> {
         out.extend_from_slice(format!("{b:02x}").as_bytes());
     }
     out.extend_from_slice(b"\r\n");
-    out.push(0x01); // CONNECT
+    out.push(cmd);
     out.extend_from_slice(&addr_field(target));
     out.extend_from_slice(&target.port.to_be_bytes());
     out.extend_from_slice(b"\r\n");
+    out
+}
+
+/// `ATYP + ADDR + PORT`（SOCKS5 地址块，Trojan 的 UDP 包逐包都要带）。
+pub fn socks5_addr(target: &SsTarget) -> Vec<u8> {
+    let mut out = addr_field(target);
+    out.extend_from_slice(&target.port.to_be_bytes());
     out
 }
 
@@ -157,6 +169,28 @@ fn addr_field(target: &SsTarget) -> Vec<u8> {
     out
 }
 
+/// 只建连（含 TLS），不写任何协议头。给 UDP over TCP 这类「头要自己拼」的场景用。
+pub async fn dial_raw(
+    server: &str,
+    port: u16,
+    tls: bool,
+    sni: &str,
+) -> io::Result<BoxStream> {
+    let tcp = tokio::time::timeout(
+        std::time::Duration::from_secs(10),
+        TcpStream::connect((server, port)),
+    )
+    .await
+    .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "连接超时"))??;
+
+    if tls {
+        let name = if sni.is_empty() { server } else { sni };
+        tls_wrap(tcp, name).await
+    } else {
+        Ok(Box::new(tcp))
+    }
+}
+
 /// 拨号并写入协议头，返回可以直接搬运字节的流。
 ///
 /// `tls` 为 false 时走裸 TCP（VLESS 在 80 端口或 CDN 回源场景下会用到）。
@@ -169,19 +203,7 @@ pub async fn dial(
     sni: &str,
     target: &SsTarget,
 ) -> io::Result<BoxStream> {
-    let tcp = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        TcpStream::connect((server, port)),
-    )
-    .await
-    .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "连接超时"))??;
-
-    let mut stream: BoxStream = if tls {
-        let name = if sni.is_empty() { server } else { sni };
-        tls_wrap(tcp, name).await?
-    } else {
-        Box::new(tcp)
-    };
+    let mut stream = dial_raw(server, port, tls, sni).await?;
 
     let header = match protocol {
         Protocol::Trojan => trojan_header(secret, target),
@@ -193,6 +215,25 @@ pub async fn dial(
             ))
         }
     };
+    stream.write_all(&header).await?;
+    stream.flush().await?;
+    Ok(stream)
+}
+
+/// Trojan 的 UDP ASSOCIATE 拨号：连上后写 `hash CRLF 0x03 ATYP ADDR PORT CRLF`。
+///
+/// 之后这条 TCP 流上跑的是逐包帧 `[ATYP][ADDR][PORT][len(2)][CRLF][payload]`，
+/// 一个连接对应一个目标，回程包同样带地址头。
+pub async fn dial_trojan_udp(
+    server: &str,
+    port: u16,
+    password: &str,
+    tls: bool,
+    sni: &str,
+    target: &SsTarget,
+) -> io::Result<BoxStream> {
+    let mut stream = dial_raw(server, port, tls, sni).await?;
+    let header = trojan_header_cmd(password, target, 0x03);
     stream.write_all(&header).await?;
     stream.flush().await?;
     Ok(stream)

@@ -14,6 +14,7 @@ pub mod outbound;
 pub mod socks5;
 pub mod ss;
 pub mod tcpstack;
+pub mod udpstream;
 pub mod tun;
 pub mod udpstack;
 
@@ -103,7 +104,7 @@ fn core() -> &'static Core {
 
 /// 内核版本（整数）。PoC-2 = 2。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeVersion(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeVersion(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -113,7 +114,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeVersion(
 
 /// 首次初始化耗时（纳秒），衡量冷启动开销。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeInitNs(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeInitNs(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -123,7 +124,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeInitNs(
 
 /// 载入 count 条规则，返回实际条数。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadRules(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLoadRules(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     count: jint,
@@ -133,7 +134,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadRules(
 
 /// 恢复默认规则集（基准跑完后调用，避免污染首页读数）。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeResetRules(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeResetRules(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -141,7 +142,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeResetRules(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleCount(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRuleCount(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -150,7 +151,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleCount(
 
 /// 反转域名 trie 的节点数，用于展示索引规模。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeIndexNodes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeIndexNodes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -159,7 +160,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeIndexNodes(
 
 /// 索引引擎匹配吞吐基准，返回耗时毫秒。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatches(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeBenchMatches(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     iterations: jint,
@@ -169,7 +170,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatches(
 
 /// 线性引擎对照基准（PoC-1 实现），返回耗时毫秒。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatchesLinear(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeBenchMatchesLinear(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     iterations: jint,
@@ -179,7 +180,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchMatchesLinear
 
 /// 模拟数据面吞吐基准，返回耗时毫秒。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchPackets(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeBenchPackets(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     packets: jint,
@@ -190,7 +191,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeBenchPackets(
 
 /// 进程 RSS（字节）。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRssBytes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRssBytes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -199,7 +200,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRssBytes(
 
 /// 逻辑状态占用（规则真源 + 索引 + 连接表，字节）。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLogicalBytes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLogicalBytes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -207,7 +208,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLogicalBytes(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenConn(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenConn(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     action: jint,
@@ -216,7 +217,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenConn(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseConn(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeCloseConn(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     id: jlong,
@@ -225,7 +226,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseConn(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeConnCount(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeConnCount(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -233,7 +234,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeConnCount(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoopbackBytes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLoopbackBytes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -245,7 +246,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoopbackBytes(
 /// 启动 / 恢复会话。now_ms 由 Java 传 System.currentTimeMillis()，
 /// seed_up / seed_down 是上次落盘的累计字节，保证重启后读数连续。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStart(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionStart(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     now_ms: jlong,
@@ -261,7 +262,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStart(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStop(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionStop(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -270,7 +271,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionStop(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionRunning(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionRunning(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -279,7 +280,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionRunning(
 
 /// 跑一小段模拟数据面并累加会话计数，返回本次处理字节数。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionTick(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionTick(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     packets: jint,
@@ -289,7 +290,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionTick(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUptimeSec(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionUptimeSec(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     now_ms: jlong,
@@ -298,7 +299,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUptimeSec(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUpBytes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionUpBytes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -306,7 +307,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionUpBytes(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionDownBytes(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionDownBytes(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -314,7 +315,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionDownBytes(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionPackets(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionPackets(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jlong {
@@ -324,7 +325,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionPackets(
 /// 会话按动作分桶汇总（内核真值）：dirBytes,dirPkts,dirConns,prxBytes,prxPkts,prxConns,
 /// rejBytes,rejPkts,rejConns。逗号分隔一次返回，首页「流量分配」每秒取一次。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionBreakdown(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionBreakdown(
     env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> *mut c_void {
@@ -335,7 +336,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeSessionBreakdown(
 
 /// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadSampleConfig(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLoadSampleConfig(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -344,7 +345,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeLoadSampleConfig(
 
 /// 已解析节点数（0 = 尚未载入配置，UI 回退演示数据）。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeCount(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeCount(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -352,7 +353,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeCount(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeName(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeName(
     env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -361,7 +362,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeName(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeType(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeType(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -370,7 +371,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeType(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeServer(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeServer(
     env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -379,7 +380,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeServer(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodePort(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodePort(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -388,7 +389,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodePort(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeDelay(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeDelay(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -397,7 +398,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeDelay(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeGroup(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeGroup(
     env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -409,7 +410,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeNodeGroup(
 /// 位布局：bit63=matched, bits16-46=规则序号, bits8-15=类型(0 suffix/1 keyword/2 cidr),
 /// bits0-7=动作(0 直连/1 代理/2 拒绝)。未命中返回 0。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeDecide(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeDecide(
     env: *mut JNIEnv,
     _cls: jclassRef,
     host: *mut c_void,
@@ -435,7 +436,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeDecide(
 
 /// 规则 #i 的匹配模式串（域名 / 关键词 / CIDR 文本）。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRulePattern(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRulePattern(
     env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -445,7 +446,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRulePattern(
 
 /// 规则 #i 的类型：0=DOMAIN-SUFFIX / 1=DOMAIN-KEYWORD / 2=IP-CIDR。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleKind(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRuleKind(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -455,7 +456,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleKind(
 
 /// 规则 #i 的动作：0=DIRECT / 1=PROXY / 2=REJECT。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleAction(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRuleAction(
     _env: *mut JNIEnv,
     _cls: jclassRef,
     i: jint,
@@ -469,7 +470,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleAction(
 /// 返回 CSV：ok,ms,ip,tx,rx,err。这是内核「真能收发字节」的第一步，
 /// 与首页 / 代理页里由 session_tick 模拟出来的流量计数不是一回事。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProbe(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeProbe(
     env: *mut JNIEnv,
     _cls: jclassRef,
     host: *mut c_void,
@@ -519,7 +520,7 @@ fn build_cfg(
 /// 参数：port 本地监听端口、ssServer 远端 SS 地址、ssPort 远端 SS 端口、password。
 /// 返回 1=已启动 / 0=参数无效。内核自此具备「真实代理入口」，外部 App 可把代理指向本机。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStartProxy(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeStartProxy(
     env: *mut JNIEnv,
     _cls: jclassRef,
     port: jint,
@@ -547,7 +548,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStartProxy(
 
 /// 停止 SOCKS5 入口。返回 1=已停止 / 0=本就未运行。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStopProxy(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeStopProxy(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -561,7 +562,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStopProxy(
 
 /// 真实代理吞吐统计 CSV：tx,rx（字节）。区别于 `nativeSessionBreakdown` 的模拟会话。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProxyStats(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeProxyStats(
     env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> *mut c_void {
@@ -572,7 +573,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProxyStats(
 /// 打开 TUN 接管：Android `VpnService` 建立 tun 后将 fd 传给内核，内核在独立线程里
 /// 读取原始 IP 帧、解析并累计真实流量。返回 1=已开启 / 0=fd 无效。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenTun(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     env: *mut JNIEnv,
     _cls: jclassRef,
     fd: jint,
@@ -596,7 +597,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenTun(
 
 /// 关闭 TUN 接管（关闭 fd，读取线程自然退出）。返回 1=已关闭 / 0=本就未开启。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseTun(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeCloseTun(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
@@ -609,7 +610,7 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeCloseTun(
 
 /// TUN 真实流量统计 CSV：bytes,packets,tcp,udp,tx_bytes,conns,udp_flows。
 #[no_mangle]
-pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeTunStats(
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeTunStats(
     env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> *mut c_void {

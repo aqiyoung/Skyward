@@ -1,4 +1,4 @@
-package com.threely.skyward.poc;
+package com.threely.skyward;
 
 import android.app.Activity;
 import android.content.Context;
