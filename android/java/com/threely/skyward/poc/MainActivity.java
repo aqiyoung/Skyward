@@ -38,10 +38,10 @@ public class MainActivity extends Activity {
     };
 
     private int current = 0;
-    private LinearLayout root;
+    private FrameLayout root;
     private FrameLayout content;
-    private LinearLayout dock;
-    private final TextView[] tabLabels = new TextView[5];
+    private FrameLayout dock;
+    private final FrameLayout[] tabChips = new FrameLayout[5];
     private final IconView[] tabIcons = new IconView[5];
 
     public static final int VPN_REQ = 9001;
@@ -93,18 +93,24 @@ public class MainActivity extends Activity {
         CrashGuard.install(getApplicationContext());
         AppState.get().attach(this);
 
-        root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        root = new FrameLayout(this);
         root.setBackgroundColor(Ui.PAGE);
         root.setFitsSystemWindows(true);
 
+        // 页面区全屏，底部让出悬浮胶囊 dock（76 + 20）的高度
         content = new FrameLayout(this);
-        content.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        root.addView(content);
+        content.setPadding(0, 0, 0, Ui.dp(this, 96));
+        root.addView(content, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         dock = buildDock();
-        root.addView(dock);
+        FrameLayout.LayoutParams dlp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 76));
+        dlp.gravity = Gravity.BOTTOM;
+        dlp.leftMargin = Ui.dp(this, 16);
+        dlp.rightMargin = Ui.dp(this, 16);
+        dlp.bottomMargin = Ui.dp(this, 20);
+        root.addView(dock, dlp);
 
         setContentView(root);
         render();
@@ -124,61 +130,76 @@ public class MainActivity extends Activity {
         super.onStop();
     }
 
-    private LinearLayout buildDock() {
-        LinearLayout bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setBackgroundColor(Ui.CARD);
-        int padTop = Ui.dp(this, 8);
-        int padBottom = Ui.dp(this, 10);
-        bar.setPadding(Ui.dp(this, 10), padTop, Ui.dp(this, 10), padBottom);
+    /**
+     * 悬浮胶囊导航（原版 CapsuleNavigationDock）：高 76dp、全圆角 stadium、
+     * 左右 16dp / 底部 20dp 边距、白色 90% 底 + 1.6dp 描边 + 投影。
+     * 每项只有 30dp 图标，无文字标签；选中项落在 66dp 的深色淡圆里。
+     */
+    private FrameLayout buildDock() {
+        FrameLayout bar = new FrameLayout(this);
+        bar.setBackground(dockBg("#E6FFFFFF"));
+        bar.setElevation(Ui.dp(this, 10));
 
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Ui.CARD);
-        bg.setStroke(1, Ui.SEP);
-        bar.setBackground(bg);
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        bar.addView(row, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         for (int i = 0; i < TABS.length; i++) {
             final int idx = i;
-            LinearLayout item = new LinearLayout(this);
-            item.setOrientation(LinearLayout.VERTICAL);
-            item.setGravity(Gravity.CENTER);
-            item.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 2));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            item.setLayoutParams(lp);
+            FrameLayout slot = new FrameLayout(this);
+            slot.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
-            IconView iv = new IconView(this, TAB_ICONS[i], Ui.TEXT3);
-            int s = Ui.dp(this, 23);
-            iv.setLayoutParams(new LinearLayout.LayoutParams(s, s));
+            FrameLayout chip = new FrameLayout(this);
+            FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
+                    Ui.dp(this, 66), Ui.dp(this, 66));
+            clp.gravity = Gravity.CENTER;
+            chip.setLayoutParams(clp);
+            GradientDrawable cbg = new GradientDrawable();
+            cbg.setShape(GradientDrawable.OVAL);
+            cbg.setColor(Color.TRANSPARENT);
+            chip.setBackground(cbg);
+            tabChips[i] = chip;
+
+            IconView iv = new IconView(this, TAB_ICONS[i], Ui.TEXT2);
+            FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(
+                    Ui.dp(this, 30), Ui.dp(this, 30));
+            ilp.gravity = Gravity.CENTER;
+            iv.setLayoutParams(ilp);
             tabIcons[i] = iv;
-            item.addView(iv);
+            chip.addView(iv);
 
-            TextView label = new TextView(this);
-            label.setText(TABS[i]);
-            label.setTextSize(10.5f);
-            label.setTextColor(Ui.TEXT3);
-            label.setGravity(Gravity.CENTER);
-            label.setPadding(0, Ui.dp(this, 2), 0, 0);
-            tabLabels[i] = label;
-            item.addView(label);
-
-            item.setClickable(true);
-            item.setOnClickListener(v -> {
+            slot.addView(chip);
+            slot.setClickable(true);
+            slot.setOnClickListener(v -> {
                 if (current == idx) return;
                 current = idx;
                 render();
             });
-            bar.addView(item);
+            row.addView(slot);
         }
         return bar;
     }
 
+    /** 胶囊底色 + 1.6dp 描边（原版 floating 0.90 白 / outlineVariant 0.72）。 */
+    private GradientDrawable dockBg(String colorHex) {
+        GradientDrawable g = new GradientDrawable();
+        g.setCornerRadius(Ui.dp(this, 38));
+        g.setColor(Color.parseColor(colorHex));
+        g.setStroke(Math.max(1, Ui.dp(this, 1.6f)), Color.parseColor("#B8E5E5EA"));
+        return g;
+    }
+
     private void syncDock() {
         for (int i = 0; i < TABS.length; i++) {
-            int c = (i == current) ? Ui.BLUE : Ui.TEXT3;
-            tabIcons[i].setTint(c);
-            tabLabels[i].setTextColor(c);
-            tabLabels[i].setTypeface(i == current ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+            boolean on = (i == current);
+            tabIcons[i].setTint(on ? Ui.TEXT : Ui.TEXT2);
+            GradientDrawable cbg = new GradientDrawable();
+            cbg.setShape(GradientDrawable.OVAL);
+            cbg.setColor(on ? Color.parseColor("#241C1C1E") : Color.TRANSPARENT);
+            tabChips[i].setBackground(cbg);
         }
     }
 
@@ -188,11 +209,10 @@ public class MainActivity extends Activity {
         s.pageEpoch++;
         boolean glass = s.liquidGlass;
         int pageBg = glass ? Color.parseColor("#DDE7F2") : Ui.PAGE;
-        int barBg  = glass ? Color.parseColor("#CCFFFFFF") : Ui.CARD;
         root.setBackgroundColor(pageBg);
-        dock.setBackgroundColor(barBg);
+        dock.setBackground(dockBg(glass ? "#E6FFFFFF" : "#E6FFFFFF"));
         getWindow().setStatusBarColor(pageBg);
-        getWindow().setNavigationBarColor(barBg);
+        getWindow().setNavigationBarColor(pageBg);
         syncDock();
         content.removeAllViews();
         Runnable refresh = this::render;

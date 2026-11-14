@@ -61,9 +61,9 @@ public final class Pages {
         sv.setVerticalScrollBarEnabled(false);
         final LinearLayout body = new LinearLayout(c);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(Ui.dp(c, 22), 0, Ui.dp(c, 22), Ui.dp(c, 28));
-        sv.addView(body, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // 原版 dashboardMobileSideOf = max(16, (width - 560) / 2)：手机宽度下即 16dp，
+        // 底部 16 + 系统手势条内边距。
+        body.setPadding(Ui.dp(c, 16), 0, Ui.dp(c, 16), Ui.dp(c, 16));
 
         // ---- 大标题 ----
         TextView h1 = new TextView(c);
@@ -72,14 +72,16 @@ public final class Pages {
         h1.setTypeface(Typeface.DEFAULT_BOLD);
         h1.setTextColor(Ui.TEXT);
         h1.setLetterSpacing(-0.02f);
-        h1.setPadding(0, Ui.dp(c, 10), 0, 0);
+        // 原版 PageLargeTitle 左右 22、顶部 statusBarTop + 12；卡片区左右 16，
+        // 故标题在此再补 6dp 左右内边距。
+        h1.setPadding(Ui.dp(c, 6), Ui.dp(c, 12), Ui.dp(c, 6), 0);
         body.addView(h1);
 
         // ---- 状态行：● 已连接 · 00:00:00 ----
         LinearLayout line = new LinearLayout(c);
         line.setOrientation(LinearLayout.HORIZONTAL);
         line.setGravity(Gravity.CENTER_VERTICAL);
-        line.setPadding(0, Ui.dp(c, 10), 0, 0);
+        line.setPadding(Ui.dp(c, 6), Ui.dp(c, 10), Ui.dp(c, 6), Ui.dp(c, 12));
         final View dot = new View(c);
         GradientDrawable dg = new GradientDrawable();
         dg.setShape(GradientDrawable.OVAL);
@@ -104,14 +106,12 @@ public final class Pages {
         body.addView(line);
 
         // ===== 卡 1 · 状态（含启动按钮，原版唯一不可移除的卡）=====
-        FrameLayout card1 = card34(c);
+        // 波形由卡片自身背景层绘制（WaveCard.dispatchDraw），不再挂铺满的子 View。
+        Dash.WaveCard card1 = new Dash.WaveCard(c, 34);
         LinearLayout.LayoutParams c1lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         c1lp.topMargin = Ui.dp(c, 12);
         card1.setLayoutParams(c1lp);
-        Dash.SparklineView wave = new Dash.SparklineView(c);
-        card1.addView(wave, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         LinearLayout c1 = new LinearLayout(c);
         c1.setOrientation(LinearLayout.VERTICAL);
@@ -126,18 +126,13 @@ public final class Pages {
         LinearLayout hd = new LinearLayout(c);
         hd.setOrientation(LinearLayout.HORIZONTAL);
         hd.setGravity(Gravity.CENTER_VERTICAL);
-        IconView stIc = new IconView(c, IconView.Glyph.CHART, Ui.TEXT2);
-        stIc.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 18), Ui.dp(c, 18)));
-        hd.addView(stIc);
         TextView stTx = new TextView(c);
         stTx.setText("状态");
         stTx.setTextSize(15);
         stTx.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         stTx.setTextColor(Ui.TEXT);
-        LinearLayout.LayoutParams stLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        stLp.leftMargin = Ui.dp(c, 7);
-        stTx.setLayoutParams(stLp);
+        stTx.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         hd.addView(stTx);
         final TextView stChip = chip(c, s.connected ? "运行中" : "未运行",
                 s.connected ? Ui.GREEN : Ui.TEXT2,
@@ -152,11 +147,21 @@ public final class Pages {
 
         final TextView upRate = new TextView(c), upTot = new TextView(c);
         final TextView dnRate = new TextView(c), dnTot = new TextView(c);
-        r1.addView(rateCol(c, "↑", true, upRate, upTot));
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlp.leftMargin = Ui.dp(c, 12);
-        r1.addView(rateCol(c, "↓", false, dnRate, dnTot), rlp);
+        // 原版 _HeaderRates：定宽 150 / 高 38，右对齐，两列之间一条 0.5dp 竖线。
+        LinearLayout rates = new LinearLayout(c);
+        rates.setOrientation(LinearLayout.HORIZONTAL);
+        rates.setGravity(Gravity.CENTER_VERTICAL);
+        rates.addView(rateCol(c, true, upRate, upTot));
+        View vline = new View(c);
+        vline.setBackgroundColor(Ui.SEP);
+        LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(
+                Math.max(1, Ui.dp(c, 0.5f)), Ui.dp(c, 26));
+        vlp.leftMargin = Ui.dp(c, 8);
+        vlp.rightMargin = Ui.dp(c, 8);
+        rates.addView(vline, vlp);
+        rates.addView(rateCol(c, false, dnRate, dnTot));
+        r1.addView(rates, new LinearLayout.LayoutParams(
+                Ui.dp(c, 150), Ui.dp(c, 38)));
         c1.addView(r1);
 
         // 出口 IP + 组织 | 启动按钮
@@ -395,10 +400,6 @@ public final class Pages {
         card7.addView(p7);
         body.addView(card7, cardGap(c));
 
-        body.addView(note(c, "布局照原 Flutter 版仪表盘（状态 / 网络控制 / 网络概览 / 路由看板 / "
-                + "配置 / 代理组 / 内存）。数据来自 Rust 内核；服务连通性与目的地解析尚未接入，"
-                + "显示为「—」。"));
-
         // ---- 秒级刷新：时长 / 速率 / 累计 ----
         final int epoch = s.pageEpoch;
         final long[] prev = { s.upBytes(), s.downBytes(), System.currentTimeMillis() };
@@ -430,18 +431,6 @@ public final class Pages {
         return page(c, body);
     }
 
-    /** 34 圆角白卡（原版 mobile 卡片半径）：FrameLayout，供背景波形铺满。 */
-    private static FrameLayout card34(Context c) {
-        FrameLayout card = new FrameLayout(c);
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(Color.WHITE);
-        g.setCornerRadius(Ui.dp(c, 34));
-        card.setBackground(g);
-        card.setElevation(Ui.dp(c, 3));
-        card.setClipChildren(true);
-        return card;
-    }
-
     /** 34 圆角白卡（LinearLayout 版），已带 20/18 内边距。 */
     private static LinearLayout lcard(Context c) {
         LinearLayout card = new LinearLayout(c);
@@ -450,38 +439,35 @@ public final class Pages {
         g.setColor(Color.WHITE);
         g.setCornerRadius(Ui.dp(c, 34));
         card.setBackground(g);
-        card.setElevation(Ui.dp(c, 3));
+        card.setElevation(Ui.dp(c, 1));
         card.setPadding(Ui.dp(c, 20), Ui.dp(c, 18), Ui.dp(c, 20), Ui.dp(c, 18));
         return card;
     }
 
-    /** 卡片间距 12dp（原版 cardSpacing）。 */
+    /** 卡片间距（原版 cardSpacingOf：mobile = 8dp）。 */
     private static LinearLayout.LayoutParams cardGap(Context c) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = Ui.dp(c, 12);
+        lp.topMargin = Ui.dp(c, 8);
         return lp;
     }
 
-    /** 卡片标题行：18dp 线性图标 + 15sp 中粗标题 + 可选右侧。 */
+    /** 卡片标题行：原版 DashboardCardHeader —— 手机版不带前置图标，只有 15sp 中粗标题，
+     *  行高固定 26dp；右侧 trailing 靠右对齐。 */
     private static LinearLayout cardHead(Context c, IconView.Glyph glyph, String title,
                                         View trailing) {
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        IconView ic = new IconView(c, glyph, Ui.TEXT2);
-        ic.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 18), Ui.dp(c, 18)));
-        row.addView(ic);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(c, 26)));
         TextView t = new TextView(c);
         t.setText(title);
         t.setTextSize(15);
         t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         t.setTextColor(Ui.TEXT);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.leftMargin = Ui.dp(c, 7);
-        t.setLayoutParams(tlp);
-        row.addView(t);
+        row.addView(t, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         if (trailing != null) {
             row.addView(new View(c), new LinearLayout.LayoutParams(0, 1, 1f));
             row.addView(trailing);
@@ -511,23 +497,23 @@ public final class Pages {
         return t;
     }
 
-    /** 速率列：↑ 1.2 MB/s / 累计 8.6 MB。 */
-    private static LinearLayout rateCol(Context c, String arrow, boolean up,
+    /** 速率列（原版 _HeaderRate）：14dp 方向箭头 + 15sp 速率，下一行 11sp 累计。 */
+    private static LinearLayout rateCol(Context c, boolean up,
                                         TextView rate, TextView total) {
         LinearLayout col = new LinearLayout(c);
         col.setOrientation(LinearLayout.VERTICAL);
         LinearLayout top = new LinearLayout(c);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView a = new TextView(c);
-        a.setText(arrow);
-        a.setTextSize(11);
-        a.setTextColor(up ? Ui.ORANGE : Ui.BLUE);
+        IconView a = new IconView(c, up ? IconView.Glyph.ARROW_UP : IconView.Glyph.ARROW_DOWN,
+                up ? Ui.ORANGE : Ui.BLUE);
+        a.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 14), Ui.dp(c, 14)));
         top.addView(a);
         rate.setText("0 B/s");
-        rate.setTextSize(13);
+        rate.setTextSize(15);
         rate.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         rate.setTextColor(Ui.TEXT);
+        rate.setSingleLine(true);
         LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         rlp.leftMargin = Ui.dp(c, 3);
@@ -535,8 +521,9 @@ public final class Pages {
         top.addView(rate);
         col.addView(top);
         total.setText("累计 0 B");
-        total.setTextSize(10);
-        total.setTextColor(Ui.TEXT3);
+        total.setTextSize(11);
+        total.setTextColor(Ui.TEXT2);
+        total.setSingleLine(true);
         total.setPadding(0, Ui.dp(c, 1), 0, 0);
         col.addView(total);
         return col;

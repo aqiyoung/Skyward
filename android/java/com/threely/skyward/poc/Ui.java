@@ -58,7 +58,8 @@ public final class Ui {
     public static LinearLayout pageHeader(Context c, String title, String sub) {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(c, 0), dp(c, 12), dp(c, 0), dp(c, 4));
+        // 原版 PageLargeTitle：左右 22（卡片区 16 + 6）、顶部 12、底部 12。
+        box.setPadding(dp(c, 6), dp(c, 12), dp(c, 6), dp(c, 12));
         TextView t = new TextView(c);
         t.setText(title);
         t.setTextSize(34);
@@ -90,7 +91,7 @@ public final class Ui {
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackground(cardBg(c));
-        card.setElevation(dp(c, 3));
+        card.setElevation(dp(c, 1));
         return card;
     }
 
@@ -244,7 +245,7 @@ public final class Ui {
     public static LinearLayout pageBody(Context c) {
         LinearLayout body = new LinearLayout(c);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(c, 22), 0, dp(c, 22), dp(c, 28));
+        body.setPadding(dp(c, 16), 0, dp(c, 16), dp(c, 16));
         return body;
     }
 }

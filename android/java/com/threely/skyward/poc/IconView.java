@@ -47,13 +47,14 @@ public class IconView extends View {
         super.onDraw(c);
         float w = getWidth(), h = getHeight();
         float s = Math.min(w, h);
-        paint.setStrokeWidth(s * 0.075f);
         paint.setColor(color);
 
-        // 统一坐标域 0..24，按实际尺寸缩放
+        // 统一坐标域 0..24，按实际尺寸缩放。线宽必须在 scale 之后按坐标域设置：
+        // 若先按像素设 s*0.075，canvas 缩放会把它一并放大成近实心块。
         float k = s / 24f;
         c.save();
         c.scale(k, k);
+        paint.setStrokeWidth(1.7f);
         float cx = 12f, cy = 12f;
         Path p = new Path();
 

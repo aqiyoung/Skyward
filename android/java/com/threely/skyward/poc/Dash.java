@@ -6,12 +6,15 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.View;
+import android.widget.FrameLayout;
 
 /**
- * 仪表盘自绘视图（对齐 4tab 定稿设计稿）：
- *  - SparklineView：状态卡里那条淡色波形（两条正弦叠层，弱透明）
- *  - GlobeView：路由卡的线框地球 + 蓝色航线弧（本机→节点）
- * 纯 Canvas 绘制，零图片资源，体积可控。
+ * 仪表盘自绘视图：
+ *  - WaveCard：状态卡容器。波形是卡片自身的背景，在 dispatchDraw 里按卡片实际
+ *    高度绘制并裁到圆角内。不能用「铺满的子 View」——FrameLayout 在
+ *    ScrollView（高度不定）里会给 MATCH_PARENT 子项整屏高度，卡片被撑爆。
+ *  - GlobeView：路由卡的线框地球 + 蓝色航线弧（本机→节点）。
+ * 纯 Canvas 绘制，零图片资源。
  */
 public final class Dash {
 
@@ -19,29 +22,50 @@ public final class Dash {
 
     private static float dp(Context c, float v) { return Ui.dp(c, v); }
 
-    /** 淡色波形：模拟实时吞吐的曲线，作为状态卡的氛围背景。 */
-    public static final class SparklineView extends View {
+    /** 34 圆角白卡，波形铺在卡片背景层。 */
+    public static final class WaveCard extends FrameLayout {
         private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path clip = new Path();
+        private final Path wave = new Path();
+        private final float radius;
+        private boolean showWave = true;
 
-        public SparklineView(Context c) {
+        public WaveCard(Context c, float radiusDp) {
             super(c);
+            radius = dp(c, radiusDp);
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeCap(Paint.Cap.ROUND);
+            android.graphics.drawable.GradientDrawable bg =
+                    new android.graphics.drawable.GradientDrawable();
+            bg.setColor(Color.WHITE);
+            bg.setCornerRadius(radius);
+            setBackground(bg);
+            setElevation(dp(c, 1));
+            setWillNotDraw(false);
         }
 
+        public void setWaveVisible(boolean v) { showWave = v; invalidate(); }
+
         @Override
-        protected void onDraw(Canvas cv) {
+        protected void dispatchDraw(Canvas cv) {
             int w = getWidth(), h = getHeight();
-            if (w == 0 || h == 0) return;
-            wave(cv, w, h, 0.55f, 0.34f, 3.1f, 0.9f, Color.parseColor("#1A007AFF"));
-            wave(cv, w, h, 0.62f, 0.26f, 2.2f, 1.6f, Color.parseColor("#1400A94F"));
+            if (showWave && w > 0 && h > 0) {
+                clip.reset();
+                clip.addRoundRect(0, 0, w, h, radius, radius, Path.Direction.CW);
+                int save = cv.save();
+                cv.clipPath(clip);
+                wave(cv, w, h, 0.92f, 0.07f, 2.2f, 1.6f, Color.parseColor("#33007AFF"));
+                wave(cv, w, h, 0.96f, 0.05f, 3.1f, 0.9f, Color.parseColor("#2600A94F"));
+                cv.restoreToCount(save);
+            }
+            super.dispatchDraw(cv);
         }
 
         private void wave(Canvas cv, int w, int h, float base, float amp,
                           float freq, float phase, int color) {
             p.setColor(color);
-            p.setStrokeWidth(dp(getContext(), 1.6f));
-            Path path = new Path();
+            p.setStrokeWidth(dp(getContext(), 1.4f));
+            wave.reset();
             float pad = dp(getContext(), 4);
             int steps = 72;
             for (int i = 0; i <= steps; i++) {
@@ -50,10 +74,10 @@ public final class Dash {
                 float y = h * base
                         - (float) Math.sin(t * Math.PI * freq + phase) * h * amp
                         * (0.72f + 0.28f * (float) Math.sin(t * 9.0f + phase));
-                if (i == 0) path.moveTo(x, y);
-                else path.lineTo(x, y);
+                if (i == 0) wave.moveTo(x, y);
+                else wave.lineTo(x, y);
             }
-            cv.drawPath(path, p);
+            cv.drawPath(wave, p);
         }
     }
 
