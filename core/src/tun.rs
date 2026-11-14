@@ -15,6 +15,7 @@
 
 use crate::dnsrelay;
 use crate::net;
+use crate::outbound::{self, Protocol};
 use crate::socks5::ProxyConfig;
 use crate::ss::{master_key, read_chunk, ss_client_connect, SsTarget};
 use crate::tcpstack::{Event, FlowKey, TcpStack};
@@ -246,16 +247,31 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
                     let relay = udp.clone();
                     let writer2 = writer.clone();
                     let stats2 = s2.clone();
-                    let server2 = cfg.ss_server.clone();
-                    let port2 = cfg.ss_port;
+                    let cfg2 = cfg.clone();
                     let client_ip = parsed.src_ip;
                     let client_port = src;
                     let dns_ip = parsed.dst_ip;
+
+                    // Trojan / VLESS 还没有 UDP 通道：DNS 走 TCP，其余 UDP 丢弃
+                    // （QUIC 会自动回退到 TCP，不会造成整站不可用）。
+                    if cfg.protocol != Protocol::Shadowsocks {
+                        if is_dns {
+                            rt.spawn(async move {
+                                dns_over_tcp(
+                                    &cfg2, master, client_ip, client_port, dns_ip,
+                                    &payload, &writer2, &stats2,
+                                )
+                                .await;
+                            });
+                        }
+                        continue;
+                    }
+
                     rt.spawn(async move {
                         // 已知服务端 UDP relay 不可用：DNS 直接走 TCP
                         if is_dns && !DNS_UDP_OK.load(Ordering::Relaxed) {
                             dns_over_tcp(
-                                master, &server2, port2, client_ip, client_port, dns_ip,
+                                &cfg2, master, client_ip, client_port, dns_ip,
                                 &payload, &writer2, &stats2,
                             )
                             .await;
@@ -270,7 +286,7 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
                                 if after == before {
                                     DNS_UDP_OK.store(false, Ordering::Relaxed);
                                     dns_over_tcp(
-                                        master, &server2, port2, client_ip, client_port, dns_ip,
+                                        &cfg2, master, client_ip, client_port, dns_ip,
                                         &payload, &writer2, &stats2,
                                     )
                                     .await;
@@ -308,9 +324,8 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
 /// DNS 回退通道：UDP relay 不可用时，用 DNS-over-TCP（2 字节长度前缀）经 SS 出去。
 #[allow(clippy::too_many_arguments)]
 async fn dns_over_tcp(
+    cfg: &ProxyConfig,
     master: [u8; 32],
-    server: &str,
-    port: u16,
     client_ip: Ipv4Addr,
     client_port: u16,
     dns_ip: Ipv4Addr,
@@ -318,7 +333,7 @@ async fn dns_over_tcp(
     writer: &Arc<Mutex<File>>,
     stats: &Arc<Mutex<TunStats>>,
 ) {
-    if let Ok(resp) = dnsrelay::resolve(&master, server, port, query).await {
+    if let Ok(resp) = dnsrelay::resolve(cfg, &master, query).await {
         // 应答源地址必须是客户端查询的那个 DNS，否则系统解析器会丢弃
         let reply = dnsrelay::build_udp_reply(dns_ip, client_ip, 53, client_port, &resp);
         write_tun(writer, &reply, stats);
@@ -386,7 +401,91 @@ fn handle_event(
     }
 }
 
-/// 单条连接的上游任务：拨号 → 双向搬运。
+/// 拨号失败时给客户端发 RST，避免应用侧一直等（表现为转圈直到超时）。
+fn reset_conn(
+    key: FlowKey,
+    stack: &Arc<Mutex<TcpStack>>,
+    writer: &Arc<Mutex<File>>,
+    stats: &Arc<Mutex<TunStats>>,
+) {
+    let pkts = {
+        let mut st = match stack.lock() {
+            Ok(g) => g,
+            Err(e) => e.into_inner(),
+        };
+        st.abort(&key)
+    };
+    for p in pkts {
+        write_tun(writer, &p, stats);
+    }
+}
+
+/// Trojan / VLESS 的上游搬运：协议头已由 `outbound::dial` 写掉，这里只搬字节。
+async fn plain_upstream(
+    key: FlowKey,
+    stream: crate::outbound::BoxStream,
+    mut rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
+    alive: Arc<AtomicBool>,
+    stack: Arc<Mutex<TcpStack>>,
+    writer: Arc<Mutex<File>>,
+    stats: Arc<Mutex<TunStats>>,
+) {
+    use tokio::io::AsyncReadExt;
+
+    let (mut r, mut w) = tokio::io::split(stream);
+
+    // 下行：出站流 → 栈 → TUN
+    {
+        let stack = stack.clone();
+        let writer = writer.clone();
+        let stats = stats.clone();
+        tokio::spawn(async move {
+            let mut buf = vec![0u8; 16384];
+            loop {
+                match r.read(&mut buf).await {
+                    Ok(0) => break,
+                    Ok(n) => {
+                        let pkts = {
+                            let mut st = match stack.lock() {
+                                Ok(g) => g,
+                                Err(e) => e.into_inner(),
+                            };
+                            st.on_upstream(&key, &buf[..n])
+                        };
+                        for p in pkts {
+                            write_tun(&writer, &p, &stats);
+                        }
+                    }
+                    Err(_) => break,
+                }
+            }
+            // 对端关闭：让栈把 FIN 补上
+            let pkts = {
+                let mut st = match stack.lock() {
+                    Ok(g) => g,
+                    Err(e) => e.into_inner(),
+                };
+                st.on_upstream_closed(&key)
+            };
+            for p in pkts {
+                write_tun(&writer, &p, &stats);
+            }
+        });
+    }
+
+    // 上行：TUN → 出站流
+    while let Some(data) = rx.recv().await {
+        if !alive.load(Ordering::Relaxed) {
+            break;
+        }
+        if w.write_all(&data).await.is_err() {
+            break;
+        }
+    }
+    let _ = w.shutdown().await;
+}
+
+/// 单条连接的上游任务：按协议拨号 → 双向搬运。
 #[allow(clippy::too_many_arguments)]
 async fn upstream_task(
     key: FlowKey,
@@ -399,20 +498,36 @@ async fn upstream_task(
     stats: Arc<Mutex<TunStats>>,
 ) {
     let target = SsTarget { host: key.dst.to_string(), port: key.dport };
+
+    // Trojan / VLESS：握手头写完后是裸字节流，不需要逐块加解密。
+    if cfg.protocol != Protocol::Shadowsocks {
+        let stream = match outbound::dial(
+            cfg.protocol,
+            &cfg.ss_server,
+            cfg.ss_port,
+            &cfg.password,
+            cfg.tls,
+            &cfg.sni,
+            &target,
+        )
+        .await
+        {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("[outbound] {} 拨号失败: {e}", cfg.protocol.as_str());
+                reset_conn(key, &stack, &writer, &stats);
+                return;
+            }
+        };
+        plain_upstream(key, stream, rx, alive, stack, writer, stats).await;
+        return;
+    }
+
     let (enc, sess) = match ss_client_connect(&master, &cfg.ss_server, cfg.ss_port, &target).await {
         Ok(x) => x,
         Err(_) => {
             // 拨号失败：给客户端 RST，别让它干等
-            let pkts = {
-                let mut st = match stack.lock() {
-                    Ok(g) => g,
-                    Err(e) => e.into_inner(),
-                };
-                st.abort(&key)
-            };
-            for p in pkts {
-                write_tun(&writer, &p, &stats);
-            }
+            reset_conn(key, &stack, &writer, &stats);
             return;
         }
     };

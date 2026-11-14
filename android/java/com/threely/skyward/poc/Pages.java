@@ -954,9 +954,10 @@ public final class Pages {
                 MainActivity.requestVpn(c);
                 // 拉起 SOCKS5 入口 + SS 出站（即使 tun fd 未到位，SOCKS5 端口也已就绪）
                 try {
-                    RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort, s.ssPassword);
+                    RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort, s.ssPassword,
+                            s.outProtocol, s.outTls, s.outSni);
                     Ui.toast(c, "本地代理入口已开启 · SOCKS5:" + s.socksPort
-                            + " → SS:" + s.ssServer + ":" + s.ssPort);
+                            + " → " + protoLabel(s.outProtocol) + " " + s.ssServer + ":" + s.ssPort);
                 } catch (Throwable t) {
                     Ui.toast(c, "开启失败：" + t.getClass().getSimpleName());
                 }
@@ -967,22 +968,38 @@ public final class Pages {
             }
         });
         entryCard.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "本地代理入口",
-                "SOCKS5 → SS 转发 · 需 VPN 授权", swEntry, null));
+                "SOCKS5 → " + protoLabel(s.outProtocol) + " 转发 · 需 VPN 授权", swEntry, null));
 
-        // 远端 SS 配置 + 本地 SOCKS5 端口（改动即落盘）
+        // 出站协议 + 远端配置 + 本地 SOCKS5 端口（改动即落盘）
         entryCard.addView(Ui.separator(c));
-        entryCard.addView(editRow(c, "远端 SS 服务器", s.ssServer, v -> {
+        entryCard.addView(protocolPicker(c, s, refresh));
+        entryCard.addView(editRow(c, "远端服务器", s.ssServer, v -> {
             s.ssServer = v.trim(); s.save();
         }));
         entryCard.addView(Ui.separator(c));
-        entryCard.addView(editRow(c, "远端 SS 端口", String.valueOf(s.ssPort), v -> {
+        entryCard.addView(editRow(c, "远端端口", String.valueOf(s.ssPort), v -> {
             try { s.ssPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.ssPort = 8388; }
             s.save();
         }));
         entryCard.addView(Ui.separator(c));
-        entryCard.addView(editRow(c, "SS 密码", s.ssPassword, v -> {
+        entryCard.addView(editRow(c, secretLabel(s.outProtocol), s.ssPassword, v -> {
             s.ssPassword = v; s.save();
         }));
+        if (!"ss".equals(s.outProtocol)) {
+            Switch swTls = Ui.toggle(c, s.outTls);
+            swTls.setEnabled(!"trojan".equals(s.outProtocol));
+            swTls.setOnCheckedChangeListener((b, on) -> {
+                if ("trojan".equals(s.outProtocol)) { b.setChecked(true); return; }
+                s.outTls = on; s.save();
+            });
+            entryCard.addView(Ui.separator(c));
+            entryCard.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.BLUE, "TLS",
+                    "trojan 强制开启；VLESS 可关（80 / 回源）", swTls, null));
+            entryCard.addView(Ui.separator(c));
+            entryCard.addView(editRow(c, "SNI（可选，空则用服务器地址）", s.outSni, v -> {
+                s.outSni = v.trim(); s.save();
+            }));
+        }
         entryCard.addView(Ui.separator(c));
         entryCard.addView(editRow(c, "本地 SOCKS5 端口", String.valueOf(s.socksPort), v -> {
             try { s.socksPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.socksPort = 1080; }
@@ -1422,6 +1439,55 @@ public final class Pages {
     }
 
     /** 可编辑行：上标签 + 下输入框（失焦或回车即回调，用于 SS 配置落盘）。 */
+    private static String protoLabel(String p) {
+        if ("trojan".equals(p)) return "Trojan";
+        if ("vless".equals(p)) return "VLESS";
+        return "Shadowsocks";
+    }
+
+    private static String secretLabel(String p) {
+        if ("trojan".equals(p)) return "Trojan 密码";
+        if ("vless".equals(p)) return "VLESS UUID";
+        return "SS 密码";
+    }
+
+    /** 出站协议三选一：Shadowsocks / Trojan / VLESS。 */
+    private static LinearLayout protocolPicker(Context c, AppState s, Runnable refresh) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 2));
+        String[] keys = {"ss", "trojan", "vless"};
+        String[] labels = {"Shadowsocks", "Trojan", "VLESS"};
+        for (int i = 0; i < keys.length; i++) {
+            final String key = keys[i];
+            boolean on = key.equals(s.outProtocol);
+            TextView t = new TextView(c);
+            t.setText(labels[i]);
+            t.setTextSize(12);
+            t.setTypeface(Typeface.DEFAULT_BOLD);
+            t.setGravity(Gravity.CENTER);
+            t.setPadding(Ui.dp(c, 12), Ui.dp(c, 7), Ui.dp(c, 12), Ui.dp(c, 7));
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(on ? Ui.BLUE : Color.WHITE);
+            g.setCornerRadius(Ui.dp(c, 16));
+            g.setStroke(1, on ? Ui.BLUE : Ui.SEP);
+            t.setBackground(g);
+            t.setTextColor(on ? Color.WHITE : Ui.TEXT2);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = Ui.dp(c, 8);
+            t.setLayoutParams(lp);
+            t.setOnClickListener(v -> {
+                s.outProtocol = key;
+                if ("trojan".equals(key)) s.outTls = true;
+                s.save();
+                refresh.run();
+            });
+            row.addView(t);
+        }
+        return row;
+    }
+
     private static View editRow(Context c, String label, String value,
                                 OnValueChange cb) {
         LinearLayout row = new LinearLayout(c);

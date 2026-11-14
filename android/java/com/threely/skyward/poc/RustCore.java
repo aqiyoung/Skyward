@@ -72,13 +72,15 @@ public final class RustCore {
     // ---- 真实代理入口 / TUN 接管（PoC-6：内核开始真转发）----
 
     /** 启动本地 SOCKS5 入口：port 本地端口、ssServer 远端 SS 地址、ssPort 远端端口、password。返回 1/0。 */
-    public static native int nativeStartProxy(int port, String ssServer, int ssPort, String password);
+    public static native int nativeStartProxy(int port, String ssServer, int ssPort, String password,
+                                              String protocol, boolean tls, String sni);
     /** 停止 SOCKS5 入口。返回 1/0。 */
     public static native int nativeStopProxy();
     /** 真实代理吞吐 CSV：tx,rx（字节）。区别于 nativeSessionBreakdown 的模拟会话。 */
     public static native String nativeProxyStats();
     /** 打开 TUN 接管：fd 由 VpnService 提供。返回 1/0。 */
-    public static native int nativeOpenTun(int fd, String server, int port, String password);
+    public static native int nativeOpenTun(int fd, String server, int port, String password,
+                                           String protocol, boolean tls, String sni);
     /** 关闭 TUN 接管。返回 1/0。 */
     public static native int nativeCloseTun();
     /** TUN 真实流量统计 CSV：bytes,packets,tcp,udp。 */

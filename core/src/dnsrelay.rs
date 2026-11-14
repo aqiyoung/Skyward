@@ -10,6 +10,8 @@
 //!
 //! 后续会把这里换成 SS 的 UDP relay，省掉 TCP 建连开销；接口不变。
 
+use crate::outbound::{self, Protocol};
+use crate::socks5::ProxyConfig;
 use crate::ss::{read_chunk, ss_client_connect, SsTarget};
 use std::collections::HashMap;
 use std::io;
@@ -114,13 +116,11 @@ fn cache_put(key: Vec<u8>, resp: Vec<u8>) {
     m.insert(key, (resp, Instant::now()));
 }
 
-/// 把查询报文送上游（经 SS TCP），返回应答报文。
-pub async fn resolve(
-    master: &[u8; 32],
-    server: &str,
-    server_port: u16,
-    query: &[u8],
-) -> io::Result<Vec<u8>> {
+/// 把查询报文送上游（DNS over TCP，经当前出站协议），返回应答报文。
+///
+/// 走 TCP 而不是 UDP 的原因：DNS over TCP 只需在报文前加 2 字节长度前缀，
+/// 任何出站协议（SS / Trojan / VLESS）都能承载，不依赖服务端是否开 UDP relay。
+pub async fn resolve(cfg: &ProxyConfig, master: &[u8; 32], query: &[u8]) -> io::Result<Vec<u8>> {
     let key = cache_key(query);
     if let Some(mut hit) = cache_get(&key) {
         // 复用缓存时把 ID 改回本次查询的
@@ -132,39 +132,70 @@ pub async fn resolve(
     }
 
     let target = SsTarget { host: UPSTREAM_HOST.to_string(), port: UPSTREAM_PORT };
-    let (mut enc, sess) = ss_client_connect(master, server, server_port, &target).await?;
-
-    // DNS over TCP：2 字节长度前缀
     let mut framed = Vec::with_capacity(query.len() + 2);
     framed.extend_from_slice(&(query.len() as u16).to_be_bytes());
     framed.extend_from_slice(query);
-    let chunk = {
-        let mut s = sess.lock().await;
-        s.seal(&framed)
-    };
-    enc.write_all(&chunk).await?;
-    enc.flush().await?;
 
-    let mut buf: Vec<u8> = Vec::new();
-    // 先凑够 2 字节长度
-    while buf.len() < 2 {
-        let p = read_chunk(&mut enc, &sess).await?;
-        if p.is_empty() {
-            return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "dns eof"));
+    let resp = if cfg.protocol == Protocol::Shadowsocks {
+        let (mut enc, sess) = ss_client_connect(master, &cfg.ss_server, cfg.ss_port, &target).await?;
+        let chunk = {
+            let mut s = sess.lock().await;
+            s.seal(&framed)
+        };
+        enc.write_all(&chunk).await?;
+        enc.flush().await?;
+
+        let mut buf: Vec<u8> = Vec::new();
+        // 先凑够 2 字节长度
+        while buf.len() < 2 {
+            let p = read_chunk(&mut enc, &sess).await?;
+            if p.is_empty() {
+                return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "dns eof"));
+            }
+            buf.extend_from_slice(&p);
         }
-        buf.extend_from_slice(&p);
-    }
-    let want = u16::from_be_bytes([buf[0], buf[1]]) as usize;
-    while buf.len() < 2 + want {
-        let p = read_chunk(&mut enc, &sess).await?;
-        if p.is_empty() {
-            return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "dns short"));
+        let want = u16::from_be_bytes([buf[0], buf[1]]) as usize;
+        while buf.len() < 2 + want {
+            let p = read_chunk(&mut enc, &sess).await?;
+            if p.is_empty() {
+                return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "dns short"));
+            }
+            buf.extend_from_slice(&p);
         }
-        buf.extend_from_slice(&p);
-    }
-    let resp = buf[2..2 + want].to_vec();
+        buf[2..2 + want].to_vec()
+    } else {
+        // Trojan / VLESS：握手头之后就是裸字节流，直接按长度前缀读写
+        let mut st = outbound::dial(
+            cfg.protocol,
+            &cfg.ss_server,
+            cfg.ss_port,
+            &cfg.password,
+            cfg.tls,
+            &cfg.sni,
+            &target,
+        )
+        .await?;
+        st.write_all(&framed).await?;
+        st.flush().await?;
+        read_framed(&mut st).await?
+    };
+
     cache_put(key, resp.clone());
     Ok(resp)
+}
+
+/// 从流里读一条 DNS over TCP 报文（2 字节长度前缀 + 报文）。
+async fn read_framed<R>(r: &mut R) -> io::Result<Vec<u8>>
+where
+    R: tokio::io::AsyncRead + Unpin,
+{
+    use tokio::io::AsyncReadExt;
+    let mut len = [0u8; 2];
+    r.read_exact(&mut len).await?;
+    let want = u16::from_be_bytes(len) as usize;
+    let mut buf = vec![0u8; want];
+    r.read_exact(&mut buf).await?;
+    Ok(buf)
 }
 
 #[cfg(test)]

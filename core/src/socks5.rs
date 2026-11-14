@@ -4,6 +4,7 @@
 //! 把目标交给 SS 出站协议并双向打通。这样外部 App / 浏览器把代理指向本机端口，
 //! 流量即经真实 SS 链路转发——这是内核第一次具备"真实代理入口"。
 
+use crate::outbound::{self, Protocol};
 use crate::ss::{master_key, ss_client_connect, ss_proxy, SsTarget};
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
@@ -11,12 +12,41 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
-/// 代理配置：远端 SS 服务器与密码。
+/// 代理配置：远端服务器、端口与凭据。
+///
+/// 字段名沿用 `ss_*` 是为了不破坏既有调用点，实际含义已通用化为「出站服务器」：
+/// SS 用密码，Trojan 用密码，VLESS 用 UUID。
 #[derive(Clone)]
 pub struct ProxyConfig {
     pub ss_server: String,
     pub ss_port: u16,
     pub password: String,
+    /// 出站协议，默认 Shadowsocks。
+    pub protocol: Protocol,
+    /// 是否走 TLS（Trojan 恒 true；VLESS 默认 true，80/回源场景可关）。
+    pub tls: bool,
+    /// TLS SNI，空则用服务器地址。
+    pub sni: String,
+}
+
+impl ProxyConfig {
+    pub fn new(server: impl Into<String>, port: u16, password: impl Into<String>) -> Self {
+        ProxyConfig {
+            ss_server: server.into(),
+            ss_port: port,
+            password: password.into(),
+            protocol: Protocol::Shadowsocks,
+            tls: false,
+            sni: String::new(),
+        }
+    }
+
+    /// 设定协议；Trojan 自动要求 TLS。
+    pub fn with_protocol(mut self, p: Protocol) -> Self {
+        self.protocol = p;
+        self.tls = p.wants_tls();
+        self
+    }
 }
 
 /// 启动 SOCKS5 监听循环（在 tokio runtime 上 spawn）。
@@ -88,11 +118,29 @@ async fn handle_conn(mut conn: TcpStream, cfg: &ProxyConfig) -> io::Result<()> {
     conn.write_all(&[0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0])
         .await?;
 
-    // 4) 经 SS 连远端目标并双向代理。
-    let master = master_key(&cfg.password);
+    // 4) 按出站协议连远端目标并双向代理。
     let target = SsTarget { host, port };
-    let (ss_stream, sess) = ss_client_connect(&master, &cfg.ss_server, cfg.ss_port, &target).await?;
-    ss_proxy(conn, ss_stream, sess).await;
+    match cfg.protocol {
+        Protocol::Shadowsocks => {
+            let master = master_key(&cfg.password);
+            let (ss_stream, sess) =
+                ss_client_connect(&master, &cfg.ss_server, cfg.ss_port, &target).await?;
+            ss_proxy(conn, ss_stream, sess).await;
+        }
+        p => {
+            let up = outbound::dial(
+                p,
+                &cfg.ss_server,
+                cfg.ss_port,
+                &cfg.password,
+                cfg.tls,
+                &cfg.sni,
+                &target,
+            )
+            .await?;
+            outbound::proxy_plain(conn, up).await?;
+        }
+    }
     Ok(())
 }
 
@@ -172,11 +220,11 @@ mod tests {
         });
 
         // SOCKS5 server
-        let cfg = Arc::new(ProxyConfig {
-            ss_server: "127.0.0.1".into(),
-            ss_port: ss_addr.port(),
-            password: "proxy-secret".into(),
-        });
+        let cfg = Arc::new(ProxyConfig::new(
+            "127.0.0.1",
+            ss_addr.port(),
+            "proxy-secret",
+        ));
         let socks_port = {
             let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
             l.local_addr().unwrap().port()

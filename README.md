@@ -1,4 +1,4 @@
-# Skyward Rust Core · PoC-8（0.1.0.21-dev · UDP 全量转发 + 修 SS 握手）
+# Skyward Rust Core · PoC-9（0.1.0.22-dev · Trojan / VLESS 出站）
 
 一版可装机的最小骨架，用来回答三个问题：
 
@@ -32,6 +32,43 @@
 | `0.1.0.19-dev` | **网络概览按 `service_status.dart` 做成 2×2 服务格 + TCP 握手探测真实延迟 + 结论芯片** | 1.02 MB |
 | `0.1.0.20-dev` | **TUN 真实转发闭环**：用户态最小 TCP 栈 + DNS over TCP via SS，开 VPN 不再断网；代理页加「数据面」卡 | 1.08 MB |
 | `0.1.0.21-dev` | **修 SS 子密钥派生（HKDF-SHA1）+ UDP 全量转发**：QUIC/游戏/DNS 走 SS UDP relay，DNS 双通道自动回退 | 1.12 MB |
+| `0.1.0.22-dev` | **Trojan / VLESS 出站**：抽协议层，共用一套 TLS（rustls + ring），DNS 跟随协议；代理页加协议选择与 SNI | 2.04 MB |
+
+## 0.1.0.22 相对上一版做了什么（本版）
+
+**一、出站协议从「只有 SS」变成三选一。**
+
+上一版只能连 Shadowsocks 节点。现实中大量机场给的是 Trojan 或 VLESS，
+协议对不上时用户只会看到「连不上」，而客户端里没有任何提示能说明原因。
+
+| 协议 | 握手 | 加密 |
+|---|---|---|
+| Shadowsocks | AEAD（HKDF-SHA1 子密钥） | ChaCha20-Poly1305 |
+| Trojan | `hex(SHA224(pwd)) CRLF CMD ATYP ADDR PORT CRLF` | TLS（rustls） |
+| VLESS | `VER UUID OPTLEN CMD PORT ATYP ADDR` | TLS 可选 |
+
+Trojan 与 VLESS 的负载都是裸字节流，安全性由外层 TLS 承担，所以两者共用同一套
+TLS 通道，实现上是一个模块（`core/src/outbound.rs`）而不是两套。
+
+**二、TLS 选型：rustls + ring，不引 OpenSSL。**
+
+先用一个独立探针验证 `rustls + ring` 能否交叉编译到 `aarch64-linux-android`
+（NDK 28 / clang），通过后才接进来。理由：ring 是纯 C + Rust，交叉编译链干净；
+`aws-lc` 会引入 cmake/go 依赖，CI 上容易碎。
+
+**三、DNS 跟随协议。**
+
+上一版 DNS 走的是「SS over TCP」，换协议后这条链路直接失效，开 VPN 就没有任何域名
+能解析，表现是「全都没网」。本版把 DNS 的传输层也抽到协议层：SS 走加密 chunk，
+Trojan / VLESS 走裸流 + 2 字节长度前缀。
+
+**四、界面。**
+
+代理页入口卡新增协议三选一（Shadowsocks / Trojan / VLESS），标签随协议变化
+（`SS 密码` / `Trojan 密码` / `VLESS UUID`）；非 SS 协议额外显示 TLS 开关与 SNI 输入。
+
+**五、这一版没做的**：Trojan / VLESS 的 UDP 通道（UDP associate / UDP over stream）。
+这两种协议下 QUIC 会丢弃、回退 TCP，网页与视频仍可用，但纯 UDP 应用会受影响。
 
 ## 0.1.0.21 相对上一版做了什么（本版）
 

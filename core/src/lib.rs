@@ -10,6 +10,7 @@
 pub mod dnsrelay;
 pub mod engine;
 pub mod net;
+pub mod outbound;
 pub mod socks5;
 pub mod ss;
 pub mod tcpstack;
@@ -497,6 +498,23 @@ fn tun_stats() -> &'static StdMutex<Option<std::sync::Arc<StdMutex<TunStats>>>> 
     TUN_STATS.get_or_init(|| StdMutex::new(None))
 }
 
+/// 由 JNI 参数组装出站配置。Trojan 强制 TLS；VLESS 尊重调用方开关（可跑 80 / 回源）。
+fn build_cfg(
+    env: *mut JNIEnv,
+    server: String,
+    port: jint,
+    secret: String,
+    protocol: *mut c_void,
+    tls: jint,
+    sni: *mut c_void,
+) -> ProxyConfig {
+    let proto = outbound::Protocol::parse(&read_jstring(env, protocol));
+    let mut cfg = ProxyConfig::new(server, port.max(1) as u16, secret).with_protocol(proto);
+    cfg.tls = if proto == outbound::Protocol::Trojan { true } else { tls != 0 };
+    cfg.sni = read_jstring(env, sni);
+    cfg
+}
+
 /// 启动本地 SOCKS5 入口（默认 1080），把目标经 SS 出站协议转发到远端。
 /// 参数：port 本地监听端口、ssServer 远端 SS 地址、ssPort 远端 SS 端口、password。
 /// 返回 1=已启动 / 0=参数无效。内核自此具备「真实代理入口」，外部 App 可把代理指向本机。
@@ -508,17 +526,16 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeStartProxy(
     ss_server: *mut c_void,
     ss_port: jint,
     password: *mut c_void,
+    protocol: *mut c_void,
+    tls: jint,
+    sni: *mut c_void,
 ) -> jint {
     if port <= 0 || ss_port <= 0 {
         return 0;
     }
     let server = read_jstring(env, ss_server);
     let pwd = read_jstring(env, password);
-    let cfg = std::sync::Arc::new(ProxyConfig {
-        ss_server: server,
-        ss_port: ss_port as u16,
-        password: pwd,
-    });
+    let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
     let rt = net::runtime();
     let handle = rt.spawn(async move {
         let _ = run_socks5(port as u16, cfg).await;
@@ -562,17 +579,16 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeOpenTun(
     ss_server: *mut c_void,
     ss_port: jint,
     password: *mut c_void,
+    protocol: *mut c_void,
+    tls: jint,
+    sni: *mut c_void,
 ) -> jint {
     if fd <= 0 {
         return 0;
     }
     let server = read_jstring(env, ss_server);
     let pwd = read_jstring(env, password);
-    let cfg = std::sync::Arc::new(ProxyConfig {
-        ss_server: server,
-        ss_port: ss_port.max(1) as u16,
-        password: pwd,
-    });
+    let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
     let stats = run_tun_blocking(fd as RawFd, cfg);
     *tun_stats().lock().unwrap() = Some(stats);
     1

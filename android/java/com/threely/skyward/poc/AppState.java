@@ -48,6 +48,11 @@ public final class AppState {
     public String ssPassword = "skyward-poc";
     public int socksPort = 1080;          // 本地 SOCKS5 入口端口
 
+    // ---- PoC-9：出站协议（ss / trojan / vless）----
+    public String outProtocol = "ss";
+    public boolean outTls = true;         // trojan 恒开；vless 可关（80 / 回源）
+    public String outSni = "";            // 空 = 用服务器地址
+
     /** 页面代次：每次 render 递增，首页秒级刷新据此自动退出，避免切页后空转 / 泄漏。 */
     public int pageEpoch = 0;
 
@@ -147,6 +152,9 @@ public final class AppState {
         ssPort         = p.getInt("ssPort", 8388);
         ssPassword     = p.getString("ssPassword", "skyward-poc");
         socksPort      = p.getInt("socksPort", 1080);
+        outProtocol    = p.getString("outProtocol", "ss");
+        outTls         = p.getBoolean("outTls", true);
+        outSni         = p.getString("outSni", "");
         // 防御：越界值兜底，避免旧数据把数组索引打崩
         if (themeMode < 0 || themeMode > 2) themeMode = 0;
         if (ruleMode < 0 || ruleMode > 2) ruleMode = 0;
@@ -177,6 +185,9 @@ public final class AppState {
                 .putInt("ssPort", ssPort)
                 .putString("ssPassword", ssPassword)
                 .putInt("socksPort", socksPort)
+                .putString("outProtocol", outProtocol)
+                .putBoolean("outTls", outTls)
+                .putString("outSni", outSni)
                 .apply();
     }
 
