@@ -195,6 +195,31 @@ public final class Pages {
                 "%s · %s 包 · %d 连接", AppState.humanBytes(b0[6]), humanK(b0[7]), b0[8]));
         body.addView(dist);
 
+        // 真实数据面探针：内核经 tokio 运行时做真实 DNS 解析 + TCP 建连 + 收发试探字节。
+        // 这是内核「真能收发字节」的实测证据，与上方由 session_tick 模拟出来的流量计数不是一回事。
+        body.addView(Ui.groupTitle(c, "数据面验证（真实 socket · 非模拟）"));
+        LinearLayout probeCard = Ui.newCard(c);
+        final TextView probeOut = new TextView(c);
+        probeOut.setTextSize(13);
+        probeOut.setTextColor(Ui.TEXT2);
+        probeOut.setPadding(Ui.dp(c, 14), Ui.dp(c, 12), Ui.dp(c, 14), Ui.dp(c, 12));
+        probeOut.setText("内核 tokio 真实探针（默认 1.1.1.1:443）· 点「测一次」发起");
+        probeCard.addView(probeOut);
+        LinearLayout probeBtnWrap = new LinearLayout(c);
+        probeBtnWrap.setPadding(Ui.dp(c, 14), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 10));
+        final String PROBE_HOST = "1.1.1.1";
+        final int PROBE_PORT = 443;
+        TextView probeBtn = Ui.primaryButton(c, "测一次", Ui.BLUE, v -> {
+            probeOut.setText("探测中…（内核 tokio socket · 真实 DNS + TCP）");
+            probeOut.setTextColor(Ui.TEXT2);
+            runKernelProbe(PROBE_HOST, PROBE_PORT, probeOut);
+        });
+        probeBtnWrap.addView(probeBtn);
+        probeCard.addView(probeBtnWrap);
+        body.addView(probeCard);
+        // 进入页面即自动跑一次真实探针（后台线程，不阻塞 UI）
+        runKernelProbe(PROBE_HOST, PROBE_PORT, probeOut);
+
         body.addView(Ui.groupTitle(c, "内核信息（Rust 实时读数）"));
         LinearLayout mem = Ui.newCard(c);
         mem.addView(Ui.monoBlock(c, s.coreInfo()));
@@ -239,7 +264,8 @@ public final class Pages {
         if (s.connected) anchor.postDelayed(ticker, 1000);
 
         body.addView(note(c, "说明：连接时长、上传/下载、实时速率、活动连接、按动作分桶流量、规则与内存"
-                + "均由 Rust 内核计算（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"));
+                + "均由 Rust 内核计算（模拟数据面，不接管真实网卡）；节点、配置、订阅为界面演示占位。"
+                + "其中「数据面验证」卡片是内核经 tokio 的真实 socket 探测（真实 DNS + TCP 收发字节，非模拟）。"));
         return page(c, body);
     }
 
@@ -548,12 +574,49 @@ public final class Pages {
         tools.addView(Ui.row(c, IconView.Glyph.LIST, Ui.ORANGE, "实时连接",
                 "演示入口", null, v -> Ui.toast(c, "连接面板未接入")));
         tools.addView(Ui.separator(c));
-        tools.addView(Ui.row(c, IconView.Glyph.DNS, Ui.PURPLE, "DNS 查询",
-                "演示入口", null, v -> Ui.toast(c, "DNS 面板未接入")));
+        tools.addView(Ui.row(c, IconView.Glyph.DNS, Ui.GREEN, "内核网络探针",
+                "真实 TCP · 见下方卡片", null, v -> Ui.toast(c, "见下方「内核网络探针」卡片")));
         tools.addView(Ui.separator(c));
         tools.addView(Ui.row(c, IconView.Glyph.LIST, Ui.TEXT2, "日志",
                 "演示入口", null, v -> Ui.toast(c, "日志面板未接入")));
         body.addView(tools);
+
+        // 真实内核网络探针（PoC-5）：可输入 host:port，内核经 tokio 做真实 DNS + TCP。
+        body.addView(Ui.groupTitle(c, "内核网络探针（真实 socket · tokio）"));
+        LinearLayout probeCard = Ui.newCard(c);
+        final android.widget.EditText pinput = new android.widget.EditText(c);
+        pinput.setHint("host:port，如 1.1.1.1:443 或 example.com:80");
+        pinput.setText("1.1.1.1:443");
+        pinput.setTextSize(14);
+        pinput.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+        pinput.setBackgroundResource(0);
+        probeCard.addView(pinput);
+        probeCard.addView(Ui.separator(c));
+        final TextView pout = new TextView(c);
+        pout.setTextSize(13);
+        pout.setTextColor(Ui.TEXT2);
+        pout.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+        pout.setText("输入目标后点「发起探针」；内核将做真实 DNS 解析 + TCP 建连 + 收发试探字节。");
+        probeCard.addView(pout);
+        View pbtn = Ui.primaryButton(c, "发起探针", Ui.BLUE, v -> {
+            String raw = pinput.getText().toString().trim();
+            int colon = raw.lastIndexOf(':');
+            String h; int pt;
+            if (colon > 0) {
+                h = raw.substring(0, colon);
+                try { pt = Integer.parseInt(raw.substring(colon + 1).trim()); }
+                catch (Throwable t) { pt = 443; }
+            } else { h = raw; pt = 443; }
+            if (h.isEmpty()) { Ui.toast(c, "请输入目标"); return; }
+            pout.setText("探测中…（内核 tokio socket · 真实 DNS + TCP）");
+            pout.setTextColor(Ui.TEXT2);
+            runKernelProbe(h, pt, pout);
+        });
+        LinearLayout pbtnWrap = new LinearLayout(c);
+        pbtnWrap.setPadding(Ui.dp(c, 14), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 10));
+        pbtnWrap.addView(pbtn);
+        probeCard.addView(pbtnWrap);
+        body.addView(probeCard);
 
         // 基准区：按需点击、子线程分段、逐段回刷 UI；结束后恢复默认规则集
         TextView benchBtn = Ui.primaryButton(c, "运行性能基准", Ui.BLUE, null);
@@ -608,7 +671,7 @@ public final class Pages {
                 v -> Ui.toast(c, "PoC-2 · 会话真值 / 索引引擎版 · 非可用代理客户端")));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.GREEN, "当前版本",
-                "0.1.0.10-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
+                "0.1.0.11-dev · arm64-v8a", Ui.valueText(c, "Dev"), null));
         about.addView(Ui.separator(c));
         about.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "构建链",
                 "aapt2 / javac / d8 / zipalign / apksigner", null, null));
@@ -714,5 +777,47 @@ public final class Pages {
         if (v < 1000L) return String.valueOf(v);
         if (v < 1_000_000L) return String.format(Locale.getDefault(), "%.1fK", v / 1000.0);
         return String.format(Locale.getDefault(), "%.2fM", v / 1_000_000.0);
+    }
+
+    /** 真实内核 TCP 探针：后台线程执行（不阻塞 UI），结果回主线程渲染。
+     *  内核经 tokio 做真实 DNS 解析 + TCP 建连 + 收发试探字节。 */
+    private static void runKernelProbe(final String host, final int port, final TextView out) {
+        new Thread(() -> {
+            String csv;
+            try {
+                csv = RustCore.nativeProbe(host, port, 4000);
+            } catch (Throwable t) {
+                csv = "0,0,," + 0 + "," + 0 + "," + t.getClass().getSimpleName();
+            }
+            final String r = csv;
+            MAIN.post(() -> applyProbeResult(out, r));
+        }, "kernel-probe").start();
+    }
+
+    /** 把探针 CSV（ok,ms,ip,tx,rx,err）渲染成可读结果，并着色。 */
+    private static void applyProbeResult(TextView out, String csv) {
+        if (csv == null) csv = "";
+        String[] p = csv.split(",");
+        boolean ok = p.length > 0 && "1".equals(p[0].trim());
+        long ms = p.length > 1 ? safeLong(p[1]) : 0;
+        String ip = p.length > 2 ? p[2].trim() : "";
+        long tx = p.length > 3 ? safeLong(p[3]) : 0;
+        long rx = p.length > 4 ? safeLong(p[4]) : 0;
+        String err = p.length > 5 ? p[5].trim() : "";
+        StringBuilder sb = new StringBuilder();
+        if (ok) {
+            sb.append("● 成功   连接延迟 ").append(ms).append(" ms");
+            if (!ip.isEmpty()) sb.append("\n解析 IP：").append(ip);
+            sb.append("\n收发字节：↑").append(AppState.humanBytes(tx))
+              .append("  ↓").append(AppState.humanBytes(rx)).append("（真实内核 socket）");
+        } else {
+            sb.append("✕ 失败   ").append(err.isEmpty() ? "未知错误" : err);
+        }
+        out.setText(sb.toString());
+        out.setTextColor(ok ? Ui.GREEN : Ui.RED);
+    }
+
+    private static long safeLong(String s) {
+        try { return Long.parseLong(s.trim()); } catch (Throwable t) { return 0; }
     }
 }

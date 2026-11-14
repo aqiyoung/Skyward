@@ -8,6 +8,7 @@
 //! 界面不再写死演示常量。另有索引/线性双引擎对照接口供工具页基准使用。
 
 pub mod engine;
+pub mod net;
 
 use engine::{Core, CORE_VERSION, RuleKind};
 use std::ffi::{c_char, c_void, CStr, CString};
@@ -448,4 +449,25 @@ pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeRuleAction(
     i: jint,
 ) -> jint {
     core().rule_action(i.max(0) as usize) as jint
+}
+
+// ---------------- 数据面地基（PoC-5：tokio 真实 socket） ----------------
+
+/// 真实 TCP 探针：内核经 tokio 运行时做 DNS 解析 + 建连 + 收发试探字节，
+/// 返回 CSV：ok,ms,ip,tx,rx,err。这是内核「真能收发字节」的第一步，
+/// 与首页 / 代理页里由 session_tick 模拟出来的流量计数不是一回事。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_poc_RustCore_nativeProbe(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    host: *mut c_void,
+    port: jint,
+    timeout_ms: jlong,
+) -> *mut c_void {
+    let h = read_jstring(env, host);
+    let p = port.max(0) as u16;
+    let t = timeout_ms.max(500) as u64;
+    let rt = net::runtime();
+    let probe = rt.block_on(net::tcp_probe(&h, p, t));
+    new_jstring(env, &probe.to_csv())
 }

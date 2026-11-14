@@ -11,6 +11,11 @@ crate-type = ["cdylib", "rlib"]
 name = "bench"
 path = "examples/bench.rs"
 
+[dependencies]
+# 数据面地基（PoC-5）：异步运行时 + 真实 socket 基础。
+# 仅启用内核所需最小特性集，避免无谓膨胀；后续协议 / tun 均复用此运行时。
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "io-util", "sync"] }
+
 [profile.release]
 opt-level = "s"
 lto = true

@@ -5,7 +5,8 @@ package com.threely.skyward.poc;
  * 边界只走原始类型 int/long/double，零对象分配、零字符串跨语言拷贝。
  *
  * PoC-2 新增：会话真值（时长 / 上下行 / 包数由内核计算）、索引引擎对照、
- * 规则集重置。PoC-4 新增：按动作分桶会话汇总、规则枚举。共 37 个导出符号。
+ * 规则集重置。PoC-4 新增：按动作分桶会话汇总、规则枚举。
+ * PoC-5 新增：真实 TCP 探针（tokio 数据面地基）。共 37 个导出符号。
  */
 public final class RustCore {
     static {
@@ -63,4 +64,8 @@ public final class RustCore {
     public static native String nativeNodeGroup(int i);
     /** 输入域名，返回打包命中结果。bit63=命中；bits16-46=规则序号；bits8-15=类型；bits0-7=动作。 */
     public static native long nativeDecide(String host);
+
+    /** 真实 TCP 探针（PoC-5）：内核经 tokio 做 DNS 解析 + 建连 + 收发试探字节。
+     *  返回 CSV：ok,ms,ip,tx,rx,err。与 session_tick 模拟计数不是一回事。 */
+    public static native String nativeProbe(String host, int port, long timeoutMs);
 }
