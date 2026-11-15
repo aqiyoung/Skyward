@@ -188,9 +188,9 @@ void main() {
       DashboardWidget.proxyGroups,
       DashboardWidget.memoryInfo,
     ]) {
-      await tester.tapAt(pileTapPoint(tester));
+      await tester.tap(find.byType(CardStack));
       await tester.pumpAndSettle();
-      expect(topOf(tester, card), pileTop(tester));
+      expect(topOf(tester, card), pileTop(tester), reason: 'selected $card');
     }
   });
 
