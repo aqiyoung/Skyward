@@ -146,7 +146,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       'CardStack tap index=$_index settled=$_settled drag=$_dragging scroll=$_pageScrolling',
     );
     _cancelPageScrollTimer();
-    if (_settled || _dragging || _pageScrolling || _count < 2) {
+    if (_dragging || _pageScrolling || _count < 2 || _turn.isAnimating) {
       return;
     }
     _settled = true;
@@ -156,6 +156,14 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       _index = (_index + 1) % _count;
       _turn.value = 0;
     });
+  }
+
+  void _finishUnselectedPress() {
+    if (!mounted || _settled || _dragging || _pageScrolling) {
+      return;
+    }
+    _settled = true;
+    _held = false;
   }
 
   void _snapShut() {
@@ -315,7 +323,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           if (_pageScrolling) {
             _endPageScroll();
           } else if (!_dragging) {
-            _tap();
+            scheduleMicrotask(_finishUnselectedPress);
           }
         },
         onPointerCancel: (_) {
@@ -378,9 +386,13 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                     child: FractionalTranslation(
                       translation: Offset(0, -travel),
                       child: _cast(
-                        RepaintBoundary(
-                          key: widget.cardKeyOf(top),
-                          child: top.card,
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _tap,
+                          child: RepaintBoundary(
+                            key: widget.cardKeyOf(top),
+                            child: top.card,
+                          ),
                         ),
                         visual,
                       ),
