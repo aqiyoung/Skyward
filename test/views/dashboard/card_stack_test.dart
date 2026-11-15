@@ -51,8 +51,12 @@ void main() {
 
   Future<void> pumpScrollablePile(
     WidgetTester tester,
-    ScrollController scroll,
-  ) async {
+    ScrollController scroll, {
+    List<DashboardWidget> cards = const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+    ],
+  }) async {
     tester.view.physicalSize = const Size(412, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -71,13 +75,7 @@ void main() {
                     const SizedBox(height: 40),
                     SizedBox(
                       width: 380,
-                      child: CardStack(
-                        cards: const [
-                          DashboardWidget.memoryInfo,
-                          DashboardWidget.networkControl,
-                        ],
-                        cardKeyOf: keyOf,
-                      ),
+                      child: CardStack(cards: cards, cardKeyOf: keyOf),
                     ),
                     const SizedBox(height: 1600),
                   ],
@@ -346,11 +344,18 @@ void main() {
   ) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
-    await pumpScrollablePile(tester, scroll);
+    await pumpScrollablePile(
+      tester,
+      scroll,
+      cards: const [
+        DashboardWidget.networkControl,
+        DashboardWidget.memoryInfo,
+      ],
+    );
 
     final control = find
         .descendant(
-          of: find.byKey(keyOf(DashboardWidget.memoryInfo)),
+          of: find.byKey(keyOf(DashboardWidget.networkControl)),
           matching: find.byType(InkWell),
         )
         .first;
@@ -358,7 +363,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scroll.offset, 0);
-    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
   testWidgets('the board can still scroll from outside a pile', (

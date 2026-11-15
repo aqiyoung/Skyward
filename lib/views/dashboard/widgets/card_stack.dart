@@ -21,6 +21,8 @@ const _turnAt = 0.24;
 const _flick = 620.0;
 const _pageScrollDelay = Duration(milliseconds: 350);
 
+enum _Phase { idle, pressing, turning, pageScrolling }
+
 /// Tap or swipe to switch cards; hold before dragging to scroll the page.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
@@ -41,11 +43,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _pressPosition = Offset.zero;
   var _pageScrollY = 0.0;
   Timer? _pageScrollTimer;
-  var _held = false;
-  var _pageScrolling = false;
-  var _dragging = false;
-  var _settled = true;
+  var _phase = _Phase.idle;
   var _settleGeneration = 0;
+  VelocityTracker? _velocity;
+  double? _downPixels;
 
   int get _count => widget.cards.length;
 
@@ -72,30 +73,43 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  void _press(Offset globalPosition) {
+  void _press(PointerDownEvent event) {
     if (_count < 2) {
       return;
     }
-    _settled = false;
     _settleGeneration++;
+    _phase = _Phase.pressing;
     _heldFrom = _index;
-    _pressPosition = globalPosition;
-    _pressY = globalPosition.dy;
+    _pressPosition = event.position;
+    _pressY = event.position.dy;
     _pageScrollY = 0;
-    _held = true;
-    _dragging = false;
-    _pageScrolling = false;
+    _velocity = VelocityTracker.withKind(event.kind)
+      ..addPosition(event.timeStamp, event.position);
     _cancelPageScrollTimer();
     _pageScrollTimer = Timer(_pageScrollDelay, () {
       _pageScrollTimer = null;
-      if (mounted && _held) {
+      if (mounted) {
         _beginPageScroll();
       }
     });
     // Keep an existing page fling from carrying the board during card input.
     final position = Scrollable.maybeOf(context)?.position;
+    _downPixels = position != null && position.hasPixels
+        ? position.pixels
+        : null;
     if (position != null && position.hasPixels) {
       position.jumpTo(position.pixels);
+    }
+  }
+
+  void _pinPage() {
+    final down = _downPixels;
+    final position = Scrollable.maybeOf(context)?.position;
+    if (down == null || position == null || !position.hasPixels) {
+      return;
+    }
+    if (position.pixels != down) {
+      position.jumpTo(down);
     }
   }
 
@@ -105,19 +119,17 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _beginPageScroll() {
-    if (_pageScrolling || !_held) {
+    if (_phase != _Phase.pressing) {
       return;
     }
     _cancelPageScrollTimer();
-    _pageScrolling = true;
+    _phase = _Phase.pageScrolling;
     _pageScrollY = 0;
-    _held = false;
-    _dragging = false;
     _turn.value = 0;
   }
 
   void _scrollPage(double dragDistance) {
-    if (!_pageScrolling) {
+    if (_phase != _Phase.pageScrolling) {
       return;
     }
     final delta = dragDistance - _pageScrollY;
@@ -135,20 +147,18 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _endPageScroll() {
-    if (!_pageScrolling) {
+    if (_phase != _Phase.pageScrolling) {
       return;
     }
-    _pageScrolling = false;
-    _settle(0);
+    _phase = _Phase.idle;
   }
 
   void _tap() {
     _cancelPageScrollTimer();
-    if (_settled || _dragging || _pageScrolling || _count < 2) {
+    if (_phase != _Phase.pressing || _count < 2) {
       return;
     }
-    _settled = true;
-    _held = false;
+    _phase = _Phase.idle;
     _turn.stop();
     setState(() {
       _index = (_index + 1) % _count;
@@ -158,21 +168,23 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   void _snapShut() {
     _cancelPageScrollTimer();
-    if (_settled) {
+    if (_phase == _Phase.idle) {
       return;
     }
-    _settled = true;
-    _held = false;
-    _dragging = false;
-    _pageScrolling = false;
+    _phase = _Phase.idle;
     _turn.stop();
-    _turn.value = 0;
+    setState(() {
+      _index = _heldFrom;
+      _turn.value = 0;
+    });
   }
 
   void _drag(double dy) {
-    if (!_held || _count < 2) {
+    if ((_phase != _Phase.pressing && _phase != _Phase.turning) ||
+        _count < 2) {
       return;
     }
+    _phase = _Phase.turning;
     var turn = -dy / _cardHeight;
     var index = _heldFrom;
     while (turn >= 1) {
@@ -183,26 +195,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       turn += 1;
       index = (index - 1 + _count) % _count;
     }
-    setState(() {
-      _index = index;
-      _dragging = true;
-    });
+    setState(() => _index = index);
     _turn.value = turn;
   }
 
   void _settle(double velocityY) {
     _cancelPageScrollTimer();
-    if (_settled) {
+    if (_phase != _Phase.turning) {
       return;
     }
-    _settled = true;
-    _held = false;
-    _pageScrolling = false;
-    final dragging = _dragging;
-    setState(() => _dragging = false);
-    if (!dragging) {
-      return;
-    }
+    _phase = _Phase.idle;
     final turn = _turn.value;
     var target = 0.0;
     if (turn.abs() >= _turnAt) {
@@ -297,20 +299,40 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         ),
         child: Listener(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) => _press(event.position),
+          onPointerDown: _press,
           onPointerMove: (event) {
-            if (!_pageScrolling &&
-                (event.position - _pressPosition).distance > kTouchSlop) {
-              _cancelPageScrollTimer();
-            }
-            if (_pageScrolling) {
+            _velocity?.addPosition(event.timeStamp, event.position);
+            if (_phase == _Phase.pageScrolling) {
               _scrollPage(event.position.dy - _pressY);
+              return;
             }
+            if (_phase != _Phase.pressing && _phase != _Phase.turning) {
+              return;
+            }
+            if ((event.position - _pressPosition).distance > kTouchSlop) {
+              _cancelPageScrollTimer();
+              _drag(event.position.dy - _pressY);
+            }
+            _pinPage();
           },
-          onPointerUp: (_) {
+          onPointerUp: (event) {
+            _velocity?.addPosition(event.timeStamp, event.position);
             _cancelPageScrollTimer();
-            if (_pageScrolling) {
-              _endPageScroll();
+            switch (_phase) {
+              case _Phase.pageScrolling:
+                _endPageScroll();
+              case _Phase.turning:
+                _pinPage();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && _phase == _Phase.idle) {
+                    _pinPage();
+                  }
+                });
+                _settle(_velocity?.getVelocity().pixelsPerSecond.dy ?? 0);
+              case _Phase.pressing:
+                _tap();
+              case _Phase.idle:
+                break;
             }
           },
           onPointerCancel: (_) {
@@ -320,13 +342,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           child: RawGestureDetector(
             behavior: HitTestBehavior.opaque,
             gestures: <Type, GestureRecognizerFactory>{
-              TapGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                    TapGestureRecognizer.new,
-                    (instance) {
-                      instance.onTap = _tap;
-                    },
-                  ),
               LongPressGestureRecognizer:
                   GestureRecognizerFactoryWithHandlers<
                     LongPressGestureRecognizer
@@ -344,20 +359,13 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                     VerticalDragGestureRecognizer.new,
                     (instance) {
                       instance.onStart = (details) {
-                        if (_pageScrolling) {
-                          return;
-                        }
-                        _dragging = true;
                         _drag(details.globalPosition.dy - _pressY);
                       };
                       instance.onUpdate = (details) {
-                        if (!_pageScrolling) {
-                          _drag(details.globalPosition.dy - _pressY);
-                        }
+                        _drag(details.globalPosition.dy - _pressY);
                       };
                       instance.onEnd = (details) {
-                        if (_pageScrolling) {
-                          _dragging = false;
+                        if (_phase == _Phase.pageScrolling) {
                           _endPageScroll();
                         } else {
                           _settle(details.velocity.pixelsPerSecond.dy);
