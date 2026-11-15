@@ -292,7 +292,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         spill: spill,
       ),
       child: Listener(
-        behavior: HitTestBehavior.translucent,
+        behavior: HitTestBehavior.opaque,
         onPointerDown: (event) => _press(event.position),
         onPointerMove: (event) {
           if (!_pageScrolling &&
@@ -316,7 +316,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           _snapShut();
         },
         child: RawGestureDetector(
-          behavior: HitTestBehavior.translucent,
+          behavior: HitTestBehavior.opaque,
           gestures: <Type, GestureRecognizerFactory>{
             LongPressGestureRecognizer:
                 GestureRecognizerFactoryWithHandlers<
