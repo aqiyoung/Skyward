@@ -102,12 +102,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     setState(() => _engaged = false);
   }
 
-  void _scrollPage(double offsetFromOrigin) {
+  void _scrollPage(double dragDistance) {
     if (!_pageScrolling) {
       return;
     }
-    final delta = offsetFromOrigin - _pageScrollY;
-    _pageScrollY = offsetFromOrigin;
+    final delta = dragDistance - _pageScrollY;
+    _pageScrollY = dragDistance;
     final position = Scrollable.maybeOf(context)?.position;
     if (delta == 0 || position == null || !position.hasContentDimensions) {
       return;
@@ -289,6 +289,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           Listener(
             behavior: HitTestBehavior.translucent,
             onPointerDown: (event) => _press(event.position.dy),
+            onPointerMove: (event) {
+              if (_pageScrolling) {
+                _scrollPage(event.position.dy - _pressY);
+              }
+            },
             onPointerUp: (_) {
               if (!_dragging && !_pageScrolling) {
                 _settle(0);
@@ -307,8 +312,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                       ),
                       (instance) {
                         instance.onLongPressStart = (_) => _beginPageScroll();
-                        instance.onLongPressMoveUpdate = (details) =>
-                            _scrollPage(details.offsetFromOrigin.dy);
                         instance.onLongPressEnd = (_) => _endPageScroll();
                       },
                     ),
