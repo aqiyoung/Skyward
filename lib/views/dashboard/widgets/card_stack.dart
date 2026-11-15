@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
@@ -42,7 +43,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _heldFrom = 0;
   var _index = 0;
   var _pressY = 0.0;
+  var _pressPosition = Offset.zero;
   var _pageScrollY = 0.0;
+  Timer? _pageScrollTimer;
   var _held = false;
   var _pageScrolling = false;
   var _dragging = false;
@@ -62,6 +65,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _pageScrollTimer?.cancel();
     _turn.dispose();
     _open.dispose();
     super.dispose();
@@ -74,17 +78,25 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  void _press(double globalY) {
+  void _press(Offset globalPosition) {
     if (_count < 2) {
       return;
     }
     _settled = false;
     _heldFrom = _index;
-    _pressY = globalY;
+    _pressPosition = globalPosition;
+    _pressY = globalPosition.dy;
     _pageScrollY = 0;
     _held = true;
     _dragging = false;
     _pageScrolling = false;
+    _cancelPageScrollTimer();
+    _pageScrollTimer = Timer(_pageScrollDelay, () {
+      _pageScrollTimer = null;
+      if (mounted && _held) {
+        _beginPageScroll();
+      }
+    });
     setState(() => _engaged = true);
     _open.forward();
     // Keep an existing page fling from carrying the board during card input.
@@ -94,7 +106,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
   }
 
+  void _cancelPageScrollTimer() {
+    _pageScrollTimer?.cancel();
+    _pageScrollTimer = null;
+  }
+
   void _beginPageScroll() {
+    if (_pageScrolling || !_held) {
+      return;
+    }
+    _cancelPageScrollTimer();
     _pageScrolling = true;
     _pageScrollY = 0;
     _held = false;
@@ -129,6 +150,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _snapShut() {
+    _cancelPageScrollTimer();
     if (_settled) {
       return;
     }
@@ -163,6 +185,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _settle(double velocityY) {
+    _cancelPageScrollTimer();
     if (_settled) {
       return;
     }
@@ -288,18 +311,28 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           // Quick drags switch cards; a held press routes movement to the page.
           Listener(
             behavior: HitTestBehavior.translucent,
-            onPointerDown: (event) => _press(event.position.dy),
+            onPointerDown: (event) => _press(event.position),
             onPointerMove: (event) {
+              if (!_pageScrolling &&
+                  (event.position - _pressPosition).distance > kTouchSlop) {
+                _cancelPageScrollTimer();
+              }
               if (_pageScrolling) {
                 _scrollPage(event.position.dy - _pressY);
               }
             },
             onPointerUp: (_) {
-              if (!_dragging && !_pageScrolling) {
+              _cancelPageScrollTimer();
+              if (_pageScrolling) {
+                _endPageScroll();
+              } else if (!_dragging) {
                 _settle(0);
               }
             },
-            onPointerCancel: (_) => _snapShut(),
+            onPointerCancel: (_) {
+              _cancelPageScrollTimer();
+              _snapShut();
+            },
             child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
               gestures: <Type, GestureRecognizerFactory>{
@@ -322,13 +355,25 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                       VerticalDragGestureRecognizer.new,
                       (instance) {
                         instance.onStart = (details) {
+                          if (_pageScrolling) {
+                            return;
+                          }
                           _dragging = true;
                           _drag(details.globalPosition.dy - _pressY);
                         };
-                        instance.onUpdate = (details) =>
+                        instance.onUpdate = (details) {
+                          if (!_pageScrolling) {
                             _drag(details.globalPosition.dy - _pressY);
-                        instance.onEnd = (details) =>
+                          }
+                        };
+                        instance.onEnd = (details) {
+                          if (_pageScrolling) {
+                            _dragging = false;
+                            _endPageScroll();
+                          } else {
                             _settle(details.velocity.pixelsPerSecond.dy);
+                          }
+                        };
                       },
                     ),
               },
