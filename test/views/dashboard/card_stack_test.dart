@@ -181,6 +181,25 @@ void main() {
     expect(peek(tester, DashboardWidget.memoryInfo), closeTo(0, 1.0));
   });
 
+  testWidgets('a tap on a control inside the top card switches the pile', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.networkControl,
+      DashboardWidget.memoryInfo,
+    ]);
+    final control = find
+        .descendant(
+          of: find.byKey(keyOf(DashboardWidget.networkControl)),
+          matching: find.byType(InkWell),
+        )
+        .first;
+    await tester.tapAt(tester.getCenter(control));
+    await tester.pumpAndSettle();
+
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+  });
+
   testWidgets('repeated taps cycle through every card and wrap around', (
     tester,
   ) async {

@@ -45,6 +45,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _pageScrolling = false;
   var _dragging = false;
   var _settled = true;
+  var _settleGeneration = 0;
 
   int get _count => widget.cards.length;
 
@@ -75,8 +76,8 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (_count < 2) {
       return;
     }
-    debugPrint('CardStack down index=$_index');
     _settled = false;
+    _settleGeneration++;
     _heldFrom = _index;
     _pressPosition = globalPosition;
     _pressY = globalPosition.dy;
@@ -142,9 +143,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _tap() {
-    debugPrint(
-      'CardStack tap index=$_index settled=$_settled drag=$_dragging scroll=$_pageScrolling',
-    );
     _cancelPageScrollTimer();
     if (_settled || _dragging || _pageScrolling || _count < 2) {
       return;
@@ -213,6 +211,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (velocityY.abs() > _flick) {
       target = velocityY < 0 ? 1 : -1;
     }
+    final generation = _settleGeneration;
     _turn
         .animateTo(
           target,
@@ -220,7 +219,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           curve: Curves.easeOutCubic,
         )
         .then((_) {
-          if (!mounted) {
+          if (!mounted || generation != _settleGeneration) {
             return;
           }
           setState(() {
@@ -309,14 +308,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             }
           },
           onPointerUp: (_) {
-            debugPrint(
-              'CardStack up index=$_index drag=$_dragging scroll=$_pageScrolling',
-            );
             _cancelPageScrollTimer();
             if (_pageScrolling) {
               _endPageScroll();
-            } else if (!_dragging) {
-              _tap();
             }
           },
           onPointerCancel: (_) {
@@ -326,6 +320,13 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           child: RawGestureDetector(
             behavior: HitTestBehavior.opaque,
             gestures: <Type, GestureRecognizerFactory>{
+              TapGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                    TapGestureRecognizer.new,
+                    (instance) {
+                      instance.onTap = _tap;
+                    },
+                  ),
               LongPressGestureRecognizer:
                   GestureRecognizerFactoryWithHandlers<
                     LongPressGestureRecognizer
@@ -381,7 +382,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                         child: _cast(
                           RepaintBoundary(
                             key: widget.cardKeyOf(top),
-                            child: top.card,
+                            // In a pile the card only turns it; its own
+                            // controls must not fire or win the arena.
+                            child: IgnorePointer(child: top.card),
                           ),
                           visual,
                         ),
