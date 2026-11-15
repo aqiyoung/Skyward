@@ -103,8 +103,8 @@ void main() {
   double topHeight(WidgetTester tester) =>
       tester.getSize(find.byType(CardStack)).height;
 
-  Offset pileTapPoint(WidgetTester tester) =>
-      tester.getTopLeft(find.byType(CardStack)) + const Offset(32, 10);
+  Offset cardTapPoint(WidgetTester tester, DashboardWidget card) =>
+      tester.getTopLeft(find.byKey(keyOf(card))) + const Offset(32, 10);
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
@@ -162,7 +162,9 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
     expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
 
-    final gesture = await tester.startGesture(pileTapPoint(tester));
+    final gesture = await tester.startGesture(
+      cardTapPoint(tester, DashboardWidget.memoryInfo),
+    );
     await tester.pump();
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
     expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
@@ -183,14 +185,16 @@ void main() {
       DashboardWidget.proxyGroups,
     ]);
 
+    var current = DashboardWidget.memoryInfo;
     for (final card in const [
       DashboardWidget.networkControl,
       DashboardWidget.proxyGroups,
       DashboardWidget.memoryInfo,
     ]) {
-      await tester.tap(find.byType(CardStack));
+      await tester.tapAt(cardTapPoint(tester, current));
       await tester.pumpAndSettle();
       expect(topOf(tester, card), pileTop(tester), reason: 'selected $card');
+      current = card;
     }
   });
 
