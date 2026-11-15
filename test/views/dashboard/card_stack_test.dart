@@ -97,17 +97,14 @@ void main() {
   double bottomOf(WidgetTester tester, DashboardWidget card) =>
       tester.getBottomLeft(find.byKey(keyOf(card))).dy;
 
-  double pileTop(WidgetTester tester) {
-    final top = tester.getTopLeft(find.byType(CardStack)).dy;
-    final isExpanded = find
-        .byKey(const ValueKey('card-stack-switchable'))
-        .evaluate()
-        .isNotEmpty;
-    return top - (isExpanded ? 6 : 0);
-  }
+  double pileTop(WidgetTester tester) =>
+      tester.getTopLeft(find.byType(CardStack)).dy;
 
   double topHeight(WidgetTester tester) =>
       tester.getSize(find.byType(CardStack)).height;
+
+  Offset pileTapPoint(WidgetTester tester) =>
+      tester.getTopLeft(find.byType(CardStack)) + const Offset(32, 10);
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
@@ -155,91 +152,46 @@ void main() {
     );
   });
 
-  testWidgets('touching a pile opens it immediately', (tester) async {
-    await pumpPile(tester, const [
-      DashboardWidget.memoryInfo,
-      DashboardWidget.networkControl,
-    ]);
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(CardStack)),
-    );
-    await tester.pump();
-    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 80));
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
-    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
-  });
-
-  testWidgets('touching a pile shows one dot for each card', (tester) async {
-    const switchable = ValueKey('card-stack-switchable');
-    await pumpPile(tester, const [
-      DashboardWidget.memoryInfo,
-      DashboardWidget.networkControl,
-      DashboardWidget.proxyGroups,
-    ]);
-    expect(find.byKey(switchable), findsNothing);
-
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(CardStack)),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 80));
-
-    final rail = find.byKey(switchable);
-    expect(rail, findsOneWidget);
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
-    expect(
-      find.descendant(of: rail, matching: find.byType(ColoredBox)),
-      findsNWidgets(3),
-    );
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(find.byKey(switchable), findsOneWidget);
-  });
-
-  testWidgets('lifting the finger leaves the pile expanded for tapping', (
+  testWidgets('a tap switches to the next card without opening the pile', (
     tester,
   ) async {
     await pumpPile(tester, const [
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
     ]);
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(CardStack)),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 80));
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
-    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
+    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
+
+    final gesture = await tester.startGesture(pileTapPoint(tester));
+    await tester.pump();
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+    expect(peek(tester, DashboardWidget.memoryInfo), closeTo(0, 1.0));
   });
 
-  testWidgets('tapping a switch dot selects its card without a hold', (
+  testWidgets('repeated taps cycle through every card and wrap around', (
     tester,
   ) async {
     await pumpPile(tester, const [
-      DashboardWidget.networkControl,
       DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
       DashboardWidget.proxyGroups,
     ]);
-    final cardTop = tester.getTopLeft(
-      find.byKey(keyOf(DashboardWidget.networkControl)),
-    );
-    await tester.tapAt(cardTop + const Offset(40, 15));
-    await tester.pumpAndSettle();
-    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
 
-    await tester.tap(find.byKey(const ValueKey('card-stack-dot-2')));
-    await tester.pumpAndSettle();
-
-    expect(topOf(tester, DashboardWidget.proxyGroups), pileTop(tester));
-    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
+    for (final card in const [
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+      DashboardWidget.memoryInfo,
+    ]) {
+      await tester.tapAt(pileTapPoint(tester));
+      await tester.pumpAndSettle();
+      expect(topOf(tester, card), pileTop(tester));
+    }
   });
 
   testWidgets('a swipe turns the pile to the next card', (tester) async {
@@ -335,7 +287,7 @@ void main() {
       tester.getCenter(find.byType(CardStack)),
     );
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
     for (var step = 0; step < 8; step++) {
       await gesture.moveBy(const Offset(0, -25));
       await tester.pump(const Duration(milliseconds: 16));

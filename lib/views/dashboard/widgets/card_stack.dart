@@ -21,7 +21,7 @@ const _turnAt = 0.24;
 const _flick = 620.0;
 const _pageScrollDelay = Duration(milliseconds: 350);
 
-/// Touch opens the pile. Tap a dot to select; quick drags flip, holds scroll.
+/// Tap or swipe to switch cards; hold before dragging to scroll the page.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -34,11 +34,6 @@ class CardStack extends StatefulWidget {
 
 class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   late final _turn = AnimationController.unbounded(vsync: this);
-  late final _open = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 130),
-    reverseDuration: const Duration(milliseconds: 220),
-  );
   final _surface = GlobalKey();
   var _heldFrom = 0;
   var _index = 0;
@@ -49,7 +44,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _held = false;
   var _pageScrolling = false;
   var _dragging = false;
-  var _expanded = false;
   var _settled = true;
 
   int get _count => widget.cards.length;
@@ -67,7 +61,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   void dispose() {
     _pageScrollTimer?.cancel();
     _turn.dispose();
-    _open.dispose();
     super.dispose();
   }
 
@@ -97,8 +90,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         _beginPageScroll();
       }
     });
-    setState(() => _expanded = true);
-    _open.forward();
     // Keep an existing page fling from carrying the board during card input.
     final position = Scrollable.maybeOf(context)?.position;
     if (position != null && position.hasPixels) {
@@ -120,11 +111,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _pageScrollY = 0;
     _held = false;
     _dragging = false;
-    setState(() {
-      _expanded = false;
-      _turn.value = 0;
-    });
-    _open.reverse();
+    _turn.value = 0;
   }
 
   void _scrollPage(double dragDistance) {
@@ -153,22 +140,27 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _settle(0);
   }
 
-  void _selectCard(int index) {
-    if (index == _index || index < 0 || index >= _count) {
+  void _tap() {
+    _cancelPageScrollTimer();
+    if (_settled || _dragging || _pageScrolling || _count < 2) {
       return;
     }
-    _cancelPageScrollTimer();
     _settled = true;
     _held = false;
-    _dragging = false;
-    _pageScrolling = false;
     _turn.stop();
     setState(() {
-      _index = index;
+      _index = (_index + 1) % _count;
       _turn.value = 0;
-      _expanded = true;
     });
-    _open.forward();
+  }
+
+  void _finishUnselectedPress() {
+    // Give an inner control's tap recognizer a chance to win the gesture arena.
+    if (!mounted || _settled || _dragging || _pageScrolling) {
+      return;
+    }
+    _settled = true;
+    _held = false;
   }
 
   void _snapShut() {
@@ -180,11 +172,8 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _held = false;
     _dragging = false;
     _pageScrolling = false;
-    setState(() {
-      _expanded = false;
-      _turn.value = 0;
-    });
-    _open.reverse();
+    _turn.stop();
+    _turn.value = 0;
   }
 
   void _drag(double dy) {
@@ -216,9 +205,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _settled = true;
     _held = false;
     _pageScrolling = false;
-    if (!_expanded) {
-      _open.reverse();
-    }
     final dragging = _dragging;
     setState(() => _dragging = false);
     if (!dragging) {
@@ -262,11 +248,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
     final scale = MediaQuery.textScalerOf(context).scale(1);
     return AnimatedBuilder(
-      animation: Listenable.merge([_turn, _open]),
+      animation: _turn,
       builder: (context, _) {
-        final open = _open.value;
         final turn = _turn.value;
-        final visual = math.max(open, turn.abs().clamp(0.0, 1.0).toDouble());
+        final visual = turn.abs().clamp(0.0, 1.0).toDouble();
         final peek = _peekPressed * visual * math.min(scale, 2);
         return _pile(turn: turn, visual: visual, peek: peek);
       },
@@ -332,7 +317,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           if (_pageScrolling) {
             _endPageScroll();
           } else if (!_dragging) {
-            _settle(0);
+            scheduleMicrotask(_finishUnselectedPress);
           }
         },
         onPointerCancel: (_) {
@@ -342,6 +327,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         child: RawGestureDetector(
           behavior: HitTestBehavior.translucent,
           gestures: <Type, GestureRecognizerFactory>{
+            TapGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                  TapGestureRecognizer.new,
+                  (instance) => instance.onTap = _tap,
+                ),
             LongPressGestureRecognizer:
                 GestureRecognizerFactoryWithHandlers<
                   LongPressGestureRecognizer
@@ -405,22 +395,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              if (_expanded)
-                Positioned(
-                  right: -9,
-                  top: 0,
-                  bottom: 0,
-                  child: KeyedSubtree(
-                    key: const ValueKey('card-stack-switchable'),
-                    child: Center(
-                      child: _SwitchDots(
-                        count: _count,
-                        index: _index,
-                        onSelected: _selectCard,
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -487,47 +461,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SwitchDots extends StatelessWidget {
-  const _SwitchDots({
-    required this.count,
-    required this.index,
-    required this.onSelected,
-  });
-
-  final int count;
-  final int index;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final activeColor = context.colorScheme.onSurface.withValues(alpha: 0.85);
-    final inactiveColor = context.colorScheme.onSurface.withValues(alpha: 0.3);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < count; i++)
-          GestureDetector(
-            key: ValueKey('card-stack-dot-$i'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () => onSelected(i),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: Center(
-                child: ClipOval(
-                  child: ColoredBox(
-                    color: i == index ? activeColor : inactiveColor,
-                    child: const SizedBox(width: 5, height: 5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
