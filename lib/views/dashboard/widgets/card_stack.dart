@@ -146,7 +146,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       'CardStack tap index=$_index settled=$_settled drag=$_dragging scroll=$_pageScrolling',
     );
     _cancelPageScrollTimer();
-    if (_dragging || _pageScrolling || _count < 2 || _turn.isAnimating) {
+    if (_settled || _dragging || _pageScrolling || _count < 2) {
       return;
     }
     _settled = true;
@@ -156,14 +156,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       _index = (_index + 1) % _count;
       _turn.value = 0;
     });
-  }
-
-  void _finishUnselectedPress() {
-    if (!mounted || _settled || _dragging || _pageScrolling) {
-      return;
-    }
-    _settled = true;
-    _held = false;
   }
 
   void _snapShut() {
@@ -297,110 +289,108 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         ),
       );
     }
-    return ClipRect(
-      clipper: _PileClipper(
-        over: turn < 0 ? peek : 0,
-        aside: 14 * visual,
-        spill: spill,
-      ),
-      child: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: (event) => _press(event.position),
-        onPointerMove: (event) {
-          if (!_pageScrolling &&
-              (event.position - _pressPosition).distance > kTouchSlop) {
-            _cancelPageScrollTimer();
-          }
-          if (_pageScrolling) {
-            _scrollPage(event.position.dy - _pressY);
-          }
-        },
-        onPointerUp: (_) {
-          debugPrint(
-            'CardStack up index=$_index drag=$_dragging scroll=$_pageScrolling',
-          );
-          _cancelPageScrollTimer();
-          if (_pageScrolling) {
-            _endPageScroll();
-          } else if (!_dragging) {
-            scheduleMicrotask(_finishUnselectedPress);
-          }
-        },
-        onPointerCancel: (_) {
-          _cancelPageScrollTimer();
-          _snapShut();
-        },
-        child: RawGestureDetector(
+    return DashboardCardStackScope(
+      child: ClipRect(
+        clipper: _PileClipper(
+          over: turn < 0 ? peek : 0,
+          aside: 14 * visual,
+          spill: spill,
+        ),
+        child: Listener(
           behavior: HitTestBehavior.opaque,
-          gestures: <Type, GestureRecognizerFactory>{
-            LongPressGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<
-                  LongPressGestureRecognizer
-                >(
-                  () => LongPressGestureRecognizer(duration: _pageScrollDelay),
-                  (instance) {
-                    instance.onLongPressStart = (_) => _beginPageScroll();
-                    instance.onLongPressEnd = (_) => _endPageScroll();
-                  },
-                ),
-            VerticalDragGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<
-                  VerticalDragGestureRecognizer
-                >(
-                  VerticalDragGestureRecognizer.new,
-                  (instance) {
-                    instance.onStart = (details) {
-                      if (_pageScrolling) {
-                        return;
-                      }
-                      _dragging = true;
-                      _drag(details.globalPosition.dy - _pressY);
-                    };
-                    instance.onUpdate = (details) {
-                      if (!_pageScrolling) {
-                        _drag(details.globalPosition.dy - _pressY);
-                      }
-                    };
-                    instance.onEnd = (details) {
-                      if (_pageScrolling) {
-                        _dragging = false;
-                        _endPageScroll();
-                      } else {
-                        _settle(details.velocity.pixelsPerSecond.dy);
-                      }
-                    };
-                  },
-                ),
+          onPointerDown: (event) => _press(event.position),
+          onPointerMove: (event) {
+            if (!_pageScrolling &&
+                (event.position - _pressPosition).distance > kTouchSlop) {
+              _cancelPageScrollTimer();
+            }
+            if (_pageScrolling) {
+              _scrollPage(event.position.dy - _pressY);
+            }
           },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ...layers,
-              RepaintBoundary(
-                key: _surface,
-                child: Transform.translate(
-                  offset: Offset(0, -6 * visual),
-                  child: Transform.scale(
-                    alignment: Alignment.topCenter,
-                    scale: 1 - _pressedScale * visual,
-                    child: FractionalTranslation(
-                      translation: Offset(0, -travel),
-                      child: _cast(
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _tap,
-                          child: RepaintBoundary(
+          onPointerUp: (_) {
+            debugPrint(
+              'CardStack up index=$_index drag=$_dragging scroll=$_pageScrolling',
+            );
+            _cancelPageScrollTimer();
+            if (_pageScrolling) {
+              _endPageScroll();
+            } else if (!_dragging) {
+              _tap();
+            }
+          },
+          onPointerCancel: (_) {
+            _cancelPageScrollTimer();
+            _snapShut();
+          },
+          child: RawGestureDetector(
+            behavior: HitTestBehavior.opaque,
+            gestures: <Type, GestureRecognizerFactory>{
+              LongPressGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                    LongPressGestureRecognizer
+                  >(
+                    () => LongPressGestureRecognizer(duration: _pageScrollDelay),
+                    (instance) {
+                      instance.onLongPressStart = (_) => _beginPageScroll();
+                      instance.onLongPressEnd = (_) => _endPageScroll();
+                    },
+                  ),
+              VerticalDragGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                    VerticalDragGestureRecognizer
+                  >(
+                    VerticalDragGestureRecognizer.new,
+                    (instance) {
+                      instance.onStart = (details) {
+                        if (_pageScrolling) {
+                          return;
+                        }
+                        _dragging = true;
+                        _drag(details.globalPosition.dy - _pressY);
+                      };
+                      instance.onUpdate = (details) {
+                        if (!_pageScrolling) {
+                          _drag(details.globalPosition.dy - _pressY);
+                        }
+                      };
+                      instance.onEnd = (details) {
+                        if (_pageScrolling) {
+                          _dragging = false;
+                          _endPageScroll();
+                        } else {
+                          _settle(details.velocity.pixelsPerSecond.dy);
+                        }
+                      };
+                    },
+                  ),
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ...layers,
+                RepaintBoundary(
+                  key: _surface,
+                  child: Transform.translate(
+                    offset: Offset(0, -6 * visual),
+                    child: Transform.scale(
+                      alignment: Alignment.topCenter,
+                      scale: 1 - _pressedScale * visual,
+                      child: FractionalTranslation(
+                        translation: Offset(0, -travel),
+                        child: _cast(
+                          RepaintBoundary(
                             key: widget.cardKeyOf(top),
                             child: top.card,
                           ),
+                          visual,
                         ),
-                        visual,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
