@@ -444,9 +444,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             curve: Curves.easeOut,
             child: ExcludeSemantics(
               child: DecoratedBox(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: colors.inverseSurface.withValues(alpha: 0.78),
-                  borderRadius: BorderRadius.circular(20),
+                  shape: AppShape.full,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
