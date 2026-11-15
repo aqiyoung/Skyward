@@ -224,13 +224,16 @@ void main() {
     tester,
   ) async {
     await pumpPile(tester, const [
-      DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
+      DashboardWidget.memoryInfo,
       DashboardWidget.proxyGroups,
     ]);
-    await tester.tap(find.byKey(keyOf(DashboardWidget.memoryInfo)));
+    final cardTop = tester.getTopLeft(
+      find.byKey(keyOf(DashboardWidget.networkControl)),
+    );
+    await tester.tapAt(cardTop + const Offset(40, 15));
     await tester.pumpAndSettle();
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
 
     await tester.tap(find.byKey(const ValueKey('card-stack-dot-2')));
     await tester.pumpAndSettle();
