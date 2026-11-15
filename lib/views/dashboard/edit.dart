@@ -28,13 +28,12 @@ const _appearDuration = Duration(milliseconds: 200);
 const _appearScale = 0.92;
 const _liftGrowth = 0.03;
 
-/// Edits the shown cards where they stand: each sways, a removable one wears
-/// a remove badge, and a held card drags to a new place.
+/// Drop a held pile in a row's center to stack it; use the edges to reorder.
 class DashboardEditor extends ConsumerStatefulWidget {
   const DashboardEditor({
     super.key,
     required this.platform,
-    required this.widgets,
+    required this.stacks,
     required this.cardKeyOf,
     required this.padding,
     required this.gap,
@@ -42,7 +41,7 @@ class DashboardEditor extends ConsumerStatefulWidget {
   });
 
   final SupportPlatform platform;
-  final List<DashboardWidget> widgets;
+  final List<List<DashboardWidget>> stacks;
 
   /// Shared with the cards outside edit mode, so each keeps its state.
   final GlobalKey Function(DashboardWidget widget) cardKeyOf;
@@ -58,15 +57,26 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     with SingleTickerProviderStateMixin {
   late final _sway = AnimationController(vsync: this, duration: _swayLoop);
 
-  /// The saved cards and any removed one still on its way out.
-  late var _cards = widget.widgets;
+  late var _stacks = _copyOf(widget.stacks);
   final _leaving = <DashboardWidget>{};
   final _entering = <DashboardWidget>{};
+  var _dragging = false;
 
-  List<DashboardWidget> get _shown => [
-    for (final card in _cards)
-      if (!_leaving.contains(card)) card,
+  static List<List<DashboardWidget>> _copyOf(
+    List<List<DashboardWidget>> stacks,
+  ) => [
+    for (final pile in stacks) [...pile],
   ];
+
+  List<List<DashboardWidget>> get _settled => [
+    for (final pile in _stacks)
+      [
+        for (final card in pile)
+          if (!_leaving.contains(card)) card,
+      ],
+  ].where((pile) => pile.isNotEmpty).toList();
+
+  List<DashboardWidget> get _shown => [for (final pile in _settled) ...pile];
 
   @override
   void didChangeDependencies() {
@@ -81,8 +91,11 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
   @override
   void didUpdateWidget(DashboardEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!listEquals(widget.widgets, _shown)) {
-      _cards = widget.widgets;
+    if (!listEquals(
+      [for (final pile in widget.stacks) ...pile],
+      _shown,
+    )) {
+      _stacks = _copyOf(widget.stacks);
       _leaving.clear();
       _entering.clear();
     }
@@ -95,32 +108,41 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
   }
 
   void _save() {
-    final shown = _shown;
+    final stacks = _settled;
     ref
         .read(appSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(
-            dashboardWidgets: _keepingOtherPlatforms(
-              state.dashboardWidgets,
-              shown,
-            ),
-          ),
-        );
+        .update((state) {
+          final merged = _withOtherPlatforms(
+            state.dashboardStacks,
+            state.dashboardWidgets,
+            stacks,
+          );
+          return state.copyWith(
+            dashboardWidgets: [for (final pile in merged) ...pile],
+            dashboardStacks: merged,
+          );
+        });
   }
 
-  /// Cards this platform cannot show stay where they were among the rest.
-  List<DashboardWidget> _keepingOtherPlatforms(
-    List<DashboardWidget> saved,
-    List<DashboardWidget> shown,
+  // Keep unsupported cards in their saved slots as standalone piles.
+  List<List<DashboardWidget>> _withOtherPlatforms(
+    List<List<DashboardWidget>>? savedStacks,
+    List<DashboardWidget> savedWidgets,
+    List<List<DashboardWidget>> stacks,
   ) {
-    final result = [...shown];
-    var at = 0;
-    for (final card in saved) {
-      if (card.platforms.contains(widget.platform)) {
-        final index = result.indexOf(card);
-        if (index != -1) at = index + 1;
-      } else {
-        result.insert(at++, card);
+    final source = savedStacks != null && savedStacks.isNotEmpty
+        ? savedStacks
+        : [
+            for (final card in savedWidgets) [card],
+          ];
+    final result = [
+      for (final pile in stacks) [...pile],
+    ];
+    for (var at = 0; at < source.length; at++) {
+      for (final card in source[at]) {
+        if (!card.platforms.contains(widget.platform)) {
+          result.insert(at.clamp(0, result.length), [card]);
+        }
       }
     }
     return result;
@@ -135,34 +157,80 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     setState(() {
       if (!_leaving.remove(card)) {
         _entering.add(card);
-        _cards = [..._cards, card];
+        _stacks = [
+          ..._stacks,
+          [card],
+        ];
       }
     });
     _save();
   }
 
-  void _reorder(int from, int to) {
-    setState(() => _cards = _cards.copyAndReorder(from, to));
+  void _turn(int at) {
+    final pile = _stacks[at];
+    if (pile.length < 2) {
+      return;
+    }
+    setState(() => _stacks[at] = [...pile.skip(1), pile.first]);
+    _save();
+  }
+
+  void _split(int at) {
+    final pile = _stacks[at];
+    if (pile.length < 2) {
+      return;
+    }
+    setState(() {
+      _stacks = [
+        ..._stacks.take(at),
+        for (final card in pile) [card],
+        ..._stacks.skip(at + 1),
+      ];
+    });
+    _save();
+  }
+
+  // Center drops merge piles; edge drops only reorder.
+  void _drop(int from, int to, {required bool stack}) {
+    if (from == to) {
+      return;
+    }
+    setState(() {
+      final pile = _stacks.removeAt(from);
+      final at = (to > from ? to - 1 : to).clamp(0, _stacks.length);
+      if (stack) {
+        _stacks[at] = [..._stacks[at], ...pile];
+      } else {
+        _stacks.insert(at, pile);
+      }
+    });
     _save();
   }
 
   void _settle(DashboardWidget card) {
     _entering.remove(card);
     if (mounted && _leaving.remove(card)) {
-      setState(() => _cards = [..._cards]..remove(card));
+      setState(
+        () => _stacks = [
+          for (final pile in _stacks)
+            [
+              for (final item in pile)
+                if (item != card) item,
+            ],
+        ].where((pile) => pile.isNotEmpty).toList(),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cards = _cards;
+    final stacks = _stacks;
     final shown = _shown;
     final addable = [
       for (final card in DashboardWidget.values)
         if (card.platforms.contains(widget.platform) && !shown.contains(card))
           card,
     ];
-    final scale = DashboardDensityScope.scaleOf(context);
     final sway = context.disableAnimations ? null : _sway;
     final appLocalizations = context.appLocalizations;
 
@@ -182,45 +250,41 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
         padding: widget.padding,
         sliver: SliverMainAxisGroup(
           slivers: [
-            SliverReorderableList(
-              itemCount: cards.length,
-              itemBuilder: (_, index) {
-                final card = cards[index];
-                return _Presence(
-                  key: ValueKey(card),
-                  entering: _entering.contains(card),
-                  leaving: _leaving.contains(card),
-                  revealPadding: revealPadding,
-                  onSettled: () => _settle(card),
-                  child: spaced(
-                    _EditableCard(
-                      item: card,
-                      cardKey: widget.cardKeyOf(card),
-                      index: index,
-                      sway: sway,
-                      onRemove: card.removable ? () => _remove(card) : null,
-                    ),
-                  ),
-                );
-              },
-              // The held card rides in the overlay, outside the density scope,
-              // and takes its key along while the list leaves its place empty.
-              proxyDecorator: (_, index, animation) => DashboardDensityScope(
-                density: DashboardDensity.mobile,
-                scale: scale,
-                child: spaced(
-                  _LiftedCard(
-                    animation: animation,
-                    child: AbsorbPointer(
-                      child: RepaintBoundary(
-                        key: widget.cardKeyOf(cards[index]),
-                        child: cards[index].card,
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (at, pile) in stacks.indexed)
+                    _Presence(
+                      key: ValueKey(pile.first),
+                      entering: _entering.contains(pile.first),
+                      leaving: pile.every(_leaving.contains),
+                      revealPadding: revealPadding,
+                      onSettled: () => _settle(pile.first),
+                      child: spaced(
+                        AnimatedSize(
+                          alignment: Alignment.topCenter,
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutCubic,
+                          child: _EditableStack(
+                            pile: pile,
+                            row: at,
+                            sway: sway,
+                            lifting: _dragging,
+                            cardKeyOf: widget.cardKeyOf,
+                            onTurn: () => _turn(at),
+                            onSplit: pile.length > 1 ? () => _split(at) : null,
+                            onRemove: pile.first.removable
+                                ? () => _remove(pile.first)
+                                : null,
+                            onDrop: _drop,
+                            onLift: (up) => setState(() => _dragging = up),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
-              onReorderItem: _reorder,
             ),
             if (addable.isNotEmpty)
               SliverPadding(
@@ -409,53 +473,232 @@ class _PresenceState extends State<_Presence>
   }
 }
 
-class _EditableCard extends StatelessWidget {
-  const _EditableCard({
-    required this.item,
-    required this.cardKey,
-    required this.index,
+/// The center drop zone stacks; the edge zones only reorder.
+class _EditableStack extends StatelessWidget {
+  const _EditableStack({
+    required this.pile,
+    required this.row,
     required this.sway,
+    required this.lifting,
+    required this.cardKeyOf,
+    required this.onTurn,
+    required this.onSplit,
     required this.onRemove,
+    required this.onDrop,
+    required this.onLift,
   });
 
-  final DashboardWidget item;
-  final GlobalKey cardKey;
-  final int index;
+  final List<DashboardWidget> pile;
+  final int row;
   final Animation<double>? sway;
+  final bool lifting;
+  final GlobalKey Function(DashboardWidget card) cardKeyOf;
+  final VoidCallback onTurn;
+  final VoidCallback? onSplit;
   final VoidCallback? onRemove;
+  final void Function(int from, int insertAt, {required bool stack}) onDrop;
+  final ValueChanged<bool> onLift;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final top = pile.first;
     final card = AbsorbPointer(
-      child: RepaintBoundary(key: cardKey, child: item.card),
-    );
-    final onRemove = this.onRemove;
-    final content = Stack(
-      fit: StackFit.passthrough,
-      children: [
-        ReorderableDelayedDragStartListener(index: index, child: card),
-        if (onRemove != null)
-          PositionedDirectional(
-            top: 0,
-            end: 0,
-            child: _RoundButton(
-              glyph: AppGlyphs.remove,
-              tooltip:
-                  '${context.appLocalizations.remove} ${item.label(context)}',
-              background: colorScheme.errorContainer,
-              foreground: colorScheme.onErrorContainer,
-              onPressed: onRemove,
-            ),
-          ),
-      ],
+      child: RepaintBoundary(key: cardKeyOf(top), child: top.card),
     );
     final sway = this.sway;
-    // The sway repaints every frame; the boundary keeps that to this card.
-    return RepaintBoundary(
-      child: sway == null
-          ? content
-          : _Sway(sway: sway, seed: item.index, child: content),
+    final body = sway == null
+        ? card
+        : _Sway(sway: sway, seed: top.index, child: card);
+    final onRemove = this.onRemove;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            LongPressDraggable<int>(
+              data: row,
+              dragAnchorStrategy: pointerDragAnchorStrategy,
+              onDragStarted: () => onLift(true),
+              onDragEnd: (_) => onLift(false),
+              onDraggableCanceled: (_, _) => onLift(false),
+              feedback: _HeldPile(card: top, width: width),
+              childWhenDragging: Opacity(opacity: 0.22, child: body),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: pile.length > 1 ? onTurn : null,
+                child: body,
+              ),
+            ),
+            if (onRemove != null)
+              PositionedDirectional(
+                top: 0,
+                end: 0,
+                child: _RoundButton(
+                  glyph: AppGlyphs.remove,
+                  tooltip:
+                      '${context.appLocalizations.remove} ${top.label(context)}',
+                  background: colorScheme.errorContainer,
+                  foreground: colorScheme.onErrorContainer,
+                  onPressed: onRemove,
+                ),
+              ),
+            if (pile.length > 1 && onSplit != null)
+              PositionedDirectional(
+                top: 0,
+                start: 0,
+                child: _PileCount(count: pile.length, onSplit: onSplit!),
+              ),
+            if (lifting)
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _DropBand(
+                        row: row,
+                        edge: -1,
+                        onAccept: (from) => onDrop(from, row, stack: false),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 6,
+                      child: _DropBand(
+                        row: row,
+                        onAccept: (from) => onDrop(from, row, stack: true),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: _DropBand(
+                        row: row,
+                        edge: 1,
+                        onAccept: (from) => onDrop(from, row + 1, stack: false),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// The overlay must not mount a card with the same key as its source.
+class _HeldPile extends StatelessWidget {
+  const _HeldPile({required this.card, required this.width});
+
+  final DashboardWidget card;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: SizedBox(
+        width: width,
+        child: DashboardDensityScope(
+          density: DashboardDensity.mobile,
+          scale: DashboardDensityScope.scaleOf(context),
+          child: _LiftedCard(
+            animation: const AlwaysStoppedAnimation(1),
+            child: AbsorbPointer(child: card.card),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PileCount extends StatelessWidget {
+  const _PileCount({required this.count, required this.onSplit});
+
+  final int count;
+  final VoidCallback onSplit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Tooltip(
+      message: context.appLocalizations.dashboardSplitStack,
+      child: Semantics(
+        button: true,
+        label: context.appLocalizations.dashboardSplitStack,
+        child: GestureDetector(
+          onTap: onSplit,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+            decoration: ShapeDecoration(
+              color: colorScheme.secondaryContainer,
+              shape: AppShape.all(12),
+            ),
+            child: Text(
+              '$count',
+              style: DashboardText.label(context).copyWith(
+                color: colorScheme.onSecondaryContainer,
+                fontWeight: DashboardWeight.title,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DropBand extends StatelessWidget {
+  const _DropBand({
+    required this.row,
+    required this.onAccept,
+    this.edge = 0,
+  });
+
+  final int row;
+  final ValueChanged<int> onAccept;
+  final int edge;
+
+  bool get _stack => edge == 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (details) => details.data != row,
+      onAcceptWithDetails: (details) => onAccept(details.data),
+      builder: (context, candidate, rejected) {
+        if (candidate.isEmpty) {
+          return const SizedBox.expand();
+        }
+        if (_stack) {
+          return Padding(
+            padding: const EdgeInsets.all(2),
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.12),
+                shape: AppShape.all(DashboardCorner.mobileCard),
+              ),
+              child: const SizedBox.expand(),
+            ),
+          );
+        }
+        return Align(
+          alignment: edge < 0 ? Alignment.topCenter : Alignment.bottomCenter,
+          child: Container(
+            height: 3,
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: ShapeDecoration(
+              color: colorScheme.primary,
+              shape: AppShape.all(2),
+            ),
+          ),
+        );
+      },
     );
   }
 }

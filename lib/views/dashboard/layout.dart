@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+export 'package:skyward/models/dashboard_stacks.dart' show dashboardStacksOf;
+
 const _minDesktopWidth = 640.0;
 const _minFourColumnWidth = 860.0;
 const _minStandardFourColumnWidth = 1040.0;

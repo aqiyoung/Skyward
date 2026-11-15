@@ -294,6 +294,34 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   return {DashboardWidget.currentOutbound, ...kept}.toList();
 }
 
+List<List<DashboardWidget>>? dashboardStacksFromJson(
+  List<dynamic>? dashboardStacks,
+) {
+  if (dashboardStacks == null) {
+    return null;
+  }
+  final byName = DashboardWidget.values.asNameMap();
+  final seen = <DashboardWidget>{};
+  final stacks = <List<DashboardWidget>>[];
+  for (final raw in dashboardStacks) {
+    if (raw is! List) {
+      continue;
+    }
+    final pile = <DashboardWidget>[];
+    for (final name in raw) {
+      final card = _legacyDashboardWidgets[name] ?? byName[name];
+      if (card == null || !seen.add(card)) {
+        continue;
+      }
+      pile.add(card);
+    }
+    if (pile.isNotEmpty) {
+      stacks.add(pile);
+    }
+  }
+  return stacks.isEmpty ? null : stacks;
+}
+
 Object? _readSidebarExpanded(Map<dynamic, dynamic> json, String key) {
   return json.containsKey(key) ? json[key] : json['showLabel'];
 }
@@ -354,6 +382,8 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(defaultDashboardWidgets)
     @JsonKey(fromJson: dashboardWidgetsFromJson)
     List<DashboardWidget> dashboardWidgets,
+    @JsonKey(fromJson: dashboardStacksFromJson)
+    List<List<DashboardWidget>>? dashboardStacks,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
 
