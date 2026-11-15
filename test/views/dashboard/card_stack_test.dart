@@ -147,6 +147,25 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
+  testWidgets('the pile shows one dot per card, and a lone card none', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+    ]);
+    final dots = find.byKey(const ValueKey('card-stack-dots'));
+    expect(dots, findsOneWidget);
+    expect(
+      find.descendant(of: dots, matching: find.byType(Container)),
+      findsNWidgets(3),
+    );
+
+    await pumpPile(tester, const [DashboardWidget.memoryInfo]);
+    expect(find.byKey(const ValueKey('card-stack-dots')), findsNothing);
+  });
+
   testWidgets('at rest a stack is one clean card, with nothing behind it', (
     tester,
   ) async {
