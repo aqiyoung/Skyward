@@ -147,7 +147,7 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
-  testWidgets('the pile shows one dot per card, and a lone card none', (
+  testWidgets('the pile shows one dot per card while turning, none at rest', (
     tester,
   ) async {
     await pumpPile(tester, const [
@@ -156,11 +156,22 @@ void main() {
       DashboardWidget.proxyGroups,
     ]);
     final dots = find.byKey(const ValueKey('card-stack-dots'));
+    expect(dots, findsNothing, reason: 'hidden at rest');
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await gesture.moveBy(const Offset(0, -30));
+    await tester.pump();
     expect(dots, findsOneWidget);
     expect(
       find.descendant(of: dots, matching: find.byType(Container)),
       findsNWidgets(3),
     );
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(dots, findsNothing, reason: 'hidden once settled');
 
     await pumpPile(tester, const [DashboardWidget.memoryInfo]);
     expect(find.byKey(const ValueKey('card-stack-dots')), findsNothing);

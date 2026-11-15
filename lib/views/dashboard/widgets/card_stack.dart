@@ -461,7 +461,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                   top: 0,
                   bottom: 0,
                   child: Center(
-                    child: _PileDots(count: _count, index: _index),
+                    child: _PileDots(
+                      count: _count,
+                      index: _index,
+                      visual: visual,
+                    ),
                   ),
                 ),
               ],
@@ -537,33 +541,44 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
 /// One dot per card in the pile, the current one lit.
 class _PileDots extends StatelessWidget {
-  const _PileDots({required this.count, required this.index});
+  const _PileDots({
+    required this.count,
+    required this.index,
+    required this.visual,
+  });
 
   final int count;
   final int index;
+  final double visual;
 
   @override
   Widget build(BuildContext context) {
+    if (visual <= 0) {
+      return const SizedBox.shrink();
+    }
     final colorScheme = context.colorScheme;
-    return ExcludeSemantics(
-      child: IgnorePointer(
-        child: Column(
-          key: const ValueKey('card-stack-dots'),
-          mainAxisSize: MainAxisSize.min,
-          spacing: 5,
-          children: [
-            for (var i = 0; i < count; i++)
-              Container(
-                width: i == index ? 6 : 5,
-                height: i == index ? 6 : 5,
-                decoration: ShapeDecoration(
-                  color: i == index
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurface.withValues(alpha: 0.28),
-                  shape: AppShape.circle,
+    return Opacity(
+      opacity: visual,
+      child: ExcludeSemantics(
+        child: IgnorePointer(
+          child: Column(
+            key: const ValueKey('card-stack-dots'),
+            mainAxisSize: MainAxisSize.min,
+            spacing: 5,
+            children: [
+              for (var i = 0; i < count; i++)
+                Container(
+                  width: i == index ? 6 : 5,
+                  height: i == index ? 6 : 5,
+                  decoration: ShapeDecoration(
+                    color: i == index
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurface.withValues(alpha: 0.28),
+                    shape: AppShape.circle,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
