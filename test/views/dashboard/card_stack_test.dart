@@ -97,7 +97,7 @@ void main() {
       tester.getCenter(find.byType(CardStack)),
     );
     // Long press first: the pile only turns for a drag it was held for.
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 1150));
     await gesture.moveBy(Offset(0, dy));
     await tester.pump();
     await gesture.up();
@@ -178,7 +178,7 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 1150));
     await tester.pump(const Duration(milliseconds: 200));
     final opened =
         bottomOf(tester, DashboardWidget.networkControl) -
@@ -200,7 +200,7 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 1150));
     await gesture.moveBy(const Offset(0, -20));
     await tester.pump();
     await gesture.up();

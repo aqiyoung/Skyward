@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/ui/ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -35,6 +37,11 @@ const _turnAt = 0.24;
 
 /// How fast a flick has to be to turn the page without travelling.
 const _flick = 620.0;
+
+/// How long the finger has to rest before the pile opens. Longer than the
+/// platform's own long press: the pile turns one card per drag, so opening it
+/// by accident while scrolling the board would be worse than waiting.
+const _holdDelay = Duration(milliseconds: 1000);
 
 /// One place on the dashboard holding one or more cards.
 ///
@@ -246,13 +253,25 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           ...layers,
           Padding(
             padding: EdgeInsets.only(bottom: peek * ahead),
-            child: GestureDetector(
+            child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
-              onLongPressStart: (_) => _hold(),
-              onLongPressMoveUpdate: (details) =>
-                  _drag(details.offsetFromOrigin.dy),
-              onLongPressEnd: (details) =>
-                  _release(details.velocity.pixelsPerSecond.dy),
+              // The platform's own long press fires at 0.5s; a pile that opens
+              // that fast opens while the board is being scrolled past it.
+              gestures: {
+                LongPressGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      LongPressGestureRecognizer
+                    >(
+                      () => LongPressGestureRecognizer(duration: _holdDelay),
+                      (instance) {
+                        instance.onLongPressStart = (_) => _hold();
+                        instance.onLongPressMoveUpdate = (details) =>
+                            _drag(details.offsetFromOrigin.dy);
+                        instance.onLongPressEnd = (details) =>
+                            _release(details.velocity.pixelsPerSecond.dy);
+                      },
+                    ),
+              },
               child: RepaintBoundary(
                 key: _surface,
                 child: Transform.translate(
@@ -286,9 +305,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   Widget _cast(Widget card) {
     final radius = dashboardCardRadius(DashboardDensityScope.of(context));
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: const [
+      decoration: ShapeDecoration(
+        shape: AppShape.all(radius),
+        shadows: const [
           BoxShadow(
             color: Color(0x24000000),
             blurRadius: 10,

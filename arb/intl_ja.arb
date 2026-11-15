@@ -1016,6 +1016,7 @@
   "editDashboard": "ダッシュボードを編集",
   "done": "完了",
   "dashboardAddableSection": "追加できるカード",
+  "dashboardSplitStack": "スタックを分解",
   "customImportDroppedSubRules": "{count, plural, other{カスタム設定はサブルールに対応していないため、SUB-RULE ルール {label} 件を破棄しました}}",
   "autoInclude": "自動で含める",
   "allReferencedProxies": "参照されているすべてのプロキシ",

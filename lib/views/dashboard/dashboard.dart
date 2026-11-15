@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:skyward/common/common.dart';
 import 'package:skyward/core/core.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/models/state.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/page_large_title.dart';
@@ -348,9 +349,7 @@ class _MobileDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(
-      dashboardStateProvider.select((state) => state.dashboardWidgets),
-    );
+    final dashboard = ref.watch(dashboardStateProvider);
     // The shared large-title block already owns the strip under the status
     // bar, so the cards start flush beneath its own bottom spacing. Editing
     // has no such block: its ordinary bar needs the full inset back.
@@ -365,19 +364,22 @@ class _MobileDashboard extends ConsumerWidget {
         SliverLayoutBuilder(
           builder: (context, constraints) {
             final side = dashboardMobileSideOf(constraints.crossAxisExtent);
-            final widgets = [
-              for (final widget in saved)
-                if (widget.platforms.contains(platform)) widget,
-            ];
-            // Cards of one size share a place and turn there, the way a
-            // launcher keeps one cell one card; a card of another size starts
-            // the next place. The editor works on that same order, so what it
-            // shows is what the dashboard will draw.
-            final stacks = dashboardStacksOf(widgets);
+            // The piles come from the saved arrangement when the reader has
+            // stacked any by hand, and from the cards' sizes before that. A
+            // pile is what the board draws in one place, so a card this
+            // platform cannot show drops out of its pile and a pile left empty
+            // drops out of the board.
+            final stacks = [
+              for (final pile in dashboard.stacks)
+                [
+                  for (final card in pile)
+                    if (card.platforms.contains(platform)) card,
+                ],
+            ].where((pile) => pile.isNotEmpty).toList();
             if (editing) {
               return DashboardEditor(
                 platform: platform,
-                widgets: [for (final stack in stacks) ...stack],
+                stacks: stacks,
                 cardKeyOf: cardKeyOf,
                 padding: EdgeInsets.fromLTRB(side, top, side, bottom),
                 gap: gap,

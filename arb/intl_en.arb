@@ -1016,6 +1016,7 @@
   "editDashboard": "Edit dashboard",
   "done": "Done",
   "dashboardAddableSection": "Available to add",
+  "dashboardSplitStack": "Split stack",
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",

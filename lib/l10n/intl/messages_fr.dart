@@ -634,6 +634,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Disponibles à l’ajout",
     ),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage(
+      "Séparer la pile",
+    ),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("Base de données"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(

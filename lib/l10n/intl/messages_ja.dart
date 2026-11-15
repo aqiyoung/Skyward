@@ -508,6 +508,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("ダーク"),
     "dashboard": MessageLookupByLibrary.simpleMessage("ダッシュボード"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("追加できるカード"),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage("スタックを分解"),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("データベース"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(

@@ -495,6 +495,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
     "dashboard": MessageLookupByLibrary.simpleMessage("대시보드"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("추가 가능"),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage("스택 풀기"),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("데이터베이스"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(

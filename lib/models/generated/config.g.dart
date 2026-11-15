@@ -21,6 +21,7 @@ _AppSettingProps _$AppSettingPropsFromJson(
   dashboardWidgets: json['dashboardWidgets'] == null
       ? defaultDashboardWidgets
       : dashboardWidgetsFromJson(json['dashboardWidgets'] as List?),
+  dashboardStacks: dashboardStacksFromJson(json['dashboardStacks'] as List?),
   onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool? ?? false,
   showNotificationStopAction:
       json['showNotificationStopAction'] as bool? ?? true,
@@ -107,6 +108,9 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'locale': instance.locale,
       'dashboardWidgets': instance.dashboardWidgets
           .map((e) => _$DashboardWidgetEnumMap[e]!)
+          .toList(),
+      'dashboardStacks': instance.dashboardStacks
+          ?.map((e) => e.map((e) => _$DashboardWidgetEnumMap[e]!).toList())
           .toList(),
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'showNotificationStopAction': instance.showNotificationStopAction,

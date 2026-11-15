@@ -7,6 +7,7 @@ import 'app.dart';
 import 'clash_config.dart';
 import 'common.dart';
 import 'core.dart';
+import 'dashboard_stacks.dart';
 import 'profile.dart';
 
 part 'generated/state.freezed.dart';
@@ -166,7 +167,23 @@ abstract class CurrentProfileSelectorState with _$CurrentProfileSelectorState {
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
+
+    /// The piles the reader stacked by hand, top card first; null while the
+    /// board still sorts itself by size.
+    List<List<DashboardWidget>>? dashboardStacks,
   }) = _DashboardState;
+}
+
+extension DashboardStateStacks on DashboardState {
+  /// The places the board draws, in the order they stand: the arrangement the
+  /// reader made if there is one, otherwise the cards grouped by size.
+  List<List<DashboardWidget>> get stacks =>
+      dashboardStacks ?? dashboardStacksOf(dashboardWidgets);
+
+  /// Every card once, in the order the piles read top to bottom. Kept in step
+  /// with [stacks] so the flat field, the backup and the add-card row all see
+  /// the same set.
+  List<DashboardWidget> get cardsByStack => [for (final pile in stacks) ...pile];
 }
 
 @freezed
