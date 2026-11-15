@@ -247,7 +247,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           // Card drags win here instead of moving the page.
           Listener(
             behavior: HitTestBehavior.translucent,
-            onPointerDown: (event) => _press(event.localPosition.dy),
+            onPointerDown: (event) => _press(event.position.dy),
             onPointerUp: (_) {
               if (!_dragging) {
                 _settle(0);
@@ -265,10 +265,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                       (instance) {
                         instance.onStart = (details) {
                           _dragging = true;
-                          _drag(details.localPosition.dy - _pressY);
+                          _drag(details.globalPosition.dy - _pressY);
                         };
                         instance.onUpdate = (details) =>
-                            _drag(details.localPosition.dy - _pressY);
+                            _drag(details.globalPosition.dy - _pressY);
                         instance.onEnd = (details) =>
                             _settle(details.velocity.pixelsPerSecond.dy);
                         instance.onCancel = _snapShut;
