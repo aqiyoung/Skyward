@@ -75,6 +75,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (_count < 2) {
       return;
     }
+    debugPrint('CardStack down index=$_index');
     _settled = false;
     _heldFrom = _index;
     _pressPosition = globalPosition;
@@ -141,6 +142,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _tap() {
+    debugPrint(
+      'CardStack tap index=$_index settled=$_settled drag=$_dragging scroll=$_pageScrolling',
+    );
     _cancelPageScrollTimer();
     if (_settled || _dragging || _pageScrolling || _count < 2) {
       return;
@@ -304,6 +308,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           }
         },
         onPointerUp: (_) {
+          debugPrint(
+            'CardStack up index=$_index drag=$_dragging scroll=$_pageScrolling',
+          );
           _cancelPageScrollTimer();
           if (_pageScrolling) {
             _endPageScroll();
