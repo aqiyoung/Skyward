@@ -87,7 +87,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (_count < 2) {
       return;
     }
-    _engaged = true;
+    setState(() => _engaged = true);
     // Stop a fling after the switch wins, without moving the page.
     final position = Scrollable.maybeOf(context)?.position;
     if (position != null && position.hasPixels) {
@@ -237,6 +237,20 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         clipBehavior: Clip.none,
         children: [
           ...layers,
+          if (_engaged)
+            Positioned(
+              right: -9,
+              top: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: KeyedSubtree(
+                  key: const ValueKey('card-stack-switchable'),
+                  child: Center(
+                    child: _SwitchDots(count: _count, index: _index),
+                  ),
+                ),
+              ),
+            ),
           // The listener shows the preview without claiming the pointer.
           Listener(
             behavior: HitTestBehavior.translucent,
@@ -353,6 +367,34 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SwitchDots extends StatelessWidget {
+  const _SwitchDots({required this.count, required this.index});
+
+  final int count;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = context.colorScheme.onSurface.withValues(alpha: 0.85);
+    final inactiveColor = context.colorScheme.onSurface.withValues(alpha: 0.3);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.5),
+            child: ClipOval(
+              child: ColoredBox(
+                color: i == index ? activeColor : inactiveColor,
+                child: const SizedBox(width: 5, height: 5),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

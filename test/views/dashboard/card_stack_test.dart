@@ -176,6 +176,35 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('a confirmed switch shows one dot for each card in the pile', (
+    tester,
+  ) async {
+    const switchable = ValueKey('card-stack-switchable');
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+    ]);
+    expect(find.byKey(switchable), findsNothing);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(find.byKey(switchable), findsNothing);
+    await tester.pump(const Duration(milliseconds: 80));
+
+    final rail = find.byKey(switchable);
+    expect(rail, findsOneWidget);
+    expect(
+      find.descendant(of: rail, matching: find.byType(ColoredBox)),
+      findsNWidgets(3),
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byKey(switchable), findsNothing);
+  });
+
   testWidgets('lifting the finger folds the pile back to one card', (
     tester,
   ) async {
