@@ -469,6 +469,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dark": MessageLookupByLibrary.simpleMessage("深色"),
     "dashboard": MessageLookupByLibrary.simpleMessage("仪表盘"),
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage("可添加"),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage("拆开这一堆"),
     "data": MessageLookupByLibrary.simpleMessage("数据"),
     "database": MessageLookupByLibrary.simpleMessage("数据库"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(

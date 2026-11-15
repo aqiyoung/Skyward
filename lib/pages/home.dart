@@ -70,6 +70,7 @@ enum _DockPhase { expanded, compact, hidden }
 
 class _HomeShellState extends ConsumerState<_HomeShell> {
   final _dockPhase = ValueNotifier(_DockPhase.expanded);
+  final _dockHold = DockFollowHold();
 
   /// Which way the finger is pulling this drag, and how far it has come that
   /// way: a drag that turns around starts counting again, so the bar answers
@@ -86,6 +87,7 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
   /// on its own, nor a page that is not the active one.
   bool _handleScroll(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical ||
+        _dockHold.held ||
         notification.context
                 ?.getInheritedWidgetOfExactType<PageActivityScope>()
                 ?.isActive ==
@@ -104,6 +106,12 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
     }
     _travel(notification.scrollDelta ?? 0);
     return false;
+  }
+
+  void _relayTravel(double delta) {
+    if (!_dockHold.held) {
+      _travel(delta);
+    }
   }
 
   /// The bar answers distance travelled, whichever way the finger came by it:
@@ -212,13 +220,16 @@ class _HomeShellState extends ConsumerState<_HomeShell> {
                         isMobile: isMobile,
                         child: NotificationListener<ScrollNotification>(
                           onNotification: dockFollows ? _handleScroll : null,
-                          child: _VerticalSwipeRelay(
-                            // Only a phone drags the pages, so only there can
-                            // a page view take a swipe up instead of the bar.
-                            enabled: isMobile,
-                            onStart: _resetTravel,
-                            onSwipe: dockFollows ? _travel : null,
-                            child: widget.child,
+                          child: DockFollowHoldScope(
+                            hold: _dockHold,
+                            child: _VerticalSwipeRelay(
+                              // Only a phone drags the pages, so only there can
+                              // a page view take a swipe up instead of the bar.
+                              enabled: isMobile,
+                              onStart: _resetTravel,
+                              onSwipe: dockFollows ? _relayTravel : null,
+                              child: widget.child,
+                            ),
                           ),
                         ),
                       ),

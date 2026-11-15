@@ -55,4 +55,26 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
-        run: dart run tool/test.dart -- --reporter expanded
+        run: |
+          set +e
+          dart run tool/test.dart -- --reporter expanded > test-output.log 2>&1
+          test_status=$?
+          set -e
+          cat test-output.log
+          if [ "$test_status" -ne 0 ]; then
+            python3 - <<'PY'
+          from pathlib import Path
+
+          lines = (
+              Path('test-output.log').read_text(errors='replace').splitlines()
+          )
+          summary = '\n'.join(lines[-50:])[-7000:]
+          message = summary.replace('%', '%25')
+          message = message.replace('\r', '%0D').replace('\n', '%0A')
+          print(
+              '::error file=.github/workflows/pr-check.yaml,line=1,'
+              'title=Flutter test failure::' + message
+          )
+          PY
+          fi
+          exit "$test_status"

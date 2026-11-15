@@ -7,6 +7,7 @@ import 'app.dart';
 import 'clash_config.dart';
 import 'common.dart';
 import 'core.dart';
+import 'dashboard_stacks.dart';
 import 'profile.dart';
 
 part 'generated/state.freezed.dart';
@@ -166,7 +167,13 @@ abstract class CurrentProfileSelectorState with _$CurrentProfileSelectorState {
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
+    List<List<DashboardWidget>>? dashboardStacks,
   }) = _DashboardState;
+}
+
+extension DashboardStateStacks on DashboardState {
+  List<List<DashboardWidget>> get stacks =>
+      dashboardStacks ?? dashboardStacksOf(dashboardWidgets);
 }
 
 @freezed

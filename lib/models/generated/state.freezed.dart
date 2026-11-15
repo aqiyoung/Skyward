@@ -4749,7 +4749,7 @@ as Map<String, String>,
 /// @nodoc
 mixin _$DashboardState {
 
- List<DashboardWidget> get dashboardWidgets;
+ List<DashboardWidget> get dashboardWidgets; List<List<DashboardWidget>>? get dashboardStacks;
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4761,20 +4761,20 @@ $DashboardStateCopyWith<DashboardState> get copyWith => _$DashboardStateCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as DashboardState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, _this.dashboardWidgets));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, _this.dashboardWidgets)&&const DeepCollectionEquality().equals(other.dashboardStacks, _this.dashboardStacks));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DashboardState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.dashboardWidgets));
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.dashboardWidgets),const DeepCollectionEquality().hash(_this.dashboardStacks));
 }
 
 @override
 String toString() {
   final _this = this as DashboardState;
-  return 'DashboardState(dashboardWidgets: ${_this.dashboardWidgets})';
+  return 'DashboardState(dashboardWidgets: ${_this.dashboardWidgets}, dashboardStacks: ${_this.dashboardStacks})';
 }
 
 
@@ -4785,7 +4785,7 @@ abstract mixin class $DashboardStateCopyWith<$Res>  {
   factory $DashboardStateCopyWith(DashboardState value, $Res Function(DashboardState) _then) = _$DashboardStateCopyWithImpl;
 @useResult
 $Res call({
- List<DashboardWidget> dashboardWidgets
+ List<DashboardWidget> dashboardWidgets, List<List<DashboardWidget>>? dashboardStacks
 });
 
 
@@ -4802,10 +4802,11 @@ class _$DashboardStateCopyWithImpl<$Res>
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dashboardWidgets = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? dashboardWidgets = null,Object? dashboardStacks = freezed,}) {
   return _then(DashboardState(
 dashboardWidgets: null == dashboardWidgets ? _self.dashboardWidgets : dashboardWidgets // ignore: cast_nullable_to_non_nullable
-as List<DashboardWidget>,
+as List<DashboardWidget>,dashboardStacks: freezed == dashboardStacks ? _self.dashboardStacks : dashboardStacks // ignore: cast_nullable_to_non_nullable
+as List<List<DashboardWidget>>?,
   ));
 }
 
@@ -4890,10 +4891,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets,  List<List<DashboardWidget>>? dashboardStacks)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DashboardState() when $default != null:
-return $default(_that.dashboardWidgets);case _:
+return $default(_that.dashboardWidgets,_that.dashboardStacks);case _:
   return orElse();
 
 }
@@ -4911,10 +4912,10 @@ return $default(_that.dashboardWidgets);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DashboardWidget> dashboardWidgets,  List<List<DashboardWidget>>? dashboardStacks)  $default,) {final _that = this;
 switch (_that) {
 case _DashboardState():
-return $default(_that.dashboardWidgets);case _:
+return $default(_that.dashboardWidgets,_that.dashboardStacks);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4931,10 +4932,10 @@ return $default(_that.dashboardWidgets);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DashboardWidget> dashboardWidgets)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DashboardWidget> dashboardWidgets,  List<List<DashboardWidget>>? dashboardStacks)?  $default,) {final _that = this;
 switch (_that) {
 case _DashboardState() when $default != null:
-return $default(_that.dashboardWidgets);case _:
+return $default(_that.dashboardWidgets,_that.dashboardStacks);case _:
   return null;
 
 }
@@ -4946,7 +4947,7 @@ return $default(_that.dashboardWidgets);case _:
 
 
 class _DashboardState implements DashboardState {
-  const _DashboardState({required  List<DashboardWidget> dashboardWidgets}): _dashboardWidgets = dashboardWidgets;
+  const _DashboardState({required  List<DashboardWidget> dashboardWidgets,  List<List<DashboardWidget>>? dashboardStacks}): _dashboardWidgets = dashboardWidgets,_dashboardStacks = dashboardStacks;
   
 
  final  List<DashboardWidget> _dashboardWidgets;
@@ -4954,6 +4955,15 @@ class _DashboardState implements DashboardState {
   if (_dashboardWidgets is EqualUnmodifiableListView) return _dashboardWidgets;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_dashboardWidgets);
+}
+
+ final  List<List<DashboardWidget>>? _dashboardStacks;
+@override List<List<DashboardWidget>>? get dashboardStacks {
+  final value = _dashboardStacks;
+  if (value == null) return null;
+  if (_dashboardStacks is EqualUnmodifiableListView) return _dashboardStacks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
 }
 
 
@@ -4967,18 +4977,18 @@ _$DashboardStateCopyWith<_DashboardState> get copyWith => __$DashboardStateCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, _dashboardWidgets));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardState&&const DeepCollectionEquality().equals(other.dashboardWidgets, _dashboardWidgets)&&const DeepCollectionEquality().equals(other.dashboardStacks, _dashboardStacks));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_dashboardWidgets));
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_dashboardWidgets),const DeepCollectionEquality().hash(_dashboardStacks));
 }
 
 @override
 String toString() {
-    return 'DashboardState(dashboardWidgets: $dashboardWidgets)';
+    return 'DashboardState(dashboardWidgets: $dashboardWidgets, dashboardStacks: $dashboardStacks)';
 }
 
 
@@ -4989,7 +4999,7 @@ abstract mixin class _$DashboardStateCopyWith<$Res> implements $DashboardStateCo
   factory _$DashboardStateCopyWith(_DashboardState value, $Res Function(_DashboardState) _then) = __$DashboardStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<DashboardWidget> dashboardWidgets
+ List<DashboardWidget> dashboardWidgets, List<List<DashboardWidget>>? dashboardStacks
 });
 
 
@@ -5006,10 +5016,11 @@ class __$DashboardStateCopyWithImpl<$Res>
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? dashboardWidgets = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? dashboardWidgets = null,Object? dashboardStacks = freezed,}) {
   return _then(_DashboardState(
 dashboardWidgets: null == dashboardWidgets ? _self._dashboardWidgets : dashboardWidgets // ignore: cast_nullable_to_non_nullable
-as List<DashboardWidget>,
+as List<DashboardWidget>,dashboardStacks: freezed == dashboardStacks ? _self._dashboardStacks : dashboardStacks // ignore: cast_nullable_to_non_nullable
+as List<List<DashboardWidget>>?,
   ));
 }
 

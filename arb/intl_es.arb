@@ -1016,6 +1016,7 @@
   "editDashboard": "Editar panel",
   "done": "Hecho",
   "dashboardAddableSection": "Disponibles para añadir",
+  "dashboardSplitStack": "Separar la pila",
   "customImportDroppedSubRules": "{count, plural, =1{Se descartó 1 regla SUB-RULE, porque los perfiles personalizados no admiten subreglas} other{Se descartaron {label} reglas SUB-RULE, porque los perfiles personalizados no admiten subreglas}}",
   "autoInclude": "Incluir automáticamente",
   "allReferencedProxies": "Todos los proxies referenciados",

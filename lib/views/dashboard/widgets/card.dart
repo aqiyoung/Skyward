@@ -29,6 +29,18 @@ double dashboardCardRadius(DashboardDensity density) => density.isDesktop
     ? DashboardCorner.desktopCard
     : DashboardCorner.mobileCard;
 
+/// A pile tap selects another card instead of firing a card-wide action.
+class DashboardCardStackScope extends InheritedWidget {
+  const DashboardCardStackScope({super.key, required super.child});
+
+  static bool isInStack(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<DashboardCardStackScope>() !=
+      null;
+
+  @override
+  bool updateShouldNotify(DashboardCardStackScope oldWidget) => false;
+}
+
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
@@ -52,6 +64,7 @@ class DashboardCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final density = DashboardDensityScope.of(context);
     final shape = AppShape.all(dashboardCardRadius(density));
+    final cardTap = DashboardCardStackScope.isInStack(context) ? null : onTap;
     final content = Padding(
       padding: padding ?? dashboardCardPadding(density),
       child: child,
@@ -68,13 +81,13 @@ class DashboardCard extends StatelessWidget {
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: onTap == null
+          child: cardTap == null
               ? content
               : FocusRing(
                   shape: shape,
                   child: InkWell(
                     customBorder: shape,
-                    onTap: onTap,
+                    onTap: cardTap,
                     child: content,
                   ),
                 ),

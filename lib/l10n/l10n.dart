@@ -8464,6 +8464,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Split stack`
+  String get dashboardSplitStack {
+    return Intl.message(
+      'Split stack',
+      name: 'dashboardSplitStack',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}`
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
