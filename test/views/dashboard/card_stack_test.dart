@@ -103,13 +103,8 @@ void main() {
   double topHeight(WidgetTester tester) =>
       tester.getSize(find.byType(CardStack)).height;
 
-  Offset cardTapPoint(WidgetTester tester, DashboardWidget card) {
-    final text = find.descendant(
-      of: find.byKey(keyOf(card)),
-      matching: find.byType(Text),
-    ).first;
-    return tester.getCenter(text);
-  }
+  Offset cardTapPoint(WidgetTester tester, DashboardWidget card) =>
+      tester.getCenter(find.byKey(keyOf(card)));
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
@@ -196,7 +191,7 @@ void main() {
       DashboardWidget.proxyGroups,
       DashboardWidget.memoryInfo,
     ]) {
-      await tester.tapAt(cardTapPoint(tester, current));
+      await tester.tap(find.byKey(keyOf(current)));
       await tester.pumpAndSettle();
       expect(topOf(tester, card), pileTop(tester), reason: 'selected $card');
       current = card;
