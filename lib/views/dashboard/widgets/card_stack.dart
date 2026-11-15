@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' show Brightness, ImageFilter;
 
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -35,23 +37,36 @@ const _turnAt = 0.24;
 /// How fast a flick has to be to turn the page without travelling.
 const _flick = 620.0;
 
+/// How long a finger has to rest on a pile before the press is read as
+/// "switch a card" instead of "scroll past". Contact alone already opens the
+/// pile; this short hold is the decision, and it is what locks the board.
+const _holdConfirm = Duration(milliseconds: 120);
+
+/// A move bigger than this before the hold is confirmed means the finger was
+/// scrolling past, not switching. It stays below Flutter's touch slop (18) so
+/// the decision is always made before the board's drag recognizer claims the
+/// move -- whichever order the hit test happens to deliver them in.
+const _scrollIntent = 10.0;
+
 /// One place on the dashboard holding one or more cards.
 ///
 /// At rest a stack is a single card with nothing peeking out behind it -- the
-/// way a HyperOS widget stack shows one widget on the desktop. Pressing it
-/// opens the pile at once, with no long-press wait: the cards behind lean aside
-/// as one angled picture, so the place reads as switchable. Sliding up or down
-/// turns the pile, with no end in either direction. Lifting the finger folds
-/// everything back to the one card in a fraction of a second.
+/// way a HyperOS widget stack shows one widget on the desktop. Touching it
+/// opens the pile at once; resting the finger there for a fraction of a second
+/// confirms "switch a card" (with a haptic tick and a dot rail), and from then
+/// on sliding up or down turns the pile with no end in either direction while
+/// the board is held perfectly still. Lifting the finger folds everything back
+/// to the one card in well under a second.
 ///
-/// A finger landing on a pile of two or more is the decision: that gesture
-/// belongs to the pile, not to the board underneath. The board is a vertical
-/// scroll view, so the pile claims the vertical drag in the gesture arena (it
-/// sits below the scroll view and so resolves first) and stops any fling still
-/// carrying the page. Switching a card can therefore never turn into the page
-/// scrolling away -- no timing threshold to lose a race against. A single card
-/// has nothing to switch, so it installs no gesture at all and the page keeps
-/// scrolling normally over it.
+/// The decision is explicit, not a race: a plain [Listener] outside the gesture
+/// arena sees every pointer event and classifies the press from three things a
+/// touch screen can actually report -- contact, how long it stayed, and how far
+/// it moved. Pressure is not usable on Android (it reads ~1.0 on an ordinary
+/// finger). A single-purpose recognizer holds a seat in the arena; the state
+/// tells it to claim the gesture once the hold is confirmed, or to yield it to
+/// the board when the finger is clearly scrolling past. Nothing the board does
+/// can reach in and cancel an opened pile any more. A single card has nothing
+/// to switch, so it installs no gesture at all and the page scrolls over it.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -82,14 +97,26 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   final _surface = GlobalKey();
 
+  /// The confirm timer and the arena seat for the press currently in flight.
+  Timer? _armTimer;
+  _PileClaim? _claim;
+
+  /// The pointer that started the press, so a second finger cannot steer it.
+  int? _pointer;
+  double _downY = 0;
+  double _lastY = 0;
+  Duration? _lastMove;
+  double _velocityY = 0;
+
   /// The card in place when the press began, so a long drag can turn the pile
   /// round more than once without the turn running away.
   var _heldFrom = 0;
   var _index = 0;
   var _held = false;
+  var _armed = false;
+  var _boardScroll = false;
   var _dragging = false;
   var _settled = true;
-  double _dragDy = 0;
 
   int get _count => widget.cards.length;
 
@@ -104,6 +131,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _cancelTimer();
     _turn.dispose();
     _open.dispose();
     super.dispose();
@@ -116,15 +144,31 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  /// A finger went down on a pile. That alone decides the gesture: the pile
-  /// opens right away and the board is held still, so it cannot drift under
-  /// the card while the pile is open. A plain Listener sits outside the gesture
-  /// arena, so opening it does not take the tap away from whatever is inside
-  /// the card, nor does it hold up the drag recognizer claiming the move.
-  void _press() {
+  void _cancelTimer() {
+    _armTimer?.cancel();
+    _armTimer = null;
+  }
+
+  /// Contact. This is the first of the three signals and it is enough on its
+  /// own for the visual: the pile opens the instant a finger lands, so the
+  /// place reads as switchable without waiting for a drag or a long press.
+  void _press(PointerDownEvent event) {
     if (_count < 2) {
       return;
     }
+    _cancelTimer();
+    _pointer = event.pointer;
+    _downY = event.position.dy;
+    _lastY = event.position.dy;
+    _lastMove = event.timeStamp;
+    _velocityY = 0;
+    _settled = false;
+    _heldFrom = _index;
+    _held = true;
+    _armed = false;
+    _boardScroll = false;
+    _dragging = false;
+
     // Stop a fling still carrying the board: pressing a pile must not leave
     // the page scrolling on behind the opened card. Jumping to where it
     // already is only cancels the activity, it moves nothing.
@@ -132,35 +176,85 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (position != null && position.hasPixels) {
       position.jumpTo(position.pixels);
     }
-    _settled = false;
-    _heldFrom = _index;
-    _held = true;
-    _dragging = false;
-    _dragDy = 0;
     _open.forward();
+    _armTimer = Timer(_holdConfirm, _arm);
   }
 
-  /// The pile's drag won the arena: from here on its moves turn the pile. The
-  /// board's scroll recognizer has been rejected, so the page stays put.
-  void _engage() {
-    if (_count < 2) {
+  /// The hold is confirmed: this press is about switching cards. Claim the
+  /// gesture outright so the board cannot take it later, and give a small
+  /// haptic tick so the finger knows the pile is now live.
+  void _arm() {
+    _armTimer = null;
+    if (!_held || _settled || _boardScroll) {
       return;
     }
-    _heldFrom = _index;
-    _dragDy = 0;
+    _armed = true;
+    _claim?.claim();
+    // A phone without a vibrator, or a test binding with no platform channel,
+    // simply has nothing to answer; the visual dot rail is the real cue.
+    HapticFeedback.selectionClick().ignore();
+    setState(() {});
   }
 
-  /// The pile lost the arena, or the pointer was cancelled. Fold straight back
-  /// so scrolling never leaves an opened pile or a half turn behind.
+  /// The finger moved before the hold was confirmed. That is a scroll past,
+  /// not a switch: fold the pile back and hand the gesture to the board before
+  /// its drag recognizer reaches touch slop.
+  void _yieldToBoard() {
+    _cancelTimer();
+    _boardScroll = true;
+    _claim?.yieldToBoard();
+    _open.reverse();
+  }
+
+  void _move(PointerMoveEvent event) {
+    if (!_held || _settled || event.pointer != _pointer) {
+      return;
+    }
+    final dt = _lastMove == null
+        ? Duration.zero
+        : event.timeStamp - _lastMove!;
+    if (dt.inMicroseconds > 0) {
+      _velocityY =
+          (event.position.dy - _lastY) / (dt.inMicroseconds / 1000000.0);
+    }
+    _lastY = event.position.dy;
+    _lastMove = event.timeStamp;
+    final dy = event.position.dy - _downY;
+
+    if (!_armed) {
+      if (!_boardScroll && dy.abs() > _scrollIntent) {
+        _yieldToBoard();
+      }
+      return;
+    }
+    if (_boardScroll) {
+      return;
+    }
+    _drag(dy);
+  }
+
+  /// The pointer was cancelled by the system. Fold straight back so nothing
+  /// is left open or half turned.
   void _snapShut() {
+    _cancelTimer();
     if (_settled) {
       return;
     }
     _settled = true;
     _held = false;
-    _dragging = false;
+    _armed = false;
+    _boardScroll = false;
     _turn.value = 0;
     _open.reverse();
+    setState(() {});
+  }
+
+  void _up(PointerUpEvent event) {
+    if (event.pointer != _pointer) {
+      return;
+    }
+    _cancelTimer();
+    _settle(_velocityY);
   }
 
   void _drag(double dy) {
@@ -187,14 +281,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _turn.value = turn;
   }
 
-  /// The finger came up, the gesture was cancelled, or the pile lost the drag.
-  /// Whichever fires first folds the pile back; the rest are ignored.
+  /// The finger came up. Whoever classified the press, lifting it folds the
+  /// pile back; a real turn settles to the nearer card before it does.
   void _settle(double velocityY) {
     if (_settled) {
       return;
     }
     _settled = true;
     _held = false;
+    _armed = false;
+    _boardScroll = false;
     _open.reverse();
     final dragging = _dragging;
     setState(() => _dragging = false);
@@ -309,39 +405,50 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         clipBehavior: Clip.none,
         children: [
           ...layers,
+          // Once the hold is confirmed, a HyperOS-style dot rail at the side
+          // says plainly that this place holds more than one card and can be
+          // switched. It is the visible proof that the press was detected.
+          if (_armed)
+            Positioned(
+              right: -9,
+              top: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: KeyedSubtree(
+                  key: const ValueKey('card-stack-switchable'),
+                  child: Center(
+                    child: _SwitchDots(count: _count, index: _index),
+                  ),
+                ),
+              ),
+            ),
           // The card on top is the only child that sizes the Stack, so the
           // pile keeps exactly its height however far it opens. The layers
           // below are painted past its bottom edge, never laid out under it.
           //
-          // A plain Listener sits outside the gesture arena: it opens the
-          // pile on the down and, crucially, always sees the up -- even a tap
-          // too short to become a drag, or a drag the pile never won. That
-          // way no press can ever leave the pile open behind it.
+          // The Listener sits outside the gesture arena: it sees the down,
+          // every move and the up no matter who wins the arena, so no press
+          // can leave the pile open behind it and no cancel can snatch the
+          // opened pile away. The recognizer underneath only holds a seat.
           Listener(
             behavior: HitTestBehavior.translucent,
-            onPointerDown: (_) => _press(),
-            onPointerUp: (_) => _settle(0),
+            onPointerDown: _press,
+            onPointerMove: _move,
+            onPointerUp: _up,
             onPointerCancel: (_) => _snapShut(),
             child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
               gestures: <Type, GestureRecognizerFactory>{
-                VerticalDragGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<
-                      VerticalDragGestureRecognizer
-                    >(
-                      () => VerticalDragGestureRecognizer(),
-                      (instance) {
-                        // Once the drag is ours the board's own scroll
-                        // recognizer has been rejected: turning a card can
-                        // no longer scroll the page out from under it.
-                        instance.onStart = (_) => _engage();
-                        instance.onUpdate = (details) {
-                          _dragDy += details.delta.dy;
-                          _drag(_dragDy);
-                        };
-                        instance.onEnd = (details) =>
-                            _settle(details.velocity.pixelsPerSecond.dy);
-                        instance.onCancel = _snapShut;
+                _PileClaim:
+                    GestureRecognizerFactoryWithHandlers<_PileClaim>(
+                      () {
+                        final claim = _PileClaim();
+                        _claim = claim;
+                        return claim;
+                      },
+                      (_) {
+                        // No callbacks by design: the state classifies the
+                        // press, this recognizer only claims or yields it.
                       },
                     ),
               },
@@ -452,6 +559,38 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 }
 
+/// The HyperOS-style rail: one dot per card, the one in place filled in. It
+/// only exists while a press is confirmed as a switch, so it doubles as the
+/// test's proof that the detection actually ran.
+class _SwitchDots extends StatelessWidget {
+  const _SwitchDots({required this.count, required this.index});
+
+  final int count;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final on = dark ? const Color(0xD9FFFFFF) : const Color(0x8A000000);
+    final off = dark ? const Color(0x55FFFFFF) : const Color(0x33000000);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.5),
+            child: ClipOval(
+              child: ColoredBox(
+                color: i == index ? on : off,
+                child: const SizedBox(width: 5, height: 5),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 /// Clips a pile to its place, keeping the little a card above the top one
 /// shows over the edge while the pile turns back to it. Every extra margin is
 /// scaled by how open the pile is, so a resting pile clips to its own card.
@@ -489,4 +628,56 @@ class _PileClipper extends CustomClipper<Rect> {
       oldClipper.over != over ||
       oldClipper.aside != aside ||
       oldClipper.spill != spill;
+}
+
+/// A seat in the gesture arena, and nothing else. It never resolves on a
+/// pointer event: the state decides from contact, hold and travel, then calls
+/// [claim] (switching -- hold the board still) or [yieldToBoard] (the finger
+/// was scrolling past). Doing it on the hold timer rather than on the first
+/// move means the board cannot win a race it was never invited to, and a tap
+/// inside the card still goes to the card.
+class _PileClaim extends OneSequenceGestureRecognizer {
+  var _resolved = false;
+
+  void claim() => _resolve(GestureDisposition.accepted);
+
+  void yieldToBoard() => _resolve(GestureDisposition.rejected);
+
+  void _resolve(GestureDisposition disposition) {
+    if (_resolved) {
+      return;
+    }
+    _resolved = true;
+    try {
+      resolve(disposition);
+    } catch (_) {
+      // The arena already closed -- the board got there first. Nothing left
+      // to claim; the state's own classification still stands.
+    }
+  }
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    _resolved = false;
+    startTrackingPointer(event.pointer);
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (event is PointerUpEvent || event is PointerCancelEvent) {
+      stopTrackingPointer(event.pointer);
+    }
+  }
+
+  @override
+  void acceptGesture(int pointer) => stopTrackingPointer(pointer);
+
+  @override
+  void rejectGesture(int pointer) => stopTrackingPointer(pointer);
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {}
+
+  @override
+  String get debugDescription => 'pile press claim';
 }

@@ -118,9 +118,14 @@ void main() {
 
   /// A real finger crosses a card in several frames, not one jump. Splitting
   /// the move lets the drag recognizer settle and the release carry a velocity.
+  ///
+  /// A press only becomes a switch after the finger rests on the pile for a
+  /// moment, so every swipe confirms the hold first. Sliding before that is a
+  /// deliberate "scroll past", covered by its own test below.
   Future<void> dragFrom(WidgetTester tester, Offset start, double dy) async {
     final gesture = await tester.startGesture(start);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 160));
     const steps = 8;
     for (var i = 0; i < steps; i++) {
       await gesture.moveBy(Offset(0, dy / steps));
@@ -287,6 +292,54 @@ void main() {
     ]);
     await dragFrom(tester, tester.getCenter(find.byType(CardStack)), -20);
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+  });
+
+  testWidgets('resting a finger detects a switch without any drag', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+    ]);
+    // Nothing says "switchable" until a finger actually lands and rests.
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pumpAndSettle();
+    // Contact opens the pile, and the short hold is detected as "switch":
+    // the dot rail is the visible proof, with no long press and no slide.
+    expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
+  });
+
+  testWidgets('sliding off before the hold is confirmed scrolls the board', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+    expect(scroll.offset, 0);
+
+    // A finger lands on the pile but sweeps away at once, before the hold is
+    // confirmed: that is a scroll past, not a card switch.
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump();
+    const steps = 8;
+    for (var i = 0; i < steps; i++) {
+      await gesture.moveBy(const Offset(0, -25));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(scroll.offset, greaterThan(0));
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
   });
 
   testWidgets('switching a card leaves the scrolling board perfectly still', (
