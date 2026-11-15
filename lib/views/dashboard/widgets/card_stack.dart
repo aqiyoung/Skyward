@@ -20,6 +20,8 @@ const _pressedScale = 0.02;
 const _turnAt = 0.24;
 const _flick = 620.0;
 const _pageScrollDelay = Duration(milliseconds: 350);
+const _pageIndicatorDuration = Duration(milliseconds: 180);
+const _pageIndicatorHold = Duration(milliseconds: 850);
 
 /// Tap or swipe to switch cards; hold before dragging to scroll the page.
 class CardStack extends StatefulWidget {
@@ -41,6 +43,8 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _pressPosition = Offset.zero;
   var _pageScrollY = 0.0;
   Timer? _pageScrollTimer;
+  Timer? _pageIndicatorTimer;
+  var _showPageIndicator = false;
   var _held = false;
   var _pageScrolling = false;
   var _dragging = false;
@@ -60,6 +64,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   @override
   void dispose() {
     _pageScrollTimer?.cancel();
+    _pageIndicatorTimer?.cancel();
     _turn.dispose();
     super.dispose();
   }
@@ -75,6 +80,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (_count < 2) {
       return;
     }
+    _revealPageIndicator();
     _settled = false;
     _heldFrom = _index;
     _pressPosition = globalPosition;
@@ -100,6 +106,24 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   void _cancelPageScrollTimer() {
     _pageScrollTimer?.cancel();
     _pageScrollTimer = null;
+  }
+
+  void _revealPageIndicator() {
+    _pageIndicatorTimer?.cancel();
+    _pageIndicatorTimer = null;
+    if (!_showPageIndicator) {
+      setState(() => _showPageIndicator = true);
+    }
+  }
+
+  void _schedulePageIndicatorHide() {
+    _pageIndicatorTimer?.cancel();
+    _pageIndicatorTimer = Timer(_pageIndicatorHold, () {
+      _pageIndicatorTimer = null;
+      if (mounted && _showPageIndicator) {
+        setState(() => _showPageIndicator = false);
+      }
+    });
   }
 
   void _beginPageScroll() {
@@ -318,10 +342,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           } else if (!_dragging) {
             scheduleMicrotask(_finishUnselectedPress);
           }
+          _schedulePageIndicatorHide();
         },
         onPointerCancel: (_) {
           _cancelPageScrollTimer();
           _snapShut();
+          _schedulePageIndicatorHide();
         },
         child: RawGestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -395,7 +421,63 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              _pageIndicator(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _pageIndicator() {
+    final colors = context.colorScheme;
+    return Positioned(
+      right: 2,
+      top: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: Center(
+          child: AnimatedOpacity(
+            key: const ValueKey('card-stack-page-indicator'),
+            opacity: _showPageIndicator ? 1 : 0,
+            duration: _pageIndicatorDuration,
+            curve: Curves.easeOut,
+            child: ExcludeSemantics(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.inverseSurface.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 7,
+                  ),
+                  child: Column(
+                    key: const ValueKey('card-stack-page-dots'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: List<Widget>.generate(_count, (index) {
+                      final selected = index == _index;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: AnimatedContainer(
+                          key: ValueKey('card-stack-page-dot-$index'),
+                          width: selected ? 6 : 4,
+                          height: selected ? 6 : 4,
+                          duration: const Duration(milliseconds: 140),
+                          decoration: BoxDecoration(
+                            color: colors.onInverseSurface.withValues(
+                              alpha: selected ? 1 : 0.55,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

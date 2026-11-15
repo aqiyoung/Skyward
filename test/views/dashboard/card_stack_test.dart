@@ -203,6 +203,48 @@ void main() {
     }
   });
 
+  testWidgets('touch reveals side dots and highlights the selected card', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+    ]);
+
+    const indicatorKey = ValueKey('card-stack-page-indicator');
+    const firstDotKey = ValueKey('card-stack-page-dot-0');
+    const secondDotKey = ValueKey('card-stack-page-dot-1');
+    const thirdDotKey = ValueKey('card-stack-page-dot-2');
+    final indicator = find.byKey(indicatorKey);
+    expect(tester.widget<AnimatedOpacity>(indicator).opacity, 0);
+
+    final gesture = await tester.startGesture(
+      cardTapPoint(tester, DashboardWidget.memoryInfo),
+    );
+    await tester.pump();
+
+    expect(tester.widget<AnimatedOpacity>(indicator).opacity, 1);
+    expect(find.byKey(firstDotKey), findsOneWidget);
+    expect(find.byKey(secondDotKey), findsOneWidget);
+    expect(find.byKey(thirdDotKey), findsOneWidget);
+    expect(
+      tester.widget<AnimatedContainer>(find.byKey(firstDotKey)).width,
+      6,
+    );
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+    expect(tester.widget<AnimatedContainer>(find.byKey(firstDotKey)).width, 4);
+    expect(tester.widget<AnimatedContainer>(find.byKey(secondDotKey)).width, 6);
+
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tester.widget<AnimatedOpacity>(indicator).opacity, 0);
+  });
+
   testWidgets('a swipe turns the pile to the next card', (tester) async {
     await pumpPile(tester, const [
       DashboardWidget.memoryInfo,
