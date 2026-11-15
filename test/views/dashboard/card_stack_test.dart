@@ -327,6 +327,40 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
+  testWidgets('a tap switches the pile inside the scrolling board', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+
+    await tester.tapAt(tester.getCenter(find.byType(CardStack)));
+    await tester.pumpAndSettle();
+
+    expect(scroll.offset, 0);
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+  });
+
+  testWidgets('a tap on a control switches the pile inside the board', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+
+    final control = find
+        .descendant(
+          of: find.byKey(keyOf(DashboardWidget.memoryInfo)),
+          matching: find.byType(InkWell),
+        )
+        .first;
+    await tester.tapAt(tester.getCenter(control));
+    await tester.pumpAndSettle();
+
+    expect(scroll.offset, 0);
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+  });
+
   testWidgets('the board can still scroll from outside a pile', (
     tester,
   ) async {
