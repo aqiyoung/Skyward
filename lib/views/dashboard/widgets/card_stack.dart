@@ -18,9 +18,9 @@ const _tilt = 0.06;
 const _pressedScale = 0.02;
 const _turnAt = 0.24;
 const _flick = 620.0;
-const _engageDelay = Duration(milliseconds: 140);
+const _engageDelay = Duration(milliseconds: 350);
 
-/// Opens on touch; quick drags scroll, paused drags switch cards.
+/// Quick vertical drags scroll; hold before dragging to switch cards.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -80,7 +80,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _held = true;
     _dragging = false;
     _engaged = false;
-    _open.forward();
   }
 
   void _engage() {
@@ -88,6 +87,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       return;
     }
     setState(() => _engaged = true);
+    _open.forward();
     // Stop a fling after the switch wins, without moving the page.
     final position = Scrollable.maybeOf(context)?.position;
     if (position != null && position.hasPixels) {
