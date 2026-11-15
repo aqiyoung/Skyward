@@ -52,23 +52,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: |
-          set +e
-          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze-output.log 2>&1
-          analyze_status=$?
-          cat analyze-output.log
-          if [ "$analyze_status" -ne 0 ]; then
-            python3 - <<'PY'
-          from pathlib import Path
-
-          lines = Path('analyze-output.log').read_text(errors='replace').splitlines()
-          message = '\n'.join(lines[-80:])[-6000:]
-          message = message.replace('%', '%25')
-          message = message.replace('\r', '%0D').replace('\n', '%0A')
-          print('::error title=Flutter analyzer output::' + message)
-          PY
-          fi
-          exit "$analyze_status"
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
         run: |

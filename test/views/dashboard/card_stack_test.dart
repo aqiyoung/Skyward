@@ -228,17 +228,14 @@ void main() {
     expect(find.byKey(firstDotKey), findsOneWidget);
     expect(find.byKey(secondDotKey), findsOneWidget);
     expect(find.byKey(thirdDotKey), findsOneWidget);
-    expect(
-      tester.widget<AnimatedContainer>(find.byKey(firstDotKey)).width,
-      6,
-    );
+    expect(tester.getSize(find.byKey(firstDotKey)).width, 6);
 
     await gesture.up();
     await tester.pumpAndSettle();
 
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
-    expect(tester.widget<AnimatedContainer>(find.byKey(firstDotKey)).width, 4);
-    expect(tester.widget<AnimatedContainer>(find.byKey(secondDotKey)).width, 6);
+    expect(tester.getSize(find.byKey(firstDotKey)).width, 4);
+    expect(tester.getSize(find.byKey(secondDotKey)).width, 6);
 
     await tester.pump(const Duration(milliseconds: 900));
     await tester.pump(const Duration(milliseconds: 200));
