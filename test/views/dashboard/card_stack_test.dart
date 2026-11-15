@@ -312,6 +312,29 @@ void main() {
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
+  testWidgets('holding before a drag scrolls instead of switching cards', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
+    for (var step = 0; step < 8; step++) {
+      await gesture.moveBy(const Offset(0, -25));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(scroll.offset, greaterThan(0));
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+  });
+
   testWidgets('the board can still scroll from outside a pile', (
     tester,
   ) async {

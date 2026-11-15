@@ -18,8 +18,9 @@ const _tilt = 0.06;
 const _pressedScale = 0.02;
 const _turnAt = 0.24;
 const _flick = 620.0;
+const _pageScrollDelay = Duration(milliseconds: 350);
 
-/// Touching opens the pile; vertical drags switch cards.
+/// Touch opens the pile; quick drags switch cards, held drags scroll the page.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -41,7 +42,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _heldFrom = 0;
   var _index = 0;
   var _pressY = 0.0;
+  var _pageScrollY = 0.0;
   var _held = false;
+  var _pageScrolling = false;
   var _dragging = false;
   var _engaged = false;
   var _settled = true;
@@ -71,15 +74,17 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  void _press(double localY) {
+  void _press(double globalY) {
     if (_count < 2) {
       return;
     }
     _settled = false;
     _heldFrom = _index;
-    _pressY = localY;
+    _pressY = globalY;
+    _pageScrollY = 0;
     _held = true;
     _dragging = false;
+    _pageScrolling = false;
     setState(() => _engaged = true);
     _open.forward();
     // Keep an existing page fling from carrying the board during card input.
@@ -89,6 +94,40 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
   }
 
+  void _beginPageScroll() {
+    _pageScrolling = true;
+    _pageScrollY = 0;
+    _held = false;
+    _dragging = false;
+    setState(() => _engaged = false);
+  }
+
+  void _scrollPage(double offsetFromOrigin) {
+    if (!_pageScrolling) {
+      return;
+    }
+    final delta = offsetFromOrigin - _pageScrollY;
+    _pageScrollY = offsetFromOrigin;
+    final position = Scrollable.maybeOf(context)?.position;
+    if (delta == 0 || position == null || !position.hasContentDimensions) {
+      return;
+    }
+    final pixels = (position.pixels - delta)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if (pixels != position.pixels) {
+      position.jumpTo(pixels);
+    }
+  }
+
+  void _endPageScroll() {
+    if (!_pageScrolling) {
+      return;
+    }
+    _pageScrolling = false;
+    _settle(0);
+  }
+
   void _snapShut() {
     if (_settled) {
       return;
@@ -96,6 +135,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _settled = true;
     _held = false;
     _dragging = false;
+    _pageScrolling = false;
     _engaged = false;
     _turn.value = 0;
     _open.reverse();
@@ -128,6 +168,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
     _settled = true;
     _held = false;
+    _pageScrolling = false;
     _engaged = false;
     _open.reverse();
     final dragging = _dragging;
@@ -244,12 +285,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          // Card drags win here instead of moving the page.
+          // Quick drags switch cards; a held press routes movement to the page.
           Listener(
             behavior: HitTestBehavior.translucent,
             onPointerDown: (event) => _press(event.position.dy),
             onPointerUp: (_) {
-              if (!_dragging) {
+              if (!_dragging && !_pageScrolling) {
                 _settle(0);
               }
             },
@@ -257,6 +298,20 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
               gestures: <Type, GestureRecognizerFactory>{
+                LongPressGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      LongPressGestureRecognizer
+                    >(
+                      () => LongPressGestureRecognizer(
+                        duration: _pageScrollDelay,
+                      ),
+                      (instance) {
+                        instance.onLongPressStart = (_) => _beginPageScroll();
+                        instance.onLongPressMoveUpdate = (details) =>
+                            _scrollPage(details.offsetFromOrigin.dy);
+                        instance.onLongPressEnd = (_) => _endPageScroll();
+                      },
+                    ),
                 VerticalDragGestureRecognizer:
                     GestureRecognizerFactoryWithHandlers<
                       VerticalDragGestureRecognizer

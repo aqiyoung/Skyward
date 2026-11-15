@@ -60,6 +60,7 @@ void main() {
     expect(end, greaterThan(0));
 
     final gesture = await tester.startGesture(const Offset(200, 500));
+    await tester.pump(const Duration(milliseconds: 400));
     while (position.pixels < end) {
       await gesture.moveBy(const Offset(0, -40));
       await tester.pump(const Duration(milliseconds: 16));
