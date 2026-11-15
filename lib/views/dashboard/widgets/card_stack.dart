@@ -154,15 +154,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     });
   }
 
-  void _finishUnselectedPress() {
-    // Give an inner control's tap recognizer a chance to win the gesture arena.
-    if (!mounted || _settled || _dragging || _pageScrolling) {
-      return;
-    }
-    _settled = true;
-    _held = false;
-  }
-
   void _snapShut() {
     _cancelPageScrollTimer();
     if (_settled) {
@@ -317,7 +308,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           if (_pageScrolling) {
             _endPageScroll();
           } else if (!_dragging) {
-            scheduleMicrotask(_finishUnselectedPress);
+            _tap();
           }
         },
         onPointerCancel: (_) {
@@ -327,11 +318,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         child: RawGestureDetector(
           behavior: HitTestBehavior.translucent,
           gestures: <Type, GestureRecognizerFactory>{
-            TapGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                  TapGestureRecognizer.new,
-                  (instance) => instance.onTap = _tap,
-                ),
             LongPressGestureRecognizer:
                 GestureRecognizerFactoryWithHandlers<
                   LongPressGestureRecognizer
