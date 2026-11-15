@@ -49,6 +49,50 @@ void main() {
     await tester.pump();
   }
 
+  /// The same pile, but inside a scrolling board like the real dashboard.
+  /// Room below the pile makes the board genuinely scrollable.
+  Future<void> pumpScrollablePile(
+    WidgetTester tester,
+    ScrollController scroll,
+  ) async {
+    tester.view.physicalSize = const Size(412, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    container.read(viewSizeProvider.notifier).value = const Size(412, 700);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: TestApp(
+          child: CustomScrollView(
+            controller: scroll,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: 380,
+                      child: CardStack(
+                        cards: const [
+                          DashboardWidget.memoryInfo,
+                          DashboardWidget.networkControl,
+                        ],
+                        cardKeyOf: keyOf,
+                      ),
+                    ),
+                    const SizedBox(height: 1600),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
   double topOf(WidgetTester tester, DashboardWidget card) =>
       tester.getTopLeft(find.byKey(keyOf(card))).dy;
 
@@ -62,23 +106,38 @@ void main() {
   double pileTop(WidgetTester tester) =>
       tester.getTopLeft(find.byType(CardStack)).dy;
 
+  /// The height of the card currently on top. Cards in a pile are not all the
+  /// same height, so a swipe is measured against the one actually showing --
+  /// exactly what a finger sees on a real screen.
+  double topHeight(WidgetTester tester) =>
+      tester.getSize(find.byType(CardStack)).height;
+
   /// How far the cards behind the top one peek out below it.
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
 
-  /// Press, slide, lift. The pile opens on the press itself; the short stay
-  /// before the slide only lets its gesture beat the page's scroll for the
-  /// drag, and is far below the platform's long press.
-  Future<void> swipe(WidgetTester tester, double dy) async {
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(CardStack)),
-    );
-    await tester.pump(const Duration(milliseconds: 160));
-    await gesture.moveBy(Offset(0, dy));
+  /// A real finger crosses a card in several frames, not one jump. Splitting
+  /// the move lets the drag recognizer settle and the release carry a velocity.
+  Future<void> dragFrom(WidgetTester tester, Offset start, double dy) async {
+    final gesture = await tester.startGesture(start);
     await tester.pump();
+    const steps = 8;
+    for (var i = 0; i < steps; i++) {
+      await gesture.moveBy(Offset(0, dy / steps));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
     await gesture.up();
     await tester.pumpAndSettle();
   }
+
+  /// Press, slide, lift across a fraction of the visible card's height.
+  /// Negative turns forwards, positive turns back. Measuring against the card
+  /// on top keeps every turn consistent even when the cards differ in height.
+  Future<void> swipe(WidgetTester tester, double fraction) async => dragFrom(
+    tester,
+    tester.getCenter(find.byType(CardStack)),
+    topHeight(tester) * fraction,
+  );
 
   testWidgets('one card draws alone, with no pile around it', (tester) async {
     await pumpPile(tester, const [DashboardWidget.memoryInfo]);
@@ -113,9 +172,8 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    // Well short of the platform's own long press: touch alone opens it.
-    // Drive the open animation to its end: a single pump only sees the frame
-    // the press lands on, before the controller has ticked.
+    // Touch alone opens it. Drive the open animation to its end: a single pump
+    // only sees the frame the press lands on, before the controller has ticked.
     await tester.pumpAndSettle();
     expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     expect(
@@ -161,8 +219,8 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    // Lift well before the short stay: the press opened it, and the up must
-    // still close it, with no card left peeking out.
+    // Lift without dragging: the press opened it, and the up must still close
+    // it, with no card left peeking out.
     await tester.pump(const Duration(milliseconds: 50));
     await gesture.up();
     await tester.pumpAndSettle();
@@ -175,10 +233,7 @@ void main() {
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
     ]);
-    final height = tester
-        .getSize(find.byKey(keyOf(DashboardWidget.memoryInfo)))
-        .height;
-    await swipe(tester, -height * 0.6);
+    await swipe(tester, -0.6);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
@@ -189,13 +244,10 @@ void main() {
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
     ]);
-    final height = tester
-        .getSize(find.byKey(keyOf(DashboardWidget.memoryInfo)))
-        .height;
-    await swipe(tester, -height * 0.6);
+    await swipe(tester, -0.6);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
 
-    await swipe(tester, -height * 0.6);
+    await swipe(tester, -0.6);
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
@@ -206,11 +258,8 @@ void main() {
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
     ]);
-    final height = tester
-        .getSize(find.byKey(keyOf(DashboardWidget.memoryInfo)))
-        .height;
     // Backwards off the first card lands on the last one: the pile loops.
-    await swipe(tester, height * 0.6);
+    await swipe(tester, 0.6);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
@@ -220,15 +269,12 @@ void main() {
       DashboardWidget.networkControl,
       DashboardWidget.proxyGroups,
     ]);
-    final height = tester
-        .getSize(find.byKey(keyOf(DashboardWidget.memoryInfo)))
-        .height;
     // Backwards off the first card: the last one comes down over the edge.
-    await swipe(tester, height * 0.6);
+    await swipe(tester, 0.6);
     expect(topOf(tester, DashboardWidget.proxyGroups), pileTop(tester));
 
     // One more turn back lands on the card in the middle.
-    await swipe(tester, height * 0.6);
+    await swipe(tester, 0.6);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
@@ -239,7 +285,36 @@ void main() {
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
     ]);
-    await swipe(tester, -20);
+    await dragFrom(tester, tester.getCenter(find.byType(CardStack)), -20);
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+  });
+
+  testWidgets('switching a card leaves the scrolling board perfectly still', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+    expect(scroll.offset, 0);
+
+    // A decisive vertical swipe on the pile: the page must not scroll a
+    // single pixel while the pile turns.
+    await swipe(tester, -0.6);
+
+    expect(scroll.offset, 0);
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+  });
+
+  testWidgets('the board can still scroll from outside a pile', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll);
+
+    // Drag on the empty space below the pile, away from any card.
+    await dragFrom(tester, const Offset(200, 600), -200);
+
+    expect(scroll.offset, greaterThan(0));
   });
 }

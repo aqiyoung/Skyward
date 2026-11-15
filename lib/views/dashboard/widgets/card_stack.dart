@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../layout.dart';
@@ -34,12 +35,6 @@ const _turnAt = 0.24;
 /// How fast a flick has to be to turn the page without travelling.
 const _flick = 620.0;
 
-/// How long a finger must rest before its drag belongs to the pile. Far below
-/// the platform's long press: the pile opens on touch, and this only decides
-/// whether a fast swipe scrolls the board or turns the pile. At rest the pile
-/// never fights the board for a vertical drag.
-const _engageDelay = Duration(milliseconds: 110);
-
 /// One place on the dashboard holding one or more cards.
 ///
 /// At rest a stack is a single card with nothing peeking out behind it -- the
@@ -48,6 +43,15 @@ const _engageDelay = Duration(milliseconds: 110);
 /// as one angled picture, so the place reads as switchable. Sliding up or down
 /// turns the pile, with no end in either direction. Lifting the finger folds
 /// everything back to the one card in a fraction of a second.
+///
+/// A finger landing on a pile of two or more is the decision: that gesture
+/// belongs to the pile, not to the board underneath. The board is a vertical
+/// scroll view, so the pile claims the vertical drag in the gesture arena (it
+/// sits below the scroll view and so resolves first) and stops any fling still
+/// carrying the page. Switching a card can therefore never turn into the page
+/// scrolling away -- no timing threshold to lose a race against. A single card
+/// has nothing to switch, so it installs no gesture at all and the page keeps
+/// scrolling normally over it.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -85,6 +89,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _held = false;
   var _dragging = false;
   var _settled = true;
+  double _dragDy = 0;
 
   int get _count => widget.cards.length;
 
@@ -111,33 +116,42 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  /// A finger went down. The pile opens right away, with no hold to wait out.
-  /// A plain Listener sits outside the gesture arena, so opening it does not
-  /// take the tap away from whatever is inside the card, nor does it delay the
-  /// page's own scroll from winning a quick swipe.
+  /// A finger went down on a pile. That alone decides the gesture: the pile
+  /// opens right away and the board is held still, so it cannot drift under
+  /// the card while the pile is open. A plain Listener sits outside the gesture
+  /// arena, so opening it does not take the tap away from whatever is inside
+  /// the card, nor does it hold up the drag recognizer claiming the move.
   void _press() {
     if (_count < 2) {
       return;
+    }
+    // Stop a fling still carrying the board: pressing a pile must not leave
+    // the page scrolling on behind the opened card. Jumping to where it
+    // already is only cancels the activity, it moves nothing.
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position != null && position.hasPixels) {
+      position.jumpTo(position.pixels);
     }
     _settled = false;
     _heldFrom = _index;
     _held = true;
     _dragging = false;
+    _dragDy = 0;
     _open.forward();
   }
 
-  /// The short hold won the arena: from here on this drag belongs to the pile
-  /// and its moves turn it. A quick swipe instead never reaches here, so the
-  /// board keeps scrolling and nothing turns.
+  /// The pile's drag won the arena: from here on its moves turn the pile. The
+  /// board's scroll recognizer has been rejected, so the page stays put.
   void _engage() {
     if (_count < 2) {
       return;
     }
     _heldFrom = _index;
+    _dragDy = 0;
   }
 
-  /// The page won the arena instead (a quick swipe to scroll). Fold straight
-  /// back so scrolling never leaves an opened pile or a half turn behind.
+  /// The pile lost the arena, or the pointer was cancelled. Fold straight back
+  /// so scrolling never leaves an opened pile or a half turn behind.
   void _snapShut() {
     if (_settled) {
       return;
@@ -173,7 +187,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _turn.value = turn;
   }
 
-  /// The finger came up, the gesture was cancelled, or the page won the drag.
+  /// The finger came up, the gesture was cancelled, or the pile lost the drag.
   /// Whichever fires first folds the pile back; the rest are ignored.
   void _settle(double velocityY) {
     if (_settled) {
@@ -254,6 +268,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     // ones below it step back: only one card shows on each side of the turn.
     final back = turn < 0 && _count > 2 ? 1 : 0;
     final ahead = turn < 0 ? 1 : math.min(_count - 1, 2);
+    // The layers hang below the card by this much. It is paint only: the pile
+    // must keep the exact height of the one card on top, or pressing it would
+    // grow the whole dashboard and make the scroll end jump under the finger.
+    final spill = peek * ahead;
     final layers = <Widget>[];
     for (var step = back; step >= 1; step--) {
       layers.add(
@@ -263,6 +281,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           steps: back.toDouble(),
           visual: visual,
           peek: peek,
+          spill: spill,
         ),
       );
     }
@@ -274,68 +293,75 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           steps: ahead.toDouble(),
           visual: visual,
           peek: peek,
+          spill: spill,
         ),
       );
     }
     // At rest this clips to exactly the card's own rectangle: no layers, no
     // extra room above or below, so a stack reads as one ordinary card.
     return ClipRect(
-      clipper: _PileClipper(over: turn < 0 ? peek : 0, aside: 14 * visual),
+      clipper: _PileClipper(
+        over: turn < 0 ? peek : 0,
+        aside: 14 * visual,
+        spill: spill,
+      ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           ...layers,
-          Padding(
-            padding: EdgeInsets.only(bottom: peek * ahead),
-            // A plain Listener sits outside the gesture arena: it opens the
-            // pile on the down and, crucially, always sees the up -- even a tap
-            // too short to become a press, or a swipe the page's scroll won.
-            // That way no press can ever leave the pile open behind it.
-            child: Listener(
+          // The card on top is the only child that sizes the Stack, so the
+          // pile keeps exactly its height however far it opens. The layers
+          // below are painted past its bottom edge, never laid out under it.
+          //
+          // A plain Listener sits outside the gesture arena: it opens the
+          // pile on the down and, crucially, always sees the up -- even a tap
+          // too short to become a drag, or a drag the pile never won. That
+          // way no press can ever leave the pile open behind it.
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => _press(),
+            onPointerUp: (_) => _settle(0),
+            onPointerCancel: (_) => _snapShut(),
+            child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
-              onPointerDown: (_) => _press(),
-              onPointerUp: (_) => _settle(0),
-              onPointerCancel: (_) => _snapShut(),
-              child: RawGestureDetector(
-                behavior: HitTestBehavior.translucent,
-                gestures: <Type, GestureRecognizerFactory>{
-                  LongPressGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                        LongPressGestureRecognizer
-                      >(
-                        () => LongPressGestureRecognizer(
-                          duration: _engageDelay,
+              gestures: <Type, GestureRecognizerFactory>{
+                VerticalDragGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      VerticalDragGestureRecognizer
+                    >(
+                      () => VerticalDragGestureRecognizer(),
+                      (instance) {
+                        // Once the drag is ours the board's own scroll
+                        // recognizer has been rejected: turning a card can
+                        // no longer scroll the page out from under it.
+                        instance.onStart = (_) => _engage();
+                        instance.onUpdate = (details) {
+                          _dragDy += details.delta.dy;
+                          _drag(_dragDy);
+                        };
+                        instance.onEnd = (details) =>
+                            _settle(details.velocity.pixelsPerSecond.dy);
+                        instance.onCancel = _snapShut;
+                      },
+                    ),
+              },
+              child: RepaintBoundary(
+                key: _surface,
+                child: Transform.translate(
+                  // The card in place lifts a little under the finger, which
+                  // is what makes room for the edges to open under it.
+                  offset: Offset(0, -6 * visual),
+                  child: Transform.scale(
+                    alignment: Alignment.topCenter,
+                    scale: 1 - _pressedScale * visual,
+                    child: FractionalTranslation(
+                      translation: Offset(0, -travel),
+                      child: _cast(
+                        RepaintBoundary(
+                          key: widget.cardKeyOf(top),
+                          child: top.card,
                         ),
-                        (instance) {
-                          // Only after the short stay does the drag belong to
-                          // the pile; a fast swipe goes to the page instead.
-                          instance.onLongPressStart = (_) => _engage();
-                          instance.onLongPressMoveUpdate = (details) =>
-                              _drag(details.offsetFromOrigin.dy);
-                          instance.onLongPressEnd = (details) =>
-                              _settle(details.velocity.pixelsPerSecond.dy);
-                          instance.onLongPressCancel = _snapShut;
-                        },
-                      ),
-                },
-                child: RepaintBoundary(
-                  key: _surface,
-                  child: Transform.translate(
-                    // The card in place lifts a little under the finger, which
-                    // is what makes room for the edges to open under it.
-                    offset: Offset(0, -6 * visual),
-                    child: Transform.scale(
-                      alignment: Alignment.topCenter,
-                      scale: 1 - _pressedScale * visual,
-                      child: FractionalTranslation(
-                        translation: Offset(0, -travel),
-                        child: _cast(
-                          RepaintBoundary(
-                            key: widget.cardKeyOf(top),
-                            child: top.card,
-                          ),
-                          visual,
-                        ),
+                        visual,
                       ),
                     ),
                   ),
@@ -380,12 +406,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     required double steps,
     required double visual,
     required double peek,
+    required double spill,
   }) {
     final depth = lift.abs();
     return Positioned(
       left: 0,
       right: 0,
-      bottom: peek * (steps - lift),
+      // The pile keeps the height of the one card on top, so a layer hangs
+      // past the bottom edge instead of being laid out beneath it. Subtracting
+      // the spill keeps every edge exactly where the padded layout put it.
+      bottom: peek * (steps - lift) - spill,
       // Only the card in place is there to read: the ones under it are a hint
       // that there is more, not more to be read out of turn.
       child: ExcludeSemantics(
@@ -426,7 +456,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 /// shows over the edge while the pile turns back to it. Every extra margin is
 /// scaled by how open the pile is, so a resting pile clips to its own card.
 class _PileClipper extends CustomClipper<Rect> {
-  const _PileClipper({required this.over, required this.aside});
+  const _PileClipper({
+    required this.over,
+    required this.aside,
+    required this.spill,
+  });
 
   /// Room kept over the top edge for a card turning back over it.
   final double over;
@@ -435,15 +469,24 @@ class _PileClipper extends CustomClipper<Rect> {
   /// the pile's own width.
   final double aside;
 
-  /// A little room under the bottom edge for the card's own shadow. It never
-  /// changes the layout: a ClipRect only clips paint, it does not size itself.
+  /// How far the layers hang below the card on top. Paint only: the pile keeps
+  /// the card's height, so opening it never changes the board's scroll extent.
+  final double spill;
+
+  /// A little extra room under the bottom edge for the card's own shadow.
   static const under = 12.0;
 
   @override
-  Rect getClip(Size size) =>
-      Rect.fromLTRB(-aside, -over, size.width + aside, size.height + under);
+  Rect getClip(Size size) => Rect.fromLTRB(
+    -aside,
+    -over,
+    size.width + aside,
+    size.height + spill + under,
+  );
 
   @override
   bool shouldReclip(_PileClipper oldClipper) =>
-      oldClipper.over != over || oldClipper.aside != aside;
+      oldClipper.over != over ||
+      oldClipper.aside != aside ||
+      oldClipper.spill != spill;
 }
