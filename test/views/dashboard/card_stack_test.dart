@@ -103,8 +103,13 @@ void main() {
   double topHeight(WidgetTester tester) =>
       tester.getSize(find.byType(CardStack)).height;
 
-  Offset cardTapPoint(WidgetTester tester, DashboardWidget card) =>
-      tester.getTopLeft(find.byKey(keyOf(card))) + const Offset(80, 35);
+  Offset cardTapPoint(WidgetTester tester, DashboardWidget card) {
+    final text = find.descendant(
+      of: find.byKey(keyOf(card)),
+      matching: find.byType(Text),
+    ).first;
+    return tester.getCenter(text);
+  }
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
