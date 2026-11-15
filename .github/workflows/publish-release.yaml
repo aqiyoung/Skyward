@@ -193,7 +193,8 @@ jobs:
             echo
             echo "- 渠道：\`${label}\`"
             echo "- 版本：\`${VERSION}\`（前三段跟上游，第四位是我们自己的迭代号）"
-            echo "- 构建号：\`${BUILD_NUMBER}\`（APK 的 versionCode）"
+            echo "- 构建号：\`${BUILD_NUMBER}\`（Android arm64 versionCode：\`$((BUILD_NUMBER + 2000))\`）"
+            echo "<!-- skyward:build-number:${BUILD_NUMBER} -->"
             echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
             echo "- 构建时间：$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             if [ -n "$PREVIOUS" ]; then
