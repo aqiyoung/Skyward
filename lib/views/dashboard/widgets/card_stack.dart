@@ -21,7 +21,7 @@ const _turnAt = 0.24;
 const _flick = 620.0;
 const _pageScrollDelay = Duration(milliseconds: 350);
 
-/// Touch opens the pile; quick drags switch cards, held drags scroll the page.
+/// Touch opens the pile. Tap a dot to select; quick drags flip, holds scroll.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -49,7 +49,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _held = false;
   var _pageScrolling = false;
   var _dragging = false;
-  var _engaged = false;
+  var _expanded = false;
   var _settled = true;
 
   int get _count => widget.cards.length;
@@ -97,7 +97,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         _beginPageScroll();
       }
     });
-    setState(() => _engaged = true);
+    setState(() => _expanded = true);
     _open.forward();
     // Keep an existing page fling from carrying the board during card input.
     final position = Scrollable.maybeOf(context)?.position;
@@ -120,7 +120,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _pageScrollY = 0;
     _held = false;
     _dragging = false;
-    setState(() => _engaged = false);
+    setState(() {
+      _expanded = false;
+      _turn.value = 0;
+    });
+    _open.reverse();
   }
 
   void _scrollPage(double dragDistance) {
@@ -149,6 +153,24 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _settle(0);
   }
 
+  void _selectCard(int index) {
+    if (index == _index || index < 0 || index >= _count) {
+      return;
+    }
+    _cancelPageScrollTimer();
+    _settled = true;
+    _held = false;
+    _dragging = false;
+    _pageScrolling = false;
+    _turn.stop();
+    setState(() {
+      _index = index;
+      _turn.value = 0;
+      _expanded = true;
+    });
+    _open.forward();
+  }
+
   void _snapShut() {
     _cancelPageScrollTimer();
     if (_settled) {
@@ -158,8 +180,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _held = false;
     _dragging = false;
     _pageScrolling = false;
-    _engaged = false;
-    _turn.value = 0;
+    setState(() {
+      _expanded = false;
+      _turn.value = 0;
+    });
     _open.reverse();
   }
 
@@ -192,8 +216,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _settled = true;
     _held = false;
     _pageScrolling = false;
-    _engaged = false;
-    _open.reverse();
+    if (!_expanded) {
+      _open.reverse();
+    }
     final dragging = _dragging;
     setState(() => _dragging = false);
     if (!dragging) {
@@ -290,94 +315,77 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         aside: 14 * visual,
         spill: spill,
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ...layers,
-          if (_engaged)
-            Positioned(
-              right: -9,
-              top: 0,
-              bottom: 0,
-              child: IgnorePointer(
-                child: KeyedSubtree(
-                  key: const ValueKey('card-stack-switchable'),
-                  child: Center(
-                    child: _SwitchDots(count: _count, index: _index),
-                  ),
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (event) => _press(event.position),
+        onPointerMove: (event) {
+          if (!_pageScrolling &&
+              (event.position - _pressPosition).distance > kTouchSlop) {
+            _cancelPageScrollTimer();
+          }
+          if (_pageScrolling) {
+            _scrollPage(event.position.dy - _pressY);
+          }
+        },
+        onPointerUp: (_) {
+          _cancelPageScrollTimer();
+          if (_pageScrolling) {
+            _endPageScroll();
+          } else if (!_dragging) {
+            _settle(0);
+          }
+        },
+        onPointerCancel: (_) {
+          _cancelPageScrollTimer();
+          _snapShut();
+        },
+        child: RawGestureDetector(
+          behavior: HitTestBehavior.translucent,
+          gestures: <Type, GestureRecognizerFactory>{
+            LongPressGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  LongPressGestureRecognizer
+                >(
+                  () => LongPressGestureRecognizer(duration: _pageScrollDelay),
+                  (instance) {
+                    instance.onLongPressStart = (_) => _beginPageScroll();
+                    instance.onLongPressEnd = (_) => _endPageScroll();
+                  },
                 ),
-              ),
-            ),
-          // Quick drags switch cards; a held press routes movement to the page.
-          Listener(
-            behavior: HitTestBehavior.translucent,
-            onPointerDown: (event) => _press(event.position),
-            onPointerMove: (event) {
-              if (!_pageScrolling &&
-                  (event.position - _pressPosition).distance > kTouchSlop) {
-                _cancelPageScrollTimer();
-              }
-              if (_pageScrolling) {
-                _scrollPage(event.position.dy - _pressY);
-              }
-            },
-            onPointerUp: (_) {
-              _cancelPageScrollTimer();
-              if (_pageScrolling) {
-                _endPageScroll();
-              } else if (!_dragging) {
-                _settle(0);
-              }
-            },
-            onPointerCancel: (_) {
-              _cancelPageScrollTimer();
-              _snapShut();
-            },
-            child: RawGestureDetector(
-              behavior: HitTestBehavior.translucent,
-              gestures: <Type, GestureRecognizerFactory>{
-                LongPressGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<
-                      LongPressGestureRecognizer
-                    >(
-                      () => LongPressGestureRecognizer(
-                        duration: _pageScrollDelay,
-                      ),
-                      (instance) {
-                        instance.onLongPressStart = (_) => _beginPageScroll();
-                        instance.onLongPressEnd = (_) => _endPageScroll();
-                      },
-                    ),
-                VerticalDragGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<
-                      VerticalDragGestureRecognizer
-                    >(
-                      VerticalDragGestureRecognizer.new,
-                      (instance) {
-                        instance.onStart = (details) {
-                          if (_pageScrolling) {
-                            return;
-                          }
-                          _dragging = true;
-                          _drag(details.globalPosition.dy - _pressY);
-                        };
-                        instance.onUpdate = (details) {
-                          if (!_pageScrolling) {
-                            _drag(details.globalPosition.dy - _pressY);
-                          }
-                        };
-                        instance.onEnd = (details) {
-                          if (_pageScrolling) {
-                            _dragging = false;
-                            _endPageScroll();
-                          } else {
-                            _settle(details.velocity.pixelsPerSecond.dy);
-                          }
-                        };
-                      },
-                    ),
-              },
-              child: RepaintBoundary(
+            VerticalDragGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  VerticalDragGestureRecognizer
+                >(
+                  VerticalDragGestureRecognizer.new,
+                  (instance) {
+                    instance.onStart = (details) {
+                      if (_pageScrolling) {
+                        return;
+                      }
+                      _dragging = true;
+                      _drag(details.globalPosition.dy - _pressY);
+                    };
+                    instance.onUpdate = (details) {
+                      if (!_pageScrolling) {
+                        _drag(details.globalPosition.dy - _pressY);
+                      }
+                    };
+                    instance.onEnd = (details) {
+                      if (_pageScrolling) {
+                        _dragging = false;
+                        _endPageScroll();
+                      } else {
+                        _settle(details.velocity.pixelsPerSecond.dy);
+                      }
+                    };
+                  },
+                ),
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ...layers,
+              RepaintBoundary(
                 key: _surface,
                 child: Transform.translate(
                   offset: Offset(0, -6 * visual),
@@ -397,9 +405,25 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            ),
+              if (_expanded)
+                Positioned(
+                  right: -9,
+                  top: 0,
+                  bottom: 0,
+                  child: KeyedSubtree(
+                    key: const ValueKey('card-stack-switchable'),
+                    child: Center(
+                      child: _SwitchDots(
+                        count: _count,
+                        index: _index,
+                        onSelected: _selectCard,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -468,10 +492,15 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 }
 
 class _SwitchDots extends StatelessWidget {
-  const _SwitchDots({required this.count, required this.index});
+  const _SwitchDots({
+    required this.count,
+    required this.index,
+    required this.onSelected,
+  });
 
   final int count;
   final int index;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -481,12 +510,20 @@ class _SwitchDots extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < count; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2.5),
-            child: ClipOval(
-              child: ColoredBox(
-                color: i == index ? activeColor : inactiveColor,
-                child: const SizedBox(width: 5, height: 5),
+          GestureDetector(
+            key: ValueKey('card-stack-dot-$i'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onSelected(i),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: Center(
+                child: ClipOval(
+                  child: ColoredBox(
+                    color: i == index ? activeColor : inactiveColor,
+                    child: const SizedBox(width: 5, height: 5),
+                  ),
+                ),
               ),
             ),
           ),
