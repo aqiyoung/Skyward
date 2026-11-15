@@ -9,8 +9,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
-const _switchHold = Duration(milliseconds: 400);
-
 void main() {
   late ProviderContainer container;
   final keys = <DashboardWidget, GlobalKey>{};
@@ -111,14 +109,10 @@ void main() {
   Future<void> dragFrom(
     WidgetTester tester,
     Offset start,
-    double dy, {
-    Duration hold = Duration.zero,
-  }) async {
+    double dy,
+  ) async {
     final gesture = await tester.startGesture(start);
     await tester.pump();
-    if (hold != Duration.zero) {
-      await tester.pump(hold);
-    }
     const steps = 8;
     for (var i = 0; i < steps; i++) {
       await gesture.moveBy(Offset(0, dy / steps));
@@ -132,7 +126,6 @@ void main() {
     tester,
     tester.getCenter(find.byType(CardStack)),
     topHeight(tester) * fraction,
-    hold: _switchHold,
   );
 
   testWidgets('one card draws alone, with no pile around it', (tester) async {
@@ -156,10 +149,7 @@ void main() {
     );
   });
 
-  testWidgets('touching a pile does not open it before the hold delay', (
-    tester,
-  ) async {
-    const switchable = ValueKey('card-stack-switchable');
+  testWidgets('touching a pile opens it immediately', (tester) async {
     await pumpPile(tester, const [
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
@@ -167,16 +157,15 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pump(const Duration(milliseconds: 200));
-    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
-    expect(find.byKey(switchable), findsNothing);
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
+    expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
     await gesture.up();
     await tester.pumpAndSettle();
+    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
   });
 
-  testWidgets('a confirmed switch shows one dot for each card in the pile', (
-    tester,
-  ) async {
+  testWidgets('touching a pile shows one dot for each card', (tester) async {
     const switchable = ValueKey('card-stack-switchable');
     await pumpPile(tester, const [
       DashboardWidget.memoryInfo,
@@ -189,18 +178,14 @@ void main() {
       tester.getCenter(find.byType(CardStack)),
     );
     await tester.pump(const Duration(milliseconds: 80));
-    expect(find.byKey(switchable), findsNothing);
-    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
-    await tester.pump(const Duration(milliseconds: 320));
 
     final rail = find.byKey(switchable);
     expect(rail, findsOneWidget);
+    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
     expect(
       find.descendant(of: rail, matching: find.byType(ColoredBox)),
       findsNWidgets(3),
     );
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(peek(tester, DashboardWidget.networkControl), greaterThan(0));
     await gesture.up();
     await tester.pumpAndSettle();
     expect(find.byKey(switchable), findsNothing);
@@ -216,8 +201,7 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pump(_switchHold);
-    await tester.pump(const Duration(milliseconds: 70));
+    await tester.pump(const Duration(milliseconds: 80));
     expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     await gesture.up();
     await tester.pumpAndSettle();
@@ -315,7 +299,6 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pump(_switchHold);
     final dy = topHeight(tester) * -0.6;
     for (var step = 0; step < 8; step++) {
       await gesture.moveBy(Offset(0, dy / 8));
@@ -327,25 +310,6 @@ void main() {
 
     expect(scroll.offset, 0);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
-  });
-
-  testWidgets('a vertical drag before the hold delay scrolls the board', (
-    tester,
-  ) async {
-    final scroll = ScrollController();
-    addTearDown(scroll.dispose);
-    await pumpScrollablePile(tester, scroll);
-
-    await dragFrom(
-      tester,
-      tester.getCenter(find.byType(CardStack)),
-      -200,
-      hold: const Duration(milliseconds: 200),
-    );
-
-    expect(scroll.offset, greaterThan(0));
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
-    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
   });
 
   testWidgets('the board can still scroll from outside a pile', (

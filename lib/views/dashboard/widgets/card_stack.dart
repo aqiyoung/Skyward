@@ -18,9 +18,8 @@ const _tilt = 0.06;
 const _pressedScale = 0.02;
 const _turnAt = 0.24;
 const _flick = 620.0;
-const _engageDelay = Duration(milliseconds: 350);
 
-/// Quick vertical drags scroll; hold before dragging to switch cards.
+/// Touching opens the pile; vertical drags switch cards.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -41,6 +40,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   final _surface = GlobalKey();
   var _heldFrom = 0;
   var _index = 0;
+  var _pressY = 0.0;
   var _held = false;
   var _dragging = false;
   var _engaged = false;
@@ -71,29 +71,22 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
-  void _press() {
+  void _press(double localY) {
     if (_count < 2) {
       return;
     }
     _settled = false;
     _heldFrom = _index;
+    _pressY = localY;
     _held = true;
     _dragging = false;
-    _engaged = false;
-  }
-
-  void _engage() {
-    if (_count < 2) {
-      return;
-    }
     setState(() => _engaged = true);
     _open.forward();
-    // Stop a fling after the switch wins, without moving the page.
+    // Keep an existing page fling from carrying the board during card input.
     final position = Scrollable.maybeOf(context)?.position;
     if (position != null && position.hasPixels) {
       position.jumpTo(position.pixels);
     }
-    _heldFrom = _index;
   }
 
   void _snapShut() {
@@ -251,12 +244,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          // The listener shows the preview without claiming the pointer.
+          // Card drags win here instead of moving the page.
           Listener(
             behavior: HitTestBehavior.translucent,
-            onPointerDown: (_) => _press(),
+            onPointerDown: (event) => _press(event.localPosition.dy),
             onPointerUp: (_) {
-              if (!_engaged) {
+              if (!_dragging) {
                 _settle(0);
               }
             },
@@ -264,20 +257,21 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
               gestures: <Type, GestureRecognizerFactory>{
-                LongPressGestureRecognizer:
+                VerticalDragGestureRecognizer:
                     GestureRecognizerFactoryWithHandlers<
-                      LongPressGestureRecognizer
+                      VerticalDragGestureRecognizer
                     >(
-                      () => LongPressGestureRecognizer(
-                        duration: _engageDelay,
-                      ),
+                      VerticalDragGestureRecognizer.new,
                       (instance) {
-                        instance.onLongPressStart = (_) => _engage();
-                        instance.onLongPressMoveUpdate = (details) =>
-                            _drag(details.offsetFromOrigin.dy);
-                        instance.onLongPressEnd = (details) =>
+                        instance.onStart = (details) {
+                          _dragging = true;
+                          _drag(details.localPosition.dy - _pressY);
+                        };
+                        instance.onUpdate = (details) =>
+                            _drag(details.localPosition.dy - _pressY);
+                        instance.onEnd = (details) =>
                             _settle(details.velocity.pixelsPerSecond.dy);
-                        instance.onLongPressCancel = _snapShut;
+                        instance.onCancel = _snapShut;
                       },
                     ),
               },
