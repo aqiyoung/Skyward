@@ -1,5 +1,6 @@
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/ui/ui.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/views/dashboard/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,7 @@ void main() {
   Future<void> pumpScrollablePile(
     WidgetTester tester,
     ScrollController scroll, {
+    DockFollowHold? dockHold,
     List<DashboardWidget> cards = const [
       DashboardWidget.memoryInfo,
       DashboardWidget.networkControl,
@@ -75,7 +77,12 @@ void main() {
                     const SizedBox(height: 40),
                     SizedBox(
                       width: 380,
-                      child: CardStack(cards: cards, cardKeyOf: keyOf),
+                      child: dockHold == null
+                          ? CardStack(cards: cards, cardKeyOf: keyOf)
+                          : DockFollowHoldScope(
+                              hold: dockHold,
+                              child: CardStack(cards: cards, cardKeyOf: keyOf),
+                            ),
                     ),
                     const SizedBox(height: 1600),
                   ],
@@ -364,6 +371,39 @@ void main() {
 
     expect(scroll.offset, 0);
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+  });
+
+  testWidgets('flipping holds the dock until the hold-scroll takes over', (
+    tester,
+  ) async {
+    final hold = DockFollowHold();
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpScrollablePile(tester, scroll, dockHold: hold);
+
+    final tap = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump();
+    expect(hold.held, isTrue, reason: 'the pile owns the finger');
+    await tap.up();
+    await tester.pumpAndSettle();
+    expect(hold.held, isFalse);
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+
+    final drag = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(hold.held, isFalse, reason: 'page scrolling is the page again');
+    for (var step = 0; step < 4; step++) {
+      await drag.moveBy(const Offset(0, -25));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await drag.up();
+    await tester.pumpAndSettle();
+    expect(scroll.offset, greaterThan(0));
+    expect(hold.held, isFalse);
   });
 
   testWidgets('the board can still scroll from outside a pile', (

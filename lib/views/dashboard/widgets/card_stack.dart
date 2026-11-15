@@ -5,6 +5,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -47,6 +48,9 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   var _settleGeneration = 0;
   VelocityTracker? _velocity;
   double? _downPixels;
+  DockFollowHold? _dockHold;
+  var _dockHeld = false;
+  var _pageScrollDirection = ScrollDirection.idle;
 
   int get _count => widget.cards.length;
 
@@ -61,9 +65,18 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _releaseDockHold();
     _pageScrollTimer?.cancel();
     _turn.dispose();
     super.dispose();
+  }
+
+  void _releaseDockHold() {
+    if (_dockHeld) {
+      _dockHeld = false;
+      _dockHold?.release();
+    }
+    _dockHold = null;
   }
 
   double get _cardHeight {
@@ -79,6 +92,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
     _settleGeneration++;
     _phase = _Phase.pressing;
+    if (!_dockHeld) {
+      _dockHold = DockFollowHoldScope.of(context);
+      _dockHold?.acquire();
+      _dockHeld = _dockHold != null;
+    }
     _heldFrom = _index;
     _pressPosition = event.position;
     _pressY = event.position.dy;
@@ -125,10 +143,13 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _cancelPageScrollTimer();
     _phase = _Phase.pageScrolling;
     _pageScrollY = 0;
+    _pageScrollDirection = ScrollDirection.idle;
+    // Scrolling the page is a real page scroll again: the dock may follow.
+    _releaseDockHold();
     _turn.value = 0;
   }
 
-  void _scrollPage(double dragDistance) {
+  void _scrollPage(double dragDistance, Offset globalPosition) {
     if (_phase != _Phase.pageScrolling) {
       return;
     }
@@ -141,9 +162,42 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     final pixels = (position.pixels - delta)
         .clamp(position.minScrollExtent, position.maxScrollExtent)
         .toDouble();
-    if (pixels != position.pixels) {
-      position.jumpTo(pixels);
+    if (pixels == position.pixels) {
+      return;
     }
+    final applied = pixels - position.pixels;
+    position.jumpTo(pixels);
+    _reportPageScroll(position, applied, globalPosition);
+  }
+
+  /// A held pile scrolls the page by hand, which no drag ever reports: tell
+  /// scroll listeners a finger is moving the page, as a list would.
+  void _reportPageScroll(
+    ScrollPosition position,
+    double applied,
+    Offset globalPosition,
+  ) {
+    final direction = applied > 0
+        ? ScrollDirection.reverse
+        : ScrollDirection.forward;
+    if (direction != _pageScrollDirection) {
+      _pageScrollDirection = direction;
+      UserScrollNotification(
+        metrics: position,
+        context: context,
+        direction: direction,
+      ).dispatch(context);
+    }
+    ScrollUpdateNotification(
+      metrics: position,
+      context: context,
+      scrollDelta: applied,
+      dragDetails: DragUpdateDetails(
+        globalPosition: globalPosition,
+        delta: Offset(0, -applied),
+        primaryDelta: -applied,
+      ),
+    ).dispatch(context);
   }
 
   void _endPageScroll() {
@@ -303,7 +357,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           onPointerMove: (event) {
             _velocity?.addPosition(event.timeStamp, event.position);
             if (_phase == _Phase.pageScrolling) {
-              _scrollPage(event.position.dy - _pressY);
+              _scrollPage(event.position.dy - _pressY, event.position);
               return;
             }
             if (_phase != _Phase.pressing && _phase != _Phase.turning) {
@@ -317,6 +371,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           },
           onPointerUp: (event) {
             _velocity?.addPosition(event.timeStamp, event.position);
+            _releaseDockHold();
             _cancelPageScrollTimer();
             switch (_phase) {
               case _Phase.pageScrolling:
@@ -336,6 +391,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             }
           },
           onPointerCancel: (_) {
+            _releaseDockHold();
             _cancelPageScrollTimer();
             _snapShut();
           },
