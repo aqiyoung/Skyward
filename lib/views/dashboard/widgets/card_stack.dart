@@ -329,7 +329,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                             _drag(details.globalPosition.dy - _pressY);
                         instance.onEnd = (details) =>
                             _settle(details.velocity.pixelsPerSecond.dy);
-                        instance.onCancel = _snapShut;
                       },
                     ),
               },
