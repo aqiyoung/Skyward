@@ -104,7 +104,7 @@ void main() {
       tester.getSize(find.byType(CardStack)).height;
 
   Offset cardTapPoint(WidgetTester tester, DashboardWidget card) =>
-      tester.getTopLeft(find.byKey(keyOf(card))) + const Offset(32, 10);
+      tester.getTopLeft(find.byKey(keyOf(card))) + const Offset(80, 35);
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
