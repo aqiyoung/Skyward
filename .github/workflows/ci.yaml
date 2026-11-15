@@ -47,6 +47,13 @@ on:
         description: Create the release and announce it on Telegram
         type: boolean
         default: true
+      platforms:
+        description: Platforms to build for beta and stable
+        type: choice
+        options:
+          - all
+          - android
+        default: all
 
 concurrency:
   group: sync-and-release
@@ -284,6 +291,15 @@ jobs:
               revision=$(( revision + 1 ))
             done
             taken="$taken ${base_version}.${revision}"
+            if [ "$ch" = beta ] && [ "$stamp" -lt 80 ]; then
+              stamp=80
+            elif [ "$ch" = stable ] && [ "$stamp" -lt 90 ]; then
+              stamp=90
+            fi
+            if [ "$stamp" -gt 99 ]; then
+              echo "::error::build numbers for today are exhausted"
+              exit 1
+            fi
             code=$(( day_prefix * 100 + stamp ))
             # A pruned tag must not let this release fall behind a number
             # already handed out; the newest release notes carry the other
@@ -380,6 +396,7 @@ jobs:
       version: ${{ needs.sync.outputs.version_stable }}
       build_number: ${{ needs.sync.outputs.build_number_stable }}
       stage: build
+      platforms: ${{ inputs.platforms || 'all' }}
     secrets: inherit
 
   test-beta:
@@ -408,6 +425,7 @@ jobs:
       version: ${{ needs.sync.outputs.version_beta }}
       build_number: ${{ needs.sync.outputs.build_number_beta }}
       stage: build
+      platforms: ${{ inputs.platforms || 'all' }}
     secrets: inherit
 
   # A release needs its own channel's tests to have passed. A single failed
@@ -437,7 +455,7 @@ jobs:
       inputs.publish &&
       needs.sync.outputs.build_beta == 'true' &&
       needs.test-beta.result == 'success' &&
-      needs.build-beta.result != 'cancelled'
+      needs.build-beta.result == 'success'
     uses: ./.github/workflows/publish-release.yaml
     with:
       channel: beta

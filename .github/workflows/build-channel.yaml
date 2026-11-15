@@ -315,7 +315,23 @@ jobs:
           curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
           echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
 
+      # A release ships one arm64 APK, the same shape as the preview channel:
+      # `--arch arm64` keeps Flutter from adding `--split-per-abi`, which would
+      # collide with the app module's `ndk.abiFilters` in AGP. Keep both
+      # commands single-line: the Build step has no `shell:` override, so
+      # Windows runs it under PowerShell and bash syntax there is a parse error.
+      - name: Build (Android)
+        if: matrix.platform == 'android'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          # The version the app reports in-app and Android's versionName carries.
+          # Harmless for the other platforms, which take the pubspec's three.
+          APP_VERSION_NAME: ${{ inputs.version }}
+          APP_BUILD_NUMBER: ${{ inputs.build_number }}
+        run: dart setup.dart android --env ${{ inputs.env }} --arch arm64 -v
+
       - name: Build
+        if: matrix.platform != 'android'
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           # The version the app reports in-app and Android's versionName carries.
@@ -359,6 +375,15 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
+          # A single-ABI build is packaged as `...-android.apk`. Give it the
+          # same name the preview does, so publish-release.yaml's
+          # `dist/*android-arm64*.apk` finds it and Telegram receives the APK
+          # itself instead of a links-only message.
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            for file in dist/*-android.apk; do
+              mv "$file" "${file%-android.apk}-android-arm64-v8a.apk"
+            done
+          fi
           echo "renamed ${renamed} artifact(s) to ${VERSION}:"
           ls -l dist
 
@@ -371,6 +396,7 @@ jobs:
         if: matrix.platform == 'android'
         env:
           VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
           # This fork ships under its own id, not upstream's com.follow.clash --
           # and a merge that quietly restored upstream's while keeping our
           # signature would still build and still upload.
@@ -392,6 +418,12 @@ jobs:
             certs="$("$build_tools/apksigner" verify --print-certs "$apk" | tr -d ':')"
             sed -n '1p' <<<"$badging"
             sed -n '1,4p' <<<"$certs"
+            version_code="$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$badging" | head -1)"
+            expected_code=$(( BUILD_NUMBER + 2000 ))
+            if [ "$version_code" != "$expected_code" ]; then
+              echo "::error::expected arm64 versionCode ${expected_code}, got ${version_code}"
+              exit 1
+            fi
             # The exact id, not merely "no .dev suffix": this also catches a
             # merge that restored upstream's package name without saying so.
             if ! grep -q "package: name='${APPLICATION_ID}'" <<<"$badging"; then

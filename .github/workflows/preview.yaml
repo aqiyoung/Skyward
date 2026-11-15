@@ -149,9 +149,16 @@ jobs:
           claimed=$(gh api \
             "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
             --jq '.[].ref' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n%s\n' "$titles" "$claimed" \
+          dev_claimed=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+            --jq '.[].ref' 2>/dev/null || true)
+          highest_stamp=$(printf '%s\n%s\n%s\n' "$titles" "$claimed" "$dev_claimed" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
+          if [ "$stamp" -gt 99 ]; then
+            echo "::error::build numbers for today are exhausted"
+            exit 1
+          fi
           build_number=$(( day_prefix * 100 + stamp ))
           # The build number doubles as the visible version and the tag: it is
           # the only number here that is unique and monotonic across both ways a
@@ -420,6 +427,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           APP_VERSION_NAME: ${{ steps.version.outputs.version }}
+          APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
         run: dart setup.dart android --env ${{ inputs.env || 'pre' }} --arch arm64 -v
 
       - name: Name the artifact after our version
