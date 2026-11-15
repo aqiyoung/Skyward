@@ -33,7 +33,9 @@ void main() {
   void seed(List<DashboardWidget> widgets) {
     container
         .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(dashboardWidgets: widgets));
+        .update(
+          (state) => state.copyWith(dashboardWidgets: widgets),
+        );
   }
 
   // The cards sway for as long as they are edited, so nothing settles.

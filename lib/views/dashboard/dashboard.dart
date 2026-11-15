@@ -15,7 +15,6 @@ import 'edit.dart';
 import 'large_title.dart';
 import 'layout.dart';
 import 'style.dart';
-import 'widget_registry.dart';
 import 'widgets/build_channel_badge.dart';
 import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
@@ -370,10 +369,15 @@ class _MobileDashboard extends ConsumerWidget {
               for (final widget in saved)
                 if (widget.platforms.contains(platform)) widget,
             ];
+            // Cards of one size share a place and turn there, the way a
+            // launcher keeps one cell one card; a card of another size starts
+            // the next place. The editor works on that same order, so what it
+            // shows is what the dashboard will draw.
+            final stacks = dashboardStacksOf(widgets);
             if (editing) {
               return DashboardEditor(
                 platform: platform,
-                widgets: widgets,
+                widgets: [for (final stack in stacks) ...stack],
                 cardKeyOf: cardKeyOf,
                 padding: EdgeInsets.fromLTRB(side, top, side, bottom),
                 gap: gap,
@@ -388,10 +392,11 @@ class _MobileDashboard extends ConsumerWidget {
                 child: Column(
                   spacing: gap,
                   children: [
-                    for (final widget in widgets)
-                      RepaintBoundary(
-                        key: cardKeyOf(widget),
-                        child: widget.card,
+                    for (final stack in stacks)
+                      CardStack(
+                        key: ValueKey(stack.first),
+                        cards: stack,
+                        cardKeyOf: cardKeyOf,
                       ),
                     // Rearranging the cards is a quiet action at the foot of
                     // the board, not a pencil floating in the empty top strip.

@@ -293,7 +293,9 @@ void main() {
     });
 
     test('every dashboard widget survives round-trip', () {
-      const props = AppSettingProps(dashboardWidgets: DashboardWidget.values);
+      const props = AppSettingProps(
+        dashboardWidgets: DashboardWidget.values,
+      );
       final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
       expect(restored.dashboardWidgets, DashboardWidget.values);
     });
