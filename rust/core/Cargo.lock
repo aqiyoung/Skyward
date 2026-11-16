@@ -317,6 +317,7 @@ dependencies = [
  "chacha20poly1305",
  "getrandom",
  "hmac",
+ "libc",
  "rustls",
  "sha1",
  "sha2",

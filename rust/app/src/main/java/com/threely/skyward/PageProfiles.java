@@ -108,8 +108,8 @@ public final class PageProfiles {
             int count = RustCore.nativeParseConfig(profile.content);
             String error = count > 0 ? "" : lastError();
             runOnMainAndWait(c, state, () -> {
-                if (state.connected || state.proxyRunning) {
-                    Ui.toast(c, "请先断开当前代理后再切换配置");
+                if (state.connected || state.proxyRunning || state.tunMode) {
+                    Ui.toast(c, "请先断开当前代理或 VPN 后再切换配置");
                     refresh.run();
                     return;
                 }
@@ -210,8 +210,8 @@ public final class PageProfiles {
             Ui.toast(c, "配置操作正在进行，请稍候");
             return false;
         }
-        if (state.connected || state.proxyRunning) {
-            Ui.toast(c, "请先断开当前代理后再修改配置");
+        if (state.connected || state.proxyRunning || state.tunMode) {
+            Ui.toast(c, "请先断开当前代理或 VPN 后再修改配置");
             return false;
         }
         state.configBusy = true;
@@ -283,8 +283,8 @@ public final class PageProfiles {
 
     private static void finishImport(Context c, AppState state, String url, String content,
                                      String name, int count, Runnable refresh) {
-        if (state.connected || state.proxyRunning) {
-            Ui.toast(c, "配置已解析；请先断开代理后再保存并启用");
+        if (state.connected || state.proxyRunning || state.tunMode) {
+            Ui.toast(c, "配置已解析；请先断开代理或 VPN 后再保存并启用");
             refresh.run();
             return;
         }

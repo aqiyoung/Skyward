@@ -25,6 +25,11 @@ public class SkywardVpnService extends VpnService {
 
     private ParcelFileDescriptor mFd;
 
+    private static void setTunMode(AppState state, boolean active) {
+        state.tunMode = active;
+        state.save();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (mFd != null) {
@@ -33,6 +38,7 @@ public class SkywardVpnService extends VpnService {
         }
         AppState st = AppState.get();
         if (st.configBusy) {
+            setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -51,10 +57,12 @@ public class SkywardVpnService extends VpnService {
             b.addDisallowedApplication(getPackageName());
             mFd = b.establish();
         } catch (Exception e) {
+            setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
         }
         if (mFd == null) {
+            setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -63,14 +71,17 @@ public class SkywardVpnService extends VpnService {
 
         // 把 fd 交给内核：内核从 fd 读原始 IP 帧，按 TCP / UDP / DNS 分流后经出站协议转发。
         if (!st.applySelectedNode()) {
+            setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
         }
         if (RustCore.nativeOpenTun(mFd.getFd(), st.ssServer, st.ssPort, st.ssPassword,
                 st.outProtocol, st.outTls, st.outSni) == 0) {
+            setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
         }
+        setTunMode(st, true);
         return START_STICKY;
     }
 
@@ -125,6 +136,7 @@ public class SkywardVpnService extends VpnService {
     @Override
     public void onDestroy() {
         RustCore.nativeCloseTun();
+        setTunMode(AppState.get(), false);
         if (mFd != null) {
             try {
                 mFd.close();
