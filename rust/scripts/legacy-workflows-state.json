@@ -1,0 +1,77 @@
+{
+  "repo": "aqiyoung/Skyward",
+  "workflows": [
+    {
+      "id": 413265917,
+      "name": ".github/workflows/benchmark.yaml",
+      "path": ".github/workflows/benchmark.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 386746864,
+      "name": "build",
+      "path": ".github/workflows/build-channel.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 385129551,
+      "name": "checks",
+      "path": ".github/workflows/build.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 386740038,
+      "name": "release",
+      "path": ".github/workflows/ci.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 413153712,
+      "name": "core check",
+      "path": ".github/workflows/core-check.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 393489969,
+      "name": "core watch",
+      "path": ".github/workflows/core-watch.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 411774411,
+      "name": "dev-preview",
+      "path": ".github/workflows/dev-preview.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 385130522,
+      "name": "pages",
+      "path": ".github/workflows/pages.yaml",
+      "state_before": "disabled_manually"
+    },
+    {
+      "id": 406211830,
+      "name": "pr-check",
+      "path": ".github/workflows/pr-check.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 398854929,
+      "name": "dev-desktop",
+      "path": ".github/workflows/preview-desktop.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 392758476,
+      "name": "preview",
+      "path": ".github/workflows/preview.yaml",
+      "state_before": "active"
+    },
+    {
+      "id": 386746865,
+      "name": "release",
+      "path": ".github/workflows/publish-release.yaml",
+      "state_before": "active"
+    }
+  ]
+}

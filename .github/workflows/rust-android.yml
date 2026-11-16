@@ -1,0 +1,118 @@
+name: rust-android
+
+# Rust 安卓内核客户端的独立构建：工程住在 rust/ 子目录，与仓库根的 Flutter
+# 工程并存，互不影响。
+#
+# 触发路径只限 rust/** 与本文件，所以 Flutter 侧的改动不会拉起它；
+# 反过来 Flutter 的多平台 / 发版工作流也不会被这个目录触发。
+#
+# 刻意不推送 Telegram、不打 Release tag、不构建 desktop / 其它平台。
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ rust-android, main ]
+    paths:
+      - 'rust/**'
+      - '.github/workflows/rust-android.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # CI 用默认 stable toolchain（已装 aarch64-linux-android target），
+      # 空字符串表示「不走本机特有的 +1.99.0」。
+      RUST_TC: ''
+      ANDROID_API_LEVEL: '26'
+      ANDROID_TARGET_SDK: '35'
+      ANDROID_PLATFORM: android-35
+      NDK_VERSION: 28.2.13676358
+      BT_VERSION: 35.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Rust (aarch64-linux-android)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            rust/core/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/core/Cargo.lock') }}
+
+      # ubuntu-latest 自带 Android SDK（/usr/local/lib/android/sdk + cmdline-tools），
+      # 直接用即可。不要用 android-actions/setup-android：它内部跑 `sdkmanager tools`，
+      # 而 Google 已下线旧 tools 包，会报 "Failed to find package 'tools'" 并退出 1。
+      - name: Install SDK components (arm64 only)
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          echo "SDK = $SDK"
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+          "$SDKM" --install \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358" || true
+          # 装完校验关键目录存在；NDK 具体版本由 build.sh 自动探测兜底
+          ls -d "$SDK"/platforms/android-35 "$SDK"/build-tools/35.0.0 "$SDK"/ndk/*/
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+
+      - name: Build arm64 APK
+        working-directory: rust
+        run: |
+          chmod +x build.sh
+          VERSION_CODE="${{ github.run_number }}" \
+          VERSION_NAME="1.0.0.${{ github.run_number }}-dev" \
+          ./build.sh
+
+      - name: Verify APK
+        working-directory: rust
+        run: |
+          APK=$(ls dist/*.apk | head -1)
+          echo "APK = $APK"
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" dump badging "$APK" | head -6
+          "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK" | head -12
+          echo "--- arm64 native + dex ---"
+          unzip -l "$APK" | grep -E "lib/arm64-v8a/libskyward_core.so|classes.dex"
+
+      - name: Size report
+        working-directory: rust
+        run: |
+          {
+            echo "## Skyward Rust · arm64 安卓包"
+            echo ""
+            echo "- commit: \`${{ github.sha }}\`"
+            echo "- versionCode: \`${{ github.run_number }}\`"
+            echo "- APK: \`$(stat -c%s dist/*.apk) bytes\`"
+            echo ""
+            echo '```'
+            cat build/apk_breakdown.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload arm64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: skyward-rust-android-arm64-${{ github.run_number }}
+          path: rust/dist/*.apk
+          if-no-files-found: error
