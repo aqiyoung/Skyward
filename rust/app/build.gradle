@@ -1,0 +1,77 @@
+plugins {
+    id 'com.android.application' version '9.0.0'
+}
+
+// 版本号可由 -PverCode= / -PverName= 覆盖，CI 与本地共用一套。
+def vCode = (project.findProperty("verCode") ?: "23") as Integer
+def vName = (project.findProperty("verName") ?: "1.0.0.23-dev") as String
+
+android {
+    namespace 'com.threely.skyward'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.threely.skyward"
+        minSdk 26
+        targetSdk 35
+        versionCode vCode
+        versionName vName
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    // 沿用随工程提交的固定 debug keystore：本机与 CI 签名一致，可覆盖安装。
+    signingConfigs {
+        release {
+            storeFile file("../scripts/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            // 关闭 R8：JNI 符号与反射调用点较多，先保稳定，后续单独做 keep 规则再开。
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+// Rust 内核：Gradle 只负责「调用现成脚本 → 产物落到 jniLibs」，编译细节仍归 build-core.sh。
+tasks.register('cargoBuild', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'bash', 'scripts/build-core.sh'
+    environment 'SKYWARD_ROOT', rootProject.projectDir.absolutePath
+    outputs.dir file('src/main/jniLibs/arm64-v8a')
+    doFirst {
+        println "== cargo: 交叉编译 libskyward_core.so =="
+    }
+}
+
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn 'cargoBuild'
+}
