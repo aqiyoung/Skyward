@@ -177,8 +177,8 @@ say "unsigned.apk: $(stat -c%s "$BUILD/unsigned.apk") bytes"
 say "== 6. zipalign =="
 "$BT/zipalign" -f -p 4 "$BUILD/unsigned.apk" "$BUILD/aligned.apk" >>"$LOG" 2>&1
 
-say "== 7. 签名（固定 debug keystore，保证多次构建可覆盖安装）=="
-# 随工程提交的固定 debug keystore；本机/ CI / 任意次构建签名一致。
+say "== 7. 签名（Rust 独立开发 keystore，保证同包后续构建可覆盖安装）=="
+# Rust 使用自己的固定 debug keystore，不复用 Flutter 主包 release key。
 KS=$ROOT/scripts/debug.keystore
 if [ ! -f "$KS" ]; then
   say "WARN: 未找到 $KS，回退到临时生成（每次签名不同，覆盖安装需先卸载）"
