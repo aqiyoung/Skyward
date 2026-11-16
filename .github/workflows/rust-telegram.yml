@@ -1,0 +1,110 @@
+name: rust-telegram
+
+# 把上一次 rust-android 构建出的 arm64 APK 推到 Dev 预览 Telegram（个人 chat）。
+#
+# 沿用旧版 notify-telegram.yml 的 secrets 与 chat 回落规则：
+#   TELEGRAM_PREVIEW_CHAT_ID（Dev 预览 / 个人）优先，未设置则回落 TELEGRAM_CHAT_ID。
+#
+# APK 来源是 rust-android 工作流的产物，不是 Release：那条工作流只上传 artifact、
+# 不打 tag，所以这里直接取「最近一次成功的 rust-android 运行」的 artifact。
+#
+# 推送的唯一路径是 workflow_dispatch（手动派发）。TG 消息不可撤回，因此：
+#   * 不挂 schedule，不挂 PR；
+#   * 下面的 push 触发器仅用于「让 GitHub 注册这个工作流」——非默认分支上只挂
+#     workflow_dispatch 的工作流不会被登记，dispatch API 会返回 404。它的 paths
+#     只包含本文件自身，且 job 有硬拦截 if，push 产生的 run 一定被跳过，
+#     绝不会发送任何消息。
+# 不进公共频道。
+on:
+  workflow_dispatch:
+  push:
+    branches: [ rust-android, main ]
+    paths:
+      - '.github/workflows/rust-telegram.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  send:
+    # 硬拦截：只有手动派发才真正发送。push 那次 run 只为完成工作流注册。
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      REPO: ${{ github.repository }}
+      EVENT_NAME: ${{ github.event_name }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+    steps:
+      - name: Resolve the latest successful rust-android build
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${REPO}/actions/workflows/rust-android.yml/runs?status=success&per_page=1"
+          body=$(curl -sS --max-time 60 \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" "$api")
+          # 先落到变量再拆开：子命令失败时 set -e 才接得住。
+          pair=$(printf '%s' "$body" | python3 -c '
+            import json,sys
+            runs=json.load(sys.stdin)["workflow_runs"]
+            if not runs:
+                print("::error::没有成功的 rust-android 运行", file=sys.stderr)
+                sys.exit(1)
+            print(runs[0]["id"], runs[0]["run_number"])
+          ')
+          read -r RUN_ID RUN_NUMBER <<<"$pair"
+          echo "RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          echo "RUN_NUMBER=$RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "APK = skyward-rust-android-arm64-${RUN_NUMBER}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Download the published APK
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ env.RUN_ID }}
+          if-no-files-found: error
+
+      - name: Send document to Dev preview chat
+        run: |
+          set -euo pipefail
+          # 双保险：即便 job 级 if 被误改，非 dispatch 事件也绝不发送。
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "skip: event=${EVENT_NAME} is not workflow_dispatch"
+            exit 0
+          fi
+          chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-${TELEGRAM_CHAT_ID:-}}"
+          if [ -z "$chat_id" ] || [ -z "${TELEGRAM_BOT_TOKEN:-}" ]; then
+            echo "::error::Telegram secrets not configured"
+            exit 1
+          fi
+          APK=$(ls *.apk | head -1)
+          test -s "$APK"
+          size=$(stat -c%s "$APK")
+          mb=$(awk "BEGIN{printf \"%.2f\", ${size}/1048576}")
+          # 官方 Bot API 的 sendDocument 上限是 50 MB；APK 超限就明确报错而不是静默失败。
+          if [ "$size" -gt 52428800 ]; then
+            echo "::error::APK ${size} bytes 超过 sendDocument 的 50 MB 上限"
+            exit 1
+          fi
+          cat > /tmp/caption.txt << CAP
+          Skyward Rust 安卓 · 第 ${RUN_NUMBER} 次构建
+          ${APK} · ${mb} MB · arm64-v8a
+
+          仓库：https://github.com/${REPO}
+          分支：rust-android · 来源：rust-android 工作流的产物 · 手动派发
+          CAP
+          http=$(curl -sS --max-time 180 -o /tmp/tg_resp.json -w "%{http_code}" \
+            -F "chat_id=${chat_id}" \
+            -F "document=@${APK};filename=${APK}" \
+            -F "caption=$(cat /tmp/caption.txt)" \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument")
+          resp=$(cat /tmp/tg_resp.json)
+          if [ "$http" != "200" ] || ! grep -q '"ok":true' <<< "$resp"; then
+            echo "::error::Telegram HTTP ${http}: ${resp}"
+            exit 1
+          fi
+          echo "Telegram sendDocument ok (HTTP ${http})"
