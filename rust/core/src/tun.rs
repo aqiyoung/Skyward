@@ -770,6 +770,27 @@ mod tests {
         assert!(stop.load(Ordering::Acquire));
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn stopping_tun_worker_closes_its_file_descriptors() {
+        use std::io::Read;
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+
+        let (tun, mut peer) = UnixStream::pair().expect("create socket pair");
+        let config = Arc::new(ProxyConfig::new("127.0.0.1", 8388, "test-password"));
+        let handle = run_tun_blocking(tun.as_raw_fd(), config).expect("start TUN worker");
+        drop(tun);
+        peer.set_read_timeout(Some(Duration::from_secs(2)))
+            .expect("set bounded worker-stop wait");
+
+        handle.stop();
+
+        let mut byte = [0u8; 1];
+        let read = peer.read(&mut byte).expect("wait for worker to close TUN fd");
+        assert_eq!(read, 0, "stopped worker should close its duplicated TUN fds");
+    }
+
     fn make_tcp(src: Ipv4Addr, dst: Ipv4Addr, sport: u16, dport: u16) -> Vec<u8> {
         let mut p = vec![0u8; 40];
         p[0] = 0x45; // ver4 ihl5
