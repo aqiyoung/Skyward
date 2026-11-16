@@ -5,6 +5,7 @@
 从这一版起脱离 PoC：
 
 - **安装包 ID** `com.threely.skyward.rust`；与 Flutter 主应用 `com.threely.skyward` 可并装，Java/JNI namespace 仍为 `com.threely.skyward`。版本线 `1.0.0.x`
+- **签名** 使用 Rust 专用固定 debug keystore，不复用 Flutter 主包的 release keystore；开发包之间保持同一签名，可连续覆盖更新
 - **Gradle 工程**（AGP 9 + 单 `app` 模块），`build.sh` 保留为 13 秒快速通道，两条路共用同一份源码
 - **UI 按页拆分**：`Pages.java` 1522 行 → `PageHome/PageProxies/PageRules/PageProfiles/PageMine` + `Widgets`
   （拆分后五页截图逐像素 0 差异，用 Robolectric 对照验证）
@@ -37,7 +38,7 @@
 | `0.1.0.21-dev` | **修 SS 子密钥派生（HKDF-SHA1）+ UDP 全量转发**：QUIC/游戏/DNS 走 SS UDP relay，DNS 双通道自动回退 | 1.12 MB |
 | `0.1.0.22-dev` | **Trojan / VLESS 出站**：抽协议层，共用一套 TLS（rustls + ring），DNS 跟随协议；代理页加协议选择与 SNI | 2.04 MB |
 | `1.0.0.23-dev` | **正式工程化**：包名去 poc / Gradle 工程 / UI 按页拆分 / 前台服务通知 / Trojan UDP 通道 | 1.86 MB |
-| `1.0.0.24-dev` | Rust 订阅解析 / 节点转发；applicationId 独立为 `com.threely.skyward.rust`，可与 Flutter 主包并装 | 待构建验证 |
+| `1.0.0.24-dev` | Rust 订阅解析 / 节点转发；applicationId 独立为 `com.threely.skyward.rust`，可与 Flutter 主包并装 | GitHub Actions arm64 构建通过 |
 
 ## 1.0.0.24 做了什么（本版）
 

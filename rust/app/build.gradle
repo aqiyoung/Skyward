@@ -23,7 +23,7 @@ android {
         }
     }
 
-    // 沿用随工程提交的固定 debug keystore：本机与 CI 签名一致，可覆盖安装。
+    // Rust 独立开发签名：与 Flutter 主包的 release keystore 分开，Rust 后续构建仍可覆盖安装。
     signingConfigs {
         release {
             storeFile file("../scripts/debug.keystore")
