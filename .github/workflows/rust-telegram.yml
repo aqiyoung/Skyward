@@ -73,7 +73,6 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ env.RUN_ID }}
           name: skyward-rust-android-arm64-${{ env.RUN_NUMBER }}
-          if-no-files-found: error
 
       - name: Send document to Dev preview chat
         run: |
