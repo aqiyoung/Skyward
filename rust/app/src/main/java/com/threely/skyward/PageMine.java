@@ -79,13 +79,13 @@ public final class PageMine {
                 v -> Ui.toast(c, "请点下方「运行性能基准」按钮")));
         tools.addView(Ui.separator(c));
         tools.addView(Ui.row(c, IconView.Glyph.LIST, Ui.ORANGE, "实时连接",
-                "演示入口", null, v -> Ui.toast(c, "连接面板未接入")));
+                "连接详情尚未接入", null, v -> Ui.toast(c, "连接详情页尚未实现")));
         tools.addView(Ui.separator(c));
         tools.addView(Ui.row(c, IconView.Glyph.DNS, Ui.GREEN, "内核网络探针",
                 "真实 TCP · 见下方卡片", null, v -> Ui.toast(c, "见下方「内核网络探针」卡片")));
         tools.addView(Ui.separator(c));
         tools.addView(Ui.row(c, IconView.Glyph.LIST, Ui.TEXT2, "日志",
-                "演示入口", null, v -> Ui.toast(c, "日志面板未接入")));
+                "日志查看尚未接入", null, v -> Ui.toast(c, "日志面板尚未实现")));
         body.addView(tools);
 
         // 真实内核网络探针（PoC-5）：可输入 host:port，内核经 tokio 做真实 DNS + TCP。

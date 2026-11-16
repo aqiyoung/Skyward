@@ -28,10 +28,15 @@ public class SkywardVpnService extends VpnService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (mFd != null) {
-            // 重复启动：沿用已建立的 TUN，只刷新通知。
             startForegroundCompat();
             return START_STICKY;
         }
+        AppState st = AppState.get();
+        if (st.configBusy) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        if (RustCore.nativeNodeCount() == 0) st.attach(this);
 
         try {
             Builder b = new Builder();
@@ -57,9 +62,15 @@ public class SkywardVpnService extends VpnService {
         startForegroundCompat();
 
         // 把 fd 交给内核：内核从 fd 读原始 IP 帧，按 TCP / UDP / DNS 分流后经出站协议转发。
-        AppState st = AppState.get();
-        RustCore.nativeOpenTun(mFd.getFd(), st.ssServer, st.ssPort, st.ssPassword,
-                st.outProtocol, st.outTls, st.outSni);
+        if (!st.applySelectedNode()) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        if (RustCore.nativeOpenTun(mFd.getFd(), st.ssServer, st.ssPort, st.ssPassword,
+                st.outProtocol, st.outTls, st.outSni) == 0) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         return START_STICKY;
     }
 

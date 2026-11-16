@@ -46,10 +46,10 @@ CLANG=${ANDROID_CLANG:-$LLVM/aarch64-linux-android${API_LEVEL}-clang}
 LLVM_AR=$LLVM/llvm-ar
 NDK_NM=$LLVM/llvm-nm
 
-# 版本与产物名可由 CI 注入（默认仍是 PoC-1）
-VERSION_CODE=${VERSION_CODE:-23}
-VERSION_NAME=${VERSION_NAME:-1.0.0.23-dev}
-OUT_APK=${OUT_APK:-$DIST/Skyward-1.0.0.23-dev-arm64.apk}
+# 版本与产物名可由 CI 注入（默认跟随 rust/app/build.gradle）
+VERSION_CODE=${VERSION_CODE:-24}
+VERSION_NAME=${VERSION_NAME:-1.0.0.24-dev}
+OUT_APK=${OUT_APK:-$DIST/Skyward-1.0.0.24-dev-arm64.apk}
 LOG=$BUILD/build.log
 mkdir -p "$BUILD" "$DIST"
 : > "$LOG"
@@ -97,10 +97,10 @@ say "so: $(stat -c%s "$SO") bytes ($(du -h "$SO" | cut -f1))"
 say "== 2b. 校验 JNI 导出符号 =="
 if [ -x "$NDK_NM" ]; then
   SYMS=$("$NDK_NM" -D --defined-only "$SO" | grep -c "Java_com_threely_skyward_RustCore_" || true)
-  # PoC-1 为 12 个；PoC-2 起新增会话真值 / 索引对照 / 规则集重置接口，当前 23 个。
-  say "exported JNI symbols: $SYMS (PoC-2 expected 23)"
-  if [ "$SYMS" -lt 12 ]; then
-    say "FAIL: JNI 导出符号异常偏少"; exit 1
+  # Current JNI surface includes parser, subscription, forwarding, and core-stat APIs.
+  say "exported JNI symbols: $SYMS (expected 52)"
+  if [ "$SYMS" -ne 52 ]; then
+    say "FAIL: JNI 导出符号数异常（expected 52, got $SYMS）"; exit 1
   fi
   "$NDK_NM" -D --defined-only "$SO" | grep "Java_com_threely" | tee -a "$LOG"
 else

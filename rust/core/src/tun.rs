@@ -23,9 +23,9 @@ use crate::udpstack::{FlowKey as UdpKey, Sink, UdpRelay};
 use crate::udpstream::StreamRelay;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::net::Ipv4Addr;
-use std::os::fd::{FromRawFd, RawFd};
+use std::os::fd::{BorrowedFd, RawFd};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -137,20 +137,34 @@ fn write_tun(w: &Arc<Mutex<File>>, pkt: &[u8], stats: &Arc<Mutex<TunStats>>) {
 }
 
 /// 在独立 OS 线程里从 TUN fd 阻塞读取原始帧，驱动 TCP 栈与 DNS 转发，并把回程包写回设备。
-/// 返回的统计句柄供 JNI 查询。设备读取本身只能在安卓真机（VpnService 提供 fd）验证。
-pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>> {
+/// 返回统计句柄供 JNI 查询；fd 克隆或线程创建错误会同步返回，设备读写需真机验证。
+pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mutex<TunStats>>> {
     let stats = Arc::new(Mutex::new(TunStats::default()));
     let s2 = stats.clone();
+    let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel(1);
 
-    std::thread::spawn(move || {
-        // fd 由调用方保证是有效的 TUN 字符设备。读用一份、写用一份：
-        // 单个 File 被读阻塞时无法写，必须 try_clone 出独立的 fd。
-        let file = unsafe { File::from_raw_fd(fd) };
-        let mut reader = match file.try_clone() {
-            Ok(f) => f,
-            Err(_) => return,
+    std::thread::Builder::new()
+        .name("skyward-tun".into())
+        .spawn(move || {
+        let borrowed_fd = unsafe { BorrowedFd::borrow_raw(fd) };
+        let mut reader = match borrowed_fd.try_clone_to_owned() {
+            Ok(fd) => File::from(fd),
+            Err(error) => {
+                let _ = ready_tx.send(Err(error));
+                return;
+            }
         };
-        let writer = Arc::new(Mutex::new(file));
+        let writer_file = match borrowed_fd.try_clone_to_owned() {
+            Ok(fd) => File::from(fd),
+            Err(error) => {
+                let _ = ready_tx.send(Err(error));
+                return;
+            }
+        };
+        let writer = Arc::new(Mutex::new(writer_file));
+        if ready_tx.send(Ok(())).is_err() {
+            return;
+        }
         let stack = Arc::new(Mutex::new(TcpStack::new()));
         let ups: Arc<Mutex<HashMap<FlowKey, Upstream>>> = Arc::new(Mutex::new(HashMap::new()));
         let master = master_key(&cfg.password);
@@ -370,9 +384,19 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> Arc<Mutex<TunStats>
                 u.alive.store(false, Ordering::Relaxed);
             }
         }
-    });
+    })
+        .map_err(|error| {
+            io::Error::new(
+                io::ErrorKind::Other,
+                format!("无法创建 TUN 线程：{error}"),
+            )
+        })?;
 
-    stats
+    match ready_rx.recv() {
+        Ok(Ok(())) => Ok(stats),
+        Ok(Err(error)) => Err(error),
+        Err(_) => Err(io::Error::new(io::ErrorKind::Other, "TUN 线程在启动完成前退出")),
+    }
 }
 
 /// DNS 回退通道：UDP relay 不可用时，用 DNS-over-TCP（2 字节长度前缀）经 SS 出去。

@@ -304,6 +304,7 @@ public final class Widgets {
     }
 
     static int nodeCount() {
+        if (AppState.get().configBusy) return 0;
         try { return RustCore.nativeNodeCount(); } catch (Throwable t) { return 0; }
     }
 
