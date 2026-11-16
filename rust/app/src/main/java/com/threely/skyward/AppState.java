@@ -3,20 +3,15 @@ package com.threely.skyward;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.util.Locale;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-/**
- * UI 状态层（PoC-2）。
- *
- * 数据分两类，界面上明确区分，避免把 PoC 演示成"能用的客户端"：
- *  - 内核真值：全部经 JNI 取自 Rust core（版本 / 规则 / 索引 / 内存 / 连接表 /
- *    会话时长 / 上下行字节 / 包数）。连接后的时长与流量不再写死常量。
- *  - 演示数据：产品结构占位（节点 / 配置 / 订阅），未接入真实协议栈与订阅解析。
- *
- * 状态持久化：开关、主题、路由、选中项、会话种子写入 SharedPreferences，
- * 进程重启后可恢复；连接态恢复时以原连接时刻为起点，累计字节作种子，读数连续。
- * 液态玻璃默认关闭（既定规则）。
- */
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.UUID;
+
+/** 应用设置与持久化代理配置；节点数据和解析逻辑由 Rust core 提供。 */
 public final class AppState {
 
     private static final AppState I = new AppState();
@@ -26,8 +21,31 @@ public final class AppState {
     private static final String PREF = "skyward_state";
     private SharedPreferences prefs;
 
+    public static final class Profile {
+        public String id;
+        public String name;
+        public String url;
+        public String content;
+        public long updatedAt;
+        public int selectedNode;
+
+        Profile(String id, String name, String url, String content, long updatedAt, int selectedNode) {
+            this.id = id;
+            this.name = name;
+            this.url = url;
+            this.content = content;
+            this.updatedAt = updatedAt;
+            this.selectedNode = selectedNode;
+        }
+    }
+
+    public final ArrayList<Profile> profiles = new ArrayList<>();
+    public String activeProfileId = "";
+
     // ---- 可交互的产品状态 ----
     public boolean connected = false;
+    public boolean proxyRunning = false;
+    public volatile boolean configBusy = false;
     public boolean systemProxy = true;
     public boolean tunMode = false;
     public boolean ipv6 = false;
@@ -42,34 +60,20 @@ public final class AppState {
     public long sessionUp = 0L;           // 落盘的累计上行字节（会话种子）
     public long sessionDown = 0L;
 
-    // ---- PoC-6：真实 SS 出站配置（本地 SOCKS5 入口把目标经此转发）----
-    public String ssServer = "1.2.3.4";   // 远端 SS 服务器（示例占位，真机需替换）
-    public int ssPort = 8388;
-    public String ssPassword = "skyward-poc";
-    public int socksPort = 1080;          // 本地 SOCKS5 入口端口
+    // 当前选择节点的出站参数，由 Rust 节点表填充。
+    public String ssServer = "";
+    public int ssPort = 0;
+    public String ssPassword = "";
+    public int socksPort = 1080;
 
-    // ---- PoC-9：出站协议（ss / trojan / vless）----
-    public String outProtocol = "ss";
-    public boolean outTls = true;         // trojan 恒开；vless 可关（80 / 回源）
+    public String outProtocol = "";
+    public boolean outTls = false;
     public String outSni = "";            // 空 = 用服务器地址
 
     /** 页面代次：每次 render 递增，首页秒级刷新据此自动退出，避免切页后空转 / 泄漏。 */
     public int pageEpoch = 0;
 
-    public static final String[] NODE_NAMES = {
-            "HK-01 · 自动选择", "Tokyo-02", "Singapore-03", "US-West-04",
-            "HK-05 备用", "Taiwan-06", "London-07", "DIRECT 直连"
-    };
-    public static final int[] NODE_LATENCY = { 38, 62, 89, 156, 47, 118, 231, -1 };
-    public static final String[] NODE_REGION = {
-            "中国香港 · BGP", "日本 · 东京", "新加坡", "美国 · 洛杉矶",
-            "中国香港 · CN2", "中国台湾", "英国 · 伦敦", "绕过代理"
-    };
     public static final String[] GROUPS = { "节点选择", "自动选择", "流媒体", "广告拦截" };
-
-    public static String latencyLabel(int ms) {
-        return ms < 0 ? "直连" : ms + " ms";
-    }
 
     public static int latencyColor(int ms) {
         if (ms < 0) return Ui.TEXT3;
@@ -122,8 +126,29 @@ public final class AppState {
         prefs = c.getApplicationContext().getSharedPreferences(PREF, Context.MODE_PRIVATE);
         load();
         warmUp();
-        // 启动即解析内置示例订阅，让「代理」页首屏即为真实节点（非演示占位）。
-        try { RustCore.nativeLoadSampleConfig(); } catch (Throwable ignored) {}
+        boolean restored = false;
+        Profile active = findProfile(activeProfileId);
+        if (active != null) {
+            int count = RustCore.nativeParseConfig(active.content);
+            if (count > 0) {
+                activeProfileId = active.id;
+                selectedNode = Math.max(0, Math.min(active.selectedNode, count - 1));
+                if (!applySelectedNode()) selectedNode = firstSupportedNode();
+                applySelectedNode();
+                restored = true;
+            }
+        }
+        if (!restored) {
+            activeProfileId = "";
+            selectedNode = 0;
+            clearOutbound();
+            if (prefs != null) {
+                prefs.edit().putString("activeProfileId", "").putInt("selectedNode", 0)
+                        .putString("ssServer", "").putInt("ssPort", 0)
+                        .putString("ssPassword", "").putString("outProtocol", "")
+                        .putBoolean("outTls", false).putString("outSni", "").apply();
+            }
+        }
         if (connected && connectSinceMs > 0L) {
             try {
                 RustCore.nativeSessionStart(connectSinceMs, sessionUp, sessionDown);
@@ -148,17 +173,28 @@ public final class AppState {
         connectSinceMs = p.getLong("connectSinceMs", 0L);
         sessionUp      = p.getLong("sessionUp", 0L);
         sessionDown    = p.getLong("sessionDown", 0L);
-        ssServer       = p.getString("ssServer", "1.2.3.4");
-        ssPort         = p.getInt("ssPort", 8388);
-        ssPassword     = p.getString("ssPassword", "skyward-poc");
+        ssServer       = p.getString("ssServer", "");
+        ssPort         = p.getInt("ssPort", 0);
+        ssPassword     = p.getString("ssPassword", "");
         socksPort      = p.getInt("socksPort", 1080);
-        outProtocol    = p.getString("outProtocol", "ss");
-        outTls         = p.getBoolean("outTls", true);
+        outProtocol    = p.getString("outProtocol", "");
+        outTls         = p.getBoolean("outTls", false);
         outSni         = p.getString("outSni", "");
-        // 防御：越界值兜底，避免旧数据把数组索引打崩
+        activeProfileId = p.getString("activeProfileId", "");
+        profiles.clear();
+        try {
+            JSONArray saved = new JSONArray(p.getString("profiles_json", "[]"));
+            for (int i = 0; i < saved.length(); i++) {
+                JSONObject item = saved.getJSONObject(i);
+                profiles.add(new Profile(item.optString("id"), item.optString("name"),
+                        item.optString("url"), item.optString("content"),
+                        item.optLong("updatedAt"), item.optInt("selectedNode", 0)));
+            }
+        } catch (JSONException ignored) {}
         if (themeMode < 0 || themeMode > 2) themeMode = 0;
         if (ruleMode < 0 || ruleMode > 2) ruleMode = 0;
-        if (selectedNode < 0 || selectedNode >= NODE_NAMES.length) selectedNode = 0;
+        if (selectedNode < 0) selectedNode = 0;
+        if (socksPort < 1 || socksPort > 65535) socksPort = 1080;
         if (selectedGroup < 0 || selectedGroup >= GROUPS.length) selectedGroup = 0;
     }
 
@@ -166,6 +202,8 @@ public final class AppState {
     public void save() {
         if (prefs == null) return;
         if (connected) syncSessionFromCore();
+        Profile active = findProfile(activeProfileId);
+        if (active != null) active.selectedNode = selectedNode;
         prefs.edit()
                 .putBoolean("connected", connected)
                 .putBoolean("systemProxy", systemProxy)
@@ -188,7 +226,140 @@ public final class AppState {
                 .putString("outProtocol", outProtocol)
                 .putBoolean("outTls", outTls)
                 .putString("outSni", outSni)
+                .putString("activeProfileId", activeProfileId)
+                .putString("profiles_json", encodeProfiles())
                 .apply();
+    }
+
+    private String encodeProfiles() {
+        JSONArray encoded = new JSONArray();
+        for (Profile profile : profiles) {
+            JSONObject item = new JSONObject();
+            try {
+                item.put("id", profile.id);
+                item.put("name", profile.name);
+                item.put("url", profile.url);
+                item.put("content", profile.content);
+                item.put("updatedAt", profile.updatedAt);
+                item.put("selectedNode", profile.selectedNode);
+            } catch (JSONException ignored) {}
+            encoded.put(item);
+        }
+        return encoded.toString();
+    }
+
+    public Profile activeProfile() {
+        return findProfile(activeProfileId);
+    }
+
+    public Profile findProfile(String id) {
+        if (id == null || id.isEmpty()) return null;
+        for (Profile profile : profiles) if (id.equals(profile.id)) return profile;
+        return null;
+    }
+
+    public boolean activateProfile(String id) {
+        if (configBusy) return false;
+        Profile profile = findProfile(id);
+        return profile != null && activateParsedProfile(id, RustCore.nativeParseConfig(profile.content));
+    }
+
+    public boolean activateParsedProfile(String id, int count) {
+        Profile profile = findProfile(id);
+        if (configBusy || profile == null || count <= 0) return false;
+        activeProfileId = profile.id;
+        selectedNode = Math.max(0, Math.min(profile.selectedNode, count - 1));
+        if (!applySelectedNode()) {
+            selectedNode = firstSupportedNode();
+            applySelectedNode();
+        }
+        save();
+        return true;
+    }
+
+    public boolean importProfile(String url, String content, String name) {
+        if (configBusy || content == null || content.trim().isEmpty()
+                || content.length() > 5 * 1024 * 1024) return false;
+        return importProfileParsed(url, content, name, RustCore.nativeParseConfig(content));
+    }
+
+    public boolean importProfileParsed(String url, String content, String name, int count) {
+        if (configBusy || content == null || content.trim().isEmpty()
+                || content.length() > 5 * 1024 * 1024 || count <= 0) return false;
+        Profile profile = null;
+        if (url != null && !url.isEmpty()) {
+            for (Profile item : profiles) {
+                if (url.equals(item.url)) { profile = item; break; }
+            }
+        }
+        if (profile == null) {
+            profile = new Profile(UUID.randomUUID().toString(), name, url == null ? "" : url,
+                    content, System.currentTimeMillis(), 0);
+            profiles.add(profile);
+        } else {
+            profile.name = name;
+            profile.content = content;
+            profile.updatedAt = System.currentTimeMillis();
+        }
+        activeProfileId = profile.id;
+        selectedNode = Math.max(0, Math.min(profile.selectedNode, count - 1));
+        if (!applySelectedNode()) {
+            selectedNode = firstSupportedNode();
+            applySelectedNode();
+        }
+        save();
+        return true;
+    }
+
+    public boolean selectNode(int index) {
+        if (configBusy || index < 0 || index >= RustCore.nativeNodeCount()
+                || RustCore.nativeNodeSupported(index) == 0) return false;
+        int previous = selectedNode;
+        selectedNode = index;
+        if (!applySelectedNode()) {
+            selectedNode = previous;
+            return false;
+        }
+        save();
+        return true;
+    }
+
+    public boolean applySelectedNode() {
+        if (configBusy) return false;
+        try {
+            if (selectedNode < 0 || selectedNode >= RustCore.nativeNodeCount()
+                    || RustCore.nativeNodeSupported(selectedNode) == 0) {
+                clearOutbound();
+                return false;
+            }
+            ssServer = RustCore.nativeNodeServer(selectedNode);
+            ssPort = RustCore.nativeNodePort(selectedNode);
+            ssPassword = RustCore.nativeNodeSecret(selectedNode);
+            outProtocol = RustCore.nativeNodeProtocol(selectedNode);
+            outTls = RustCore.nativeNodeTls(selectedNode) != 0;
+            outSni = RustCore.nativeNodeSni(selectedNode);
+            return !ssServer.isEmpty() && ssPort > 0 && !ssPassword.isEmpty();
+        } catch (Throwable ignored) {
+            clearOutbound();
+            return false;
+        }
+    }
+
+    private int firstSupportedNode() {
+        int count = RustCore.nativeNodeCount();
+        for (int i = 0; i < count; i++) {
+            if (RustCore.nativeNodeSupported(i) != 0) return i;
+        }
+        return -1;
+    }
+
+    private void clearOutbound() {
+        ssServer = "";
+        ssPort = 0;
+        ssPassword = "";
+        outProtocol = "";
+        outTls = false;
+        outSni = "";
     }
 
     private void syncSessionFromCore() {
@@ -202,7 +373,7 @@ public final class AppState {
     // ================= 会话（内核真值） =================
 
     public void connect() {
-        if (connected) return;
+        if (connected || configBusy) return;
         connected = true;
         connectSinceMs = System.currentTimeMillis();
         try {

@@ -25,6 +25,12 @@ public final class PageHome {
 
     public static View home(Context c, Runnable refresh) {
         final AppState s = AppState.get();
+        boolean hasSelectedNode = false;
+        if (!s.configBusy && s.selectedNode >= 0) {
+            try {
+                hasSelectedNode = s.selectedNode < RustCore.nativeNodeCount();
+            } catch (Throwable ignored) {}
+        }
 
         ScrollView sv = new ScrollView(c);
         sv.setFillViewport(true);
@@ -143,7 +149,9 @@ public final class PageHome {
         LinearLayout ipCol = new LinearLayout(c);
         ipCol.setOrientation(LinearLayout.VERTICAL);
         String srv = "";
-        try { srv = RustCore.nativeNodeServer(s.selectedNode); } catch (Throwable ignored) {}
+        if (hasSelectedNode) {
+            try { srv = RustCore.nativeNodeServer(s.selectedNode); } catch (Throwable ignored) {}
+        }
         if (srv == null || srv.isEmpty()) srv = "—";
         final TextView ipV = new TextView(c);
         ipV.setText(srv);
@@ -160,7 +168,9 @@ public final class PageHome {
         orgLab.setPadding(0, Ui.dp(c, 12), 0, 0);
         ipCol.addView(orgLab);
         String grp = "";
-        try { grp = RustCore.nativeNodeGroup(s.selectedNode); } catch (Throwable ignored) {}
+        if (hasSelectedNode) {
+            try { grp = RustCore.nativeNodeGroup(s.selectedNode); } catch (Throwable ignored) {}
+        }
         TextView orgVal = new TextView(c);
         orgVal.setText(grp == null || grp.isEmpty() ? "—" : grp);
         orgVal.setTextSize(15);
@@ -189,6 +199,10 @@ public final class PageHome {
         btn.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 64), Ui.dp(c, 64)));
         btn.setClickable(true);
         btn.setOnClickListener(v -> {
+            if (s.configBusy) {
+                Ui.toast(c, "配置操作正在进行，请稍候");
+                return;
+            }
             if (AppState.get().connected) AppState.get().disconnect();
             else AppState.get().connect();
             refresh.run();
@@ -244,11 +258,19 @@ public final class PageHome {
         LinearLayout vpnTile = tile(c, "VPN", s.tunMode ? "已接管" : "未接管");
         vpnTile.setClickable(true);
         vpnTile.setOnClickListener(v -> {
+            if (s.configBusy) {
+                Ui.toast(c, "配置操作正在进行，请稍候");
+                return;
+            }
             if (AppState.get().tunMode) {
                 try { RustCore.nativeCloseTun(); } catch (Throwable ignored) {}
                 MainActivity.stopVpn(c);
                 AppState.get().tunMode = false;
             } else {
+                if (!s.applySelectedNode()) {
+                    Ui.toast(c, "请先导入配置并选择支持的节点");
+                    return;
+                }
                 MainActivity.requestVpn(c);
                 AppState.get().tunMode = true;
             }
@@ -344,7 +366,9 @@ public final class PageHome {
         cols.setGravity(Gravity.CENTER_VERTICAL);
         cols.setPadding(0, Ui.dp(c, 16), 0, 0);
         String nodeName = "";
-        try { nodeName = RustCore.nativeNodeName(s.selectedNode); } catch (Throwable ignored) {}
+        if (hasSelectedNode) {
+            try { nodeName = RustCore.nativeNodeName(s.selectedNode); } catch (Throwable ignored) {}
+        }
         cols.addView(rcol(c, "本机", "本设备", "局域网"),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         cols.addView(rarrow(c));
@@ -358,7 +382,9 @@ public final class PageHome {
 
         // ===== 卡 5 · 配置 =====
         int nc = 0;
-        try { nc = RustCore.nativeNodeCount(); } catch (Throwable ignored) {}
+        if (!s.configBusy) {
+            try { nc = RustCore.nativeNodeCount(); } catch (Throwable ignored) {}
+        }
         LinearLayout card5 = lcard(c);
         card5.addView(cardHead(c, IconView.Glyph.PROFILE, "配置", null));
         LinearLayout p5 = new LinearLayout(c);
@@ -366,7 +392,7 @@ public final class PageHome {
         p5.setGravity(Gravity.CENTER_VERTICAL);
         p5.setPadding(0, Ui.dp(c, 12), 0, 0);
         TextView pn = new TextView(c);
-        pn.setText("默认配置");
+        pn.setText(s.activeProfile() == null ? "本地配置" : s.activeProfile().name);
         pn.setTextSize(17);
         pn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         pn.setTextColor(Ui.TEXT);

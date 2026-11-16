@@ -3,8 +3,8 @@ plugins {
 }
 
 // 版本号可由 -PverCode= / -PverName= 覆盖，CI 与本地共用一套。
-def vCode = (project.findProperty("verCode") ?: "23") as Integer
-def vName = (project.findProperty("verName") ?: "1.0.0.23-dev") as String
+def vCode = (project.findProperty("verCode") ?: "24") as Integer
+def vName = (project.findProperty("verName") ?: "1.0.0.24-dev") as String
 
 android {
     namespace 'com.threely.skyward'

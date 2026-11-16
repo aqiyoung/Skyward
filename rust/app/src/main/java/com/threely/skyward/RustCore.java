@@ -1,13 +1,6 @@
 package com.threely.skyward;
 
-/**
- * Java 侧只做 JNI 声明。所有逻辑都在 Rust core（libskyward_core.so）。
- * 边界只走原始类型 int/long/double，零对象分配、零字符串跨语言拷贝。
- *
- * PoC-2 新增：会话真值（时长 / 上下行 / 包数由内核计算）、索引引擎对照、
- * 规则集重置。PoC-4 新增：按动作分桶会话汇总、规则枚举。
- * PoC-5 新增：真实 TCP 探针（tokio 数据面地基）。共 37 个导出符号。
- */
+/** Java JNI declarations; subscription parsing, node credentials, and forwarding stay in Rust. */
 public final class RustCore {
     static {
         System.loadLibrary("skyward_core");
@@ -53,15 +46,25 @@ public final class RustCore {
     public static native int nativeRuleKind(int i);
     public static native int nativeRuleAction(int i);
 
-    // ---- 订阅解析 / 代理节点 / 路由决策（PoC-3）----
+    // ---- 订阅解析 / 代理节点 / 路由决策 ----
+    /** Loads the Rust parser test fixture; app startup does not use it as a default profile. */
     public static native int nativeLoadSampleConfig();
+    public static native int nativeParseConfig(String text);
+    public static native String nativeFetchSubscription(String url);
+    public static native String nativeLastError();
     public static native int nativeNodeCount();
     public static native String nativeNodeName(int i);
     public static native int nativeNodeType(int i);
+    public static native String nativeNodeProtocol(int i);
     public static native String nativeNodeServer(int i);
     public static native int nativeNodePort(int i);
     public static native int nativeNodeDelay(int i);
     public static native String nativeNodeGroup(int i);
+    public static native String nativeNodeSecret(int i);
+    public static native String nativeNodeCipher(int i);
+    public static native int nativeNodeTls(int i);
+    public static native String nativeNodeSni(int i);
+    public static native int nativeNodeSupported(int i);
     /** 输入域名，返回打包命中结果。bit63=命中；bits16-46=规则序号；bits8-15=类型；bits0-7=动作。 */
     public static native long nativeDecide(String host);
 

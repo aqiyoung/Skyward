@@ -1,6 +1,6 @@
-# Skyward · 1.0.0.23-dev
+# Skyward · 1.0.0.24-dev
 
-安卓客户端，数据面与控制面用 Rust 重写，UI 保持与原 Flutter 版逐像素一致。
+安卓客户端，代理解析与数据面用 Rust 实现，UI 保持原生 Android Views。
 
 从这一版起脱离 PoC：
 
@@ -9,6 +9,7 @@
 - **UI 按页拆分**：`Pages.java` 1522 行 → `PageHome/PageProxies/PageRules/PageProfiles/PageMine` + `Widgets`
   （拆分后五页截图逐像素 0 差异，用 Robolectric 对照验证）
 - **数据面**：TUN 接管、用户态 TCP 栈、UDP relay、SS / Trojan / VLESS 三种出站
+- **订阅配置**：Rust 拉取 HTTP(S) 订阅并解析 Clash YAML 与 SS / Trojan / VLESS / VMess URI；配置和选中节点在应用私有存储持久化
 
 > 体积仍是单 arm64 APK，约 1.9 MB。原 Flutter 版是 60 MB 量级。
 
@@ -36,6 +37,15 @@
 | `0.1.0.21-dev` | **修 SS 子密钥派生（HKDF-SHA1）+ UDP 全量转发**：QUIC/游戏/DNS 走 SS UDP relay，DNS 双通道自动回退 | 1.12 MB |
 | `0.1.0.22-dev` | **Trojan / VLESS 出站**：抽协议层，共用一套 TLS（rustls + ring），DNS 跟随协议；代理页加协议选择与 SNI | 2.04 MB |
 | `1.0.0.23-dev` | **正式工程化**：包名去 poc / Gradle 工程 / UI 按页拆分 / 前台服务通知 / Trojan UDP 通道 | 1.86 MB |
+| `1.0.0.24-dev` | Rust 订阅 URL 拉取与 YAML/URI 解析；配置切换持久化；所选节点凭据接入 TUN/SOCKS5 | 待构建验证 |
+
+## 1.0.0.24 做了什么（本版）
+
+- Rust core 通过 HTTP(S) 获取订阅，处理有限重定向、分块响应和 5 MiB 上限。
+- 解析 Clash `proxies` 常用标量字段、SS/Trojan/VLESS 与 VMess URI；订阅原文和每个配置的节点选择保存在应用私有 SharedPreferences。
+- 代理页选择节点后，服务器、端口、密码/UUID、TLS 和 SNI 由 Rust 节点记录填充，VPN 服务和 SOCKS5 共用该出站配置。
+- 当前实际出站仅启用 SS ChaCha20-Poly1305、Trojan TLS、VLESS TCP/TLS；AES-SS、VMess、Reality、WS、flow 和其它未实现的传输仍可查看，但会被标为不可选。
+- 不再默认载入虚构节点；尚未测量的真实节点显示「未测」，内置测试夹具不会出现在节点列表。
 
 ## 1.0.0.23 做了什么（本版）
 
@@ -268,18 +278,13 @@ VERSION_CODE=8 VERSION_NAME="0.1.0.8-dev" ./build.sh
 的 sysroot 里没有，脚本用 `cargo +1.99.0` 显式指定。换机器时按实际 toolchain 调整
 `build.sh` 里的 `RUST_TC`。
 
-## PoC 边界（诚实说明）
+## 当前能力边界（1.0.0.24）
 
-- **不含真实代理协议栈**：不含 Clash.Meta / clash-rs 的 VLESS Reality、Hysteria2、
-  TUIC、WireGuard 等实现，也没有 tun2socks。数据面基准与会话计数都是**内存模拟**。
-- **不含 geo 数据**（现行版 15.55MB）、不含订阅解析、不含真实配置导入 / 编辑。
-- **不接管真实流量**：`SkywardVpnService` 有 `establishTun()` 但 UI 不触发，
-  避免装机后误触断网。真实 tun fd 交给 Rust 是阶段 2。
-- **已落盘的只是界面状态**：开关、主题、路由、选中项、连接态与模拟会话累计字节；
-  节点、配置、订阅仍是界面演示占位，"连接"按钮不建 VPN 会话、不改系统设置。
-- 因此这一版**不能用来连接代理**，只用于看：界面骨架与信息架构对齐程度、架构体积
-  下限、规则引擎规模特性、数据面吞吐、常驻内存。真实转发性能必须等内核补齐后再测。
-- 内存量级（host 实测）：基线 RSS 1.89 MB，跑完 100 万包 6.54 MB，逻辑状态约 3 KB。
+- Rust core 可拉取 HTTP(S) 订阅并解析有限的 Clash `proxies` 标量字段，以及 SS、Trojan、VLESS、VMess URI；这不是完整 YAML 实现。
+- Java Views 保存订阅原文、配置列表、活动配置与每个配置的节点选择到应用私有存储。没有导入配置时节点列表保持为空；仓库内置样例只用于 Rust 单元测试，不作为默认或可用节点。
+- 当前可选出站仅有 Shadowsocks ChaCha20-Poly1305、Trojan TLS、VLESS TCP/TLS。Reality、VMess、WS、flow、其它 cipher 和未实现协议会保留显示，但不能选作出站。
+- 代理页的本地 SOCKS5 入口和 `VpnService` 接入 Rust 转发实现；首页“连接”卡仍用于会话统计状态，不等同于启动实际 VPN。
+- 暂无 geo 数据库，也没有 Clash.Meta / clash-rs 的完整协议覆盖。当前配置解析器针对常见订阅格式，不承诺接受任意 YAML。
 
 ## 与现行 Flutter 版的对照基线（实测 60.30 MB）
 

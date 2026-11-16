@@ -19,7 +19,7 @@ import java.util.Locale;
 
 import static com.threely.skyward.Widgets.*;
 
-/** 代理页：入口开关、出站协议与凭据、数据面实时读数、节点列表。 */
+/** 代理页：Rust 解析的节点、数据面读数和当前出站入口。 */
 public final class PageProxies {
     private PageProxies() {}
 
@@ -115,46 +115,60 @@ public final class PageProxies {
         hs.addView(tabs);
         body.addView(hs);
 
-        int n = nodeCount();
-        body.addView(Ui.groupTitle(c,
+        int n = s.configBusy ? 0 : nodeCount();
+        body.addView(Ui.groupTitle(c, s.configBusy ? "配置正在处理" :
                 AppState.GROUPS[s.selectedGroup] + " · 节点列表（已解析 " + n + " 个）"));
         LinearLayout list = Ui.newCard(c);
-        int shown = n > 0 ? n : AppState.NODE_NAMES.length;
-        for (int i = 0; i < shown; i++) {
+        if (s.configBusy) {
+            list.addView(Ui.row(c, IconView.Glyph.INFO, Ui.TEXT2, "正在更新配置",
+                    "完成后节点列表会自动刷新", null, null));
+        } else if (n == 0) {
+            list.addView(Ui.row(c, IconView.Glyph.INFO, Ui.TEXT2, "当前配置没有节点",
+                    "请到配置页导入订阅或粘贴配置文本", null, null));
+        }
+        for (int i = 0; i < n; i++) {
             final int idx = i;
-            String name, addr;
-            int ms, tint;
-            if (n > 0) {
-                name = RustCore.nativeNodeName(i);
-                int typeCode = RustCore.nativeNodeType(i);
-                String server = RustCore.nativeNodeServer(i);
-                int port = RustCore.nativeNodePort(i);
-                ms = RustCore.nativeNodeDelay(i);
-                addr = (port > 0 ? server + ":" + port : server)
-                        + " · " + AppState.nodeTypeLabel(typeCode);
-                tint = AppState.nodeTypeColor(typeCode);
-            } else {
-                name = AppState.NODE_NAMES[i];
-                ms = AppState.NODE_LATENCY[i];
-                addr = AppState.NODE_REGION[i] + " · " + AppState.latencyLabel(ms);
-                tint = AppState.latencyColor(ms);
+            String name = RustCore.nativeNodeName(i);
+            int typeCode = RustCore.nativeNodeType(i);
+            String server = RustCore.nativeNodeServer(i);
+            int port = RustCore.nativeNodePort(i);
+            int ms = RustCore.nativeNodeDelay(i);
+            boolean supported = RustCore.nativeNodeSupported(i) != 0;
+            String addr = (port > 0 ? server + ":" + port : server)
+                    + " · " + AppState.nodeTypeLabel(typeCode);
+            if (typeCode == 0) {
+                String cipher = RustCore.nativeNodeCipher(i);
+                if (!cipher.isEmpty()) addr += " · " + cipher;
             }
+            int tint = AppState.nodeTypeColor(typeCode);
             View trailing;
             if (i == s.selectedNode) {
                 IconView chk = new IconView(c, IconView.Glyph.CHECK, Ui.BLUE);
                 chk.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20)));
                 trailing = chk;
+            } else if (!supported) {
+                TextView status = new TextView(c);
+                status.setText("暂不支持");
+                status.setTextSize(11);
+                status.setTextColor(Ui.TEXT3);
+                trailing = status;
             } else {
                 TextView lat = new TextView(c);
-                lat.setText(AppState.latencyLabel(ms));
+                lat.setText(typeCode == 13 ? "直连" : (ms < 0 ? "未测" : ms + " ms"));
                 lat.setTextSize(13);
                 lat.setTextColor(AppState.latencyColor(ms));
                 lat.setTypeface(Typeface.DEFAULT_BOLD);
                 trailing = lat;
             }
-            list.addView(Ui.row(c, IconView.Glyph.GLOBE, tint, name, addr, trailing,
-                    v -> { s.selectedNode = idx; s.save(); refresh.run(); }));
-            if (i != shown - 1) list.addView(Ui.separator(c));
+            list.addView(Ui.row(c, IconView.Glyph.GLOBE, tint, name, addr, trailing, v -> {
+                if (!s.selectNode(idx)) {
+                    Ui.toast(c, "该节点协议或传输方式尚不支持");
+                    return;
+                }
+                if (s.connected || s.proxyRunning) Ui.toast(c, "已保存节点；当前通道需重连后应用");
+                refresh.run();
+            }));
+            if (i != n - 1) list.addView(Ui.separator(c));
         }
         body.addView(list);
 
@@ -164,70 +178,60 @@ public final class PageProxies {
                 "绿 < 80ms · 橙 < 150ms · 红 ≥ 150ms", null, null));
         gset.addView(Ui.separator(c));
         gset.addView(Ui.row(c, IconView.Glyph.CLOCK, Ui.ORANGE, "延迟测速",
-                n > 0 ? "已解析 " + n + " 个节点" : "演示入口", null,
-                v -> Ui.toast(c, "PoC 阶段未接入真实延迟探测（当前为模拟值）")));
+                n > 0 ? "已解析 " + n + " 个节点" : "请先导入配置", null,
+                v -> Ui.toast(c, "真实延迟探测尚未接入")));
         body.addView(gset);
 
-        // ===== 本地代理入口（PoC-6）：真实 SOCKS5 → SS 转发，需系统 VPN 授权 =====
         body.addView(Ui.groupTitle(c, "本地代理入口（真实转发）"));
         LinearLayout entryCard = Ui.newCard(c);
-        Switch swEntry = Ui.toggle(c, false);
+        Switch swEntry = Ui.toggle(c, s.proxyRunning);
         swEntry.setOnCheckedChangeListener((b, on) -> {
             if (on) {
-                // 先向系统申请 VPN 权限（首授权后由 onActivityResult 拉起 VpnService）；
-                // VpnService 建立 tun 并 nativeOpenTun 后，内核即可在独立线程读帧。
-                MainActivity.requestVpn(c);
-                // 拉起 SOCKS5 入口 + SS 出站（即使 tun fd 未到位，SOCKS5 端口也已就绪）
+                if (!s.applySelectedNode()) {
+                    Ui.toast(c, "请先选择支持的节点");
+                    b.setChecked(false);
+                    return;
+                }
                 try {
-                    RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort, s.ssPassword,
-                            s.outProtocol, s.outTls, s.outSni);
-                    Ui.toast(c, "本地代理入口已开启 · SOCKS5:" + s.socksPort
-                            + " → " + protoLabel(s.outProtocol) + " " + s.ssServer + ":" + s.ssPort);
+                    int started = RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort,
+                            s.ssPassword, s.outProtocol, s.outTls, s.outSni);
+                    if (started == 0) throw new IllegalStateException("参数无效");
+                    s.proxyRunning = true;
+                    MainActivity.requestVpn(c);
+                    Ui.toast(c, "SOCKS5:" + s.socksPort + " → " + protoLabel(s.outProtocol)
+                            + " " + s.ssServer + ":" + s.ssPort);
                 } catch (Throwable t) {
-                    Ui.toast(c, "开启失败：" + t.getClass().getSimpleName());
+                    s.proxyRunning = false;
+                    try { RustCore.nativeStopProxy(); } catch (Throwable ignored) {}
+                    try { MainActivity.stopVpn(c); } catch (Throwable ignored) {}
+                    b.setChecked(false);
+                    Ui.toast(c, "开启失败：" + t.getMessage());
                 }
             } else {
+                s.proxyRunning = false;
                 try { RustCore.nativeStopProxy(); } catch (Throwable ignored) {}
                 try { MainActivity.stopVpn(c); } catch (Throwable ignored) {}
-                Ui.toast(c, "本地代理入口已关闭");
             }
         });
         entryCard.addView(Ui.row(c, IconView.Glyph.BOLT, Ui.ORANGE, "本地代理入口",
-                "SOCKS5 → " + protoLabel(s.outProtocol) + " 转发 · 需 VPN 授权", swEntry, null));
-
-        // 出站协议 + 远端配置 + 本地 SOCKS5 端口（改动即落盘）
+                "SOCKS5 → 当前选择节点 · 需 VPN 授权", swEntry, null));
         entryCard.addView(Ui.separator(c));
-        entryCard.addView(protocolPicker(c, s, refresh));
-        entryCard.addView(editRow(c, "远端服务器", s.ssServer, v -> {
-            s.ssServer = v.trim(); s.save();
-        }));
-        entryCard.addView(Ui.separator(c));
-        entryCard.addView(editRow(c, "远端端口", String.valueOf(s.ssPort), v -> {
-            try { s.ssPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.ssPort = 8388; }
-            s.save();
-        }));
-        entryCard.addView(Ui.separator(c));
-        entryCard.addView(editRow(c, secretLabel(s.outProtocol), s.ssPassword, v -> {
-            s.ssPassword = v; s.save();
-        }));
-        if (!"ss".equals(s.outProtocol)) {
-            Switch swTls = Ui.toggle(c, s.outTls);
-            swTls.setEnabled(!"trojan".equals(s.outProtocol));
-            swTls.setOnCheckedChangeListener((b, on) -> {
-                if ("trojan".equals(s.outProtocol)) { b.setChecked(true); return; }
-                s.outTls = on; s.save();
-            });
-            entryCard.addView(Ui.separator(c));
-            entryCard.addView(Ui.row(c, IconView.Glyph.SHIELD, Ui.BLUE, "TLS",
-                    "trojan 强制开启；VLESS 可关（80 / 回源）", swTls, null));
-            entryCard.addView(Ui.separator(c));
-            entryCard.addView(editRow(c, "SNI（可选，空则用服务器地址）", s.outSni, v -> {
-                s.outSni = v.trim(); s.save();
-            }));
-        }
+        String selectedName = s.selectedNode >= 0 && s.selectedNode < n
+                ? RustCore.nativeNodeName(s.selectedNode) : "未选择";
+        String endpoint = s.ssServer.isEmpty() ? "请选择可用节点"
+                : protoLabel(s.outProtocol) + " · " + s.ssServer + ":" + s.ssPort;
+        entryCard.addView(Ui.row(c, IconView.Glyph.GLOBE, Ui.BLUE, selectedName,
+                endpoint + (s.outSni.isEmpty() ? "" : " · SNI " + s.outSni), null, null));
         entryCard.addView(Ui.separator(c));
         entryCard.addView(editRow(c, "本地 SOCKS5 端口", String.valueOf(s.socksPort), v -> {
-            try { s.socksPort = Integer.parseInt(v.trim()); } catch (Throwable t) { s.socksPort = 1080; }
+            try {
+                int port = Integer.parseInt(v.trim());
+                if (port < 1 || port > 65535) throw new NumberFormatException();
+                s.socksPort = port;
+            } catch (Throwable t) {
+                s.socksPort = 1080;
+                Ui.toast(c, "端口无效，已恢复 1080");
+            }
             s.save();
         }));
         body.addView(entryCard);
@@ -271,9 +275,8 @@ public final class PageProxies {
         routeTest.addView(btnWrap);
         body.addView(routeTest);
 
-        body.addView(note(c, "节点由 Rust 内核解析示例订阅得到（非界面占位）；"
-                + "延迟为模拟值，真实探测属后续阶段。路由测试直接调用内核索引引擎，"
-                + "与「工具」页基准同源。"));
+        body.addView(note(c, "节点凭据直接来自 Rust 解析的当前配置；未测延迟显示为“未测”。"
+                + "路由规则测试调用 Rust 索引引擎。"));
         return page(c, body);
     }
 
@@ -281,48 +284,6 @@ public final class PageProxies {
         if ("trojan".equals(p)) return "Trojan";
         if ("vless".equals(p)) return "VLESS";
         return "Shadowsocks";
-    }
-
-    static String secretLabel(String p) {
-        if ("trojan".equals(p)) return "Trojan 密码";
-        if ("vless".equals(p)) return "VLESS UUID";
-        return "SS 密码";
-    }
-
-    static LinearLayout protocolPicker(Context c, AppState s, Runnable refresh) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 2));
-        String[] keys = {"ss", "trojan", "vless"};
-        String[] labels = {"Shadowsocks", "Trojan", "VLESS"};
-        for (int i = 0; i < keys.length; i++) {
-            final String key = keys[i];
-            boolean on = key.equals(s.outProtocol);
-            TextView t = new TextView(c);
-            t.setText(labels[i]);
-            t.setTextSize(12);
-            t.setTypeface(Typeface.DEFAULT_BOLD);
-            t.setGravity(Gravity.CENTER);
-            t.setPadding(Ui.dp(c, 12), Ui.dp(c, 7), Ui.dp(c, 12), Ui.dp(c, 7));
-            GradientDrawable g = new GradientDrawable();
-            g.setColor(on ? Ui.BLUE : Color.WHITE);
-            g.setCornerRadius(Ui.dp(c, 16));
-            g.setStroke(1, on ? Ui.BLUE : Ui.SEP);
-            t.setBackground(g);
-            t.setTextColor(on ? Color.WHITE : Ui.TEXT2);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.rightMargin = Ui.dp(c, 8);
-            t.setLayoutParams(lp);
-            t.setOnClickListener(v -> {
-                s.outProtocol = key;
-                if ("trojan".equals(key)) s.outTls = true;
-                s.save();
-                refresh.run();
-            });
-            row.addView(t);
-        }
-        return row;
     }
 
     static View editRow(Context c, String label, String value,

@@ -66,14 +66,45 @@ pub struct Connection {
 
 // ============================ 代理节点（Clash 配置解析） ============================
 
-/// 从 Clash 风格配置解析出的单节点（仅取展示所需字段；凭据仅保存样例明文用于演示）。
+#[derive(Clone)]
 pub struct ProxyNode {
     pub name: String,
-    pub ptype: String,   // ss / trojan / vmess / vless / hysteria2 / tuic / socks5 / direct ...
+    pub ptype: String,
     pub server: String,
     pub port: u16,
     pub group: String,
-    pub delay_ms: i32,   // 延迟；-1 = 未测
+    pub delay_ms: i32,
+    pub secret: String,
+    pub cipher: String,
+    pub tls: bool,
+    pub sni: String,
+    pub transport: String,
+    pub security: String,
+    pub flow: String,
+    pub insecure: bool,
+}
+
+impl ProxyNode {
+    pub fn supported(&self) -> bool {
+        if self.server.is_empty() || self.port == 0 || self.secret.is_empty() || self.insecure {
+            return false;
+        }
+        match self.ptype.as_str() {
+            "ss" => self.transport == "tcp" && self.cipher == "chacha20-ietf-poly1305",
+            "trojan" => {
+                self.tls
+                    && self.transport == "tcp"
+                    && (self.security.is_empty() || self.security == "tls")
+            }
+            "vless" => {
+                self.transport == "tcp"
+                    && self.flow.is_empty()
+                    && matches!(self.security.as_str(), "" | "none" | "tls")
+                    && crate::outbound::parse_uuid(&self.secret).is_ok()
+            }
+            _ => false,
+        }
+    }
 }
 
 /// 节点类型 → 稳定整型编码，供 Java 侧着色 / 徽标，避免跨语言传字符串类型。
@@ -93,6 +124,15 @@ struct NodeBuilder {
     port: u16,
     group: String,
     delay_ms: i32,
+    secret: String,
+    uuid: String,
+    cipher: String,
+    tls: bool,
+    sni: String,
+    transport: String,
+    security: String,
+    flow: String,
+    insecure: bool,
 }
 
 impl NodeBuilder {
@@ -104,110 +144,144 @@ impl NodeBuilder {
             port: 0,
             group: String::new(),
             delay_ms: -1,
+            secret: String::new(),
+            uuid: String::new(),
+            cipher: String::new(),
+            tls: false,
+            sni: String::new(),
+            transport: "tcp".into(),
+            security: String::new(),
+            flow: String::new(),
+            insecure: false,
         }
     }
 }
 
-fn strip_quotes(v: &str) -> String {
-    let t = v.trim();
-    if (t.starts_with('"') && t.ends_with('"')) || (t.starts_with('\'') && t.ends_with('\'')) {
-        if t.len() >= 2 {
-            return t[1..t.len() - 1].to_string();
+fn yaml_scalar(raw: &str) -> String {
+    let value = raw.trim();
+    if value.len() >= 2 {
+        let first = value.as_bytes()[0];
+        let last = value.as_bytes()[value.len() - 1];
+        if (first == b'\'' && last == b'\'') || (first == b'"' && last == b'"') {
+            let inner = &value[1..value.len() - 1];
+            return if first == b'\'' {
+                inner.replace("''", "'")
+            } else {
+                inner.replace("\\\"", "\"").replace("\\\\", "\\")
+            };
         }
     }
-    t.to_string()
+    value.split_once(" #").map(|(v, _)| v.trim()).unwrap_or(value).to_string()
+}
+
+fn parse_bool(value: &str) -> bool {
+    matches!(value.trim().to_ascii_lowercase().as_str(), "true" | "yes" | "on" | "1" | "tls")
 }
 
 fn parse_kv(line: &str, b: &mut NodeBuilder) {
     let Some((k, v)) = line.split_once(':') else { return };
     let key = k.trim().to_ascii_lowercase();
-    let val = strip_quotes(v.trim());
+    let val = yaml_scalar(v);
     match key.as_str() {
         "name" => b.name = val,
-        "type" => b.ptype = val,
+        "type" => b.ptype = val.to_ascii_lowercase(),
         "server" => b.server = val,
-        "port" => {
-            if let Ok(p) = val.parse::<u16>() {
-                b.port = p;
-            }
+        "port" => b.port = val.parse::<u16>().unwrap_or(0),
+        "password" => b.secret = val,
+        "uuid" => b.uuid = val,
+        "cipher" => b.cipher = val.to_ascii_lowercase(),
+        "tls" => b.tls = parse_bool(&val),
+        "security" => {
+            b.security = val.to_ascii_lowercase();
+            b.tls = matches!(b.security.as_str(), "tls" | "reality");
         }
+        "sni" | "servername" | "server-name" | "peer" => b.sni = val,
+        "network" | "transport" => b.transport = val.to_ascii_lowercase(),
+        "flow" => b.flow = val,
+        "skip-cert-verify" | "allowinsecure" => b.insecure = parse_bool(&val),
+        "plugin" if !val.is_empty() => b.transport = "plugin".into(),
         _ => {}
     }
 }
 
-/// 极简 Clash 风格解析器：扫描 `proxies:` 序列，提取 name/type/server/port。
-/// 零三方依赖（不引入 yaml 库）。支持缩进的 `- item` 列表与 `key: value` 子字段；
-/// 映射/列表型值（如 plug-opts、...,）整体跳过，只取标量字段。
-/// 区分「顶层键」与「节点子字段」靠缩进：顶层键出现在 proxies 同级或更浅处。
 pub fn parse_clash_proxies(text: &str) -> Vec<ProxyNode> {
-    let mut nodes: Vec<ProxyNode> = Vec::new();
+    let mut nodes = Vec::new();
     let mut in_proxies = false;
-    let mut proxies_indent: usize = 0;
-    let mut cur: Option<NodeBuilder> = None;
-
+    let mut proxies_indent = 0;
+    let mut item_indent = None;
+    let mut current = None;
     for raw in text.lines() {
         let indent = raw.len() - raw.trim_start().len();
-        let trimmed = raw.trim();
-        if trimmed.is_empty() || trimmed.starts_with('#') {
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') {
             continue;
         }
-
-        // 顶层键判定：非列表项、含冒号、且缩进不超过 proxies 块基准。
-        if !trimmed.starts_with('-') && trimmed.contains(':') {
-            let key = trimmed.split(':').next().unwrap_or("").trim();
+        if !line.starts_with('-') && line.contains(':') {
+            let key = line.split(':').next().unwrap_or("").trim();
             if key == "proxies" {
                 in_proxies = true;
                 proxies_indent = indent;
-                if let Some(b) = cur.take() {
-                    flush(&mut nodes, b);
+                item_indent = None;
+                if let Some(builder) = current.take() {
+                    flush(&mut nodes, builder);
                 }
                 continue;
             }
             if indent <= proxies_indent {
-                // 遇到另一个顶层键（如 proxy-groups:），离开 proxies 块
                 in_proxies = false;
-                if let Some(b) = cur.take() {
-                    flush(&mut nodes, b);
+                if let Some(builder) = current.take() {
+                    flush(&mut nodes, builder);
                 }
                 continue;
             }
-            // 否则是节点子字段（缩进更深），落到下面的子字段处理
         }
-
         if !in_proxies {
             continue;
         }
-
-        if let Some(rest) = trimmed.strip_prefix("- ") {
-            // 新节点；`- ` 之后可能直接跟首个 key: value
-            if let Some(b) = cur.take() {
-                flush(&mut nodes, b);
+        if let Some(rest) = line.strip_prefix("- ") {
+            if item_indent.is_some_and(|expected| indent != expected) {
+                continue;
             }
-            let mut b = NodeBuilder::new();
-            parse_kv(rest, &mut b);
-            cur = Some(b);
-        } else if trimmed == "-" {
-            if let Some(b) = cur.take() {
-                flush(&mut nodes, b);
+            item_indent.get_or_insert(indent);
+            if let Some(builder) = current.take() {
+                flush(&mut nodes, builder);
             }
-            cur = Some(NodeBuilder::new());
+            let mut builder = NodeBuilder::new();
+            parse_kv(rest, &mut builder);
+            current = Some(builder);
+        } else if line == "-" {
+            if item_indent.is_some_and(|expected| indent != expected) {
+                continue;
+            }
+            item_indent.get_or_insert(indent);
+            if let Some(builder) = current.take() {
+                flush(&mut nodes, builder);
+            }
+            current = Some(NodeBuilder::new());
         } else if indent > proxies_indent {
-            // 当前节点的子字段
-            if let Some(b) = cur.as_mut() {
-                parse_kv(trimmed, b);
+            if let Some(builder) = current.as_mut() {
+                parse_kv(line, builder);
             }
         }
     }
-    if let Some(b) = cur.take() {
-        flush(&mut nodes, b);
+    if let Some(builder) = current {
+        flush(&mut nodes, builder);
     }
     nodes
 }
 
 fn flush(out: &mut Vec<ProxyNode>, b: NodeBuilder) {
-    if b.name.is_empty() {
+    if b.name.is_empty() || b.ptype.is_empty() {
         return;
     }
+    let secret = if b.ptype == "vless" && !b.uuid.is_empty() { b.uuid } else { b.secret };
+    let tls = if b.ptype == "trojan" {
+        true
+    } else if b.security.is_empty() {
+        b.tls
+    } else {
+        matches!(b.security.as_str(), "tls" | "reality")
+    };
     out.push(ProxyNode {
         name: b.name,
         ptype: b.ptype,
@@ -215,18 +289,266 @@ fn flush(out: &mut Vec<ProxyNode>, b: NodeBuilder) {
         port: b.port,
         group: b.group,
         delay_ms: b.delay_ms,
+        secret,
+        cipher: b.cipher,
+        tls,
+        sni: b.sni,
+        transport: b.transport,
+        security: b.security,
+        flow: b.flow,
+        insecure: b.insecure,
     });
 }
 
-/// 内置示例订阅：一份真实感的 Clash/Mihomo 风格配置，覆盖常见协议类型。
-/// 解析逻辑与真实订阅完全一致，仅内容为本仓库自带样例。
+fn percent_decode(value: &str, plus_as_space: bool) -> String {
+    let bytes = value.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let Ok(hex) = std::str::from_utf8(&bytes[i + 1..i + 3]) {
+                if let Ok(byte) = u8::from_str_radix(hex, 16) {
+                    out.push(byte);
+                    i += 3;
+                    continue;
+                }
+            }
+        }
+        out.push(if plus_as_space && bytes[i] == b'+' { b' ' } else { bytes[i] });
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+fn decode_base64(value: &str) -> Option<Vec<u8>> {
+    let mut out = Vec::with_capacity(value.len() * 3 / 4);
+    let mut bits = 0u32;
+    let mut count = 0u32;
+    for byte in value.bytes() {
+        if byte.is_ascii_whitespace() {
+            continue;
+        }
+        if byte == b'=' {
+            break;
+        }
+        let digit = match byte {
+            b'A'..=b'Z' => byte - b'A',
+            b'a'..=b'z' => byte - b'a' + 26,
+            b'0'..=b'9' => byte - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            _ => return None,
+        };
+        bits = (bits << 6) | digit as u32;
+        count += 6;
+        if count >= 8 {
+            count -= 8;
+            out.push(((bits >> count) & 0xff) as u8);
+        }
+    }
+    (!out.is_empty()).then_some(out)
+}
+
+fn parse_host_port(value: &str) -> Result<(String, u16), String> {
+    if let Some(rest) = value.strip_prefix('[') {
+        let end = rest.find(']').ok_or_else(|| "IPv6 地址格式无效".to_string())?;
+        let host = rest[..end].to_string();
+        let port = rest[end + 1..]
+            .strip_prefix(':')
+            .ok_or_else(|| "节点端口缺失".to_string())?
+            .parse::<u16>()
+            .map_err(|_| "节点端口无效".to_string())?;
+        if host.is_empty() || port == 0 {
+            return Err("节点地址或端口无效".into());
+        }
+        return Ok((host, port));
+    }
+    let (host, raw_port) = value.rsplit_once(':').ok_or_else(|| "节点端口缺失".to_string())?;
+    let port = raw_port.parse::<u16>().map_err(|_| "节点端口无效".to_string())?;
+    if host.is_empty() || host.contains(':') || port == 0 {
+        return Err("节点地址或端口无效".into());
+    }
+    Ok((host.to_string(), port))
+}
+
+fn query_map(query: &str) -> HashMap<String, String> {
+    query.split('&').filter_map(|pair| {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        if key.is_empty() { None } else {
+            Some((percent_decode(key, true).to_ascii_lowercase(), percent_decode(value, true)))
+        }
+    }).collect()
+}
+
+fn uri_node(name: String, ptype: &str, host: String, port: u16, secret: String) -> ProxyNode {
+    ProxyNode {
+        name: if name.is_empty() { format!("{host}:{port}") } else { name },
+        ptype: ptype.into(),
+        server: host,
+        port,
+        group: String::new(),
+        delay_ms: -1,
+        secret,
+        cipher: "chacha20-ietf-poly1305".into(),
+        tls: false,
+        sni: String::new(),
+        transport: "tcp".into(),
+        security: String::new(),
+        flow: String::new(),
+        insecure: false,
+    }
+}
+
+fn json_value(json: &str, key: &str) -> Option<String> {
+    let needle = format!("\"{key}\"");
+    let tail = json.split_once(&needle)?.1.trim_start().strip_prefix(':')?.trim_start();
+    if let Some(quoted) = tail.strip_prefix('"') {
+        let mut value = String::new();
+        let mut chars = quoted.chars();
+        while let Some(ch) = chars.next() {
+            match ch {
+                '"' => return Some(value),
+                '\\' => match chars.next()? {
+                    '"' => value.push('"'),
+                    '\\' => value.push('\\'),
+                    '/' => value.push('/'),
+                    'b' => value.push('\u{0008}'),
+                    'f' => value.push('\u{000c}'),
+                    'n' => value.push('\n'),
+                    'r' => value.push('\r'),
+                    't' => value.push('\t'),
+                    'u' => {
+                        let hex: String = chars.by_ref().take(4).collect();
+                        let code = u16::from_str_radix(&hex, 16).ok()?;
+                        value.push(char::from_u32(code as u32)?);
+                    }
+                    _ => return None,
+                },
+                _ => value.push(ch),
+            }
+        }
+        return None;
+    }
+    let end = tail.find(|ch| ch == ',' || ch == '}' || ch == ']')?;
+    let value = tail[..end].trim();
+    (!value.is_empty() && value != "null").then(|| value.to_string())
+}
+
+fn parse_proxy_uri(input: &str) -> Result<Option<ProxyNode>, String> {
+    let Some((scheme, rest)) = input.split_once("://") else { return Ok(None) };
+    let scheme = scheme.to_ascii_lowercase();
+    if !matches!(scheme.as_str(), "ss" | "trojan" | "vless" | "vmess") {
+        return Ok(None);
+    }
+    let (without_name, raw_name) = rest.split_once('#').unwrap_or((rest, ""));
+    let name = percent_decode(raw_name, false);
+    let (authority, raw_query) = without_name.split_once('?').unwrap_or((without_name, ""));
+    let query = query_map(raw_query);
+    match scheme.as_str() {
+        "vmess" => {
+            let json = decode_base64(authority)
+                .and_then(|bytes| String::from_utf8(bytes).ok())
+                .ok_or_else(|| "VMess URI 编码无效".to_string())?;
+            let host = json_value(&json, "add").ok_or_else(|| "VMess URI 缺少服务器地址".to_string())?;
+            let port = json_value(&json, "port")
+                .and_then(|value| value.parse::<u16>().ok())
+                .filter(|port| *port > 0)
+                .ok_or_else(|| "VMess URI 端口无效".to_string())?;
+            let secret = json_value(&json, "id").unwrap_or_default();
+            let label = if name.is_empty() { json_value(&json, "ps").unwrap_or_default() } else { name };
+            let mut node = uri_node(label, "vmess", host, port, secret);
+            node.transport = json_value(&json, "net").unwrap_or_else(|| "tcp".into()).to_ascii_lowercase();
+            node.tls = json_value(&json, "tls").is_some_and(|value| value == "tls" || value == "1");
+            node.sni = json_value(&json, "sni").unwrap_or_default();
+            node.cipher = json_value(&json, "scy").unwrap_or_default();
+            Ok(Some(node))
+        }
+        "ss" => {
+            let (userinfo, host_port) = if let Some((user, host)) = authority.rsplit_once('@') {
+                (percent_decode(user, false), host.to_string())
+            } else {
+                let decoded = decode_base64(authority)
+                    .and_then(|bytes| String::from_utf8(bytes).ok())
+                    .ok_or_else(|| "Shadowsocks URI 编码无效".to_string())?;
+                let (user, host) = decoded.rsplit_once('@').ok_or_else(|| "Shadowsocks URI 缺少服务器地址".to_string())?;
+                (user.to_string(), host.to_string())
+            };
+            let userinfo = decode_base64(&userinfo)
+                .and_then(|bytes| String::from_utf8(bytes).ok())
+                .unwrap_or(userinfo);
+            let (cipher, secret) = userinfo.split_once(':').ok_or_else(|| "Shadowsocks URI 缺少加密方法或密码".to_string())?;
+            let (host, port) = parse_host_port(&host_port)?;
+            let mut node = uri_node(name, "ss", host, port, percent_decode(secret, false));
+            node.cipher = cipher.to_ascii_lowercase();
+            if query.get("plugin").is_some_and(|value| !value.is_empty()) {
+                node.transport = "plugin".into();
+            }
+            Ok(Some(node))
+        }
+        "trojan" | "vless" => {
+            let (user, host_port) = authority.rsplit_once('@').ok_or_else(|| "代理 URI 缺少凭据或服务器地址".to_string())?;
+            let (host, port) = parse_host_port(host_port)?;
+            let mut node = uri_node(name, &scheme, host, port, percent_decode(user, false));
+            let transport = query.get("type").cloned().unwrap_or_else(|| "tcp".into()).to_ascii_lowercase();
+            node.transport = transport;
+            node.sni = query.get("sni").or_else(|| query.get("peer")).cloned().unwrap_or_default();
+            node.flow = query.get("flow").cloned().unwrap_or_default();
+            node.insecure = query.get("allowinsecure").is_some_and(|value| parse_bool(value));
+            node.security = query.get("security").cloned().unwrap_or_default().to_ascii_lowercase();
+            node.tls = if scheme == "trojan" {
+                node.security != "none"
+            } else {
+                matches!(node.security.as_str(), "tls" | "reality")
+            };
+            Ok(Some(node))
+        }
+        _ => Ok(None),
+    }
+}
+
+fn decode_subscription(text: &str) -> String {
+    let trimmed = text.trim().trim_start_matches('\u{feff}');
+    if let Some(decoded) = decode_base64(trimmed).and_then(|bytes| String::from_utf8(bytes).ok()) {
+        if decoded.contains("proxies:") || decoded.lines().any(|line| line.contains("://")) {
+            return decoded;
+        }
+    }
+    trimmed.to_string()
+}
+
+pub fn parse_config(text: &str) -> Result<Vec<ProxyNode>, String> {
+    if text.trim().is_empty() {
+        return Err("配置内容为空".into());
+    }
+    if text.len() > 5 * 1024 * 1024 {
+        return Err("配置内容超过 5 MiB".into());
+    }
+    let decoded = decode_subscription(text);
+    let nodes = if decoded.lines().any(|line| line.trim_start().starts_with("proxies:")) {
+        parse_clash_proxies(&decoded)
+    } else {
+        let mut nodes = Vec::new();
+        for line in decoded.lines().map(str::trim).filter(|line| !line.is_empty() && !line.starts_with('#')) {
+            if let Some(node) = parse_proxy_uri(line)? {
+                nodes.push(node);
+            }
+        }
+        nodes
+    };
+    if nodes.is_empty() {
+        return Err("没有找到可识别的代理节点".into());
+    }
+    Ok(nodes)
+}
+
+/// 测试夹具：一份 Clash/Mihomo 风格配置，地址和凭据均为虚构，不作为可用订阅展示。
 pub const SAMPLE_CONFIG: &str = r#"
 proxies:
   - name: "HK · 专线 01"
     type: ss
     server: 103.45.12.7
     port: 8388
-    cipher: aes-256-gcm
+    cipher: chacha20-ietf-poly1305
     password: "sample-ss-pass-001"
   - name: "Tokyo · BGP 02"
     type: trojan
@@ -604,8 +926,8 @@ pub struct Core {
     rules: Mutex<Vec<Rule>>,
     /// 线上查询走的索引
     index: Mutex<RuleIndex>,
-    /// 从 Clash 风格配置解析出的代理节点（订阅解析，PoC-3 新增）
     nodes: Mutex<Vec<ProxyNode>>,
+    last_error: Mutex<String>,
     connections: Mutex<HashMap<u64, Connection>>,
     next_id: AtomicU64,
     loopback_bytes: AtomicU64,
@@ -620,6 +942,7 @@ impl Core {
             rules: Mutex::new(rules),
             index: Mutex::new(index),
             nodes: Mutex::new(Vec::new()),
+            last_error: Mutex::new(String::new()),
             connections: Mutex::new(HashMap::new()),
             next_id: AtomicU64::new(1),
             loopback_bytes: AtomicU64::new(0),
@@ -699,26 +1022,32 @@ impl Core {
         linear_match(self.rules.lock().unwrap().as_slice(), host)
     }
 
-    // ================= 订阅解析 / 代理节点（PoC-3） =================
-
-    /// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
+    /// Loads a test fixture for the native parser test hook.
     pub fn load_sample_config(&self) -> usize {
-        let mut nodes = parse_clash_proxies(SAMPLE_CONFIG);
-        // 确定性模拟延迟（非真实探测），用于验证按延迟着色逻辑。
-        for (i, n) in nodes.iter_mut().enumerate() {
-            n.delay_ms = ((i as i32 * 37) % 210 + 18) as i32;
-        }
-        let cnt = nodes.len();
-        *self.nodes.lock().unwrap() = nodes;
-        cnt
+        self.parse_text_config(SAMPLE_CONFIG).unwrap_or(0)
     }
 
-    /// 解析任意 Clash 风格配置文本，返回节点数。
-    pub fn parse_text_config(&self, text: &str) -> usize {
-        let nodes = parse_clash_proxies(text);
-        let cnt = nodes.len();
-        *self.nodes.lock().unwrap() = nodes;
-        cnt
+    pub fn parse_text_config(&self, text: &str) -> Result<usize, String> {
+        match parse_config(text) {
+            Ok(nodes) => {
+                let count = nodes.len();
+                *self.nodes.lock().unwrap() = nodes;
+                *self.last_error.lock().unwrap() = String::new();
+                Ok(count)
+            }
+            Err(error) => {
+                *self.last_error.lock().unwrap() = error.clone();
+                Err(error)
+            }
+        }
+    }
+
+    pub fn set_last_error(&self, error: String) {
+        *self.last_error.lock().unwrap() = error;
+    }
+
+    pub fn last_error(&self) -> String {
+        self.last_error.lock().unwrap().clone()
     }
 
     pub fn node_count(&self) -> usize {
@@ -741,6 +1070,26 @@ impl Core {
             .get(i)
             .map(|n| n.ptype.clone())
             .unwrap_or_default()
+    }
+
+    pub fn node_secret(&self, i: usize) -> String {
+        self.nodes.lock().unwrap().get(i).map(|n| n.secret.clone()).unwrap_or_default()
+    }
+
+    pub fn node_cipher(&self, i: usize) -> String {
+        self.nodes.lock().unwrap().get(i).map(|n| n.cipher.clone()).unwrap_or_default()
+    }
+
+    pub fn node_tls(&self, i: usize) -> bool {
+        self.nodes.lock().unwrap().get(i).is_some_and(|n| n.tls)
+    }
+
+    pub fn node_sni(&self, i: usize) -> String {
+        self.nodes.lock().unwrap().get(i).map(|n| n.sni.clone()).unwrap_or_default()
+    }
+
+    pub fn node_supported(&self, i: usize) -> bool {
+        self.nodes.lock().unwrap().get(i).is_some_and(ProxyNode::supported)
     }
 
     pub fn node_type_code(&self, i: usize) -> u8 {
@@ -976,14 +1325,60 @@ mod tests {
     fn parses_sample_config_node_count_and_fields() {
         let nodes = parse_clash_proxies(SAMPLE_CONFIG);
         assert_eq!(nodes.len(), 8);
-        // 第一个节点：HK · 专线 01 / ss / 103.45.12.7:8388
         assert_eq!(nodes[0].name, "HK · 专线 01");
         assert_eq!(nodes[0].ptype, "ss");
         assert_eq!(nodes[0].server, "103.45.12.7");
         assert_eq!(nodes[0].port, 8388);
-        // direct 节点 port 0
+        assert_eq!(nodes[0].secret, "sample-ss-pass-001");
+        assert!(nodes[0].supported());
         assert_eq!(nodes[7].ptype, "direct");
         assert_eq!(nodes[7].port, 0);
+    }
+
+    #[test]
+    fn parses_clash_credentials_and_tls_metadata() {
+        let text = "proxies:\n  - name: hk\n    type: ss\n    server: edge.example\n    port: 8388\n    cipher: chacha20-ietf-poly1305\n    password: secret\n  - name: tls\n    type: trojan\n    server: edge.example\n    port: 443\n    password: pass\n    sni: cdn.example\n  - name: uuid\n    type: vless\n    server: edge.example\n    port: 443\n    uuid: b831381d-6324-4d53-ad4f-8cda48b30811\n    tls: true\n";
+        let nodes = parse_config(text).unwrap();
+        assert_eq!(nodes.len(), 3);
+        assert!(nodes[0].supported());
+        assert_eq!(nodes[0].secret, "secret");
+        assert_eq!(nodes[1].sni, "cdn.example");
+        assert!(nodes[1].tls);
+        assert!(nodes[2].supported());
+        assert!(nodes[2].tls);
+
+        let unsupported = parse_config("proxies:\n  - name: missing-cipher\n    type: ss\n    server: edge.example\n    port: 8388\n    password: secret\n    plugin-opts:\n      headers:\n        - X-Test: value\n  - name: unknown-security\n    type: vless\n    server: edge.example\n    port: 443\n    uuid: b831381d-6324-4d53-ad4f-8cda48b30811\n    security: xtls\n").unwrap();
+        assert_eq!(unsupported.len(), 2);
+        assert!(!unsupported[0].supported());
+        assert!(!unsupported[1].supported());
+    }
+
+    #[test]
+    fn parses_supported_proxy_uri_schemes_and_subscription_base64() {
+        let text = "ss://chacha20-ietf-poly1305:secret@example.com:8388#HK\ntrojan://password@example.com:443?sni=edge.example.com#Tokyo\nvless://b831381d-6324-4d53-ad4f-8cda48b30811@example.com:443?security=tls&type=tcp&sni=cdn.example.com#US";
+        let nodes = parse_config(text).unwrap();
+        assert_eq!(nodes.len(), 3);
+        assert!(nodes[0].supported());
+        assert_eq!(nodes[0].secret, "secret");
+        assert!(nodes[1].supported());
+        assert_eq!(nodes[1].sni, "edge.example.com");
+        assert!(nodes[2].supported());
+        assert_eq!(nodes[2].secret, "b831381d-6324-4d53-ad4f-8cda48b30811");
+        let encoded = "ss://YWVzLTI1Ni1nY206cGFzcw==@example.com:8388#legacy";
+        let legacy = parse_config(encoded).unwrap();
+        assert_eq!(legacy[0].cipher, "aes-256-gcm");
+        assert_eq!(legacy[0].secret, "pass");
+        assert!(!legacy[0].supported());
+        let vmess = "vmess://eyJ2IjoiMiIsInBzIjoiSmFwYW4iLCJhZGQiOiJleGFtcGxlLmNvbSIsInBvcnQiOiI0NDMiLCJpZCI6ImI4MzEzODFkLTYzMjQtNGQ1My1hZDRmLThjZGE0OGIzMDgxMSIsIm5ldCI6InRjcCIsInRscyI6InRscyIsInNjeSI6ImF1dG8ifQ==";
+        let parsed = parse_config(vmess).unwrap();
+        assert_eq!(parsed[0].name, "Japan");
+        assert_eq!(parsed[0].server, "example.com");
+        assert_eq!(parsed[0].ptype, "vmess");
+        assert!(!parsed[0].supported());
+        let encoded_list = "dHJvamFuOi8vcGFzc3dvcmRAZXhhbXBsZS5jb206NDQzI1Rlc3QK";
+        let decoded_list = parse_config(encoded_list).unwrap();
+        assert_eq!(decoded_list[0].name, "Test");
+        assert_eq!(decoded_list[0].secret, "password");
     }
 
     #[test]

@@ -13,6 +13,7 @@ pub mod net;
 pub mod outbound;
 pub mod socks5;
 pub mod ss;
+pub mod subscription;
 pub mod tcpstack;
 pub mod udpstream;
 pub mod tun;
@@ -334,7 +335,7 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSessionBreakdown(
 
 // ---------------- 订阅解析 / 代理节点 / 路由决策（PoC-3） ----------------
 
-/// 载入内置示例订阅（Clash 风格），解析真实节点，返回节点数。
+/// Load the built-in parser test fixture; it is not used as an app default profile.
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLoadSampleConfig(
     _env: *mut JNIEnv,
@@ -343,7 +344,44 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLoadSampleConfig(
     core().load_sample_config() as jint
 }
 
-/// 已解析节点数（0 = 尚未载入配置，UI 回退演示数据）。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeParseConfig(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    text: *mut c_void,
+) -> jint {
+    let config = read_jstring(env, text);
+    core().parse_text_config(&config).map(|count| count as jint).unwrap_or(-1)
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeFetchSubscription(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    url: *mut c_void,
+) -> *mut c_void {
+    let url = read_jstring(env, url);
+    match net::runtime().block_on(subscription::fetch_url(&url)) {
+        Ok(text) => {
+            core().set_last_error(String::new());
+            new_jstring(env, &text)
+        }
+        Err(error) => {
+            core().set_last_error(error.to_string());
+            new_jstring(env, "")
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeLastError(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> *mut c_void {
+    new_jstring(env, &core().last_error())
+}
+
+/// 当前配置解析出的节点数。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeCount(
     _env: *mut JNIEnv,
@@ -368,6 +406,60 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeType(
     i: jint,
 ) -> jint {
     core().node_type_code(i.max(0) as usize) as jint
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeProtocol(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_type(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeSecret(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_secret(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeCipher(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_cipher(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeTls(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    if core().node_tls(i.max(0) as usize) { 1 } else { 0 }
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeSni(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> *mut c_void {
+    new_jstring(env, &core().node_sni(i.max(0) as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeNodeSupported(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+) -> jint {
+    if core().node_supported(i.max(0) as usize) { 1 } else { 0 }
 }
 
 #[no_mangle]
@@ -571,7 +663,7 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeProxyStats(
 }
 
 /// 打开 TUN 接管：Android `VpnService` 建立 tun 后将 fd 传给内核，内核在独立线程里
-/// 读取原始 IP 帧、解析并累计真实流量。返回 1=已开启 / 0=fd 无效。
+/// 读取原始 IP 帧、解析并累计真实流量。返回 1=已启动 / 0=fd 无效或线程启动失败。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     env: *mut JNIEnv,
@@ -590,9 +682,13 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     let server = read_jstring(env, ss_server);
     let pwd = read_jstring(env, password);
     let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
-    let stats = run_tun_blocking(fd as RawFd, cfg);
-    *tun_stats().lock().unwrap() = Some(stats);
-    1
+    match run_tun_blocking(fd as RawFd, cfg) {
+        Ok(stats) => {
+            *tun_stats().lock().unwrap() = Some(stats);
+            1
+        }
+        Err(_) => 0,
+    }
 }
 
 /// 关闭 TUN 接管（关闭 fd，读取线程自然退出）。返回 1=已关闭 / 0=本就未开启。
