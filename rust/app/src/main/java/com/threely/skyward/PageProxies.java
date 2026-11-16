@@ -165,7 +165,9 @@ public final class PageProxies {
                     Ui.toast(c, "该节点协议或传输方式尚不支持");
                     return;
                 }
-                if (s.connected || s.proxyRunning) Ui.toast(c, "已保存节点；当前通道需重连后应用");
+                if (s.connected || s.proxyRunning || s.tunMode) {
+                    Ui.toast(c, "已保存节点；当前通道需重连后应用");
+                }
                 refresh.run();
             }));
             if (i != n - 1) list.addView(Ui.separator(c));

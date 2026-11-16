@@ -27,7 +27,7 @@ use std::sync::OnceLock;
 use std::time::Instant;
 use std::sync::Mutex as StdMutex;
 use tokio::task::JoinHandle;
-use tun::{run_tun_blocking, TunStats};
+use tun::{run_tun_blocking, TunHandle};
 
 // JNI 原始类型别名（与 jni.h 一致）。
 #[allow(non_camel_case_types)]
@@ -585,9 +585,9 @@ fn proxy_task() -> &'static StdMutex<Option<JoinHandle<()>>> {
     PROXY_TASK.get_or_init(|| StdMutex::new(None))
 }
 
-/// TUN 真实流量统计句柄（VpnService 提供 fd 后由 `run_tun_blocking` 返回）。
-static TUN_STATS: OnceLock<StdMutex<Option<std::sync::Arc<StdMutex<TunStats>>>>> = OnceLock::new();
-fn tun_stats() -> &'static StdMutex<Option<std::sync::Arc<StdMutex<TunStats>>>> {
+/// TUN worker handle returned after `run_tun_blocking` clones the VpnService descriptor.
+static TUN_STATS: OnceLock<StdMutex<Option<TunHandle>>> = OnceLock::new();
+fn tun_stats() -> &'static StdMutex<Option<TunHandle>> {
     TUN_STATS.get_or_init(|| StdMutex::new(None))
 }
 
@@ -683,21 +683,22 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     let pwd = read_jstring(env, password);
     let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
     match run_tun_blocking(fd as RawFd, cfg) {
-        Ok(stats) => {
-            *tun_stats().lock().unwrap() = Some(stats);
+        Ok(handle) => {
+            *tun_stats().lock().unwrap() = Some(handle);
             1
         }
         Err(_) => 0,
     }
 }
 
-/// 关闭 TUN 接管（关闭 fd，读取线程自然退出）。返回 1=已关闭 / 0=本就未开启。
+/// 请求停止 TUN worker；轮询线程随后退出并关闭克隆 fd。返回 1=已请求停止 / 0=本就未开启。
 #[no_mangle]
 pub extern "C" fn Java_com_threely_skyward_RustCore_nativeCloseTun(
     _env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> jint {
-    if tun_stats().lock().unwrap().take().is_some() {
+    if let Some(handle) = tun_stats().lock().unwrap().take() {
+        handle.stop();
         1
     } else {
         0
@@ -710,8 +711,8 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeTunStats(
     env: *mut JNIEnv,
     _cls: jclassRef,
 ) -> *mut c_void {
-    if let Some(s) = tun_stats().lock().unwrap().as_ref() {
-        let s = s.lock().unwrap();
+    if let Some(handle) = tun_stats().lock().unwrap().as_ref() {
+        let s = handle.stats.lock().unwrap();
         new_jstring(
             env,
             &format!(

@@ -25,7 +25,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::net::Ipv4Addr;
-use std::os::fd::{BorrowedFd, RawFd};
+use std::os::fd::{AsRawFd, BorrowedFd, RawFd};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -109,6 +109,25 @@ pub struct TunStats {
     pub tx_bytes: u64,
 }
 
+type TunWriter = Arc<Mutex<Option<File>>>;
+
+pub struct TunHandle {
+    pub stats: Arc<Mutex<TunStats>>,
+    stop: Arc<AtomicBool>,
+}
+
+impl TunHandle {
+    pub fn stop(&self) {
+        self.stop.store(true, Ordering::Release);
+    }
+}
+
+impl Drop for TunHandle {
+    fn drop(&mut self) {
+        self.stop();
+    }
+}
+
 /// 一条活跃连接的上游句柄。
 struct Upstream {
     tx: UnboundedSender<Vec<u8>>,
@@ -123,24 +142,38 @@ static DNS_UDP_OK: AtomicBool = AtomicBool::new(true);
 /// DNS 走 UDP relay 时的等待上限：超过即判定 UDP 不可用并回退 TCP。
 const DNS_FALLBACK_WAIT: Duration = Duration::from_millis(1200);
 
+fn set_nonblocking(fd: RawFd) -> io::Result<()> {
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
+    if flags < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    if unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
+}
+
 /// 写一个完整的 IP 包回 TUN。
-fn write_tun(w: &Arc<Mutex<File>>, pkt: &[u8], stats: &Arc<Mutex<TunStats>>) {
-    let mut f = match w.lock() {
-        Ok(f) => f,
+fn write_tun(w: &TunWriter, pkt: &[u8], stats: &Arc<Mutex<TunStats>>) {
+    let mut guard = match w.lock() {
+        Ok(guard) => guard,
         Err(e) => e.into_inner(),
     };
-    if f.write_all(pkt).is_ok() {
-        if let Ok(mut s) = stats.lock() {
-            s.tx_bytes += pkt.len() as u64;
+    if let Some(file) = guard.as_mut() {
+        if file.write_all(pkt).is_ok() {
+            if let Ok(mut s) = stats.lock() {
+                s.tx_bytes += pkt.len() as u64;
+            }
         }
     }
 }
 
-/// 在独立 OS 线程里从 TUN fd 阻塞读取原始帧，驱动 TCP 栈与 DNS 转发，并把回程包写回设备。
-/// 返回统计句柄供 JNI 查询；fd 克隆或线程创建错误会同步返回，设备读写需真机验证。
-pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mutex<TunStats>>> {
+/// 在独立 OS 线程里读写 TUN；启动错误同步返回，stop 会通知读循环退出并释放句柄。
+pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandle> {
     let stats = Arc::new(Mutex::new(TunStats::default()));
     let s2 = stats.clone();
+    let stop = Arc::new(AtomicBool::new(false));
+    let worker_stop = stop.clone();
     let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel(1);
 
     std::thread::Builder::new()
@@ -161,10 +194,11 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mute
                 return;
             }
         };
-        let writer = Arc::new(Mutex::new(writer_file));
-        if ready_tx.send(Ok(())).is_err() {
+        if let Err(error) = set_nonblocking(writer_file.as_raw_fd()) {
+            let _ = ready_tx.send(Err(error));
             return;
         }
+        let writer = Arc::new(Mutex::new(Some(writer_file)));
         let stack = Arc::new(Mutex::new(TcpStack::new()));
         let ups: Arc<Mutex<HashMap<FlowKey, Upstream>>> = Arc::new(Mutex::new(HashMap::new()));
         let master = master_key(&cfg.password);
@@ -190,31 +224,76 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mute
             sink2,
         );
 
-        // 重传定时器：每 100ms 推一次栈内的超时段。
-        {
-            let stack = stack.clone();
-            let writer = writer.clone();
-            let stats = s2.clone();
-            std::thread::spawn(move || loop {
-                std::thread::sleep(Duration::from_millis(100));
-                let pkts = {
-                    let mut st = match stack.lock() {
-                        Ok(g) => g,
-                        Err(e) => e.into_inner(),
+        let timer_stop = worker_stop.clone();
+        let timer_stack = stack.clone();
+        let timer_writer = writer.clone();
+        let timer_stats = s2.clone();
+        let _timer = match std::thread::Builder::new()
+            .name("skyward-tun-timer".into())
+            .spawn(move || {
+                while !timer_stop.load(Ordering::Acquire) {
+                    std::thread::sleep(Duration::from_millis(100));
+                    if timer_stop.load(Ordering::Acquire) {
+                        break;
+                    }
+                    let pkts = {
+                        let mut st = match timer_stack.lock() {
+                            Ok(g) => g,
+                            Err(e) => e.into_inner(),
+                        };
+                        st.tick()
                     };
-                    st.tick()
-                };
-                for p in pkts {
-                    write_tun(&writer, &p, &stats);
+                    for pkt in pkts {
+                        write_tun(&timer_writer, &pkt, &timer_stats);
+                    }
                 }
-            });
+            })
+        {
+            Ok(timer) => timer,
+            Err(error) => {
+                let _ = ready_tx.send(Err(error));
+                return;
+            }
+        };
+        if ready_tx.send(Ok(())).is_err() {
+            worker_stop.store(true, Ordering::Release);
+            return;
         }
 
         let mut buf = vec![0u8; 65536];
         loop {
+            if worker_stop.load(Ordering::Acquire) {
+                break;
+            }
+            let mut pollfd = libc::pollfd {
+                fd: reader.as_raw_fd(),
+                events: libc::POLLIN,
+                revents: 0,
+            };
+            let ready = unsafe { libc::poll(&mut pollfd, 1, 100) };
+            if worker_stop.load(Ordering::Acquire) {
+                break;
+            }
+            if ready < 0 {
+                if io::Error::last_os_error().kind() == io::ErrorKind::Interrupted {
+                    continue;
+                }
+                break;
+            }
+            if ready == 0 {
+                continue;
+            }
+            if pollfd.revents & (libc::POLLERR | libc::POLLHUP | libc::POLLNVAL) != 0 {
+                break;
+            }
+            if pollfd.revents & libc::POLLIN == 0 {
+                continue;
+            }
             let n = match reader.read(&mut buf) {
-                Ok(0) => break, // EOF：VPN 断开
+                Ok(0) => break,
                 Ok(n) => n,
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                Err(error) if error.kind() == io::ErrorKind::WouldBlock => continue,
                 Err(_) => break,
             };
             let pkt = &buf[..n];
@@ -374,7 +453,13 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mute
             }
         }
 
-        // TUN 关闭：清掉所有上游句柄，让任务退出
+        worker_stop.store(true, Ordering::Release);
+        let mut writer_guard = match writer.lock() {
+            Ok(guard) => guard,
+            Err(error) => error.into_inner(),
+        };
+        writer_guard.take();
+        drop(writer_guard);
         {
             let mut m = match ups.lock() {
                 Ok(g) => g,
@@ -393,7 +478,7 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<Arc<Mute
         })?;
 
     match ready_rx.recv() {
-        Ok(Ok(())) => Ok(stats),
+        Ok(Ok(())) => Ok(TunHandle { stats, stop }),
         Ok(Err(error)) => Err(error),
         Err(_) => Err(io::Error::new(io::ErrorKind::Other, "TUN 线程在启动完成前退出")),
     }
@@ -408,7 +493,7 @@ async fn dns_over_tcp(
     client_port: u16,
     dns_ip: Ipv4Addr,
     query: &[u8],
-    writer: &Arc<Mutex<File>>,
+    writer: &TunWriter,
     stats: &Arc<Mutex<TunStats>>,
 ) {
     if let Ok(resp) = dnsrelay::resolve(cfg, &master, query).await {
@@ -424,7 +509,7 @@ fn handle_event(
     ev: Event,
     rt: &'static tokio::runtime::Runtime,
     stack: &Arc<Mutex<TcpStack>>,
-    writer: &Arc<Mutex<File>>,
+    writer: &TunWriter,
     ups: &Arc<Mutex<HashMap<FlowKey, Upstream>>>,
     cfg: &Arc<ProxyConfig>,
     master: &[u8; 32],
@@ -483,7 +568,7 @@ fn handle_event(
 fn reset_conn(
     key: FlowKey,
     stack: &Arc<Mutex<TcpStack>>,
-    writer: &Arc<Mutex<File>>,
+    writer: &TunWriter,
     stats: &Arc<Mutex<TunStats>>,
 ) {
     let pkts = {
@@ -505,7 +590,7 @@ async fn plain_upstream(
     mut rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
     alive: Arc<AtomicBool>,
     stack: Arc<Mutex<TcpStack>>,
-    writer: Arc<Mutex<File>>,
+    writer: TunWriter,
     stats: Arc<Mutex<TunStats>>,
 ) {
     use tokio::io::AsyncReadExt;
@@ -572,7 +657,7 @@ async fn upstream_task(
     cfg: Arc<ProxyConfig>,
     master: [u8; 32],
     stack: Arc<Mutex<TcpStack>>,
-    writer: Arc<Mutex<File>>,
+    writer: TunWriter,
     stats: Arc<Mutex<TunStats>>,
 ) {
     let target = SsTarget { host: key.dst.to_string(), port: key.dport };
@@ -673,6 +758,17 @@ async fn upstream_task(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stop_handle_signals_worker() {
+        let stop = Arc::new(AtomicBool::new(false));
+        let handle = TunHandle {
+            stats: Arc::new(Mutex::new(TunStats::default())),
+            stop: stop.clone(),
+        };
+        handle.stop();
+        assert!(stop.load(Ordering::Acquire));
+    }
 
     fn make_tcp(src: Ipv4Addr, dst: Ipv4Addr, sport: u16, dport: u16) -> Vec<u8> {
         let mut p = vec![0u8; 40];

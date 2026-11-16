@@ -259,14 +259,14 @@ public final class AppState {
     }
 
     public boolean activateProfile(String id) {
-        if (configBusy) return false;
+        if (configBusy || connected || proxyRunning || tunMode) return false;
         Profile profile = findProfile(id);
         return profile != null && activateParsedProfile(id, RustCore.nativeParseConfig(profile.content));
     }
 
     public boolean activateParsedProfile(String id, int count) {
         Profile profile = findProfile(id);
-        if (configBusy || profile == null || count <= 0) return false;
+        if (configBusy || connected || proxyRunning || tunMode || profile == null || count <= 0) return false;
         activeProfileId = profile.id;
         selectedNode = Math.max(0, Math.min(profile.selectedNode, count - 1));
         if (!applySelectedNode()) {
@@ -278,14 +278,14 @@ public final class AppState {
     }
 
     public boolean importProfile(String url, String content, String name) {
-        if (configBusy || content == null || content.trim().isEmpty()
+        if (configBusy || connected || proxyRunning || tunMode || content == null || content.trim().isEmpty()
                 || content.length() > 5 * 1024 * 1024) return false;
         return importProfileParsed(url, content, name, RustCore.nativeParseConfig(content));
     }
 
     public boolean importProfileParsed(String url, String content, String name, int count) {
-        if (configBusy || content == null || content.trim().isEmpty()
-                || content.length() > 5 * 1024 * 1024 || count <= 0) return false;
+        if (configBusy || connected || proxyRunning || tunMode || content == null
+                || content.trim().isEmpty() || content.length() > 5 * 1024 * 1024 || count <= 0) return false;
         Profile profile = null;
         if (url != null && !url.isEmpty()) {
             for (Profile item : profiles) {

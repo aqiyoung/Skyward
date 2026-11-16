@@ -58,6 +58,16 @@ public class MainActivity extends Activity {
             }
         } else {
             a.startService(new Intent(a, SkywardVpnService.class));
+            refreshAfterVpnCommand(a);
+        }
+    }
+
+    private static void refreshAfterVpnCommand(Context context) {
+        if (context instanceof MainActivity) {
+            MainActivity activity = (MainActivity) context;
+            activity.getWindow().getDecorView().postDelayed(() -> {
+                if (!activity.isFinishing()) activity.render();
+            }, 400);
         }
     }
 
@@ -68,8 +78,16 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int req, int res, android.content.Intent data) {
-        if (req == VPN_REQ && res == Activity.RESULT_OK) {
+        super.onActivityResult(req, res, data);
+        if (req != VPN_REQ) return;
+        if (res == Activity.RESULT_OK) {
             startService(new Intent(this, SkywardVpnService.class));
+            refreshAfterVpnCommand(this);
+        } else {
+            AppState state = AppState.get();
+            state.tunMode = false;
+            state.save();
+            render();
         }
     }
 

@@ -272,7 +272,6 @@ public final class PageHome {
                     return;
                 }
                 MainActivity.requestVpn(c);
-                AppState.get().tunMode = true;
             }
             AppState.get().save();
             refresh.run();
