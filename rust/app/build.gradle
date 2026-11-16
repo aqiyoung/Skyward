@@ -7,11 +7,13 @@ def vCode = (project.findProperty("verCode") ?: "24") as Integer
 def vName = (project.findProperty("verName") ?: "1.0.0.24-dev") as String
 
 android {
+    // Java/JNI namespace is shared with the Flutter client, but the standalone Rust APK
+    // gets its own install id so both apps can coexist on one device.
     namespace 'com.threely.skyward'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.threely.skyward"
+        applicationId "com.threely.skyward.rust"
         minSdk 26
         targetSdk 35
         versionCode vCode

@@ -20,7 +20,7 @@
         tools:targetApi="35">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.threely.skyward.MainActivity"
             android:configChanges="orientation|screenSize|uiMode"
             android:exported="true"
             android:launchMode="singleTop">
@@ -31,7 +31,7 @@
         </activity>
 
         <service
-            android:name=".SkywardVpnService"
+            android:name="com.threely.skyward.SkywardVpnService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE">

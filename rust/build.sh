@@ -46,10 +46,12 @@ CLANG=${ANDROID_CLANG:-$LLVM/aarch64-linux-android${API_LEVEL}-clang}
 LLVM_AR=$LLVM/llvm-ar
 NDK_NM=$LLVM/llvm-nm
 
-# 版本与产物名可由 CI 注入（默认跟随 rust/app/build.gradle）
+# 版本、独立安装包名与产物路径可由 CI 注入。
 VERSION_CODE=${VERSION_CODE:-24}
 VERSION_NAME=${VERSION_NAME:-1.0.0.24-dev}
-OUT_APK=${OUT_APK:-$DIST/Skyward-1.0.0.24-dev-arm64.apk}
+ANDROID_APPLICATION_ID=${ANDROID_APPLICATION_ID:-com.threely.skyward.rust}
+JAVA_NAMESPACE=com.threely.skyward
+OUT_APK=${OUT_APK:-$DIST/Skyward-Rust-${VERSION_NAME}-arm64.apk}
 LOG=$BUILD/build.log
 mkdir -p "$BUILD" "$DIST"
 : > "$LOG"
@@ -110,18 +112,20 @@ fi
 say "== 3. aapt2 编译 Manifest / 生成基础 APK =="
 # aapt2 link 的 --version-code/--version-name 不会覆盖 manifest 里已硬编码的值，
 # 所以先生成一份把版本号替换掉的临时 manifest，再交给 link。
-python3 - "$AND/AndroidManifest.xml" "$BUILD/AndroidManifest.xml" "$VERSION_CODE" "$VERSION_NAME" <<'PY'
+python3 - "$AND/AndroidManifest.xml" "$BUILD/AndroidManifest.xml" "$VERSION_CODE" "$VERSION_NAME" "$ANDROID_APPLICATION_ID" <<'PY'
 import sys, re, html
-src, dst, code, name = sys.argv[1:5]
+src, dst, code, name, package = sys.argv[1:6]
 s = open(src, encoding="utf-8").read()
-# AGP 用 namespace 而非 manifest 的 package 属性；aapt2 link 仍强制要求 package，这里补回。
+# The Rust APK has a distinct install id; keep Java/JNI classes under the shared namespace.
 if "package=" not in s.split(">")[0]:
-    s = s.replace("<manifest ", '<manifest package="com.threely.skyward" ', 1)
+    s = s.replace("<manifest ", f'<manifest package="{package}" ', 1)
+else:
+    s = re.sub(r'\bpackage="[^"]*"', f'package="{package}"', s, count=1)
 s = re.sub(r'android:versionCode="\d+"', f'android:versionCode="{int(code)}"', s)
 s = re.sub(r'android:versionName="[^"]*"',
            f'android:versionName="{html.escape(name, quote=True)}"', s)
 open(dst, "w", encoding="utf-8").write(s)
-print(f"injected versionCode={code} versionName={name}")
+print(f"injected applicationId={package} versionCode={code} versionName={name}")
 PY
 # 编译全部 res（mipmap 图标 / adaptive icon xml / values），逐个 .flat 交给 link。
 # 旧版只 compile 不 link，导致 resources.arsc 为空、Manifest 引用不到图标。
@@ -133,6 +137,7 @@ say "compiled resources: $(echo "$FLATS" | wc -l) flat files"
 rm -rf "$BUILD/rgen"
 "$BT/aapt2" link -o "$BUILD/base.apk" \
   --java "$BUILD/rgen" \
+  --custom-package "$JAVA_NAMESPACE" \
   -I "$ANDROID_JAR" \
   --manifest "$BUILD/AndroidManifest.xml" \
   --min-sdk-version "$API_LEVEL" --target-sdk-version "$TARGET_SDK" \

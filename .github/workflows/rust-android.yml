@@ -92,9 +92,15 @@ jobs:
       - name: Verify APK
         working-directory: rust
         run: |
-          APK=$(ls dist/*.apk | head -1)
+          APK=$(find dist -maxdepth 1 -type f -name 'Skyward-Rust-*.apk' | head -1)
+          [ -n "$APK" ] || { echo "Rust APK not found"; exit 1; }
           echo "APK = $APK"
-          "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" dump badging "$APK" | head -6
+          BADGING=$("$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" dump badging "$APK")
+          printf '%s\n' "$BADGING" | head -6
+          if ! printf '%s\n' "$BADGING" | grep -Fq "package: name='com.threely.skyward.rust'"; then
+            echo "Unexpected application id; expected com.threely.skyward.rust"
+            exit 1
+          fi
           "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --verbose "$APK" | head -12
           echo "--- arm64 native + dex ---"
           unzip -l "$APK" | grep -E "lib/arm64-v8a/libskyward_core.so|classes.dex"
