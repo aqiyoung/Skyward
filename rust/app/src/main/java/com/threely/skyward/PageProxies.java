@@ -199,7 +199,7 @@ public final class PageProxies {
                             s.ssPassword, s.outProtocol, s.outTls, s.outSni);
                     if (started == 0) throw new IllegalStateException("参数无效");
                     s.proxyRunning = true;
-                    MainActivity.requestVpn(c);
+                    MainActivity.requestVpn(c, true);
                     Ui.toast(c, "SOCKS5:" + s.socksPort + " → " + protoLabel(s.outProtocol)
                             + " " + s.ssServer + ":" + s.ssPort);
                 } catch (Throwable t) {

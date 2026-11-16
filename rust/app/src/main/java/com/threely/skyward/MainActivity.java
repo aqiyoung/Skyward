@@ -44,19 +44,34 @@ public class MainActivity extends Activity {
     private final FrameLayout[] tabChips = new FrameLayout[5];
     private final IconView[] tabIcons = new IconView[5];
 
+    private static final String STATE_PROXY_VPN_REQUEST = "proxy_vpn_request";
+    private boolean stopProxyIfVpnDenied;
+
     public static final int VPN_REQ = 9001;
 
     /** 请求 VPN 权限并启动系统流量接管（VpnService）。首次需用户授权。
      *  接受 Context（调用方多为页面里的 Context，运行时即 Activity）。 */
     public static void requestVpn(Context a) {
+        requestVpn(a, false);
+    }
+
+    /** 由代理入口开关发起的请求，在授权拒绝时回滚刚启动的本地代理。 */
+    public static void requestVpn(Context a, boolean proxyEntryStarted) {
         Intent intent = VpnService.prepare(a);
         if (intent != null) {
             if (a instanceof Activity) {
-                ((Activity) a).startActivityForResult(intent, VPN_REQ);
+                Activity activity = (Activity) a;
+                if (activity instanceof MainActivity) {
+                    ((MainActivity) activity).stopProxyIfVpnDenied = proxyEntryStarted;
+                }
+                activity.startActivityForResult(intent, VPN_REQ);
             } else {
                 a.startActivity(intent);
             }
         } else {
+            if (a instanceof MainActivity) {
+                ((MainActivity) a).stopProxyIfVpnDenied = false;
+            }
             a.startService(new Intent(a, SkywardVpnService.class));
             refreshAfterVpnCommand(a);
         }
@@ -80,11 +95,17 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int req, int res, android.content.Intent data) {
         super.onActivityResult(req, res, data);
         if (req != VPN_REQ) return;
+        boolean rollbackProxy = stopProxyIfVpnDenied;
+        stopProxyIfVpnDenied = false;
         if (res == Activity.RESULT_OK) {
             startService(new Intent(this, SkywardVpnService.class));
             refreshAfterVpnCommand(this);
         } else {
             AppState state = AppState.get();
+            if (rollbackProxy) {
+                try { RustCore.nativeStopProxy(); } catch (Throwable ignored) {}
+                state.proxyRunning = false;
+            }
             state.tunMode = false;
             state.save();
             render();
@@ -92,8 +113,17 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(STATE_PROXY_VPN_REQUEST, stopProxyIfVpnDenied);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            stopProxyIfVpnDenied = savedInstanceState.getBoolean(STATE_PROXY_VPN_REQUEST);
+        }
 
         // 浅色状态栏 + 深色图标，避免内容顶到状态栏
         Window w = getWindow();
