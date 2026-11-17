@@ -48,7 +48,7 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
   }
 
-  testWidgets('the resting phone board cannot be scrolled by a swipe', (
+  testWidgets('the phone cards keep their scroll end while scrolling', (
     tester,
   ) async {
     final position = await pumpDashboard(
@@ -56,18 +56,23 @@ void main() {
       const Size(412, 700),
       SupportPlatform.Android,
     );
+    final end = position.maxScrollExtent;
+    expect(end, greaterThan(0));
 
-    // The resting board is a fixed home screen: a pile turns its cards only
-    // after the hold confirms. There is no free page scroll to compete with
-    // it, so a swipe that begins off any pile leaves the page where it is.
+    // Start over the single hero card. A pile now claims the vertical drag on
+    // itself to turn its cards, so a drag that begins on a pile cannot scroll
+    // the board at all; the scroll-end check needs a place where the page can
+    // actually move. Starting on the one card that is not a pile keeps this
+    // about the scroll end, not about which gesture won the arena.
     final gesture = await tester.startGesture(const Offset(200, 150));
-    for (var step = 0; step < 8; step++) {
+    while (position.pixels < end) {
       await gesture.moveBy(const Offset(0, -40));
       await tester.pump(const Duration(milliseconds: 16));
+      expect(position.maxScrollExtent, end);
     }
     await gesture.up();
-    await tester.pumpAndSettle();
-    expect(position.pixels, 0);
+    await tester.pump(const Duration(seconds: 2));
+    expect(position.pixels, end);
 
     await teardown(tester);
   });
