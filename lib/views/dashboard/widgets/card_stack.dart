@@ -42,6 +42,9 @@ const _flick = 620.0;
 /// pile; this short hold is the decision, and it is what locks the board.
 const _holdConfirm = Duration(milliseconds: 120);
 
+/// How long a switched pile holds its new card open before folding back.
+const _switchRest = Duration(milliseconds: 400);
+
 /// A move bigger than this before the hold is confirmed means the finger was
 /// scrolling past, not switching. It stays below Flutter's touch slop (18) so
 /// the decision is always made before the board's drag recognizer claims the
@@ -99,6 +102,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   /// The confirm timer and the arena seat for the press currently in flight.
   Timer? _armTimer;
+  Timer? _restTimer;
   _PileClaim? _claim;
 
   /// The pointer that started the press, so a second finger cannot steer it.
@@ -132,6 +136,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   @override
   void dispose() {
     _cancelTimer();
+    _restTimer?.cancel();
     _turn.dispose();
     _open.dispose();
     super.dispose();
@@ -157,6 +162,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       return;
     }
     _cancelTimer();
+    _restTimer?.cancel();
     _pointer = event.pointer;
     _downY = event.position.dy;
     _lastY = event.position.dy;
@@ -237,6 +243,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   /// is left open or half turned.
   void _snapShut() {
     _cancelTimer();
+    _restTimer?.cancel();
     if (_settled) {
       return;
     }
@@ -281,8 +288,8 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _turn.value = turn;
   }
 
-  /// The finger came up. Whoever classified the press, lifting it folds the
-  /// pile back; a real turn settles to the nearer card before it does.
+  /// The finger came up. A tap folds at once; a switch holds its result open
+  /// briefly before folding back.
   void _settle(double velocityY) {
     if (_settled) {
       return;
@@ -291,10 +298,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _held = false;
     _armed = false;
     _boardScroll = false;
-    _open.reverse();
     final dragging = _dragging;
     setState(() => _dragging = false);
     if (!dragging) {
+      _open.reverse();
       return;
     }
     // A flick turns the page even when it never travelled far; otherwise the
@@ -321,6 +328,15 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             _index = (_index + target.toInt() + _count) % _count;
             _turn.value = 0;
           });
+          if (target == 0 || _held) {
+            _open.reverse();
+          } else {
+            _restTimer = Timer(_switchRest, () {
+              if (mounted) {
+                _open.reverse();
+              }
+            });
+          }
         });
   }
 
