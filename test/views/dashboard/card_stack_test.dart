@@ -278,6 +278,37 @@ void main() {
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
+  testWidgets('a switch holds the new card open before folding back', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+    ]);
+    final openLayers = find.byWidgetPredicate(
+      (w) => w is Opacity && w.opacity > 0,
+    );
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump(const Duration(milliseconds: 160));
+    final dy = topHeight(tester) * -0.6;
+    for (var step = 0; step < 8; step++) {
+      await gesture.moveBy(Offset(0, dy / 8));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+
+    await tester.pump(const Duration(milliseconds: 260));
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+    expect(openLayers, findsWidgets, reason: 'held open after the switch');
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(openLayers, findsNothing);
+  });
+
   testWidgets('the pile turns all the way round: every card comes back', (
     tester,
   ) async {
