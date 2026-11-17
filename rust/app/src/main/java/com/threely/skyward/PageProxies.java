@@ -160,7 +160,7 @@ public final class PageProxies {
                 lat.setTypeface(Typeface.DEFAULT_BOLD);
                 trailing = lat;
             }
-            list.addView(Ui.row(c, IconView.Glyph.GLOBE, tint, name, addr, trailing, v -> {
+            LinearLayout nodeRow = Ui.row(c, IconView.Glyph.GLOBE, tint, name, addr, trailing, v -> {
                 if (!s.selectNode(idx)) {
                     Ui.toast(c, "该节点协议或传输方式尚不支持");
                     return;
@@ -169,7 +169,27 @@ public final class PageProxies {
                     Ui.toast(c, "已保存节点；当前通道需重连后应用");
                 }
                 refresh.run();
-            }));
+            });
+            if (supported && typeCode != 13) {
+                final String nodeName = name;
+                nodeRow.setOnLongClickListener(v -> {
+                    Ui.toast(c, "测速 " + nodeName + " …");
+                    final Handler main = new Handler(Looper.getMainLooper());
+                    new Thread(() -> {
+                        int d;
+                        try { d = RustCore.nativeTestNodeDelay(idx, 3000); }
+                        catch (Throwable t) { d = -1; }
+                        final int got = d;
+                        main.post(() -> {
+                            Ui.toast(c, got >= 0 ? nodeName + "：" + got + " ms"
+                                    : nodeName + "：超时或不可达");
+                            refresh.run();
+                        });
+                    }, "sky-delay-one").start();
+                    return true;
+                });
+            }
+            list.addView(nodeRow);
             if (i != n - 1) list.addView(Ui.separator(c));
         }
         body.addView(list);
@@ -291,8 +311,8 @@ public final class PageProxies {
         routeTest.addView(btnWrap);
         body.addView(routeTest);
 
-        body.addView(note(c, "节点凭据直接来自 Rust 解析的当前配置；未测延迟显示为“未测”。"
-                + "路由规则测试调用 Rust 索引引擎。"));
+        body.addView(note(c, "节点凭据直接来自 Rust 解析的当前配置；未测延迟显示为“未测”，"
+                + "长按节点可单独实测。路由规则测试调用 Rust 索引引擎。"));
         return page(c, body);
     }
 

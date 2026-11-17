@@ -130,7 +130,13 @@ async fn handle_conn(mut conn: TcpStream, cfg: &ProxyConfig) -> io::Result<()> {
     let port = u16::from_be_bytes(port_b);
 
     // 3) 路由决策：REJECT 直接回「规则不允许」并断开；DIRECT 旁路代理。
-    let action = crate::engine::shared().route_noted(&host);
+    // IP 直连目标先经 DNS 反查表换回域名，让 DOMAIN* 规则也能命中。
+    let route_host = host
+        .parse::<Ipv4Addr>()
+        .ok()
+        .and_then(crate::dnsrelay::lookup_domain)
+        .unwrap_or_else(|| host.clone());
+    let action = crate::engine::shared().route_noted(&route_host);
     if action == ACTION_REJECT {
         conn.write_all(&[0x05, 0x02, 0x00, 0x01, 0, 0, 0, 0, 0, 0]).await?;
         return Ok(());
@@ -221,6 +227,39 @@ mod tests {
         let mut rep = [0u8; 10];
         s.read_exact(&mut rep).await.unwrap();
         assert_eq!(rep[1], 0x02, "REJECT 应回 connection not allowed");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn socks5_routes_ip_target_via_reverse_dns() {
+        // 登记 203.0.113.9 ← tracker-ip.example 的 A 应答；关键词 tracker → REJECT
+        let mut resp = vec![0x00u8, 0x01, 0x81, 0x80, 0, 1, 0, 1, 0, 0, 0, 0];
+        for label in ["tracker-ip", "example"] {
+            resp.push(label.len() as u8);
+            resp.extend_from_slice(label.as_bytes());
+        }
+        resp.push(0);
+        resp.extend_from_slice(&[0, 1, 0, 1]);
+        resp.extend_from_slice(&[0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 203, 0, 113, 9]);
+        crate::dnsrelay::record_dns_answers(&resp);
+
+        let cfg = Arc::new(ProxyConfig::new("127.0.0.1", 1, "unused"));
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = l.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            let (conn, _) = l.accept().await.unwrap();
+            let _ = handle_conn(conn, &cfg).await;
+        });
+
+        let mut s = ClientStream::connect(("127.0.0.1", port)).await.unwrap();
+        s.write_all(&[0x05, 0x01, 0x00]).await.unwrap();
+        let mut m = [0u8; 2];
+        s.read_exact(&mut m).await.unwrap();
+        let mut req = vec![0x05u8, 0x01, 0x00, 0x01, 203, 0, 113, 9];
+        req.extend_from_slice(&443u16.to_be_bytes());
+        s.write_all(&req).await.unwrap();
+        let mut rep = [0u8; 10];
+        s.read_exact(&mut rep).await.unwrap();
+        assert_eq!(rep[1], 0x02, "IP 目标应经反查表命中域名规则被拒");
     }
 
     #[tokio::test(flavor = "multi_thread")]
