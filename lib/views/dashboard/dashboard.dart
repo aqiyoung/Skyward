@@ -356,6 +356,10 @@ class _MobileDashboard extends ConsumerWidget {
     final top = largeTitle ? 0.0 : MediaQuery.paddingOf(context).top + 4;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
+      // The resting board is a fixed home screen: a pile owns every up-down
+      // gesture after its hold confirms, so there is no free page scroll to
+      // compete with it. Editing still scrolls to reach and reorder cards.
+      physics: editing ? null : const NeverScrollableScrollPhysics(),
       // A viewport per card lays them all out and holds the scroll end still.
       scrollCacheExtent: editing
           ? ScrollCacheExtent.viewport(DashboardWidget.values.length.toDouble())
