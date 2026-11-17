@@ -14,7 +14,8 @@ void main() {
   late ProviderContainer container;
   final keys = <DashboardWidget, GlobalKey>{};
 
-  GlobalKey keyOf(DashboardWidget card) => keys.putIfAbsent(card, GlobalKey.new);
+  GlobalKey keyOf(DashboardWidget card) =>
+      keys.putIfAbsent(card, GlobalKey.new);
 
   setUp(() {
     container = ProviderContainer(
@@ -109,21 +110,16 @@ void main() {
       tester.getSize(find.byType(CardStack)).height;
 
   Offset cardTapPoint(WidgetTester tester, DashboardWidget card) {
-    final text = find.descendant(
-      of: find.byKey(keyOf(card)),
-      matching: find.byType(Text),
-    ).first;
+    final text = find
+        .descendant(of: find.byKey(keyOf(card)), matching: find.byType(Text))
+        .first;
     return tester.getCenter(text);
   }
 
   double peek(WidgetTester tester, DashboardWidget behind) =>
       bottomOf(tester, behind) - bottomOf(tester, DashboardWidget.memoryInfo);
 
-  Future<void> dragFrom(
-    WidgetTester tester,
-    Offset start,
-    double dy,
-  ) async {
+  Future<void> dragFrom(WidgetTester tester, Offset start, double dy) async {
     final gesture = await tester.startGesture(start);
     await tester.pump();
     const steps = 8;
@@ -192,31 +188,26 @@ void main() {
     );
   });
 
-  testWidgets('a tap switches to the next card without opening the pile', (
-    tester,
-  ) async {
-    await pumpPile(tester, const [
-      DashboardWidget.memoryInfo,
-      DashboardWidget.networkControl,
-    ]);
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
-    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
+  testWidgets(
+    'a tap opens the visible card detail without switching the pile',
+    (tester) async {
+      await pumpPile(tester, const [
+        DashboardWidget.memoryInfo,
+        DashboardWidget.networkControl,
+      ]);
+      expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+      expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
 
-    final gesture = await tester.startGesture(
-      cardTapPoint(tester, DashboardWidget.memoryInfo),
-    );
-    await tester.pump();
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
-    expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
+      await tester.tapAt(cardTapPoint(tester, DashboardWidget.memoryInfo));
+      await tester.pumpAndSettle();
 
-    await gesture.up();
-    await tester.pumpAndSettle();
+      expect(find.byType(MemoryDetailSheet), findsOneWidget);
+      expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+      expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
+    },
+  );
 
-    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
-    expect(peek(tester, DashboardWidget.memoryInfo), closeTo(0, 1.0));
-  });
-
-  testWidgets('a tap on a control inside the top card switches the pile', (
+  testWidgets('a tap on a control inside the top card leaves the pile alone', (
     tester,
   ) async {
     await pumpPile(tester, const [
@@ -232,10 +223,10 @@ void main() {
     await tester.tapAt(tester.getCenter(control));
     await tester.pumpAndSettle();
 
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
-  testWidgets('repeated taps cycle through every card and wrap around', (
+  testWidgets('repeated swipes cycle through every card and wrap around', (
     tester,
   ) async {
     await pumpPile(tester, const [
@@ -244,16 +235,13 @@ void main() {
       DashboardWidget.proxyGroups,
     ]);
 
-    var current = DashboardWidget.memoryInfo;
     for (final card in const [
       DashboardWidget.networkControl,
       DashboardWidget.proxyGroups,
       DashboardWidget.memoryInfo,
     ]) {
-      await tester.tapAt(cardTapPoint(tester, current));
-      await tester.pumpAndSettle();
+      await swipe(tester, -0.6);
       expect(topOf(tester, card), pileTop(tester), reason: 'selected $card');
-      current = card;
     }
   });
 
@@ -362,7 +350,7 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
-  testWidgets('a tap switches the pile inside the scrolling board', (
+  testWidgets('a tap opens the card detail inside the scrolling board', (
     tester,
   ) async {
     final scroll = ScrollController();
@@ -372,11 +360,12 @@ void main() {
     await tester.tapAt(tester.getCenter(find.byType(CardStack)));
     await tester.pumpAndSettle();
 
+    expect(find.byType(MemoryDetailSheet), findsOneWidget);
     expect(scroll.offset, 0);
-    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
+    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
-  testWidgets('a tap on a control switches the pile inside the board', (
+  testWidgets('a tap on a control leaves the pile in place inside the board', (
     tester,
   ) async {
     final scroll = ScrollController();
@@ -384,10 +373,7 @@ void main() {
     await pumpScrollablePile(
       tester,
       scroll,
-      cards: const [
-        DashboardWidget.networkControl,
-        DashboardWidget.memoryInfo,
-      ],
+      cards: const [DashboardWidget.networkControl, DashboardWidget.memoryInfo],
     );
 
     final control = find
@@ -400,7 +386,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scroll.offset, 0);
-    expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
   testWidgets('flipping holds the dock until the hold-scroll takes over', (
@@ -411,12 +397,17 @@ void main() {
     addTearDown(scroll.dispose);
     await pumpScrollablePile(tester, scroll, dockHold: hold);
 
-    final tap = await tester.startGesture(
+    final flip = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
     await tester.pump();
     expect(hold.held, isTrue, reason: 'the pile owns the finger');
-    await tap.up();
+    final flipDistance = topHeight(tester) * -0.6;
+    for (var step = 0; step < 8; step++) {
+      await flip.moveBy(Offset(0, flipDistance / 8));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await flip.up();
     await tester.pumpAndSettle();
     expect(hold.held, isFalse);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
@@ -436,9 +427,7 @@ void main() {
     expect(hold.held, isFalse);
   });
 
-  testWidgets('the board can still scroll from outside a pile', (
-    tester,
-  ) async {
+  testWidgets('the board can still scroll from outside a pile', (tester) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
     await pumpScrollablePile(tester, scroll);

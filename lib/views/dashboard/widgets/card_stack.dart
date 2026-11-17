@@ -24,7 +24,7 @@ const _pageScrollDelay = Duration(milliseconds: 350);
 
 enum _Phase { idle, pressing, turning, pageScrolling }
 
-/// Tap or swipe to switch cards; hold before dragging to scroll the page.
+/// Swipe to switch cards, tap to open the visible card's own action; hold to scroll the page.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
@@ -207,17 +207,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _phase = _Phase.idle;
   }
 
-  void _tap() {
+  void _finishPress() {
     _cancelPageScrollTimer();
-    if (_phase != _Phase.pressing || _count < 2) {
+    if (_phase != _Phase.pressing) {
       return;
     }
     _phase = _Phase.idle;
-    _turn.stop();
-    setState(() {
-      _index = (_index + 1) % _count;
-      _turn.value = 0;
-    });
   }
 
   void _snapShut() {
@@ -234,8 +229,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 
   void _drag(double dy) {
-    if ((_phase != _Phase.pressing && _phase != _Phase.turning) ||
-        _count < 2) {
+    if ((_phase != _Phase.pressing && _phase != _Phase.turning) || _count < 2) {
       return;
     }
     _phase = _Phase.turning;
@@ -344,132 +338,127 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         ),
       );
     }
-    return DashboardCardStackScope(
-      child: ClipRect(
-        clipper: _PileClipper(
-          over: turn < 0 ? peek : 0,
-          aside: 14 * visual,
-          spill: spill,
-        ),
-        child: Listener(
+    return ClipRect(
+      clipper: _PileClipper(
+        over: turn < 0 ? peek : 0,
+        aside: 14 * visual,
+        spill: spill,
+      ),
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _press,
+        onPointerMove: (event) {
+          _velocity?.addPosition(event.timeStamp, event.position);
+          if (_phase == _Phase.pageScrolling) {
+            _scrollPage(event.position.dy - _pressY, event.position);
+            return;
+          }
+          if (_phase != _Phase.pressing && _phase != _Phase.turning) {
+            return;
+          }
+          if ((event.position - _pressPosition).distance > kTouchSlop) {
+            _cancelPageScrollTimer();
+            _drag(event.position.dy - _pressY);
+          }
+          _pinPage();
+        },
+        onPointerUp: (event) {
+          _velocity?.addPosition(event.timeStamp, event.position);
+          _releaseDockHold();
+          _cancelPageScrollTimer();
+          switch (_phase) {
+            case _Phase.pageScrolling:
+              _endPageScroll();
+            case _Phase.turning:
+              _pinPage();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _phase == _Phase.idle) {
+                  _pinPage();
+                }
+              });
+              _settle(_velocity?.getVelocity().pixelsPerSecond.dy ?? 0);
+            case _Phase.pressing:
+              _finishPress();
+            case _Phase.idle:
+              break;
+          }
+        },
+        onPointerCancel: (_) {
+          _releaseDockHold();
+          _cancelPageScrollTimer();
+          _snapShut();
+        },
+        child: RawGestureDetector(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: _press,
-          onPointerMove: (event) {
-            _velocity?.addPosition(event.timeStamp, event.position);
-            if (_phase == _Phase.pageScrolling) {
-              _scrollPage(event.position.dy - _pressY, event.position);
-              return;
-            }
-            if (_phase != _Phase.pressing && _phase != _Phase.turning) {
-              return;
-            }
-            if ((event.position - _pressPosition).distance > kTouchSlop) {
-              _cancelPageScrollTimer();
-              _drag(event.position.dy - _pressY);
-            }
-            _pinPage();
+          gestures: <Type, GestureRecognizerFactory>{
+            LongPressGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  LongPressGestureRecognizer
+                >(
+                  () => LongPressGestureRecognizer(duration: _pageScrollDelay),
+                  (instance) {
+                    instance.onLongPressStart = (_) => _beginPageScroll();
+                    instance.onLongPressEnd = (_) => _endPageScroll();
+                  },
+                ),
+            VerticalDragGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  VerticalDragGestureRecognizer
+                >(VerticalDragGestureRecognizer.new, (instance) {
+                  instance.onStart = (details) {
+                    _drag(details.globalPosition.dy - _pressY);
+                  };
+                  instance.onUpdate = (details) {
+                    _drag(details.globalPosition.dy - _pressY);
+                  };
+                  instance.onEnd = (details) {
+                    if (_phase == _Phase.pageScrolling) {
+                      _endPageScroll();
+                    } else {
+                      _settle(details.velocity.pixelsPerSecond.dy);
+                    }
+                  };
+                }),
           },
-          onPointerUp: (event) {
-            _velocity?.addPosition(event.timeStamp, event.position);
-            _releaseDockHold();
-            _cancelPageScrollTimer();
-            switch (_phase) {
-              case _Phase.pageScrolling:
-                _endPageScroll();
-              case _Phase.turning:
-                _pinPage();
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted && _phase == _Phase.idle) {
-                    _pinPage();
-                  }
-                });
-                _settle(_velocity?.getVelocity().pixelsPerSecond.dy ?? 0);
-              case _Phase.pressing:
-                _tap();
-              case _Phase.idle:
-                break;
-            }
-          },
-          onPointerCancel: (_) {
-            _releaseDockHold();
-            _cancelPageScrollTimer();
-            _snapShut();
-          },
-          child: RawGestureDetector(
-            behavior: HitTestBehavior.opaque,
-            gestures: <Type, GestureRecognizerFactory>{
-              LongPressGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<
-                    LongPressGestureRecognizer
-                  >(
-                    () => LongPressGestureRecognizer(duration: _pageScrollDelay),
-                    (instance) {
-                      instance.onLongPressStart = (_) => _beginPageScroll();
-                      instance.onLongPressEnd = (_) => _endPageScroll();
-                    },
-                  ),
-              VerticalDragGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<
-                    VerticalDragGestureRecognizer
-                  >(
-                    VerticalDragGestureRecognizer.new,
-                    (instance) {
-                      instance.onStart = (details) {
-                        _drag(details.globalPosition.dy - _pressY);
-                      };
-                      instance.onUpdate = (details) {
-                        _drag(details.globalPosition.dy - _pressY);
-                      };
-                      instance.onEnd = (details) {
-                        if (_phase == _Phase.pageScrolling) {
-                          _endPageScroll();
-                        } else {
-                          _settle(details.velocity.pixelsPerSecond.dy);
-                        }
-                      };
-                    },
-                  ),
-            },
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ...layers,
-                RepaintBoundary(
-                  key: _surface,
-                  child: Transform.translate(
-                    offset: Offset(0, -6 * visual),
-                    child: Transform.scale(
-                      alignment: Alignment.topCenter,
-                      scale: 1 - _pressedScale * visual,
-                      child: FractionalTranslation(
-                        translation: Offset(0, -travel),
-                        child: _cast(
-                          RepaintBoundary(
-                            key: widget.cardKeyOf(top),
-                            // In a pile the card only turns it; its own
-                            // controls must not fire or win the arena.
-                            child: IgnorePointer(child: top.card),
-                          ),
-                          visual,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ...layers,
+              RepaintBoundary(
+                key: _surface,
+                child: Transform.translate(
+                  offset: Offset(0, -6 * visual),
+                  child: Transform.scale(
+                    alignment: Alignment.topCenter,
+                    scale: 1 - _pressedScale * visual,
+                    child: FractionalTranslation(
+                      translation: Offset(0, -travel),
+                      child: _cast(
+                        RepaintBoundary(
+                          key: widget.cardKeyOf(top),
+                          // The card keeps its own taps; the recognizers
+                          // above own drags and long press.
+                          child: top.card,
                         ),
+                        visual,
                       ),
                     ),
                   ),
                 ),
-                Positioned(
-                  right: 8,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: _PileDots(
-                      count: _count,
-                      index: _index,
-                      visual: visual,
-                    ),
+              ),
+              Positioned(
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _PileDots(
+                    count: _count,
+                    index: _index,
+                    visual: visual,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
