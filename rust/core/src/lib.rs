@@ -93,12 +93,11 @@ fn read_jstring(env: *mut JNIEnv, js: *mut c_void) -> String {
     s
 }
 
-static CORE: OnceLock<Core> = OnceLock::new();
 static INIT_NS: OnceLock<u128> = OnceLock::new();
 
 fn core() -> &'static Core {
     let t = Instant::now();
-    let c = CORE.get_or_init(Core::new);
+    let c = engine::shared();
     INIT_NS.get_or_init(|| t.elapsed().as_nanos());
     c
 }
@@ -514,6 +513,7 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeDecide(
                 RuleKind::DomainSuffix => 0,
                 RuleKind::DomainKeyword => 1,
                 RuleKind::IpCidr => 2,
+                RuleKind::DomainFull => 3,
             };
             (((1u64) << 63)
                 | ((order as u64 & 0x7FFF_FFFF) << 16)
@@ -592,17 +592,21 @@ fn tun_stats() -> &'static StdMutex<Option<TunHandle>> {
 }
 
 /// 由 JNI 参数组装出站配置。Trojan 强制 TLS；VLESS 尊重调用方开关（可跑 80 / 回源）。
+#[allow(clippy::too_many_arguments)]
 fn build_cfg(
     env: *mut JNIEnv,
     server: String,
     port: jint,
     secret: String,
+    cipher: *mut c_void,
     protocol: *mut c_void,
     tls: jint,
     sni: *mut c_void,
 ) -> ProxyConfig {
     let proto = outbound::Protocol::parse(&read_jstring(env, protocol));
-    let mut cfg = ProxyConfig::new(server, port.max(1) as u16, secret).with_protocol(proto);
+    let mut cfg = ProxyConfig::new(server, port.max(1) as u16, secret)
+        .with_protocol(proto)
+        .with_cipher(&read_jstring(env, cipher));
     cfg.tls = if proto == outbound::Protocol::Trojan { true } else { tls != 0 };
     cfg.sni = read_jstring(env, sni);
     cfg
@@ -619,6 +623,7 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeStartProxy(
     ss_server: *mut c_void,
     ss_port: jint,
     password: *mut c_void,
+    cipher: *mut c_void,
     protocol: *mut c_void,
     tls: jint,
     sni: *mut c_void,
@@ -628,7 +633,8 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeStartProxy(
     }
     let server = read_jstring(env, ss_server);
     let pwd = read_jstring(env, password);
-    let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
+    let cfg =
+        std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, cipher, protocol, tls, sni));
     let rt = net::runtime();
     let handle = rt.spawn(async move {
         let _ = run_socks5(port as u16, cfg).await;
@@ -672,6 +678,7 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     ss_server: *mut c_void,
     ss_port: jint,
     password: *mut c_void,
+    cipher: *mut c_void,
     protocol: *mut c_void,
     tls: jint,
     sni: *mut c_void,
@@ -681,7 +688,8 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeOpenTun(
     }
     let server = read_jstring(env, ss_server);
     let pwd = read_jstring(env, password);
-    let cfg = std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, protocol, tls, sni));
+    let cfg =
+        std::sync::Arc::new(build_cfg(env, server, ss_port, pwd, cipher, protocol, tls, sni));
     match run_tun_blocking(fd as RawFd, cfg) {
         Ok(handle) => {
             *tun_stats().lock().unwrap() = Some(handle);
@@ -723,4 +731,72 @@ pub extern "C" fn Java_com_threely_skyward_RustCore_nativeTunStats(
     } else {
         new_jstring(env, "0,0,0,0,0,0,0")
     }
+}
+
+/// 同步路由模式：0=规则 / 1=全局 / 2=直连。数据面（SOCKS5 / TUN）即时生效。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeSetRuleMode(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    mode: jint,
+) -> jint {
+    core().set_rule_mode(mode.clamp(0, 2) as u8);
+    core().get_rule_mode() as jint
+}
+
+/// 数据面真实路由决策计数 CSV：direct,proxy,reject。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeRouteStats(
+    env: *mut JNIEnv,
+    _cls: jclassRef,
+) -> *mut c_void {
+    new_jstring(env, &core().route_stats())
+}
+
+/// 单节点真实延迟测速（DNS + TCP 建连毫秒），结果写回节点表；失败返回 -1。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeTestNodeDelay(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    i: jint,
+    timeout_ms: jlong,
+) -> jint {
+    let idx = i.max(0) as usize;
+    let Some((server, port)) = core().node_endpoint(idx) else {
+        return -1;
+    };
+    let ms = net::runtime().block_on(net::tcp_delay(&server, port, timeout_ms.max(500) as u64));
+    core().set_node_delay(idx, ms);
+    ms
+}
+
+/// 并发测速全部受支持节点，结果写回节点表；返回实测节点数。
+#[no_mangle]
+pub extern "C" fn Java_com_threely_skyward_RustCore_nativeTestAllDelays(
+    _env: *mut JNIEnv,
+    _cls: jclassRef,
+    timeout_ms: jlong,
+) -> jint {
+    let endpoints = core().supported_endpoints();
+    let timeout = timeout_ms.max(500) as u64;
+    let results = net::runtime().block_on(async move {
+        let mut tasks = Vec::with_capacity(endpoints.len());
+        for (i, server, port) in endpoints {
+            tasks.push(tokio::spawn(async move {
+                (i, net::tcp_delay(&server, port, timeout).await)
+            }));
+        }
+        let mut out = Vec::with_capacity(tasks.len());
+        for t in tasks {
+            if let Ok(r) = t.await {
+                out.push(r);
+            }
+        }
+        out
+    });
+    let tested = results.len();
+    for (i, ms) in results {
+        core().set_node_delay(i, ms);
+    }
+    tested as jint
 }

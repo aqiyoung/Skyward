@@ -4,8 +4,9 @@
 //! 把目标交给 SS 出站协议并双向打通。这样外部 App / 浏览器把代理指向本机端口，
 //! 流量即经真实 SS 链路转发——这是内核第一次具备"真实代理入口"。
 
+use crate::engine::{ACTION_DIRECT, ACTION_REJECT};
 use crate::outbound::{self, Protocol};
-use crate::ss::{master_key, ss_client_connect, ss_proxy, SsTarget};
+use crate::ss::{ss_client_connect, ss_proxy, SsCipher, SsKey, SsTarget};
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::sync::Arc;
@@ -21,6 +22,8 @@ pub struct ProxyConfig {
     pub ss_server: String,
     pub ss_port: u16,
     pub password: String,
+    /// SS AEAD 加密方法，默认 chacha20-ietf-poly1305（仅 Shadowsocks 使用）。
+    pub cipher: SsCipher,
     /// 出站协议，默认 Shadowsocks。
     pub protocol: Protocol,
     /// 是否走 TLS（Trojan 恒 true；VLESS 默认 true，80/回源场景可关）。
@@ -35,6 +38,7 @@ impl ProxyConfig {
             ss_server: server.into(),
             ss_port: port,
             password: password.into(),
+            cipher: SsCipher::Chacha20IetfPoly1305,
             protocol: Protocol::Shadowsocks,
             tls: false,
             sni: String::new(),
@@ -46,6 +50,17 @@ impl ProxyConfig {
         self.protocol = p;
         self.tls = p.wants_tls();
         self
+    }
+
+    pub fn with_cipher(mut self, name: &str) -> Self {
+        if let Some(c) = SsCipher::parse(name) {
+            self.cipher = c;
+        }
+        self
+    }
+
+    pub fn ss_key(&self) -> SsKey {
+        SsKey::derive(self.cipher, &self.password)
     }
 }
 
@@ -114,15 +129,26 @@ async fn handle_conn(mut conn: TcpStream, cfg: &ProxyConfig) -> io::Result<()> {
     conn.read_exact(&mut port_b).await?;
     let port = u16::from_be_bytes(port_b);
 
-    // 3) 回复 success（绑定地址占位为 0.0.0.0:0）。
+    // 3) 路由决策：REJECT 直接回「规则不允许」并断开；DIRECT 旁路代理。
+    let action = crate::engine::shared().route_noted(&host);
+    if action == ACTION_REJECT {
+        conn.write_all(&[0x05, 0x02, 0x00, 0x01, 0, 0, 0, 0, 0, 0]).await?;
+        return Ok(());
+    }
+
     conn.write_all(&[0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0])
         .await?;
 
     // 4) 按出站协议连远端目标并双向代理。
     let target = SsTarget { host, port };
+    if action == ACTION_DIRECT {
+        let up = TcpStream::connect((target.host.as_str(), target.port)).await?;
+        outbound::proxy_plain(conn, up).await?;
+        return Ok(());
+    }
     match cfg.protocol {
         Protocol::Shadowsocks => {
-            let master = master_key(&cfg.password);
+            let master = cfg.ss_key();
             let (ss_stream, sess) =
                 ss_client_connect(&master, &cfg.ss_server, cfg.ss_port, &target).await?;
             ss_proxy(conn, ss_stream, sess).await;
@@ -174,8 +200,32 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread")]
+    async fn socks5_rejects_blocked_domain_before_dialing() {
+        let cfg = Arc::new(ProxyConfig::new("127.0.0.1", 1, "unused"));
+        let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = l.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            let (conn, _) = l.accept().await.unwrap();
+            let _ = handle_conn(conn, &cfg).await;
+        });
+
+        let mut s = ClientStream::connect(("127.0.0.1", port)).await.unwrap();
+        s.write_all(&[0x05, 0x01, 0x00]).await.unwrap();
+        let mut m = [0u8; 2];
+        s.read_exact(&mut m).await.unwrap();
+        let host = b"tracker.example.org";
+        let mut req = vec![0x05u8, 0x01, 0x00, 0x03, host.len() as u8];
+        req.extend_from_slice(host);
+        req.extend_from_slice(&443u16.to_be_bytes());
+        s.write_all(&req).await.unwrap();
+        let mut rep = [0u8; 10];
+        s.read_exact(&mut rep).await.unwrap();
+        assert_eq!(rep[1], 0x02, "REJECT 应回 connection not allowed");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
     async fn socks5_to_ss_e2e() {
-        let mk = master_key("proxy-secret");
+        let mk = crate::ss::master_key("proxy-secret");
 
         // echo 目标
         let echo = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();

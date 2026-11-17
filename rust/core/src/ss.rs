@@ -1,21 +1,23 @@
 //! Shadowsocks AEAD 出站协议（PoC-6）。
 //!
-//! 这是内核第一次拥有真正的"转发肌肉"：用 ChaCha20-Poly1305 加密，
-//! 经真实 TCP 连远端 SS 服务器并收发字节——不再是内存模拟。
+//! 这是内核第一次拥有真正的"转发肌肉"：用 AEAD 加密经真实 TCP 连远端
+//! SS 服务器并收发字节——不再是内存模拟。
 //!
 //! 设计要点：
-//! - 主密钥 = SHA-256(password)；每次连接随机 32 字节 salt；
-//!   会话子密钥 = HMAC-SHA256(master, salt)（与 shadowsocks-rust 一致，可对接真实远端）。
+//! - 支持三种标准 AEAD：chacha20-ietf-poly1305 / aes-128-gcm / aes-256-gcm，
+//!   AES 走 ring（硬件 AES 指令），ChaCha 沿用纯 Rust 实现。
+//! - 主密钥 = OpenSSL EVP_BytesToKey(MD5)（SS 标准），每次连接随机 salt
+//!   （长度 = 密钥长度）；会话子密钥 = HKDF-SHA1(master, salt, "ss-subkey")。
 //! - 每个 chunk 结构：`seal([u16 length][payload])` → 输出 `[length_chunk(2+16)][payload_chunk(len+16)]`。
-//! - nonce（12 字节）= `[0u8;4] ++ counter.to_be_bytes()`，收发各自独立计数。
+//! - nonce（12 字节）= 小端计数（shadowsocks 标准），收发各自独立计数。
 //! - 双向代理以 `ss_proxy(plain, enc, sess)` 复用：enc 侧发用 tx、收用 rx。
 
 use chacha20poly1305::aead::generic_array::GenericArray;
-use chacha20poly1305::aead::Aead;
+use chacha20poly1305::aead::Aead as ChaChaAead;
 use chacha20poly1305::{ChaCha20Poly1305, KeyInit};
 use hmac::{Hmac, Mac};
+use ring::aead::{self as ring_aead, LessSafeKey, UnboundKey};
 use sha1::Sha1;
-use sha2::{Digest, Sha256};
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::sync::{Arc, OnceLock};
@@ -23,7 +25,6 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 
-const SALT_LEN: usize = 32; // chacha20-ietf-poly1305
 const MAX_PAYLOAD: usize = 0x3FFF; // 单 chunk 载荷上限（SS 惯例）
 const TAG_LEN: usize = 16;
 
@@ -51,29 +52,175 @@ pub fn reset_proxy_stats() {
 
 type HmacSha1 = Hmac<Sha1>;
 
-/// 由密码派生主密钥（SHA-256）。
-pub fn master_key(password: &str) -> [u8; 32] {
-    let mut h = Sha256::new();
-    h.update(password.as_bytes());
-    let out = h.finalize();
-    let mut k = [0u8; 32];
-    k.copy_from_slice(&out);
-    k
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SsCipher {
+    Chacha20IetfPoly1305,
+    Aes128Gcm,
+    Aes256Gcm,
 }
 
-/// SS AEAD 子密钥派生：`HKDF-SHA1(ikm = master, salt = salt, info = "ss-subkey")`。
-///
-/// 这里必须与 shadowsocks-rust / 规范完全一致，否则真实服务端在解第一个 chunk 时
-/// 就会 AEAD 校验失败并直接断开。早期版本误用 `HMAC-SHA256(master, salt)`，
-/// 自建回环两端同错所以测试能过，但对真实服务器必然连不上。
-pub fn subkey(master: &[u8; 32], salt: &[u8]) -> [u8; 32] {
-    // HKDF-Extract：PRK = HMAC-SHA1(salt, master)
+impl SsCipher {
+    pub fn parse(name: &str) -> Option<SsCipher> {
+        match name.trim().to_ascii_lowercase().as_str() {
+            "chacha20-ietf-poly1305" | "chacha20-poly1305" | "aead_chacha20_poly1305" => {
+                Some(SsCipher::Chacha20IetfPoly1305)
+            }
+            "aes-128-gcm" | "aead_aes_128_gcm" => Some(SsCipher::Aes128Gcm),
+            "aes-256-gcm" | "aead_aes_256_gcm" => Some(SsCipher::Aes256Gcm),
+            _ => None,
+        }
+    }
+
+    pub fn key_len(self) -> usize {
+        match self {
+            SsCipher::Aes128Gcm => 16,
+            _ => 32,
+        }
+    }
+
+    pub fn salt_len(self) -> usize {
+        self.key_len()
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            SsCipher::Chacha20IetfPoly1305 => "chacha20-ietf-poly1305",
+            SsCipher::Aes128Gcm => "aes-128-gcm",
+            SsCipher::Aes256Gcm => "aes-256-gcm",
+        }
+    }
+}
+
+/// RFC 1321 MD5（仅用于 EVP_BytesToKey，几十字节输入，无性能诉求）。
+fn md5(parts: &[&[u8]]) -> [u8; 16] {
+    const S: [u32; 64] = [
+        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+        5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+        4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+        6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+    ];
+    const K: [u32; 64] = [
+        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+        0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+        0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+        0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+        0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+        0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+        0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+        0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+        0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+        0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+        0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+        0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+        0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+        0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+        0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+    ];
+    let mut msg: Vec<u8> = parts.concat();
+    let bits = (msg.len() as u64).wrapping_mul(8);
+    msg.push(0x80);
+    while msg.len() % 64 != 56 {
+        msg.push(0);
+    }
+    msg.extend_from_slice(&bits.to_le_bytes());
+
+    let (mut a0, mut b0, mut c0, mut d0) =
+        (0x67452301u32, 0xefcdab89u32, 0x98badcfeu32, 0x10325476u32);
+    for chunk in msg.chunks_exact(64) {
+        let mut m = [0u32; 16];
+        for (i, w) in m.iter_mut().enumerate() {
+            *w = u32::from_le_bytes([
+                chunk[4 * i],
+                chunk[4 * i + 1],
+                chunk[4 * i + 2],
+                chunk[4 * i + 3],
+            ]);
+        }
+        let (mut a, mut b, mut c, mut d) = (a0, b0, c0, d0);
+        for i in 0..64 {
+            let (f, g) = match i / 16 {
+                0 => ((b & c) | (!b & d), i),
+                1 => ((d & b) | (!d & c), (5 * i + 1) % 16),
+                2 => (b ^ c ^ d, (3 * i + 5) % 16),
+                _ => (c ^ (b | !d), (7 * i) % 16),
+            };
+            let tmp = d;
+            d = c;
+            c = b;
+            b = b.wrapping_add(
+                a.wrapping_add(f)
+                    .wrapping_add(K[i])
+                    .wrapping_add(m[g])
+                    .rotate_left(S[i]),
+            );
+            a = tmp;
+        }
+        a0 = a0.wrapping_add(a);
+        b0 = b0.wrapping_add(b);
+        c0 = c0.wrapping_add(c);
+        d0 = d0.wrapping_add(d);
+    }
+    let mut out = [0u8; 16];
+    out[..4].copy_from_slice(&a0.to_le_bytes());
+    out[4..8].copy_from_slice(&b0.to_le_bytes());
+    out[8..12].copy_from_slice(&c0.to_le_bytes());
+    out[12..].copy_from_slice(&d0.to_le_bytes());
+    out
+}
+
+/// OpenSSL `EVP_BytesToKey`（MD5、无 salt）——Shadowsocks 标准的密码→主密钥派生。
+pub fn evp_bytes_to_key(password: &[u8], key: &mut [u8]) {
+    let mut last: Option<[u8; 16]> = None;
+    let mut filled = 0usize;
+    while filled < key.len() {
+        let digest = match last {
+            Some(prev) => md5(&[&prev, password]),
+            None => md5(&[password]),
+        };
+        let take = (key.len() - filled).min(digest.len());
+        key[filled..filled + take].copy_from_slice(&digest[..take]);
+        filled += take;
+        last = Some(digest);
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct SsKey {
+    pub cipher: SsCipher,
+    key: [u8; 32],
+}
+
+impl SsKey {
+    pub fn derive(cipher: SsCipher, password: &str) -> SsKey {
+        let mut key = [0u8; 32];
+        evp_bytes_to_key(password.as_bytes(), &mut key[..cipher.key_len()]);
+        SsKey { cipher, key }
+    }
+
+    pub fn material(&self) -> &[u8] {
+        &self.key[..self.cipher.key_len()]
+    }
+}
+
+/// 兼容旧调用点：默认 chacha20-ietf-poly1305 的主密钥。
+pub fn master_key(password: &str) -> SsKey {
+    SsKey::derive(SsCipher::Chacha20IetfPoly1305, password)
+}
+
+/// 子密钥 = `HKDF-SHA1(ikm = master, salt, info = "ss-subkey")`，长度 = 密钥长度；
+/// 与规范有任何出入，真实服务端解第一个 chunk 即失败断开。
+pub fn subkey(master: &SsKey, salt: &[u8]) -> Vec<u8> {
+    let mut out = vec![0u8; master.cipher.key_len()];
+    hkdf_sha1(master.material(), salt, &mut out);
+    out
+}
+
+fn hkdf_sha1(ikm: &[u8], salt: &[u8], out: &mut [u8]) {
     let mut mac = <HmacSha1 as Mac>::new_from_slice(salt).expect("hkdf salt");
-    mac.update(master);
+    mac.update(ikm);
     let prk = mac.finalize().into_bytes();
 
-    // HKDF-Expand：T(i) = HMAC-SHA1(PRK, T(i-1) || info || i)
-    let mut out = [0u8; 32];
     let mut prev: Vec<u8> = Vec::new();
     let mut filled = 0usize;
     let mut counter: u8 = 1;
@@ -88,42 +235,93 @@ pub fn subkey(master: &[u8; 32], salt: &[u8]) -> [u8; 32] {
         filled += take;
         counter = counter.wrapping_add(1);
     }
-    out
 }
 
-/// 生成一次连接的随机 salt。
-pub fn random_salt() -> [u8; SALT_LEN] {
-    let mut salt = [0u8; SALT_LEN];
-    // getrandom 在 aarch64-linux-android（minSdk 26，有 libc getrandom）可用。
+/// 生成一次连接的随机 salt（真实长度 = cipher.salt_len()，调用方取前缀）。
+pub fn random_salt() -> [u8; 32] {
+    let mut salt = [0u8; 32];
     let _ = getrandom::getrandom(&mut salt);
     salt
 }
 
+/// 统一的 AEAD 封装：ChaCha 走纯 Rust 实现，AES-GCM 走 ring。
+enum AeadImpl {
+    ChaCha(Box<ChaCha20Poly1305>),
+    Ring(LessSafeKey),
+}
+
+impl AeadImpl {
+    fn new(cipher: SsCipher, session_key: &[u8]) -> AeadImpl {
+        match cipher {
+            SsCipher::Chacha20IetfPoly1305 => AeadImpl::ChaCha(Box::new(
+                ChaCha20Poly1305::new(GenericArray::from_slice(session_key)),
+            )),
+            SsCipher::Aes128Gcm => AeadImpl::Ring(LessSafeKey::new(
+                UnboundKey::new(&ring_aead::AES_128_GCM, session_key).expect("aes128 key"),
+            )),
+            SsCipher::Aes256Gcm => AeadImpl::Ring(LessSafeKey::new(
+                UnboundKey::new(&ring_aead::AES_256_GCM, session_key).expect("aes256 key"),
+            )),
+        }
+    }
+
+    fn seal(&self, nonce: &[u8; 12], plain: &[u8]) -> Vec<u8> {
+        match self {
+            AeadImpl::ChaCha(c) => c
+                .encrypt(GenericArray::from_slice(nonce), plain)
+                .expect("ss seal"),
+            AeadImpl::Ring(k) => {
+                let mut buf = plain.to_vec();
+                let n = ring_aead::Nonce::assume_unique_for_key(*nonce);
+                k.seal_in_place_append_tag(n, ring_aead::Aad::empty(), &mut buf)
+                    .expect("ss seal");
+                buf
+            }
+        }
+    }
+
+    fn open(&self, nonce: &[u8; 12], ct: &[u8]) -> io::Result<Vec<u8>> {
+        match self {
+            AeadImpl::ChaCha(c) => c
+                .decrypt(GenericArray::from_slice(nonce), ct)
+                .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "ss decrypt failed")),
+            AeadImpl::Ring(k) => {
+                let mut buf = ct.to_vec();
+                let n = ring_aead::Nonce::assume_unique_for_key(*nonce);
+                let plain_len = k
+                    .open_in_place(n, ring_aead::Aad::empty(), &mut buf)
+                    .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "ss decrypt failed"))?
+                    .len();
+                buf.truncate(plain_len);
+                Ok(buf)
+            }
+        }
+    }
+}
+
 /// 单个 SS 会话：持有子密钥与收发 nonce 计数。
 pub struct SsSession {
-    cipher: ChaCha20Poly1305,
+    cipher: AeadImpl,
     tx: u64,
     rx: u64,
 }
 
 impl SsSession {
     /// 从主密钥 + 本次连接 salt 派生子密钥（HKDF-SHA1）。
-    pub fn new(master: &[u8; 32], salt: &[u8; SALT_LEN]) -> Self {
+    pub fn new(master: &SsKey, salt: &[u8]) -> Self {
         let skey = subkey(master, salt);
-        let key = GenericArray::from_slice(&skey);
-        let cipher = ChaCha20Poly1305::new(key);
         SsSession {
-            cipher,
+            cipher: AeadImpl::new(master.cipher, &skey),
             tx: 0,
             rx: 0,
         }
     }
 
-    /// SS nonce：前 4 字节为 0，后 8 字节为 big-endian 计数。
+    /// SS nonce：12 字节小端计数（shadowsocks AEAD 标准）。
     #[inline]
     fn nonce(c: u64) -> [u8; 12] {
         let mut n = [0u8; 12];
-        n[4..].copy_from_slice(&c.to_be_bytes());
+        n[..8].copy_from_slice(&c.to_le_bytes());
         n
     }
 
@@ -133,20 +331,11 @@ impl SsSession {
     pub fn seal(&mut self, payload: &[u8]) -> Vec<u8> {
         let n = Self::nonce(self.tx);
         self.tx += 1;
-        let nonce = GenericArray::from_slice(&n);
         let len_frame = (payload.len() as u16).to_be_bytes();
-        let len_block = self
-            .cipher
-            .encrypt(nonce, len_frame.as_slice())
-            .expect("ss seal len");
+        let mut out = self.cipher.seal(&n, len_frame.as_slice());
         let n2 = Self::nonce(self.tx);
         self.tx += 1;
-        let nonce2 = GenericArray::from_slice(&n2);
-        let payload_block = self
-            .cipher
-            .encrypt(nonce2, payload)
-            .expect("ss seal payload");
-        let mut out = len_block;
+        let payload_block = self.cipher.seal(&n2, payload);
         out.extend_from_slice(&payload_block);
         out
     }
@@ -155,10 +344,7 @@ impl SsSession {
     pub fn open(&mut self, ct: &[u8]) -> io::Result<Vec<u8>> {
         let n = Self::nonce(self.rx);
         self.rx += 1;
-        let nonce = GenericArray::from_slice(&n);
-        self.cipher
-            .decrypt(nonce, ct)
-            .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "ss decrypt failed"))
+        self.cipher.open(&n, ct)
     }
 }
 
@@ -255,42 +441,41 @@ pub(crate) fn header_len(buf: &[u8]) -> io::Result<usize> {
 }
 
 /// SS AEAD UDP 加密（shadowsocks UDP relay 的客户端封装）：
-/// `[salt(32)] || AEAD(subkey, nonce = 0, [addr][payload])`。
+/// `[salt] || AEAD(subkey, nonce = 0, [addr][payload])`。
 ///
 /// 与 TCP 的区别：UDP 每个报文独立加盐、nonce 恒为 0、只加密一段明文，
 /// 不需要长度前缀的两段式结构。服务器未开启 udp 时该报文会被直接丢弃。
-pub fn seal_udp(master: &[u8; 32], target: &SsTarget, payload: &[u8]) -> Vec<u8> {
+pub fn seal_udp(master: &SsKey, target: &SsTarget, payload: &[u8]) -> Vec<u8> {
+    let salt_len = master.cipher.salt_len();
     let salt = random_salt();
-    let skey = subkey(master, &salt);
-    let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(&skey));
+    let salt = &salt[..salt_len];
+    let skey = subkey(master, salt);
+    let cipher = AeadImpl::new(master.cipher, &skey);
 
     let mut plain = build_header(target);
     plain.extend_from_slice(payload);
 
     let nonce = [0u8; 12];
-    let ct = cipher
-        .encrypt(GenericArray::from_slice(&nonce), plain.as_slice())
-        .expect("ss udp seal");
+    let ct = cipher.seal(&nonce, &plain);
 
-    let mut out = Vec::with_capacity(SALT_LEN + ct.len());
-    out.extend_from_slice(&salt);
+    let mut out = Vec::with_capacity(salt_len + ct.len());
+    out.extend_from_slice(salt);
     out.extend_from_slice(&ct);
     out
 }
 
 /// SS AEAD UDP 解密：返回（来源地址, 载荷）。来源地址是服务器回包时写入的目标，
 /// 客户端应校验它与请求目标一致，避免串包。
-pub fn open_udp(master: &[u8; 32], pkt: &[u8]) -> io::Result<(SsTarget, Vec<u8>)> {
-    if pkt.len() < SALT_LEN + TAG_LEN {
+pub fn open_udp(master: &SsKey, pkt: &[u8]) -> io::Result<(SsTarget, Vec<u8>)> {
+    let salt_len = master.cipher.salt_len();
+    if pkt.len() < salt_len + TAG_LEN {
         return Err(io::Error::new(io::ErrorKind::InvalidData, "ss udp too short"));
     }
-    let (salt, ct) = pkt.split_at(SALT_LEN);
+    let (salt, ct) = pkt.split_at(salt_len);
     let skey = subkey(master, salt);
-    let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(&skey));
+    let cipher = AeadImpl::new(master.cipher, &skey);
     let nonce = [0u8; 12];
-    let plain = cipher
-        .decrypt(GenericArray::from_slice(&nonce), ct)
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "ss udp decrypt failed"))?;
+    let plain = cipher.open(&nonce, ct)?;
 
     let target = parse_header(&plain)?;
     let hlen = header_len(&plain)?;
@@ -303,15 +488,16 @@ pub fn open_udp(master: &[u8; 32], pkt: &[u8]) -> io::Result<(SsTarget, Vec<u8>)
 /// SS 客户端：连远端服务器、发送 salt + 加密头，返回（加密流, 会话）。
 /// 之后调用 [`ss_proxy`] 把本地明文连接与加密流双向打通。
 pub async fn ss_client_connect(
-    master: &[u8; 32],
+    master: &SsKey,
     server: &str,
     server_port: u16,
     target: &SsTarget,
 ) -> io::Result<(TcpStream, Arc<Mutex<SsSession>>)> {
     let mut stream = TcpStream::connect((server, server_port)).await?;
     let salt = random_salt();
-    stream.write_all(&salt).await?;
-    let mut sess = SsSession::new(master, &salt);
+    let salt = &salt[..master.cipher.salt_len()];
+    stream.write_all(salt).await?;
+    let mut sess = SsSession::new(master, salt);
     let header = build_header(target);
     let sealed = sess.seal(&header);
     stream.write_all(&sealed).await?;
@@ -342,9 +528,9 @@ where
 /// 返回（加密流, 会话, 目标），调用方可自行连目标并 `ss_proxy`。
 pub async fn ss_server_accept(
     mut enc: TcpStream,
-    master: &[u8; 32],
+    master: &SsKey,
 ) -> io::Result<(TcpStream, Arc<Mutex<SsSession>>, SsTarget)> {
-    let mut salt = [0u8; SALT_LEN];
+    let mut salt = vec![0u8; master.cipher.salt_len()];
     enc.read_exact(&mut salt).await?;
     let sess = SsSession::new(master, &salt);
     let sess_arc = Arc::new(Mutex::new(sess));
@@ -412,46 +598,141 @@ where
 mod tests {
     use super::*;
 
-    #[test]
-    fn subkey_matches_hkdf_sha1_vector() {
-        // 独立向量（Python hashlib/hmac 按 RFC 5869 计算）：
-        // master = SHA256("test-password")，salt = 0x00..0x1f，info = "ss-subkey"
-        // 这个断言的作用是钉死算法：一旦有人把派生改回 HMAC-SHA256 或漏掉 info，
-        // 真实服务器会立刻解不开，而自建回环测试却察觉不到。
-        let mk = master_key("test-password");
-        let salt: [u8; 32] = core::array::from_fn(|i| i as u8);
-        let sk = subkey(&mk, &salt);
-        let hex: String = sk.iter().map(|b| format!("{b:02x}")).collect();
-        assert_eq!(
-            hex,
-            "70e4f9110de361fd01d3323dbdddb87e0cbc961a9b7c3eb323c8dd1860e46a9c",
-            "子密钥必须等于 HKDF-SHA1(master, salt, \"ss-subkey\")"
-        );
+    fn hex(bytes: &[u8]) -> String {
+        bytes.iter().map(|b| format!("{b:02x}")).collect()
     }
 
     #[test]
-    fn seal_open_roundtrip() {
-        let mk = master_key("test-password");
-        let salt = random_salt();
-        let mut a = SsSession::new(&mk, &salt);
-        let mut b = SsSession::new(&mk, &salt);
-        let samples = [
-            b"".to_vec(),
-            b"hello world".to_vec(),
-            vec![0u8; 2000],
-            (0..16383u16).map(|x| x as u8).collect::<Vec<u8>>(),
-        ];
-        for s in &samples {
-            let sealed = a.seal(s);
-            // 两段式：前 18 字节为长度块，其后为载荷块
-            assert!(sealed.len() >= 18, "sealed too short");
-            let len_block = &sealed[..18];
-            let h = b.open(len_block).expect("open len");
-            let plen = u16::from_be_bytes([h[0], h[1]]) as usize;
-            assert_eq!(plen, s.len());
-            let payload_block = &sealed[18..18 + plen + TAG_LEN];
-            let payload = b.open(payload_block).expect("open payload");
-            assert_eq!(&payload, s);
+    fn evp_bytes_to_key_matches_openssl_vectors() {
+        // 向量由 Python hashlib.md5 独立计算，钉死 MD5 + EVP_BytesToKey 实现。
+        let mut k16 = [0u8; 16];
+        evp_bytes_to_key(b"", &mut k16);
+        assert_eq!(hex(&k16), "d41d8cd98f00b204e9800998ecf8427e");
+        evp_bytes_to_key(b"test-password", &mut k16);
+        assert_eq!(hex(&k16), "dfb450efddbb5387197c84460623675b");
+        let mut k32 = [0u8; 32];
+        evp_bytes_to_key(b"test-password", &mut k32);
+        assert_eq!(
+            hex(&k32),
+            "dfb450efddbb5387197c84460623675b69f2cebcd8ef520a3dfddef7c3d540b2"
+        );
+        evp_bytes_to_key(b"secret", &mut k32);
+        assert_eq!(
+            hex(&k32),
+            "5ebe2294ecd0e0f08eab7690d2a6ee6926ae5cc854e36b6bdfca366848dea6bb"
+        );
+        let long = vec![b'a'; 100];
+        evp_bytes_to_key(&long, &mut k32);
+        assert_eq!(
+            hex(&k32),
+            "36a92cc94a9e0fa21f625f8bfb007adf1c2e3353e40401402b1b0a7bf3e33ae8"
+        );
+        let mut k24 = [0u8; 24];
+        evp_bytes_to_key(b"test-password", &mut k24);
+        assert_eq!(hex(&k24), "dfb450efddbb5387197c84460623675b69f2cebcd8ef520a");
+    }
+
+    #[test]
+    fn cipher_parse_aliases_and_lengths() {
+        assert_eq!(
+            SsCipher::parse("CHACHA20-IETF-POLY1305"),
+            Some(SsCipher::Chacha20IetfPoly1305)
+        );
+        assert_eq!(SsCipher::parse("chacha20-poly1305"), Some(SsCipher::Chacha20IetfPoly1305));
+        assert_eq!(SsCipher::parse("aes-128-gcm"), Some(SsCipher::Aes128Gcm));
+        assert_eq!(SsCipher::parse("AEAD_AES_256_GCM"), Some(SsCipher::Aes256Gcm));
+        assert_eq!(SsCipher::parse("rc4-md5"), None);
+        assert_eq!(SsCipher::Aes128Gcm.key_len(), 16);
+        assert_eq!(SsCipher::Aes128Gcm.salt_len(), 16);
+        assert_eq!(SsCipher::Aes256Gcm.key_len(), 32);
+        assert_eq!(SsCipher::Chacha20IetfPoly1305.salt_len(), 32);
+    }
+
+    #[test]
+    fn subkey_matches_hkdf_sha1_vectors() {
+        // 独立向量（Python hashlib/hmac 按 RFC 5869 计算）钉死派生算法。
+        let mk = SsKey::derive(SsCipher::Chacha20IetfPoly1305, "test-password");
+        let salt: [u8; 32] = core::array::from_fn(|i| i as u8);
+        let sk = subkey(&mk, &salt);
+        assert_eq!(
+            hex(&sk),
+            "7b6ca12d45ef79467432717aaa6a6ae6e1dd046a505fb2ebaaac602210919595"
+        );
+        let mk16 = SsKey::derive(SsCipher::Aes128Gcm, "test-password");
+        let salt16: [u8; 16] = core::array::from_fn(|i| i as u8);
+        let sk16 = subkey(&mk16, &salt16);
+        assert_eq!(hex(&sk16), "780f000955954fb33743812b1002261b");
+    }
+
+    #[test]
+    fn seal_open_roundtrip_all_ciphers() {
+        for cipher in [
+            SsCipher::Chacha20IetfPoly1305,
+            SsCipher::Aes128Gcm,
+            SsCipher::Aes256Gcm,
+        ] {
+            let mk = SsKey::derive(cipher, "test-password");
+            let salt = random_salt();
+            let salt = &salt[..cipher.salt_len()];
+            let mut a = SsSession::new(&mk, salt);
+            let mut b = SsSession::new(&mk, salt);
+            let samples = [
+                b"".to_vec(),
+                b"hello world".to_vec(),
+                vec![0u8; 2000],
+                (0..16383u16).map(|x| x as u8).collect::<Vec<u8>>(),
+            ];
+            for s in &samples {
+                let sealed = a.seal(s);
+                assert!(sealed.len() >= 18, "sealed too short");
+                let len_block = &sealed[..18];
+                let h = b.open(len_block).expect("open len");
+                let plen = u16::from_be_bytes([h[0], h[1]]) as usize;
+                assert_eq!(plen, s.len());
+                let payload_block = &sealed[18..18 + plen + TAG_LEN];
+                let payload = b.open(payload_block).expect("open payload");
+                assert_eq!(&payload, s, "cipher {:?}", cipher);
+            }
+        }
+    }
+
+    #[test]
+    fn tampered_ciphertext_rejected_all_ciphers() {
+        for cipher in [
+            SsCipher::Chacha20IetfPoly1305,
+            SsCipher::Aes128Gcm,
+            SsCipher::Aes256Gcm,
+        ] {
+            let mk = SsKey::derive(cipher, "k");
+            let salt = random_salt();
+            let salt = &salt[..cipher.salt_len()];
+            let mut a = SsSession::new(&mk, salt);
+            let mut b = SsSession::new(&mk, salt);
+            let mut sealed = a.seal(b"payload");
+            sealed[3] ^= 0xff;
+            assert!(b.open(&sealed[..18]).is_err(), "cipher {:?}", cipher);
+        }
+    }
+
+    #[test]
+    fn udp_seal_open_roundtrip_all_ciphers() {
+        for cipher in [
+            SsCipher::Chacha20IetfPoly1305,
+            SsCipher::Aes128Gcm,
+            SsCipher::Aes256Gcm,
+        ] {
+            let mk = SsKey::derive(cipher, "udp-pass");
+            let t = SsTarget { host: "1.2.3.4".into(), port: 53 };
+            let sealed = seal_udp(&mk, &t, b"payload-bytes");
+            assert_eq!(sealed.len(), cipher.salt_len() + 7 + 13 + TAG_LEN);
+            let (got_t, got_p) = open_udp(&mk, &sealed).expect("open udp");
+            assert_eq!(got_t.host, "1.2.3.4");
+            assert_eq!(got_t.port, 53);
+            assert_eq!(got_p, b"payload-bytes");
+            let mut bad = sealed.clone();
+            let last = bad.len() - 1;
+            bad[last] ^= 0xff;
+            assert!(open_udp(&mk, &bad).is_err());
         }
     }
 
@@ -481,10 +762,10 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn end_to_end_ss_link() {
-        // 回环目标 echo server
+        // 回环目标 echo server；AES-256-GCM 走与真实服务器一致的全链路。
         let echo = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let echo_addr = echo.local_addr().unwrap();
-        let mk = master_key("e2e-secret");
+        let mk = SsKey::derive(SsCipher::Aes256Gcm, "e2e-secret");
 
         // SS server：accept -> 解析目标 -> 连目标 -> 双向代理
         let ss_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();

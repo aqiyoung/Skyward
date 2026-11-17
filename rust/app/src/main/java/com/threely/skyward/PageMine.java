@@ -52,7 +52,7 @@ public final class PageMine {
         LinearLayout general = Ui.newCard(c);
         general.addView(Ui.row(c, IconView.Glyph.ROUTE, Ui.ORANGE, "路由模式",
                 "点击切换 · 已落盘", Ui.valueText(c, s.ruleModeLabel()),
-                v -> { s.ruleMode = (s.ruleMode + 1) % 3; s.save(); refresh.run(); }));
+                v -> { s.setRuleMode((s.ruleMode + 1) % 3); refresh.run(); }));
         general.addView(Ui.separator(c));
         Switch swV6 = Ui.toggle(c, s.ipv6);
         swV6.setOnCheckedChangeListener((b, on) -> { s.ipv6 = on; s.save(); });

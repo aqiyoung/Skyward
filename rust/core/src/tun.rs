@@ -14,12 +14,13 @@
 //! 帧解析、TCP 状态机、DNS 报文封装均有单元测试覆盖。
 
 use crate::dnsrelay;
+use crate::engine::{ACTION_DIRECT, ACTION_REJECT};
 use crate::net;
 use crate::outbound::{self, Protocol};
 use crate::socks5::ProxyConfig;
-use crate::ss::{master_key, read_chunk, ss_client_connect, SsTarget};
+use crate::ss::{read_chunk, ss_client_connect, SsKey, SsTarget};
 use crate::tcpstack::{Event, FlowKey, TcpStack};
-use crate::udpstack::{FlowKey as UdpKey, Sink, UdpRelay};
+use crate::udpstack::{DirectRelay, FlowKey as UdpKey, Sink, UdpRelay};
 use crate::udpstream::StreamRelay;
 use std::collections::HashMap;
 use std::fs::File;
@@ -201,7 +202,7 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
         let writer = Arc::new(Mutex::new(Some(writer_file)));
         let stack = Arc::new(Mutex::new(TcpStack::new()));
         let ups: Arc<Mutex<HashMap<FlowKey, Upstream>>> = Arc::new(Mutex::new(HashMap::new()));
-        let master = master_key(&cfg.password);
+        let master = cfg.ss_key();
         let rt = net::runtime();
         DNS_UDP_OK.store(true, Ordering::Relaxed);
 
@@ -210,9 +211,13 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
         let sink: Sink = {
             let w = writer.clone();
             let s = s2.clone();
-            Arc::new(move |pkt: &[u8]| write_tun(&w, pkt, &s))
+            Arc::new(move |pkt: &[u8]| {
+                dnsrelay::record_from_packet(pkt);
+                write_tun(&w, pkt, &s)
+            })
         };
         let sink2 = sink.clone();
+        let sink3 = sink.clone();
         let udp = UdpRelay::new(master, cfg.ss_server.clone(), cfg.ss_port, sink);
         // Trojan 的 UDP 走同一条 TLS 流（UDP ASSOCIATE），单独一张会话表。
         let udp_stream = StreamRelay::new(
@@ -223,6 +228,7 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
             cfg.sni.clone(),
             sink2,
         );
+        let udp_direct = DirectRelay::new(sink3);
 
         let timer_stop = worker_stop.clone();
         let timer_stack = stack.clone();
@@ -352,6 +358,25 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
                     let client_port = src;
                     let dns_ip = parsed.dst_ip;
 
+                    let route_host = dnsrelay::lookup_domain(parsed.dst_ip)
+                        .unwrap_or_else(|| parsed.dst_ip.to_string());
+                    let action = crate::engine::shared().route_noted(&route_host);
+                    if action == ACTION_REJECT {
+                        continue;
+                    }
+                    if action == ACTION_DIRECT {
+                        let relay = udp_direct.clone();
+                        rt.spawn(async move {
+                            let _ = relay.send(key, &payload).await;
+                        });
+                        if let Ok(mut s) = s2.lock() {
+                            s.udp_flows = (udp.flow_count()
+                                + udp_stream.flow_count()
+                                + udp_direct.flow_count()) as u64;
+                        }
+                        continue;
+                    }
+
                     // 三条通道按协议分流：
                     //   Shadowsocks → SS UDP relay（独立 UDP socket，逐包加盐）
                     //   Trojan      → UDP ASSOCIATE（同一条 TLS 流上逐包分帧）
@@ -438,11 +463,8 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
                         }
                     }
 
-                    let flows = match cfg.protocol {
-                        Protocol::Shadowsocks => udp.flow_count(),
-                        Protocol::Trojan => udp_stream.flow_count(),
-                        Protocol::Vless => 0,
-                    };
+                    let flows =
+                        udp.flow_count() + udp_stream.flow_count() + udp_direct.flow_count();
                     if let Ok(mut s) = s2.lock() {
                         s.udp_flows = flows as u64;
                     }
@@ -488,7 +510,7 @@ pub fn run_tun_blocking(fd: RawFd, cfg: Arc<ProxyConfig>) -> io::Result<TunHandl
 #[allow(clippy::too_many_arguments)]
 async fn dns_over_tcp(
     cfg: &ProxyConfig,
-    master: [u8; 32],
+    master: SsKey,
     client_ip: Ipv4Addr,
     client_port: u16,
     dns_ip: Ipv4Addr,
@@ -512,7 +534,7 @@ fn handle_event(
     writer: &TunWriter,
     ups: &Arc<Mutex<HashMap<FlowKey, Upstream>>>,
     cfg: &Arc<ProxyConfig>,
-    master: &[u8; 32],
+    master: &SsKey,
     stats: &Arc<Mutex<TunStats>>,
 ) {
     match ev {
@@ -655,12 +677,35 @@ async fn upstream_task(
     mut rx: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
     alive: Arc<AtomicBool>,
     cfg: Arc<ProxyConfig>,
-    master: [u8; 32],
+    master: SsKey,
     stack: Arc<Mutex<TcpStack>>,
     writer: TunWriter,
     stats: Arc<Mutex<TunStats>>,
 ) {
     let target = SsTarget { host: key.dst.to_string(), port: key.dport };
+
+    // 路由决策：优先用 DNS 反查到的域名过规则，查不到再按目标 IP。
+    let route_host =
+        dnsrelay::lookup_domain(key.dst).unwrap_or_else(|| key.dst.to_string());
+    let action = crate::engine::shared().route_noted(&route_host);
+    if action == ACTION_REJECT {
+        reset_conn(key, &stack, &writer, &stats);
+        return;
+    }
+    if action == ACTION_DIRECT {
+        let dial = tokio::time::timeout(
+            std::time::Duration::from_secs(10),
+            tokio::net::TcpStream::connect((target.host.as_str(), target.port)),
+        )
+        .await;
+        match dial {
+            Ok(Ok(tcp)) => {
+                plain_upstream(key, Box::new(tcp), rx, alive, stack, writer, stats).await;
+            }
+            _ => reset_conn(key, &stack, &writer, &stats),
+        }
+        return;
+    }
 
     // Trojan / VLESS：握手头写完后是裸字节流，不需要逐块加解密。
     if cfg.protocol != Protocol::Shadowsocks {

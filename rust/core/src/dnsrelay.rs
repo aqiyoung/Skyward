@@ -12,7 +12,7 @@
 
 use crate::outbound::{self, Protocol};
 use crate::socks5::ProxyConfig;
-use crate::ss::{read_chunk, ss_client_connect, SsTarget};
+use crate::ss::{read_chunk, ss_client_connect, SsKey, SsTarget};
 use std::collections::HashMap;
 use std::io;
 use std::net::Ipv4Addr;
@@ -27,6 +27,115 @@ const UPSTREAM_PORT: u16 = 53;
 const CACHE_TTL: Duration = Duration::from_secs(120);
 /// 缓存条目上限，防止长时间运行无限增长。
 const CACHE_MAX: usize = 512;
+
+/// IP → 域名反查表容量上限（超出整表清空，防长跑膨胀）。
+const IP_MAP_MAX: usize = 4096;
+
+fn ip_domains() -> &'static Mutex<HashMap<Ipv4Addr, String>> {
+    static M: OnceLock<Mutex<HashMap<Ipv4Addr, String>>> = OnceLock::new();
+    M.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// TUN 流量只有目标 IP；登记应答的 A 记录→查询域名，后续流才能过 DOMAIN* 规则。
+pub fn record_dns_answers(msg: &[u8]) {
+    let Some((name, ips)) = parse_answers(msg) else { return };
+    let mut m = match ip_domains().lock() {
+        Ok(g) => g,
+        Err(e) => e.into_inner(),
+    };
+    if m.len() >= IP_MAP_MAX {
+        m.clear();
+    }
+    for ip in ips {
+        m.insert(ip, name.clone());
+    }
+}
+
+/// 反查某个 IPv4 最近解析出的域名。
+pub fn lookup_domain(ip: Ipv4Addr) -> Option<String> {
+    let m = match ip_domains().lock() {
+        Ok(g) => g,
+        Err(e) => e.into_inner(),
+    };
+    m.get(&ip).cloned()
+}
+
+/// 回写 TUN 的 UDP 包若来自 53 端口，顺手登记其中的 A 记录。
+pub fn record_from_packet(pkt: &[u8]) {
+    if let Some(d) = parse_udp(pkt) {
+        if d.sport == 53 {
+            record_dns_answers(&d.payload);
+        }
+    }
+}
+
+fn skip_name(msg: &[u8], mut pos: usize) -> Option<usize> {
+    loop {
+        let len = *msg.get(pos)? as usize;
+        if len == 0 {
+            return Some(pos + 1);
+        }
+        if len & 0xc0 == 0xc0 {
+            return Some(pos + 2);
+        }
+        if len & 0xc0 != 0 {
+            return None;
+        }
+        pos += 1 + len;
+    }
+}
+
+/// 从 DNS 应答取（查询域名, A 记录 IP 列表）；CNAME 链上的 A 记录都归到问题域名。
+fn parse_answers(msg: &[u8]) -> Option<(String, Vec<Ipv4Addr>)> {
+    if msg.len() < 12 || msg[2] & 0x80 == 0 {
+        return None;
+    }
+    let qd = u16::from_be_bytes([msg[4], msg[5]]);
+    let an = u16::from_be_bytes([msg[6], msg[7]]);
+    if qd == 0 || an == 0 {
+        return None;
+    }
+    let mut pos = 12usize;
+    let mut name = String::new();
+    loop {
+        let len = *msg.get(pos)? as usize;
+        if len == 0 {
+            pos += 1;
+            break;
+        }
+        if len & 0xc0 != 0 {
+            return None;
+        }
+        let label = msg.get(pos + 1..pos + 1 + len)?;
+        if !name.is_empty() {
+            name.push('.');
+        }
+        name.push_str(&String::from_utf8_lossy(label));
+        pos += 1 + len;
+    }
+    pos += 4;
+    for _ in 1..qd {
+        pos = skip_name(msg, pos)? + 4;
+    }
+    let mut ips = Vec::new();
+    for _ in 0..an {
+        pos = skip_name(msg, pos)?;
+        let rtype = u16::from_be_bytes([*msg.get(pos)?, *msg.get(pos + 1)?]);
+        let rdlen = u16::from_be_bytes([*msg.get(pos + 8)?, *msg.get(pos + 9)?]) as usize;
+        pos += 10;
+        if rtype == 1 && rdlen == 4 {
+            ips.push(Ipv4Addr::new(
+                *msg.get(pos)?,
+                *msg.get(pos + 1)?,
+                *msg.get(pos + 2)?,
+                *msg.get(pos + 3)?,
+            ));
+        }
+        pos += rdlen;
+        msg.get(pos.checked_sub(1)?)?;
+    }
+    (!name.is_empty() && !ips.is_empty()).then_some((name.to_ascii_lowercase(), ips))
+}
 
 /// 解析出的 UDP 报文。
 pub struct UdpDatagram {
@@ -120,7 +229,7 @@ fn cache_put(key: Vec<u8>, resp: Vec<u8>) {
 ///
 /// 走 TCP 而不是 UDP 的原因：DNS over TCP 只需在报文前加 2 字节长度前缀，
 /// 任何出站协议（SS / Trojan / VLESS）都能承载，不依赖服务端是否开 UDP relay。
-pub async fn resolve(cfg: &ProxyConfig, master: &[u8; 32], query: &[u8]) -> io::Result<Vec<u8>> {
+pub async fn resolve(cfg: &ProxyConfig, master: &SsKey, query: &[u8]) -> io::Result<Vec<u8>> {
     let key = cache_key(query);
     if let Some(mut hit) = cache_get(&key) {
         // 复用缓存时把 ID 改回本次查询的
@@ -180,6 +289,7 @@ pub async fn resolve(cfg: &ProxyConfig, master: &[u8; 32], query: &[u8]) -> io::
         read_framed(&mut st).await?
     };
 
+    record_dns_answers(&resp);
     cache_put(key, resp.clone());
     Ok(resp)
 }
@@ -240,6 +350,42 @@ mod tests {
         assert_eq!(parsed.sport, 53);
         assert_eq!(parsed.dport, 40123);
         assert_eq!(parsed.payload, q);
+    }
+
+    fn sample_response() -> Vec<u8> {
+        // 应答：question example.com A，CNAME（压缩名指针）+ 两条 A 记录
+        let mut r = vec![0x12, 0x34, 0x81, 0x80, 0, 1, 0, 3, 0, 0, 0, 0];
+        for label in ["example", "com"] {
+            r.push(label.len() as u8);
+            r.extend_from_slice(label.as_bytes());
+        }
+        r.push(0);
+        r.extend_from_slice(&[0, 1, 0, 1]);
+        r.extend_from_slice(&[0xc0, 0x0c, 0, 5, 0, 1, 0, 0, 0, 60, 0, 6]);
+        r.extend_from_slice(&[3, b'c', b'd', b'n', 0xc0, 0x0c]);
+        for ip in [[93u8, 184, 216, 34], [93, 184, 216, 35]] {
+            r.extend_from_slice(&[0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4]);
+            r.extend_from_slice(&ip);
+        }
+        r
+    }
+
+    #[test]
+    fn records_a_answers_for_ip_lookup() {
+        let resp = sample_response();
+        let (name, ips) = parse_answers(&resp).expect("应能解析");
+        assert_eq!(name, "example.com");
+        assert_eq!(ips, vec![Ipv4Addr::new(93, 184, 216, 34), Ipv4Addr::new(93, 184, 216, 35)]);
+
+        record_dns_answers(&resp);
+        assert_eq!(lookup_domain(Ipv4Addr::new(93, 184, 216, 35)).as_deref(), Some("example.com"));
+        assert!(lookup_domain(Ipv4Addr::new(9, 9, 9, 9)).is_none());
+
+        let pkt = build_udp_reply(
+            Ipv4Addr::new(8, 8, 8, 8), Ipv4Addr::new(10, 10, 10, 2), 53, 40000, &resp);
+        record_from_packet(&pkt);
+        assert_eq!(lookup_domain(Ipv4Addr::new(93, 184, 216, 34)).as_deref(), Some("example.com"));
+        assert!(parse_answers(&sample_query()).is_none(), "查询报文不应入表");
     }
 
     #[test]

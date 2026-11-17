@@ -68,22 +68,32 @@ public final class RustCore {
     /** 输入域名，返回打包命中结果。bit63=命中；bits16-46=规则序号；bits8-15=类型；bits0-7=动作。 */
     public static native long nativeDecide(String host);
 
+    // ---- 路由模式 / 真实分流统计 / 节点测速 ----
+    /** 同步路由模式到内核：0=规则 / 1=全局 / 2=直连。数据面即时生效。 */
+    public static native int nativeSetRuleMode(int mode);
+    /** 数据面真实路由决策计数 CSV：direct,proxy,reject。 */
+    public static native String nativeRouteStats();
+    /** 单节点真实延迟（DNS + TCP 建连毫秒），写回节点表；失败 -1。阻塞，须后台线程调用。 */
+    public static native int nativeTestNodeDelay(int i, long timeoutMs);
+    /** 并发测速全部受支持节点，返回实测个数。阻塞，须后台线程调用。 */
+    public static native int nativeTestAllDelays(long timeoutMs);
+
     /** 真实 TCP 探针（PoC-5）：内核经 tokio 做 DNS 解析 + 建连 + 收发试探字节。
      *  返回 CSV：ok,ms,ip,tx,rx,err。与 session_tick 模拟计数不是一回事。 */
     public static native String nativeProbe(String host, int port, long timeoutMs);
 
     // ---- 真实代理入口 / TUN 接管（PoC-6：内核开始真转发）----
 
-    /** 启动本地 SOCKS5 入口：port 本地端口、ssServer 远端 SS 地址、ssPort 远端端口、password。返回 1/0。 */
+    /** 启动本地 SOCKS5 入口：port 本地端口、ssServer 远端 SS 地址、ssPort 远端端口、password、cipher。返回 1/0。 */
     public static native int nativeStartProxy(int port, String ssServer, int ssPort, String password,
-                                              String protocol, boolean tls, String sni);
+                                              String cipher, String protocol, boolean tls, String sni);
     /** 停止 SOCKS5 入口。返回 1/0。 */
     public static native int nativeStopProxy();
     /** 真实代理吞吐 CSV：tx,rx（字节）。区别于 nativeSessionBreakdown 的模拟会话。 */
     public static native String nativeProxyStats();
     /** 打开 TUN 接管：fd 由 VpnService 提供。返回 1/0。 */
     public static native int nativeOpenTun(int fd, String server, int port, String password,
-                                           String protocol, boolean tls, String sni);
+                                           String cipher, String protocol, boolean tls, String sni);
     /** 关闭 TUN 接管。返回 1/0。 */
     public static native int nativeCloseTun();
     /** TUN 真实流量统计 CSV：bytes,packets,tcp,udp。 */

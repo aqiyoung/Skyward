@@ -64,6 +64,7 @@ public final class AppState {
     public String ssServer = "";
     public int ssPort = 0;
     public String ssPassword = "";
+    public String ssCipher = "";
     public int socksPort = 1080;
 
     public String outProtocol = "";
@@ -119,6 +120,17 @@ public final class AppState {
         return new String[]{"规则模式", "全局代理", "直连模式"}[ruleMode];
     }
 
+    /** 修改路由模式并同步到内核数据面（SOCKS5 / TUN 即时生效）。 */
+    public void setRuleMode(int mode) {
+        ruleMode = Math.max(0, Math.min(2, mode));
+        pushRuleMode();
+        save();
+    }
+
+    private void pushRuleMode() {
+        try { RustCore.nativeSetRuleMode(ruleMode); } catch (Throwable ignored) {}
+    }
+
     // ================= 持久化 =================
 
     /** 绑定 Application Context，读回状态并恢复内核会话。由 MainActivity.onCreate 调用。 */
@@ -126,6 +138,7 @@ public final class AppState {
         prefs = c.getApplicationContext().getSharedPreferences(PREF, Context.MODE_PRIVATE);
         load();
         warmUp();
+        pushRuleMode();
         boolean restored = false;
         Profile active = findProfile(activeProfileId);
         if (active != null) {
@@ -145,7 +158,8 @@ public final class AppState {
             if (prefs != null) {
                 prefs.edit().putString("activeProfileId", "").putInt("selectedNode", 0)
                         .putString("ssServer", "").putInt("ssPort", 0)
-                        .putString("ssPassword", "").putString("outProtocol", "")
+                        .putString("ssPassword", "").putString("ssCipher", "")
+                        .putString("outProtocol", "")
                         .putBoolean("outTls", false).putString("outSni", "").apply();
             }
         }
@@ -176,6 +190,7 @@ public final class AppState {
         ssServer       = p.getString("ssServer", "");
         ssPort         = p.getInt("ssPort", 0);
         ssPassword     = p.getString("ssPassword", "");
+        ssCipher       = p.getString("ssCipher", "");
         socksPort      = p.getInt("socksPort", 1080);
         outProtocol    = p.getString("outProtocol", "");
         outTls         = p.getBoolean("outTls", false);
@@ -222,6 +237,7 @@ public final class AppState {
                 .putString("ssServer", ssServer)
                 .putInt("ssPort", ssPort)
                 .putString("ssPassword", ssPassword)
+                .putString("ssCipher", ssCipher)
                 .putInt("socksPort", socksPort)
                 .putString("outProtocol", outProtocol)
                 .putBoolean("outTls", outTls)
@@ -335,6 +351,7 @@ public final class AppState {
             ssServer = RustCore.nativeNodeServer(selectedNode);
             ssPort = RustCore.nativeNodePort(selectedNode);
             ssPassword = RustCore.nativeNodeSecret(selectedNode);
+            ssCipher = RustCore.nativeNodeCipher(selectedNode);
             outProtocol = RustCore.nativeNodeProtocol(selectedNode);
             outTls = RustCore.nativeNodeTls(selectedNode) != 0;
             outSni = RustCore.nativeNodeSni(selectedNode);
@@ -357,6 +374,7 @@ public final class AppState {
         ssServer = "";
         ssPort = 0;
         ssPassword = "";
+        ssCipher = "";
         outProtocol = "";
         outTls = false;
         outSni = "";

@@ -180,8 +180,22 @@ public final class PageProxies {
                 "绿 < 80ms · 橙 < 150ms · 红 ≥ 150ms", null, null));
         gset.addView(Ui.separator(c));
         gset.addView(Ui.row(c, IconView.Glyph.CLOCK, Ui.ORANGE, "延迟测速",
-                n > 0 ? "已解析 " + n + " 个节点" : "请先导入配置", null,
-                v -> Ui.toast(c, "真实延迟探测尚未接入")));
+                n > 0 ? "已解析 " + n + " 个节点 · 点击实测 TCP 建连" : "请先导入配置", null,
+                v -> {
+                    if (n == 0) { Ui.toast(c, "请先导入配置"); return; }
+                    Ui.toast(c, "测速中…");
+                    final Handler main = new Handler(Looper.getMainLooper());
+                    new Thread(() -> {
+                        int tested;
+                        try { tested = RustCore.nativeTestAllDelays(3000); }
+                        catch (Throwable t) { tested = -1; }
+                        final int done = tested;
+                        main.post(() -> {
+                            Ui.toast(c, done >= 0 ? "已实测 " + done + " 个节点" : "测速失败");
+                            refresh.run();
+                        });
+                    }, "sky-delay-probe").start();
+                }));
         body.addView(gset);
 
         body.addView(Ui.groupTitle(c, "本地代理入口（真实转发）"));
@@ -196,7 +210,7 @@ public final class PageProxies {
                 }
                 try {
                     int started = RustCore.nativeStartProxy(s.socksPort, s.ssServer, s.ssPort,
-                            s.ssPassword, s.outProtocol, s.outTls, s.outSni);
+                            s.ssPassword, s.ssCipher, s.outProtocol, s.outTls, s.outSni);
                     if (started == 0) throw new IllegalStateException("参数无效");
                     s.proxyRunning = true;
                     MainActivity.requestVpn(c, true);
@@ -266,7 +280,7 @@ public final class PageProxies {
             int order = (int) ((packed >>> 16) & 0x7FFFFFFF);
             int kind = (int) ((packed >>> 8) & 0xFF);
             int action = (int) (packed & 0xFF);
-            String[] kindName = {"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR"};
+            String[] kindName = {"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR", "DOMAIN"};
             String[] actName = {"直连 DIRECT", "代理 PROXY", "拒绝 REJECT"};
             result.setText("命中规则 #" + (order + 1) + " · 类型 " + kindName[kind]
                     + "\n动作：" + actName[action]);

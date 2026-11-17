@@ -59,9 +59,9 @@ jobs:
             rust/core/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('rust/core/Cargo.lock') }}
 
-      - name: Test TUN lifecycle and packet path
+      - name: Test core library (crypto, routing, TUN, data plane)
         working-directory: rust/core
-        run: cargo test --locked --lib tun::tests
+        run: cargo test --locked --lib
 
       # ubuntu-latest 自带 Android SDK（/usr/local/lib/android/sdk + cmdline-tools），
       # 直接用即可。不要用 android-actions/setup-android：它内部跑 `sdkmanager tools`，

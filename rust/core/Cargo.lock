@@ -318,6 +318,7 @@ dependencies = [
  "getrandom",
  "hmac",
  "libc",
+ "ring",
  "rustls",
  "sha1",
  "sha2",

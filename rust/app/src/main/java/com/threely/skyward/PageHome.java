@@ -239,8 +239,7 @@ public final class PageHome {
             t.setBackground(g);
             t.setTextColor(on ? Ui.TEXT : Ui.TEXT2);
             t.setOnClickListener(v -> {
-                AppState.get().ruleMode = idx;
-                AppState.get().save();
+                AppState.get().setRuleMode(idx);
                 refresh.run();
             });
             seg.addView(t, new LinearLayout.LayoutParams(0,

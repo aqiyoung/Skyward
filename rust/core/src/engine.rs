@@ -20,8 +20,8 @@
 
 use std::collections::HashMap;
 use std::hint::black_box;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
+use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 
 pub const ACTION_DIRECT: u8 = 0;
@@ -46,11 +46,16 @@ pub static HOSTS: [&str; 12] = [
     "192.168.1.20",
 ];
 
+pub const RULE_MODE_RULE: u8 = 0;
+pub const RULE_MODE_GLOBAL: u8 = 1;
+pub const RULE_MODE_DIRECT: u8 = 2;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RuleKind {
     DomainSuffix,
     DomainKeyword,
     IpCidr,
+    DomainFull,
 }
 
 pub struct Rule {
@@ -90,7 +95,7 @@ impl ProxyNode {
             return false;
         }
         match self.ptype.as_str() {
-            "ss" => self.transport == "tcp" && self.cipher == "chacha20-ietf-poly1305",
+            "ss" => self.transport == "tcp" && crate::ss::SsCipher::parse(&self.cipher).is_some(),
             "trojan" => {
                 self.tls
                     && self.transport == "tcp"
@@ -541,6 +546,79 @@ pub fn parse_config(text: &str) -> Result<Vec<ProxyNode>, String> {
     Ok(nodes)
 }
 
+fn policy_action(policy: &str) -> u8 {
+    match policy.trim().to_ascii_uppercase().as_str() {
+        "DIRECT" => ACTION_DIRECT,
+        "REJECT" | "REJECT-DROP" | "BLOCK" => ACTION_REJECT,
+        _ => ACTION_PROXY,
+    }
+}
+
+/// 解析 Clash `rules:` 段 →（规则集, MATCH 兜底动作）；代理组名视为 PROXY，
+/// GEOIP / RULE-SET 等无法本地判定的类型跳过；无该段返回 None。
+pub fn parse_clash_rules(text: &str) -> Option<(Vec<Rule>, u8)> {
+    let decoded = decode_subscription(text);
+    let mut in_rules = false;
+    let mut rules_indent = 0usize;
+    let mut saw_section = false;
+    let mut out = Vec::new();
+    let mut final_action: Option<u8> = None;
+    for raw in decoded.lines() {
+        let indent = raw.len() - raw.trim_start().len();
+        let line = raw.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if !line.starts_with('-') && line.contains(':') {
+            let key = line.split(':').next().unwrap_or("").trim();
+            if key == "rules" {
+                in_rules = true;
+                saw_section = true;
+                rules_indent = indent;
+                continue;
+            }
+            if in_rules && indent <= rules_indent {
+                in_rules = false;
+            }
+            continue;
+        }
+        if !in_rules {
+            continue;
+        }
+        let Some(rest) = line.strip_prefix('-') else { continue };
+        let item = yaml_scalar(rest);
+        let parts: Vec<&str> = item.split(',').map(str::trim).collect();
+        let kind_raw = parts[0].to_ascii_uppercase();
+        if matches!(kind_raw.as_str(), "MATCH" | "FINAL") {
+            if let Some(policy) = parts.get(1) {
+                final_action.get_or_insert(policy_action(policy));
+            }
+            continue;
+        }
+        if parts.len() < 3 || parts[1].is_empty() {
+            continue;
+        }
+        let kind = match kind_raw.as_str() {
+            "DOMAIN-SUFFIX" => RuleKind::DomainSuffix,
+            "DOMAIN" => RuleKind::DomainFull,
+            "DOMAIN-KEYWORD" => RuleKind::DomainKeyword,
+            "IP-CIDR" | "IP-CIDR6" => {
+                if parse_cidr(parts[1]).is_none() {
+                    continue;
+                }
+                RuleKind::IpCidr
+            }
+            _ => continue,
+        };
+        out.push(Rule {
+            kind,
+            pattern: parts[1].to_ascii_lowercase(),
+            action: policy_action(parts[2]),
+        });
+    }
+    saw_section.then(|| (out, final_action.unwrap_or(ACTION_PROXY)))
+}
+
 /// 测试夹具：一份 Clash/Mihomo 风格配置，地址和凭据均为虚构，不作为可用订阅展示。
 pub const SAMPLE_CONFIG: &str = r#"
 proxies:
@@ -608,6 +686,8 @@ impl SuffixNode {
 
 pub struct RuleIndex {
     suffix: SuffixNode,
+    /// DOMAIN 精确匹配：host → (规则序号, action)
+    exact: HashMap<String, (usize, u8)>,
     /// 关键词按首字节分桶：(pattern, 规则序号, action)
     keywords: HashMap<u8, Vec<(String, usize, u8)>>,
     /// 下标 = 前缀长度 0..=32，值为 (网络号, 规则序号, action)，按网络号排序
@@ -658,6 +738,7 @@ impl RuleIndex {
     fn build(rules: &[Rule]) -> Self {
         let mut idx = RuleIndex {
             suffix: SuffixNode::new(),
+            exact: HashMap::new(),
             keywords: HashMap::new(),
             cidrs: (0..=32).map(|_| Vec::new()).collect(),
             cidr_prefixes: Vec::new(),
@@ -690,6 +771,9 @@ impl RuleIndex {
                     if node.action.is_none() {
                         node.action = Some((order, r.action));
                     }
+                }
+                RuleKind::DomainFull => {
+                    idx.exact.entry(r.pattern.clone()).or_insert((order, r.action));
                 }
                 RuleKind::DomainKeyword => {
                     let key = *r.pattern.as_bytes().first().unwrap_or(&0);
@@ -724,6 +808,12 @@ impl RuleIndex {
         let mut best_order: usize = usize::MAX;
         let mut best_action: u8 = ACTION_DIRECT;
         let mut best_kind: RuleKind = RuleKind::DomainSuffix;
+
+        if let Some(&(order, action)) = self.exact.get(host) {
+            best_order = order;
+            best_action = action;
+            best_kind = RuleKind::DomainFull;
+        }
 
         // 1) 反转域名 trie：O(标签数)。沿路记录序号最小的命中，保持原始优先级。
         // 用 rsplit 直接从最右标签往左走，避免 split().collect() 的堆分配。
@@ -822,6 +912,7 @@ fn linear_match(rules: &[Rule], host: &str) -> u8 {
                         && host.ends_with(&r.pattern)
                         && host.as_bytes()[host.len() - r.pattern.len() - 1] == b'.')
             }
+            RuleKind::DomainFull => host == r.pattern,
             RuleKind::DomainKeyword => host.contains(&r.pattern),
             RuleKind::IpCidr => {
                 let prefix = r.pattern.split('/').next().unwrap_or("");
@@ -932,6 +1023,18 @@ pub struct Core {
     next_id: AtomicU64,
     loopback_bytes: AtomicU64,
     session: Session,
+    /// 0 规则 / 1 全局 / 2 直连，由 Java 侧同步。
+    rule_mode: AtomicU8,
+    /// 规则全部未命中时的兜底动作（Clash 的 MATCH）。
+    final_action: AtomicU8,
+    /// 数据面真实路由决策计数：[直连, 代理, 拒绝]。
+    route_counts: [AtomicU64; 3],
+}
+
+/// 全进程共享单例：JNI 与数据面（socks5 / tun）共用同一份规则与节点状态。
+pub fn shared() -> &'static Core {
+    static CORE: OnceLock<Core> = OnceLock::new();
+    CORE.get_or_init(Core::new)
 }
 
 impl Core {
@@ -947,6 +1050,9 @@ impl Core {
             next_id: AtomicU64::new(1),
             loopback_bytes: AtomicU64::new(0),
             session: Session::new(),
+            rule_mode: AtomicU8::new(RULE_MODE_RULE),
+            final_action: AtomicU8::new(ACTION_PROXY),
+            route_counts: [AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0)],
         }
     }
 
@@ -989,12 +1095,13 @@ impl Core {
         self.rules.lock().unwrap().get(i).map(|r| r.pattern.clone()).unwrap_or_default()
     }
 
-    /// 规则 #i 的类型：0=DOMAIN-SUFFIX / 1=DOMAIN-KEYWORD / 2=IP-CIDR。
+    /// 规则 #i 的类型：0=DOMAIN-SUFFIX / 1=DOMAIN-KEYWORD / 2=IP-CIDR / 3=DOMAIN。
     pub fn rule_kind_code(&self, i: usize) -> u8 {
         self.rules.lock().unwrap().get(i).map(|r| match r.kind {
             RuleKind::DomainSuffix => 0,
             RuleKind::DomainKeyword => 1,
             RuleKind::IpCidr => 2,
+            RuleKind::DomainFull => 3,
         }).unwrap_or(0)
     }
 
@@ -1032,6 +1139,7 @@ impl Core {
             Ok(nodes) => {
                 let count = nodes.len();
                 *self.nodes.lock().unwrap() = nodes;
+                self.install_profile_rules(text);
                 *self.last_error.lock().unwrap() = String::new();
                 Ok(count)
             }
@@ -1040,6 +1148,78 @@ impl Core {
                 Err(error)
             }
         }
+    }
+
+    /// 配置携带 `rules:` 段时替换内置规则集；没有时保留当前规则，不打扰既有行为。
+    fn install_profile_rules(&self, text: &str) {
+        let Some((rules, fin)) = parse_clash_rules(text) else { return };
+        let index = RuleIndex::build(&rules);
+        *self.rules.lock().unwrap() = rules;
+        *self.index.lock().unwrap() = index;
+        self.final_action.store(fin, Ordering::Relaxed);
+    }
+
+    pub fn set_rule_mode(&self, mode: u8) {
+        self.rule_mode.store(mode.min(RULE_MODE_DIRECT), Ordering::Relaxed);
+    }
+
+    pub fn get_rule_mode(&self) -> u8 {
+        self.rule_mode.load(Ordering::Relaxed)
+    }
+
+    /// 数据面路由决策：全局→代理，直连→直连，规则→索引命中动作（未命中走兜底）。
+    pub fn route(&self, host: &str) -> u8 {
+        match self.rule_mode.load(Ordering::Relaxed) {
+            RULE_MODE_GLOBAL => ACTION_PROXY,
+            RULE_MODE_DIRECT => ACTION_DIRECT,
+            _ => self
+                .decide(host)
+                .map(|d| d.1)
+                .unwrap_or_else(|| self.final_action.load(Ordering::Relaxed)),
+        }
+    }
+
+    pub fn route_noted(&self, host: &str) -> u8 {
+        let action = self.route(host);
+        self.route_counts[action.min(2) as usize].fetch_add(1, Ordering::Relaxed);
+        action
+    }
+
+    /// 真实路由决策计数 CSV：direct,proxy,reject。
+    pub fn route_stats(&self) -> String {
+        format!(
+            "{},{},{}",
+            self.route_counts[0].load(Ordering::Relaxed),
+            self.route_counts[1].load(Ordering::Relaxed),
+            self.route_counts[2].load(Ordering::Relaxed),
+        )
+    }
+
+    pub fn set_node_delay(&self, i: usize, ms: i32) {
+        if let Some(n) = self.nodes.lock().unwrap().get_mut(i) {
+            n.delay_ms = ms;
+        }
+    }
+
+    pub fn node_endpoint(&self, i: usize) -> Option<(String, u16)> {
+        self.nodes
+            .lock()
+            .unwrap()
+            .get(i)
+            .filter(|n| n.supported())
+            .map(|n| (n.server.clone(), n.port))
+    }
+
+    /// 全部受支持节点的测速端点 (index, server, port)。
+    pub fn supported_endpoints(&self) -> Vec<(usize, String, u16)> {
+        self.nodes
+            .lock()
+            .unwrap()
+            .iter()
+            .enumerate()
+            .filter(|(_, n)| n.supported())
+            .map(|(i, n)| (i, n.server.clone(), n.port))
+            .collect()
     }
 
     pub fn set_last_error(&self, error: String) {
@@ -1368,7 +1548,7 @@ mod tests {
         let legacy = parse_config(encoded).unwrap();
         assert_eq!(legacy[0].cipher, "aes-256-gcm");
         assert_eq!(legacy[0].secret, "pass");
-        assert!(!legacy[0].supported());
+        assert!(legacy[0].supported(), "aes-256-gcm 已支持");
         let vmess = "vmess://eyJ2IjoiMiIsInBzIjoiSmFwYW4iLCJhZGQiOiJleGFtcGxlLmNvbSIsInBvcnQiOiI0NDMiLCJpZCI6ImI4MzEzODFkLTYzMjQtNGQ1My1hZDRmLThjZGE0OGIzMDgxMSIsIm5ldCI6InRjcCIsInRscyI6InRscyIsInNjeSI6ImF1dG8ifQ==";
         let parsed = parse_config(vmess).unwrap();
         assert_eq!(parsed[0].name, "Japan");
@@ -1417,6 +1597,62 @@ mod tests {
         assert!(total > 0);
         // 会话总字节应与分桶合计一致
         assert_eq!(c.session_up() + c.session_down(), total);
+    }
+
+    #[test]
+    fn parses_clash_rules_section_with_fallback() {
+        let text = "proxies:\n  - name: hk\n    type: ss\n    server: edge.example\n    port: 8388\n    cipher: aes-128-gcm\n    password: secret\nrules:\n  - DOMAIN,dl.google.com,DIRECT\n  - DOMAIN-SUFFIX,openai.com,🚀 节点选择\n  - DOMAIN-KEYWORD,tracker,REJECT\n  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve\n  - IP-CIDR6,fe80::/10,DIRECT\n  - GEOIP,CN,DIRECT\n  - MATCH,DIRECT\n";
+        let (rules, fin) = parse_clash_rules(text).expect("应识别 rules 段");
+        assert_eq!(rules.len(), 4, "IP-CIDR6 / GEOIP 应被跳过");
+        assert_eq!(rules[0].kind, RuleKind::DomainFull);
+        assert_eq!(rules[0].action, ACTION_DIRECT);
+        assert_eq!(rules[1].kind, RuleKind::DomainSuffix);
+        assert_eq!(rules[1].action, ACTION_PROXY, "代理组名应映射为 PROXY");
+        assert_eq!(rules[2].action, ACTION_REJECT);
+        assert_eq!(rules[3].kind, RuleKind::IpCidr);
+        assert_eq!(fin, ACTION_DIRECT);
+        assert!(parse_clash_rules("proxies:\n  - name: x\n").is_none());
+
+        let c = Core::new();
+        c.parse_text_config(text).expect("配置应可解析");
+        assert_eq!(c.rule_count(), 4);
+        assert_eq!(c.rule_kind_code(0), 3);
+        assert_eq!(c.route("dl.google.com"), ACTION_DIRECT);
+        assert_eq!(c.route("sub.dl.google.com"), ACTION_DIRECT, "兜底 MATCH,DIRECT");
+        assert_eq!(c.route("api.openai.com"), ACTION_PROXY);
+        assert_eq!(c.route("tracker.example.org"), ACTION_REJECT);
+        assert_eq!(c.route("192.168.1.3"), ACTION_DIRECT);
+    }
+
+    #[test]
+    fn route_respects_rule_mode_and_counts() {
+        let c = Core::new();
+        assert_eq!(c.route("www.google.com"), ACTION_PROXY);
+        assert_eq!(c.route("unmatched.example"), ACTION_PROXY, "默认兜底代理");
+        assert_eq!(c.route("ads.doubleclick.net"), ACTION_REJECT);
+        c.set_rule_mode(RULE_MODE_GLOBAL);
+        assert_eq!(c.route("ads.doubleclick.net"), ACTION_PROXY);
+        c.set_rule_mode(RULE_MODE_DIRECT);
+        assert_eq!(c.route("www.google.com"), ACTION_DIRECT);
+        c.set_rule_mode(RULE_MODE_RULE);
+        assert_eq!(c.route_noted("www.qq.com"), ACTION_DIRECT);
+        assert_eq!(c.route_noted("www.google.com"), ACTION_PROXY);
+        assert_eq!(c.route_noted("tracker.example.org"), ACTION_REJECT);
+        assert_eq!(c.route_stats(), "1,1,1");
+    }
+
+    #[test]
+    fn node_delay_updates_after_probe() {
+        let c = Core::new();
+        c.parse_text_config("ss://aes-128-gcm:pw@198.51.100.7:8388#n1").expect("解析");
+        assert_eq!(c.node_delay(0), -1);
+        let eps = c.supported_endpoints();
+        assert_eq!(eps.len(), 1);
+        assert_eq!(eps[0].1, "198.51.100.7");
+        c.set_node_delay(0, 87);
+        assert_eq!(c.node_delay(0), 87);
+        assert_eq!(c.node_endpoint(0), Some(("198.51.100.7".into(), 8388)));
+        assert_eq!(c.node_endpoint(9), None);
     }
 
     #[test]

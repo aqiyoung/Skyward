@@ -11,7 +11,7 @@
 //! 服务器的 UDP socket，回程包解密后重新封装成 IPv4/UDP 帧写回 TUN。
 //! 会话空闲 90s 自动回收（socket 关闭、任务退出、表项移除）。
 
-use crate::ss::{open_udp, seal_udp, SsTarget};
+use crate::ss::{open_udp, seal_udp, SsKey, SsTarget};
 use crate::tcpstack::checksum;
 use std::collections::HashMap;
 use std::io;
@@ -109,7 +109,7 @@ impl Session {
 
 /// UDP 会话表 + 转发器。
 pub struct UdpRelay {
-    master: [u8; 32],
+    master: SsKey,
     server: String,
     server_port: u16,
     sink: Sink,
@@ -117,7 +117,7 @@ pub struct UdpRelay {
 }
 
 impl UdpRelay {
-    pub fn new(master: [u8; 32], server: String, server_port: u16, sink: Sink) -> Arc<Self> {
+    pub fn new(master: SsKey, server: String, server_port: u16, sink: Sink) -> Arc<Self> {
         Arc::new(UdpRelay {
             master,
             server,
@@ -238,6 +238,111 @@ impl UdpRelay {
                 Ok(Err(_)) => break, // socket 出错，回收
                 Err(_) => {
                     // 空闲超时：超过阈值就结束，让表项被清理
+                    let idle = now_ms().saturating_sub(sess.last_active.load(Ordering::Relaxed));
+                    if idle >= IDLE_TIMEOUT.as_millis() as u64 {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct DirectSession {
+    key: FlowKey,
+    sock: Arc<UdpSocket>,
+    last_active: AtomicU64,
+}
+
+/// 直连 UDP 转发：路由判为 DIRECT 的流不过代理，直接发往真实目标。
+/// 应用自身已被 VpnService 排除（addDisallowedApplication），不会回环进 TUN。
+pub struct DirectRelay {
+    sink: Sink,
+    table: Mutex<HashMap<FlowKey, Arc<DirectSession>>>,
+}
+
+impl DirectRelay {
+    pub fn new(sink: Sink) -> Arc<Self> {
+        Arc::new(DirectRelay {
+            sink,
+            table: Mutex::new(HashMap::new()),
+        })
+    }
+
+    pub fn flow_count(&self) -> usize {
+        match self.table.lock() {
+            Ok(g) => g.len(),
+            Err(e) => e.into_inner().len(),
+        }
+    }
+
+    pub async fn send(self: &Arc<Self>, key: FlowKey, payload: &[u8]) -> io::Result<()> {
+        let sess = self.get_or_open(key).await?;
+        sess.last_active.store(now_ms(), Ordering::Relaxed);
+        sess.sock.send(payload).await?;
+        Ok(())
+    }
+
+    async fn get_or_open(self: &Arc<Self>, key: FlowKey) -> io::Result<Arc<DirectSession>> {
+        {
+            let m = match self.table.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            if let Some(s) = m.get(&key) {
+                return Ok(s.clone());
+            }
+        }
+
+        let sock = UdpSocket::bind("0.0.0.0:0").await?;
+        sock.connect((key.dst, key.dport)).await?;
+        let sess = Arc::new(DirectSession {
+            key,
+            sock: Arc::new(sock),
+            last_active: AtomicU64::new(now_ms()),
+        });
+
+        {
+            let mut m = match self.table.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            if let Some(existing) = m.get(&key) {
+                return Ok(existing.clone());
+            }
+            m.insert(key, sess.clone());
+        }
+
+        let me = self.clone();
+        let s2 = sess.clone();
+        tokio::spawn(async move {
+            me.recv_loop(s2).await;
+            let mut m = match me.table.lock() {
+                Ok(g) => g,
+                Err(e) => e.into_inner(),
+            };
+            m.remove(&key);
+        });
+        Ok(sess)
+    }
+
+    async fn recv_loop(&self, sess: Arc<DirectSession>) {
+        let mut buf = vec![0u8; MAX_DATAGRAM];
+        loop {
+            match tokio::time::timeout(RECV_TICK, sess.sock.recv(&mut buf)).await {
+                Ok(Ok(n)) => {
+                    sess.last_active.store(now_ms(), Ordering::Relaxed);
+                    let pkt = build_udp_packet(
+                        sess.key.dst,
+                        sess.key.src,
+                        sess.key.dport,
+                        sess.key.sport,
+                        &buf[..n],
+                    );
+                    (self.sink)(&pkt);
+                }
+                Ok(Err(_)) => break,
+                Err(_) => {
                     let idle = now_ms().saturating_sub(sess.last_active.load(Ordering::Relaxed));
                     if idle >= IDLE_TIMEOUT.as_millis() as u64 {
                         break;
@@ -377,6 +482,53 @@ mod tests {
         assert_eq!(u16::from_be_bytes([f[20], f[21]]), echo_addr.port());
         assert_eq!(u16::from_be_bytes([f[22], f[23]]), 51000);
         assert_eq!(&f[28..], b"pdu-olleh", "echo 应被反转后回来");
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn direct_relay_roundtrip_without_proxy() {
+        use std::sync::Mutex as StdMutex;
+
+        let echo = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let echo_port = echo.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            let mut b = [0u8; 2048];
+            loop {
+                let (n, from) = match echo.recv_from(&mut b).await {
+                    Ok(x) => x,
+                    Err(_) => break,
+                };
+                let mut out = b[..n].to_vec();
+                out.reverse();
+                let _ = echo.send_to(&out, from).await;
+            }
+        });
+
+        let got: Arc<StdMutex<Vec<Vec<u8>>>> = Arc::new(StdMutex::new(Vec::new()));
+        let hold = got.clone();
+        let sink: Sink = Arc::new(move |pkt: &[u8]| {
+            hold.lock().unwrap().push(pkt.to_vec());
+        });
+        let relay = DirectRelay::new(sink);
+        let key = FlowKey::new(
+            Ipv4Addr::new(10, 10, 10, 2),
+            52001,
+            Ipv4Addr::new(127, 0, 0, 1),
+            echo_port,
+        );
+        relay.send(key, b"direct-udp").await.expect("发送应成功");
+
+        let mut waited = 0;
+        while got.lock().unwrap().is_empty() && waited < 3000 {
+            tokio::time::sleep(Duration::from_millis(20)).await;
+            waited += 20;
+        }
+        let frames = got.lock().unwrap().clone();
+        assert_eq!(frames.len(), 1);
+        let f = &frames[0];
+        assert_eq!(u16::from_be_bytes([f[20], f[21]]), echo_port);
+        assert_eq!(u16::from_be_bytes([f[22], f[23]]), 52001);
+        assert_eq!(&f[28..], b"pdu-tcerid");
+        assert_eq!(relay.flow_count(), 1);
     }
 
     #[test]

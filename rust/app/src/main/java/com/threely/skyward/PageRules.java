@@ -46,7 +46,7 @@ public final class PageRules {
                 pattern = RustCore.nativeRulePattern(i);
                 int kind = RustCore.nativeRuleKind(i);
                 action = RustCore.nativeRuleAction(i);
-                kindLabel = new String[]{"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR"}[kind];
+                kindLabel = new String[]{"DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR", "DOMAIN"}[kind];
             } catch (Throwable t) {
                 pattern = "—"; kindLabel = "—"; action = 0;
             }
@@ -70,6 +70,17 @@ public final class PageRules {
             if (i != n - 1) list.addView(Ui.separator(c));
         }
         body.addView(list);
+
+        body.addView(Ui.groupTitle(c, "数据面分流计数（真实决策）"));
+        LinearLayout counts = Ui.newCard(c);
+        String routeCsv = "0,0,0";
+        try { routeCsv = RustCore.nativeRouteStats(); } catch (Throwable t) { }
+        String[] rc = routeCsv.split(",");
+        counts.addView(Ui.row(c, IconView.Glyph.ROUTE, Ui.BLUE, "直连 / 代理 / 拒绝",
+                "SOCKS5 与 TUN 每个连接的路由裁决累计", Ui.valueText(c,
+                        rc[0] + " / " + (rc.length > 1 ? rc[1] : "0")
+                                + " / " + (rc.length > 2 ? rc[2] : "0")), null));
+        body.addView(counts);
 
         body.addView(note(c, "以上规则由 Rust 内核索引引擎真实持有（反转域名 trie / 关键词分桶 / "
                 + "CIDR 最长前缀）。「代理」页的路由测试、首页的流量分配均与这里同源；"

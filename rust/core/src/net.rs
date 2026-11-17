@@ -29,6 +29,16 @@ pub fn runtime() -> &'static Runtime {
     })
 }
 
+/// 节点延迟 = DNS 解析 + TCP 建连毫秒（Clash TCP ping 同口径）；失败 / 超时 -1。
+pub async fn tcp_delay(host: &str, port: u16, timeout_ms: u64) -> i32 {
+    let to = Duration::from_millis(timeout_ms.clamp(200, 60_000));
+    let start = Instant::now();
+    match tokio::time::timeout(to, TcpStream::connect((host, port))).await {
+        Ok(Ok(_)) => start.elapsed().as_millis() as i32,
+        _ => -1,
+    }
+}
+
 /// 真实 TCP 探针结果。
 pub struct Probe {
     pub ok: bool,
@@ -136,6 +146,20 @@ impl Probe {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tcp_delay_measures_local_listener_and_fails_cleanly() {
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(async {
+            let l = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let port = l.local_addr().unwrap().port();
+            let ms = tcp_delay("127.0.0.1", port, 2000).await;
+            assert!(ms >= 0, "本地建连应成功，got {ms}");
+            drop(l);
+            let ms = tcp_delay("127.0.0.1", port, 800).await;
+            assert_eq!(ms, -1, "已关闭端口应判失败");
+        });
+    }
 
     #[test]
     fn real_tcp_connect_to_example_com() {

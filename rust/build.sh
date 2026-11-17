@@ -100,9 +100,9 @@ say "== 2b. 校验 JNI 导出符号 =="
 if [ -x "$NDK_NM" ]; then
   SYMS=$("$NDK_NM" -D --defined-only "$SO" | grep -c "Java_com_threely_skyward_RustCore_" || true)
   # Current JNI surface includes parser, subscription, forwarding, and core-stat APIs.
-  say "exported JNI symbols: $SYMS (expected 52)"
-  if [ "$SYMS" -ne 52 ]; then
-    say "FAIL: JNI 导出符号数异常（expected 52, got $SYMS）"; exit 1
+  say "exported JNI symbols: $SYMS (expected 56)"
+  if [ "$SYMS" -ne 56 ]; then
+    say "FAIL: JNI 导出符号数异常（expected 56, got $SYMS）"; exit 1
   fi
   "$NDK_NM" -D --defined-only "$SO" | grep "Java_com_threely" | tee -a "$LOG"
 else

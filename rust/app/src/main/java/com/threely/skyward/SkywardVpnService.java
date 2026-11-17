@@ -76,7 +76,7 @@ public class SkywardVpnService extends VpnService {
             return START_NOT_STICKY;
         }
         if (RustCore.nativeOpenTun(mFd.getFd(), st.ssServer, st.ssPort, st.ssPassword,
-                st.outProtocol, st.outTls, st.outSni) == 0) {
+                st.ssCipher, st.outProtocol, st.outTls, st.outSni) == 0) {
             setTunMode(st, false);
             stopSelf();
             return START_NOT_STICKY;
