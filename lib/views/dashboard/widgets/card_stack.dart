@@ -180,16 +180,14 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     _armTimer = Timer(_holdConfirm, _arm);
   }
 
-  /// The hold is confirmed: this press is about switching cards. Claim the
-  /// gesture outright so the board cannot take it later, and give a small
-  /// haptic tick so the finger knows the pile is now live.
+  /// The hold is confirmed: the pile is live. Claim only on a real slide in
+  /// [_move], so a press that is never dragged falls through to the card's tap.
   void _arm() {
     _armTimer = null;
     if (!_held || _settled || _boardScroll) {
       return;
     }
     _armed = true;
-    _claim?.claim();
     // A phone without a vibrator, or a test binding with no platform channel,
     // simply has nothing to answer; the visual dot rail is the real cue.
     HapticFeedback.selectionClick().ignore();
@@ -210,9 +208,7 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (!_held || _settled || event.pointer != _pointer) {
       return;
     }
-    final dt = _lastMove == null
-        ? Duration.zero
-        : event.timeStamp - _lastMove!;
+    final dt = _lastMove == null ? Duration.zero : event.timeStamp - _lastMove!;
     if (dt.inMicroseconds > 0) {
       _velocityY =
           (event.position.dy - _lastY) / (dt.inMicroseconds / 1000000.0);
@@ -230,6 +226,10 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (_boardScroll) {
       return;
     }
+    if (dy.abs() <= _scrollIntent) {
+      return;
+    }
+    _claim?.claim();
     _drag(dy);
   }
 
@@ -439,18 +439,17 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
             child: RawGestureDetector(
               behavior: HitTestBehavior.translucent,
               gestures: <Type, GestureRecognizerFactory>{
-                _PileClaim:
-                    GestureRecognizerFactoryWithHandlers<_PileClaim>(
-                      () {
-                        final claim = _PileClaim();
-                        _claim = claim;
-                        return claim;
-                      },
-                      (_) {
-                        // No callbacks by design: the state classifies the
-                        // press, this recognizer only claims or yields it.
-                      },
-                    ),
+                _PileClaim: GestureRecognizerFactoryWithHandlers<_PileClaim>(
+                  () {
+                    final claim = _PileClaim();
+                    _claim = claim;
+                    return claim;
+                  },
+                  (_) {
+                    // No callbacks by design: the state classifies the
+                    // press, this recognizer only claims or yields it.
+                  },
+                ),
               },
               child: RepaintBoundary(
                 key: _surface,

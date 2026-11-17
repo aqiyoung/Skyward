@@ -13,7 +13,8 @@ void main() {
   late ProviderContainer container;
   final keys = <DashboardWidget, GlobalKey>{};
 
-  GlobalKey keyOf(DashboardWidget card) => keys.putIfAbsent(card, GlobalKey.new);
+  GlobalKey keyOf(DashboardWidget card) =>
+      keys.putIfAbsent(card, GlobalKey.new);
 
   setUp(() {
     container = ProviderContainer(
@@ -233,6 +234,41 @@ void main() {
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
 
+  testWidgets('holding past the confirm without sliding opens the detail', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+    ]);
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    // Past the hold confirm, but no slide: the card's own tap must win.
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byType(MemoryDetailSheet), findsOneWidget);
+  });
+
+  testWidgets('jitter below the slide threshold still opens the detail', (
+    tester,
+  ) async {
+    await pumpPile(tester, const [
+      DashboardWidget.memoryInfo,
+      DashboardWidget.networkControl,
+    ]);
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CardStack)),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    await gesture.moveBy(const Offset(0, 4));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byType(MemoryDetailSheet), findsOneWidget);
+  });
+
   testWidgets('a swipe turns the pile to the next card', (tester) async {
     await pumpPile(tester, const [
       DashboardWidget.memoryInfo,
@@ -358,9 +394,7 @@ void main() {
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
-  testWidgets('the board can still scroll from outside a pile', (
-    tester,
-  ) async {
+  testWidgets('the board can still scroll from outside a pile', (tester) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
     await pumpScrollablePile(tester, scroll);
