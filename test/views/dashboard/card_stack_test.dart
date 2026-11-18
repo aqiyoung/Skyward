@@ -133,6 +133,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     await gesture.up();
+    // A switch rests open on a timer before folding. Advance past the turn,
+    // the rest and the fold so position checks see a settled pile.
+    await tester.pump(const Duration(milliseconds: 900));
     await tester.pumpAndSettle();
   }
 
@@ -301,12 +304,12 @@ void main() {
     await gesture.up();
 
     await tester.pump(const Duration(milliseconds: 260));
-    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
     expect(openLayers, findsWidgets, reason: 'held open after the switch');
 
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 900));
     await tester.pumpAndSettle();
     expect(openLayers, findsNothing);
+    expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
 
   testWidgets('the pile turns all the way round: every card comes back', (
