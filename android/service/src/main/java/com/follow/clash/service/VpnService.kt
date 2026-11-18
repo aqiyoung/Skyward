@@ -7,6 +7,7 @@ import android.net.ProxyInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import androidx.core.content.getSystemService
 import com.follow.clash.common.AccessControlMode
 import com.follow.clash.common.GlobalState
@@ -29,6 +30,7 @@ class VpnService : SystemVpnService(), ManagedService {
     private val binder = LocalBinder()
     private val tunLock = Any()
     private var tunRunning = false
+    private var tunInterface: ParcelFileDescriptor? = null
 
     override fun onDestroy() {
         try {
@@ -123,7 +125,7 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun handleStart(options: VpnOptions) {
-        val fd = with(Builder()) {
+        val descriptor = with(Builder()) {
             addAddressAndRoutes(options)
             addDnsServers(options)
             setMtu(options.tunMtu)
@@ -146,11 +148,10 @@ class VpnService : SystemVpnService(), ManagedService {
                     ),
                 )
             }
-            establish()?.detachFd()
+            establish()
                 ?: error("VPN establishment was rejected by the system")
         }
         synchronized(tunLock) {
-            tunRunning = true
             try {
                 // A Core that fails to take the descriptor leaves the system
                 // routes pointing at an interface nothing reads, and it no
@@ -159,7 +160,7 @@ class VpnService : SystemVpnService(), ManagedService {
                 // reporting a start that only looks successful.
                 check(
                     Core.startTun(
-                        fd = fd,
+                        fd = descriptor.detachFd(),
                         protect = this::protect,
                         resolveUid = this::resolveUid,
                         resolvePackage = this::resolvePackage,
@@ -169,8 +170,12 @@ class VpnService : SystemVpnService(), ManagedService {
                         options = options.tunOptions,
                     ),
                 ) { "Core rejected the tun file descriptor" }
+                tunInterface = descriptor
+                tunRunning = true
             } catch (error: Exception) {
+                descriptor.close()
                 stopTunLocked()
+                stopSelf()
                 throw error
             }
         }
@@ -290,6 +295,8 @@ class VpnService : SystemVpnService(), ManagedService {
             Core.stopTun()
             tunRunning = false
         }
+        runCatching { tunInterface?.close() }
+        tunInterface = null
     }
 
     companion object {
