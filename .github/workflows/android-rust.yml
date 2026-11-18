@@ -39,6 +39,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The Rust-core Gradle switches + JNI classes live on this branch.
+          ref: rust-core
 
       - name: Download Rust core .so package
         env:
