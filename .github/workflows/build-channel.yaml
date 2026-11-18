@@ -315,16 +315,28 @@ jobs:
           curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
           echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
 
-      - name: Build
+      # A release ships one arm64 APK, the same shape as the preview channel:
+      # `--arch arm64` keeps Flutter from adding `--split-per-abi`, which would
+      # collide with the app module's `ndk.abiFilters` in AGP. Keep both
+      # commands single-line: the Build step has no `shell:` override, so
+      # Windows runs it under PowerShell and bash syntax there is a parse error.
+      - name: Build (Android)
+        if: matrix.platform == 'android'
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
-          # The channel names the corner ribbon (DEV / Beta). A release version
-          # has no -beta suffix for channelOf() to read, so inject it directly.
-          APP_CHANNEL_NAME: ${{ inputs.channel }}
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} ${{ matrix.platform == 'android' && '--arch arm64' || '' }} -v
+        run: dart setup.dart android --env ${{ inputs.env }} --arch arm64 -v
+
+      - name: Build
+        if: matrix.platform != 'android'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          # The version the app reports in-app and Android's versionName carries.
+          # Harmless for the other platforms, which take the pubspec's three.
+          APP_VERSION_NAME: ${{ inputs.version }}
+        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
@@ -362,12 +374,12 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
-          # The phone release builds one arm64 APK. Restore the ABI suffix the
-          # in-app updater matches on, which split-per-abi used to put in the
-          # name before the build was narrowed to a single architecture.
-          if [ "${{ matrix.platform }}" = android ]; then
+          # A single-ABI build is packaged as `...-android.apk`. Give it the
+          # same name the preview does, so publish-release.yaml's
+          # `dist/*android-arm64*.apk` finds it and Telegram receives the APK
+          # itself instead of a links-only message.
+          if [ "${{ matrix.platform }}" = "android" ]; then
             for file in dist/*-android.apk; do
-              [ -e "$file" ] || continue
               mv "$file" "${file%-android.apk}-android-arm64-v8a.apk"
             done
           fi
