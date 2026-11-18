@@ -237,13 +237,13 @@ jobs:
 
           # Two numbers per release.
           #
-          # The one users see is upstream's three components plus a fourth of our
-          # own, counting the releases of the line it belongs to: a new version
-          # line starts at .0, and a promoted beta takes a fresh number so that
-          # beta users are offered the stable build as well. The app carries it
-          # as APP_VERSION (see the build workflow), and the release tag is
-          # exactly it -- so the update check, which compares the latest tag
-          # against that version, compares like with like.
+          # The one users see takes its major and patch from this repository's
+          # pubspec.yaml; the second component is the channel code (dev 0, beta 1,
+          # stable 2) and the fourth counts releases of that channel's line, each
+          # starting at .0. Stable's code outranks beta's, so a promoted beta
+          # takes a fresh number and beta users are offered the stable build. The
+          # app carries the version as APP_VERSION and the tag is exactly it, so
+          # the update check compares the latest tag against like.
           #
           # The versionCode -- what Android uses to decide whether one build may
           # install over another -- is a day number written as <20900294><01>:
@@ -291,26 +291,32 @@ jobs:
             br=$(branch_of "$ch")
             git rev-parse --verify --quiet "refs/heads/$br" >/dev/null || continue
             base_version=$(git show "$br:pubspec.yaml" | sed -n 's/^version: *\([^+]*\).*/\1/p' | tr -d '\r')
+            # Component 2 is the channel code: dev 0, beta 1, stable 2. The
+            # upstream major and patch keep their places around it.
+            case "$ch" in beta) chan=1 ;; stable) chan=2 ;; *) chan=0 ;; esac
+            major="${base_version%%.*}"
+            patch="${base_version##*.}"
+            line_base="${major}.${chan}.${patch}"
             # The fourth component counts the releases of this line, so a new
             # line starts at .0 instead of inheriting the last line's count.
             # Past the highest tag of the line, so a tag that went missing never
             # hands the same number out twice.
-            highest_revision=$(git tag --list "v${base_version}.*" \
-              | sed -n "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)$/\1/p" \
+            highest_revision=$(git tag --list "v${line_base}.*" \
+              | sed -n "s/^v${line_base//./\\.}\.\([0-9][0-9]*\)$/\1/p" \
               | sort -n | tail -1)
             if [[ -n "$highest_revision" ]]; then
               revision=$(( 10#${highest_revision} + 1 ))
             else
               revision=0
             fi
-            while [[ " $taken " == *" ${base_version}.${revision} "* ]]; do
+            while [[ " $taken " == *" ${line_base}.${revision} "* ]]; do
               revision=$(( revision + 1 ))
             done
-            taken="$taken ${base_version}.${revision}"
+            taken="$taken ${line_base}.${revision}"
             code=$(( day_prefix * 100 + stamp ))
-            echo "version_$ch=${base_version}.${revision}" >> "$GITHUB_OUTPUT"
+            echo "version_$ch=${line_base}.${revision}" >> "$GITHUB_OUTPUT"
             echo "build_number_$ch=${code}" >> "$GITHUB_OUTPUT"
-            echo "$ch ($br): next version ${base_version}.${revision}, build number ${code}"
+            echo "$ch ($br): next version ${line_base}.${revision}, build number ${code}"
             stamp=$(( stamp + 1 ))
           done
 
