@@ -359,6 +359,15 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
+          # The phone release builds one arm64 APK. Restore the ABI suffix the
+          # in-app updater matches on, which split-per-abi used to put in the
+          # name before the build was narrowed to a single architecture.
+          if [ "${{ matrix.platform }}" = android ]; then
+            for file in dist/*-android.apk; do
+              [ -e "$file" ] || continue
+              mv "$file" "${file%-android.apk}-android-arm64-v8a.apk"
+            done
+          fi
           echo "renamed ${renamed} artifact(s) to ${VERSION}:"
           ls -l dist
 
