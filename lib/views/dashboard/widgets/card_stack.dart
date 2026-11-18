@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' show Brightness, ImageFilter;
 
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -13,22 +13,71 @@ import '../layout.dart';
 import '../widget_registry.dart';
 import 'card.dart';
 
+/// How far the cards under the top one show once a finger is down. At rest
+/// they show nothing at all: a stack is one clean card until it is pressed.
 const _peekPressed = 30.0;
+
+/// The scale each card loses per step down the pile.
 const _depthScale = 0.03;
+
+/// The blur each card takes on per step down the pile.
 const _depthBlur = 1.6;
+
+/// How far each card under the top one turns aside while the pile is open, in
+/// radians. The lean is what makes the open pile read as one angled picture
+/// behind the top card instead of a set of stacked borders.
 const _tilt = 0.06;
+
+/// How much the top card shrinks while the pile is open.
 const _pressedScale = 0.02;
+
+/// How much of the card a drag must cover to turn the page.
 const _turnAt = 0.24;
+
+/// How fast a flick has to be to turn the page without travelling.
 const _flick = 620.0;
-const _pageScrollDelay = Duration(milliseconds: 350);
 
-enum _Phase { idle, pressing, turning, pageScrolling }
+/// How long a finger has to rest on a pile before the press is read as
+/// "switch a card" instead of "scroll past". Contact alone already opens the
+/// pile; this short hold is the decision, and it is what locks the board.
+const _holdConfirm = Duration(milliseconds: 120);
 
-/// Swipe to switch cards, tap to open the visible card's own action; hold to scroll the page.
+/// How long a switched pile holds its new card open before folding back.
+const _switchRest = Duration(milliseconds: 400);
+
+/// A move bigger than this before the hold is confirmed means the finger was
+/// scrolling past, not switching. It stays below Flutter's touch slop (18) so
+/// the decision is always made before the board's drag recognizer claims the
+/// move -- whichever order the hit test happens to deliver them in.
+const _scrollIntent = 10.0;
+
+/// One place on the dashboard holding one or more cards.
+///
+/// At rest a stack is a single card with nothing peeking out behind it -- the
+/// way a HyperOS widget stack shows one widget on the desktop. Touching it
+/// opens the pile at once; resting the finger there for a fraction of a second
+/// confirms "switch a card" (with a haptic tick and a dot rail), and from then
+/// on sliding up or down turns the pile with no end in either direction while
+/// the board is held perfectly still. Lifting the finger folds everything back
+/// to the one card in well under a second.
+///
+/// The decision is explicit, not a race: a plain [Listener] outside the gesture
+/// arena sees every pointer event and classifies the press from three things a
+/// touch screen can actually report -- contact, how long it stayed, and how far
+/// it moved. Pressure is not usable on Android (it reads ~1.0 on an ordinary
+/// finger). A single-purpose recognizer holds a seat in the arena; the state
+/// tells it to claim the gesture once the hold is confirmed, or to yield it to
+/// the board when the finger is clearly scrolling past. Nothing the board does
+/// can reach in and cancel an opened pile any more. A single card has nothing
+/// to switch, so it installs no gesture at all and the page scrolls over it.
 class CardStack extends StatefulWidget {
   const CardStack({super.key, required this.cards, required this.cardKeyOf});
 
+  /// Top card first.
   final List<DashboardWidget> cards;
+
+  /// Shared with the editor and the plain page, so a card keeps its state as
+  /// the pile turns.
   final GlobalKey Function(DashboardWidget card) cardKeyOf;
 
   @override
@@ -36,21 +85,42 @@ class CardStack extends StatefulWidget {
 }
 
 class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
+  /// How far the pile has turned from the card in place: 1 is the card below
+  /// it, -1 the card above it. Kept short of either end by handing the whole
+  /// turn to [_index] as the drag passes a card.
   late final _turn = AnimationController.unbounded(vsync: this);
+
+  /// How far the pile is open: 0 at rest, 1 while a finger is down. It opens
+  /// almost at once on press and folds back in well under a second on release.
+  late final _open = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 130),
+    reverseDuration: const Duration(milliseconds: 220),
+  );
+
   final _surface = GlobalKey();
+
+  /// The confirm timer and the arena seat for the press currently in flight.
+  Timer? _armTimer;
+  Timer? _restTimer;
+  _PileClaim? _claim;
+
+  /// The pointer that started the press, so a second finger cannot steer it.
+  int? _pointer;
+  double _downY = 0;
+  double _lastY = 0;
+  Duration? _lastMove;
+  double _velocityY = 0;
+
+  /// The card in place when the press began, so a long drag can turn the pile
+  /// round more than once without the turn running away.
   var _heldFrom = 0;
   var _index = 0;
-  var _pressY = 0.0;
-  var _pressPosition = Offset.zero;
-  var _pageScrollY = 0.0;
-  Timer? _pageScrollTimer;
-  var _phase = _Phase.idle;
-  var _settleGeneration = 0;
-  VelocityTracker? _velocity;
-  double? _downPixels;
-  DockFollowHold? _dockHold;
-  var _dockHeld = false;
-  var _pageScrollDirection = ScrollDirection.idle;
+  var _held = false;
+  var _armed = false;
+  var _boardScroll = false;
+  var _dragging = false;
+  var _settled = true;
 
   int get _count => widget.cards.length;
 
@@ -65,18 +135,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _releaseDockHold();
-    _pageScrollTimer?.cancel();
+    _cancelTimer();
+    _restTimer?.cancel();
     _turn.dispose();
+    _open.dispose();
     super.dispose();
-  }
-
-  void _releaseDockHold() {
-    if (_dockHeld) {
-      _dockHeld = false;
-      _dockHold?.release();
-    }
-    _dockHold = null;
   }
 
   double get _cardHeight {
@@ -86,153 +149,128 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         : 1;
   }
 
+  void _cancelTimer() {
+    _armTimer?.cancel();
+    _armTimer = null;
+  }
+
+  /// Contact. This is the first of the three signals and it is enough on its
+  /// own for the visual: the pile opens the instant a finger lands, so the
+  /// place reads as switchable without waiting for a drag or a long press.
   void _press(PointerDownEvent event) {
     if (_count < 2) {
       return;
     }
-    _settleGeneration++;
-    _phase = _Phase.pressing;
-    if (!_dockHeld) {
-      _dockHold = DockFollowHoldScope.of(context);
-      _dockHold?.acquire();
-      _dockHeld = _dockHold != null;
-    }
+    _cancelTimer();
+    _restTimer?.cancel();
+    _pointer = event.pointer;
+    _downY = event.position.dy;
+    _lastY = event.position.dy;
+    _lastMove = event.timeStamp;
+    _velocityY = 0;
+    _settled = false;
     _heldFrom = _index;
-    _pressPosition = event.position;
-    _pressY = event.position.dy;
-    _pageScrollY = 0;
-    _velocity = VelocityTracker.withKind(event.kind)
-      ..addPosition(event.timeStamp, event.position);
-    _cancelPageScrollTimer();
-    _pageScrollTimer = Timer(_pageScrollDelay, () {
-      _pageScrollTimer = null;
-      if (mounted) {
-        _beginPageScroll();
-      }
-    });
-    // Keep an existing page fling from carrying the board during card input.
+    _held = true;
+    _armed = false;
+    _boardScroll = false;
+    _dragging = false;
+
+    // Stop a fling still carrying the board: pressing a pile must not leave
+    // the page scrolling on behind the opened card. Jumping to where it
+    // already is only cancels the activity, it moves nothing.
     final position = Scrollable.maybeOf(context)?.position;
-    _downPixels = position != null && position.hasPixels
-        ? position.pixels
-        : null;
     if (position != null && position.hasPixels) {
       position.jumpTo(position.pixels);
     }
+    _open.forward();
+    _armTimer = Timer(_holdConfirm, _arm);
   }
 
-  void _pinPage() {
-    final down = _downPixels;
-    final position = Scrollable.maybeOf(context)?.position;
-    if (down == null || position == null || !position.hasPixels) {
+  /// The hold is confirmed: the pile is live. Claim only on a real slide in
+  /// [_move], so a press that is never dragged falls through to the card's tap.
+  void _arm() {
+    _armTimer = null;
+    if (!_held || _settled || _boardScroll) {
       return;
     }
-    if (position.pixels != down) {
-      position.jumpTo(down);
-    }
+    _armed = true;
+    // A phone without a vibrator, or a test binding with no platform channel,
+    // simply has nothing to answer; the visual dot rail is the real cue.
+    HapticFeedback.selectionClick().ignore();
+    setState(() {});
   }
 
-  void _cancelPageScrollTimer() {
-    _pageScrollTimer?.cancel();
-    _pageScrollTimer = null;
+  /// The finger moved before the hold was confirmed. That is a scroll past,
+  /// not a switch: fold the pile back and hand the gesture to the board before
+  /// its drag recognizer reaches touch slop.
+  void _yieldToBoard() {
+    _cancelTimer();
+    _boardScroll = true;
+    _claim?.yieldToBoard();
+    _open.reverse();
   }
 
-  void _beginPageScroll() {
-    if (_phase != _Phase.pressing) {
+  void _move(PointerMoveEvent event) {
+    if (!_held || _settled || event.pointer != _pointer) {
       return;
     }
-    _cancelPageScrollTimer();
-    _phase = _Phase.pageScrolling;
-    _pageScrollY = 0;
-    _pageScrollDirection = ScrollDirection.idle;
-    // Scrolling the page is a real page scroll again: the dock may follow.
-    _releaseDockHold();
-    _turn.value = 0;
-  }
+    final dt = _lastMove == null ? Duration.zero : event.timeStamp - _lastMove!;
+    if (dt.inMicroseconds > 0) {
+      _velocityY =
+          (event.position.dy - _lastY) / (dt.inMicroseconds / 1000000.0);
+    }
+    _lastY = event.position.dy;
+    _lastMove = event.timeStamp;
+    final dy = event.position.dy - _downY;
 
-  void _scrollPage(double dragDistance, Offset globalPosition) {
-    if (_phase != _Phase.pageScrolling) {
+    if (!_armed) {
+      if (!_boardScroll && dy.abs() > _scrollIntent) {
+        _yieldToBoard();
+      }
       return;
     }
-    final delta = dragDistance - _pageScrollY;
-    _pageScrollY = dragDistance;
-    final position = Scrollable.maybeOf(context)?.position;
-    if (delta == 0 || position == null || !position.hasContentDimensions) {
+    if (_boardScroll) {
       return;
     }
-    final pixels = (position.pixels - delta)
-        .clamp(position.minScrollExtent, position.maxScrollExtent)
-        .toDouble();
-    if (pixels == position.pixels) {
+    if (dy.abs() <= _scrollIntent) {
       return;
     }
-    final applied = pixels - position.pixels;
-    position.jumpTo(pixels);
-    _reportPageScroll(position, applied, globalPosition);
+    _claim?.claim();
+    _drag(dy);
   }
 
-  /// A held pile scrolls the page by hand, which no drag ever reports: tell
-  /// scroll listeners a finger is moving the page, as a list would.
-  void _reportPageScroll(
-    ScrollPosition position,
-    double applied,
-    Offset globalPosition,
-  ) {
-    final direction = applied > 0
-        ? ScrollDirection.reverse
-        : ScrollDirection.forward;
-    if (direction != _pageScrollDirection) {
-      _pageScrollDirection = direction;
-      UserScrollNotification(
-        metrics: position,
-        context: context,
-        direction: direction,
-      ).dispatch(context);
-    }
-    ScrollUpdateNotification(
-      metrics: position,
-      context: context,
-      scrollDelta: applied,
-      dragDetails: DragUpdateDetails(
-        globalPosition: globalPosition,
-        delta: Offset(0, -applied),
-        primaryDelta: -applied,
-      ),
-    ).dispatch(context);
-  }
-
-  void _endPageScroll() {
-    if (_phase != _Phase.pageScrolling) {
-      return;
-    }
-    _phase = _Phase.idle;
-  }
-
-  void _finishPress() {
-    _cancelPageScrollTimer();
-    if (_phase != _Phase.pressing) {
-      return;
-    }
-    _phase = _Phase.idle;
-  }
-
+  /// The pointer was cancelled by the system. Fold straight back so nothing
+  /// is left open or half turned.
   void _snapShut() {
-    _cancelPageScrollTimer();
-    if (_phase == _Phase.idle) {
+    _cancelTimer();
+    _restTimer?.cancel();
+    if (_settled) {
       return;
     }
-    _phase = _Phase.idle;
-    _turn.stop();
-    setState(() {
-      _index = _heldFrom;
-      _turn.value = 0;
-    });
+    _settled = true;
+    _held = false;
+    _armed = false;
+    _boardScroll = false;
+    _turn.value = 0;
+    _open.reverse();
+    setState(() {});
+  }
+
+  void _up(PointerUpEvent event) {
+    if (event.pointer != _pointer) {
+      return;
+    }
+    _cancelTimer();
+    _settle(_velocityY);
   }
 
   void _drag(double dy) {
-    if ((_phase != _Phase.pressing && _phase != _Phase.turning) || _count < 2) {
+    if (!_held || _count < 2) {
       return;
     }
-    _phase = _Phase.turning;
+    // The drag is measured from where the press began, so a drag past a whole
+    // card hands it to the index and carries on from the next one: the pile
+    // has no end to run into.
     var turn = -dy / _cardHeight;
     var index = _heldFrom;
     while (turn >= 1) {
@@ -243,16 +281,31 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
       turn += 1;
       index = (index - 1 + _count) % _count;
     }
-    setState(() => _index = index);
+    setState(() {
+      _index = index;
+      _dragging = true;
+    });
     _turn.value = turn;
   }
 
+  /// The finger came up. A tap folds at once; a switch holds its result open
+  /// briefly before folding back.
   void _settle(double velocityY) {
-    _cancelPageScrollTimer();
-    if (_phase != _Phase.turning) {
+    if (_settled) {
       return;
     }
-    _phase = _Phase.idle;
+    _settled = true;
+    _held = false;
+    _armed = false;
+    _boardScroll = false;
+    final dragging = _dragging;
+    setState(() => _dragging = false);
+    if (!dragging) {
+      _open.reverse();
+      return;
+    }
+    // A flick turns the page even when it never travelled far; otherwise the
+    // card nearer the top is the one that stays.
     final turn = _turn.value;
     var target = 0.0;
     if (turn.abs() >= _turnAt) {
@@ -261,7 +314,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     if (velocityY.abs() > _flick) {
       target = velocityY < 0 ? 1 : -1;
     }
-    final generation = _settleGeneration;
     _turn
         .animateTo(
           target,
@@ -269,13 +321,22 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
           curve: Curves.easeOutCubic,
         )
         .then((_) {
-          if (!mounted || generation != _settleGeneration) {
+          if (!mounted) {
             return;
           }
           setState(() {
             _index = (_index + target.toInt() + _count) % _count;
             _turn.value = 0;
           });
+          if (target == 0 || _held) {
+            _open.reverse();
+          } else {
+            _restTimer = Timer(_switchRest, () {
+              if (mounted) {
+                _open.reverse();
+              }
+            });
+          }
         });
   }
 
@@ -292,10 +353,14 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     }
     final scale = MediaQuery.textScalerOf(context).scale(1);
     return AnimatedBuilder(
-      animation: _turn,
+      animation: Listenable.merge([_turn, _open]),
       builder: (context, _) {
+        final open = _open.value;
         final turn = _turn.value;
-        final visual = turn.abs().clamp(0.0, 1.0).toDouble();
+        // At rest every trace of the pile is zero: one card, no layers, no
+        // extra height. A turn still in flight keeps the pile visible while it
+        // settles, so the card under the top one can slide into place.
+        final visual = math.max(open, turn.abs().clamp(0.0, 1.0).toDouble());
         final peek = _peekPressed * visual * math.min(scale, 2);
         return _pile(turn: turn, visual: visual, peek: peek);
       },
@@ -308,10 +373,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     required double peek,
   }) {
     final top = widget.cards[_index];
+    // A pile of two has the same card below it and above it, so turning back
+    // is the turn forwards played from the other side.
     final travel = _count == 2 && turn < 0 ? -turn : turn;
+    // Turning back shows the card above the top one over its edge, while the
+    // ones below it step back: only one card shows on each side of the turn.
     final back = turn < 0 && _count > 2 ? 1 : 0;
     final ahead = turn < 0 ? 1 : math.min(_count - 1, 2);
-    // Layers paint past the fixed card height without shifting the page.
+    // The layers hang below the card by this much. It is paint only: the pile
+    // must keep the exact height of the one card on top, or pressing it would
+    // grow the whole dashboard and make the scroll end jump under the finger.
     final spill = peek * ahead;
     final layers = <Widget>[];
     for (var step = back; step >= 1; step--) {
@@ -338,95 +409,69 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
         ),
       );
     }
+    // At rest this clips to exactly the card's own rectangle: no layers, no
+    // extra room above or below, so a stack reads as one ordinary card.
     return ClipRect(
       clipper: _PileClipper(
         over: turn < 0 ? peek : 0,
         aside: 14 * visual,
         spill: spill,
       ),
-      child: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: _press,
-        onPointerMove: (event) {
-          _velocity?.addPosition(event.timeStamp, event.position);
-          if (_phase == _Phase.pageScrolling) {
-            _scrollPage(event.position.dy - _pressY, event.position);
-            return;
-          }
-          if (_phase != _Phase.pressing && _phase != _Phase.turning) {
-            return;
-          }
-          if ((event.position - _pressPosition).distance > kTouchSlop) {
-            _cancelPageScrollTimer();
-            _drag(event.position.dy - _pressY);
-          }
-          _pinPage();
-        },
-        onPointerUp: (event) {
-          _velocity?.addPosition(event.timeStamp, event.position);
-          _releaseDockHold();
-          _cancelPageScrollTimer();
-          switch (_phase) {
-            case _Phase.pageScrolling:
-              _endPageScroll();
-            case _Phase.turning:
-              _pinPage();
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _phase == _Phase.idle) {
-                  _pinPage();
-                }
-              });
-              _settle(_velocity?.getVelocity().pixelsPerSecond.dy ?? 0);
-            case _Phase.pressing:
-              _finishPress();
-            case _Phase.idle:
-              break;
-          }
-        },
-        onPointerCancel: (_) {
-          _releaseDockHold();
-          _cancelPageScrollTimer();
-          _snapShut();
-        },
-        child: RawGestureDetector(
-          behavior: HitTestBehavior.opaque,
-          gestures: <Type, GestureRecognizerFactory>{
-            LongPressGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<
-                  LongPressGestureRecognizer
-                >(
-                  () => LongPressGestureRecognizer(duration: _pageScrollDelay),
-                  (instance) {
-                    instance.onLongPressStart = (_) => _beginPageScroll();
-                    instance.onLongPressEnd = (_) => _endPageScroll();
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ...layers,
+          // Once the hold is confirmed, a HyperOS-style dot rail at the side
+          // says plainly that this place holds more than one card and can be
+          // switched. It is the visible proof that the press was detected.
+          if (_armed)
+            Positioned(
+              right: -9,
+              top: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: KeyedSubtree(
+                  key: const ValueKey('card-stack-switchable'),
+                  child: Center(
+                    child: _SwitchDots(count: _count, index: _index),
+                  ),
+                ),
+              ),
+            ),
+          // The card on top is the only child that sizes the Stack, so the
+          // pile keeps exactly its height however far it opens. The layers
+          // below are painted past its bottom edge, never laid out under it.
+          //
+          // The Listener sits outside the gesture arena: it sees the down,
+          // every move and the up no matter who wins the arena, so no press
+          // can leave the pile open behind it and no cancel can snatch the
+          // opened pile away. The recognizer underneath only holds a seat.
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: _press,
+            onPointerMove: _move,
+            onPointerUp: _up,
+            onPointerCancel: (_) => _snapShut(),
+            child: RawGestureDetector(
+              behavior: HitTestBehavior.translucent,
+              gestures: <Type, GestureRecognizerFactory>{
+                _PileClaim: GestureRecognizerFactoryWithHandlers<_PileClaim>(
+                  () {
+                    final claim = _PileClaim();
+                    _claim = claim;
+                    return claim;
+                  },
+                  (_) {
+                    // No callbacks by design: the state classifies the
+                    // press, this recognizer only claims or yields it.
                   },
                 ),
-            VerticalDragGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<
-                  VerticalDragGestureRecognizer
-                >(VerticalDragGestureRecognizer.new, (instance) {
-                  instance.onStart = (details) {
-                    _drag(details.globalPosition.dy - _pressY);
-                  };
-                  instance.onUpdate = (details) {
-                    _drag(details.globalPosition.dy - _pressY);
-                  };
-                  instance.onEnd = (details) {
-                    if (_phase == _Phase.pageScrolling) {
-                      _endPageScroll();
-                    } else {
-                      _settle(details.velocity.pixelsPerSecond.dy);
-                    }
-                  };
-                }),
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ...layers,
-              RepaintBoundary(
+              },
+              child: RepaintBoundary(
                 key: _surface,
                 child: Transform.translate(
+                  // The card in place lifts a little under the finger, which
+                  // is what makes room for the edges to open under it.
                   offset: Offset(0, -6 * visual),
                   child: Transform.scale(
                     alignment: Alignment.topCenter,
@@ -436,8 +481,6 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                       child: _cast(
                         RepaintBoundary(
                           key: widget.cardKeyOf(top),
-                          // The card keeps its own taps; the recognizers
-                          // above own drags and long press.
                           child: top.card,
                         ),
                         visual,
@@ -446,25 +489,16 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              Positioned(
-                right: 8,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: _PileDots(
-                    count: _count,
-                    index: _index,
-                    visual: visual,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
+  /// A card with the shadow it casts on the edge of the one below it. The
+  /// shadow is a sign the pile is open, so at rest it fades to nothing and the
+  /// card is just itself.
   Widget _cast(Widget card, double visual) {
     final radius = dashboardCardRadius(DashboardDensityScope.of(context));
     return DecoratedBox(
@@ -483,6 +517,11 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     );
   }
 
+  /// One card of the pile, hung one edge further up the pile for every step
+  /// it sits below the top one, so what shows under the top card is the bottom
+  /// edge of the card beneath it -- rounded corners and all, whatever height
+  /// the two cards happen to be. An opened pile also turns it aside, so the
+  /// edges read as one angled picture behind the card in place.
   Widget _layer({
     required DashboardWidget card,
     required double lift,
@@ -495,7 +534,12 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
     return Positioned(
       left: 0,
       right: 0,
+      // The pile keeps the height of the one card on top, so a layer hangs
+      // past the bottom edge instead of being laid out beneath it. Subtracting
+      // the spill keeps every edge exactly where the padded layout put it.
       bottom: peek * (steps - lift) - spill,
+      // Only the card in place is there to read: the ones under it are a hint
+      // that there is more, not more to be read out of turn.
       child: ExcludeSemantics(
         child: IgnorePointer(
           child: Opacity(
@@ -511,6 +555,8 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
                     sigmaX: _depthBlur * depth * visual,
                     sigmaY: _depthBlur * depth * visual,
                   ),
+                  // The key wraps the card itself in both modes, so the card
+                  // keeps its state as the page turns to editing.
                   child: _cast(
                     RepaintBoundary(
                       key: widget.cardKeyOf(card),
@@ -528,52 +574,41 @@ class _CardStackState extends State<CardStack> with TickerProviderStateMixin {
   }
 }
 
-/// One dot per card in the pile, the current one lit.
-class _PileDots extends StatelessWidget {
-  const _PileDots({
-    required this.count,
-    required this.index,
-    required this.visual,
-  });
+/// The HyperOS-style rail: one dot per card, the one in place filled in. It
+/// only exists while a press is confirmed as a switch, so it doubles as the
+/// test's proof that the detection actually ran.
+class _SwitchDots extends StatelessWidget {
+  const _SwitchDots({required this.count, required this.index});
 
   final int count;
   final int index;
-  final double visual;
 
   @override
   Widget build(BuildContext context) {
-    if (visual <= 0) {
-      return const SizedBox.shrink();
-    }
-    final colorScheme = context.colorScheme;
-    return Opacity(
-      opacity: visual,
-      child: ExcludeSemantics(
-        child: IgnorePointer(
-          child: Column(
-            key: const ValueKey('card-stack-dots'),
-            mainAxisSize: MainAxisSize.min,
-            spacing: 5,
-            children: [
-              for (var i = 0; i < count; i++)
-                Container(
-                  width: i == index ? 6 : 5,
-                  height: i == index ? 6 : 5,
-                  decoration: ShapeDecoration(
-                    color: i == index
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurface.withValues(alpha: 0.28),
-                    shape: AppShape.circle,
-                  ),
-                ),
-            ],
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    final on = dark ? const Color(0xD9FFFFFF) : const Color(0x8A000000);
+    final off = dark ? const Color(0x55FFFFFF) : const Color(0x33000000);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.5),
+            child: ClipOval(
+              child: ColoredBox(
+                color: i == index ? on : off,
+                child: const SizedBox(width: 5, height: 5),
+              ),
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 }
 
+/// Clips a pile to its place, keeping the little a card above the top one
+/// shows over the edge while the pile turns back to it. Every extra margin is
+/// scaled by how open the pile is, so a resting pile clips to its own card.
 class _PileClipper extends CustomClipper<Rect> {
   const _PileClipper({
     required this.over,
@@ -581,9 +616,18 @@ class _PileClipper extends CustomClipper<Rect> {
     required this.spill,
   });
 
+  /// Room kept over the top edge for a card turning back over it.
   final double over;
+
+  /// Room at the sides for the corners of an opened pile, which lean out of
+  /// the pile's own width.
   final double aside;
+
+  /// How far the layers hang below the card on top. Paint only: the pile keeps
+  /// the card's height, so opening it never changes the board's scroll extent.
   final double spill;
+
+  /// A little extra room under the bottom edge for the card's own shadow.
   static const under = 12.0;
 
   @override
@@ -599,4 +643,56 @@ class _PileClipper extends CustomClipper<Rect> {
       oldClipper.over != over ||
       oldClipper.aside != aside ||
       oldClipper.spill != spill;
+}
+
+/// A seat in the gesture arena, and nothing else. It never resolves on a
+/// pointer event: the state decides from contact, hold and travel, then calls
+/// [claim] (switching -- hold the board still) or [yieldToBoard] (the finger
+/// was scrolling past). Doing it on the hold timer rather than on the first
+/// move means the board cannot win a race it was never invited to, and a tap
+/// inside the card still goes to the card.
+class _PileClaim extends OneSequenceGestureRecognizer {
+  var _resolved = false;
+
+  void claim() => _resolve(GestureDisposition.accepted);
+
+  void yieldToBoard() => _resolve(GestureDisposition.rejected);
+
+  void _resolve(GestureDisposition disposition) {
+    if (_resolved) {
+      return;
+    }
+    _resolved = true;
+    try {
+      resolve(disposition);
+    } catch (_) {
+      // The arena already closed -- the board got there first. Nothing left
+      // to claim; the state's own classification still stands.
+    }
+  }
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    _resolved = false;
+    startTrackingPointer(event.pointer);
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (event is PointerUpEvent || event is PointerCancelEvent) {
+      stopTrackingPointer(event.pointer);
+    }
+  }
+
+  @override
+  void acceptGesture(int pointer) => stopTrackingPointer(pointer);
+
+  @override
+  void rejectGesture(int pointer) => stopTrackingPointer(pointer);
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {}
+
+  @override
+  String get debugDescription => 'pile press claim';
 }

@@ -59,8 +59,12 @@ void main() {
     final end = position.maxScrollExtent;
     expect(end, greaterThan(0));
 
-    final gesture = await tester.startGesture(const Offset(200, 500));
-    await tester.pump(const Duration(milliseconds: 400));
+    // Start over the single hero card. A pile now claims the vertical drag on
+    // itself to turn its cards, so a drag that begins on a pile cannot scroll
+    // the board at all; the scroll-end check needs a place where the page can
+    // actually move. Starting on the one card that is not a pile keeps this
+    // about the scroll end, not about which gesture won the arena.
+    final gesture = await tester.startGesture(const Offset(200, 150));
     while (position.pixels < end) {
       await gesture.moveBy(const Offset(0, -40));
       await tester.pump(const Duration(milliseconds: 16));
