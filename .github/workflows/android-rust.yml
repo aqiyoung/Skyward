@@ -92,19 +92,26 @@ jobs:
           add-to-path: true
           link-to-sdk: true
 
-      - name: Generate fresh release keystore (new signature)
+      - name: Install fixed test keystore (stable signature)
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_RUST_TEST }}
+          STORE_PASS: ${{ secrets.KEYSTORE_RUST_PASS }}
+          KEY_ALIAS: ${{ secrets.KEYSTORE_RUST_ALIAS }}
         run: |
           set -euo pipefail
-          keytool -genkeypair -v -keystore android/app/keystore.jks \
-            -storetype JKS -storepass skywardrust -keypass skywardrust \
-            -alias rustcore -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Skyward Rust Test,O=Skyward,C=US" >> /dev/null 2>&1
+          if [ -z "${KEYSTORE_B64:-}" ] || [ -z "${STORE_PASS:-}" ]; then
+            echo "::error::fixed test keystore secrets missing"; exit 1
+          fi
+          # Stable, committed-once test key: every build uses the same signature,
+          # so updates install over each other. Signature differs from the Go
+          # release, and applicationId (.rust) keeps both installed side by side.
+          echo "$KEYSTORE_B64" | base64 -d > android/app/keystore.jks
           {
-            echo "storePassword=skywardrust"
-            echo "keyAlias=rustcore"
-            echo "keyPassword=skywardrust"
+            echo "storePassword=$STORE_PASS"
+            echo "keyAlias=${KEY_ALIAS:-rustcore}"
+            echo "keyPassword=$STORE_PASS"
           } >> android/local.properties
-          echo "generated new keystore (signature differs from Go release)"
+          echo "installed fixed test keystore (stable signature)"
 
       - name: Get Flutter dependencies
         run: flutter pub get
@@ -117,11 +124,9 @@ jobs:
           APP_BUILD_NUMBER: ${{ github.run_number }}
         run: |
           set -euo pipefail
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          # Keep the signing props written by the keystore step; append SDK paths.
+          echo "flutter.sdk=$FLUTTER_ROOT" >> android/local.properties
           echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-          echo "storePassword=skywardrust" >> android/local.properties
-          echo "keyAlias=rustcore" >> android/local.properties
-          echo "keyPassword=skywardrust" >> android/local.properties
           wrapper="$FLUTTER_ROOT/bin/cache/artifacts/gradle_wrapper"
           test -d "$wrapper" || flutter precache
           cd android
@@ -131,6 +136,8 @@ jobs:
           dart setup.dart android --env stable --arch arm64 -v
 
       - name: Verify APK
+        env:
+          EXPECTED_CERT: 618247c29a1519d757287f7f3c10fb288afa2d369bfe36bc3b4d4d6b2ec6820a
         run: |
           set -euo pipefail
           APK=$(find build/app/outputs dist -name '*.apk' 2>/dev/null | head -1)
@@ -139,6 +146,13 @@ jobs:
           mkdir -p dist && cp "$APK" dist/skyward-rust-core-arm64.apk
           "$ANDROID_HOME"/build-tools/35.0.0/apksigner verify --verbose dist/skyward-rust-core-arm64.apk | head -8
           echo "size: $(stat -c%s dist/skyward-rust-core-arm64.apk) bytes"
+          # Confirm the signature is the fixed test key (stable across builds).
+          CERT=$("$ANDROID_HOME"/build-tools/35.0.0/apksigner verify --print-certs dist/skyward-rust-core-arm64.apk \
+            | grep -i 'SHA-256' | head -1 | sed 's/.*: //' | tr -d ' ' | tr 'A-Z' 'a-z')
+          echo "signer cert sha256: $CERT"
+          if [ "${EXPECTED_CERT:-}" != "" ] && [ "$CERT" != "$EXPECTED_CERT" ]; then
+            echo "::error::unexpected signer cert (expected $EXPECTED_CERT)"; exit 1
+          fi
 
       - name: Push APK to Telegram (preview chat)
         env:
