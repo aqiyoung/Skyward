@@ -123,6 +123,16 @@ void main() {
   /// A press only becomes a switch after the finger rests on the pile for a
   /// moment, so every swipe confirms the hold first. Sliding before that is a
   /// deliberate "scroll past", covered by its own test below.
+  /// Drives frames past a switch's turn, timed rest and fold so the pile is
+  /// back to one plain card. Pumping in small steps lets any timer the switch
+  /// scheduled fire on the way, instead of betting on one exact duration.
+  Future<void> foldBack(WidgetTester tester) async {
+    for (var step = 0; step < 16; step++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+  }
+
   Future<void> dragFrom(WidgetTester tester, Offset start, double dy) async {
     final gesture = await tester.startGesture(start);
     await tester.pump();
@@ -133,10 +143,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     await gesture.up();
-    // A switch rests open on a timer before folding. Advance past the turn,
-    // the rest and the fold so position checks see a settled pile.
-    await tester.pump(const Duration(milliseconds: 900));
-    await tester.pumpAndSettle();
+    await foldBack(tester);
   }
 
   /// Press, slide, lift across a fraction of the visible card's height.
@@ -306,8 +313,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 260));
     expect(openLayers, findsWidgets, reason: 'held open after the switch');
 
-    await tester.pump(const Duration(milliseconds: 900));
-    await tester.pumpAndSettle();
+    await foldBack(tester);
     expect(openLayers, findsNothing);
     expect(topOf(tester, DashboardWidget.networkControl), pileTop(tester));
   });
