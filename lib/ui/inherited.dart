@@ -25,6 +25,42 @@ class PageActivityScope extends InheritedWidget {
   }
 }
 
+/// Held while a descendant's gesture owns the finger for its own content.
+class DockFollowHold {
+  int _count = 0;
+
+  bool get held => _count > 0;
+
+  void acquire() => _count++;
+
+  void release() {
+    if (_count > 0) {
+      _count--;
+    }
+  }
+}
+
+class DockFollowHoldScope extends InheritedWidget {
+  const DockFollowHoldScope({
+    super.key,
+    required this.hold,
+    required super.child,
+  });
+
+  final DockFollowHold hold;
+
+  static DockFollowHold? of(BuildContext context) {
+    return context
+        .getInheritedWidgetOfExactType<DockFollowHoldScope>()
+        ?.hold;
+  }
+
+  @override
+  bool updateShouldNotify(DockFollowHoldScope oldWidget) {
+    return hold != oldWidget.hold;
+  }
+}
+
 class BottomInsetScope extends InheritedWidget {
   static const double dockedSearchHeight = 48;
   static const double dockedSearchMargin = kFloatingActionButtonMargin;

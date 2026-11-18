@@ -91,13 +91,14 @@ class Migration {
 
   /// One-off setting changes for upgrades, apart from [currentVersion], which
   /// backups carry and an older app refuses when it is newer than its own.
-  static const upgradeVersion = 4;
+  static const upgradeVersion = 5;
 
   static const Map<int, Config Function(Config config)> _upgrades = {
     1: _resetThemeColors,
     2: _keepGlassLook,
     3: _followSystemColors,
     4: _turnOffSidebarBlur,
+    5: _keepDockAndGlassChoices,
   };
 
   Future<Config> run() async {
@@ -237,6 +238,16 @@ Config _followSystemColors(Config config) {
 // Releases stored sidebar blur on while its switch stayed hidden.
 Config _turnOffSidebarBlur(Config config) =>
     config.copyWith(themeProps: config.themeProps.copyWith(sidebarBlur: false));
+
+// Slot 5 is deliberately a no-op. It once tried to settle a "flashing"
+// floating + glass dock onto the capsule bar, but that guess was backwards:
+// the flash came from a floating dock with glass *off*, and the real fix lives
+// in the renderer (see navigation_dock.dart). Dev builds already handed out
+// upgrade version 5, so the slot must stay occupied and the version must stay
+// at 5 -- dropping or renumbering it would replay the transform for anyone
+// still below 5, or crash on a missing map entry. Leave every user choice
+// untouched instead.
+Config _keepDockAndGlassChoices(Config config) => config;
 
 bool _isV0(Map<String, Object?>? configMap) =>
     configMap?['proxiesStyle'] != null;

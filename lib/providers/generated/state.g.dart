@@ -3130,7 +3130,7 @@ final class DashboardStateProvider
   }
 }
 
-String _$dashboardStateHash() => r'33838f85f2b6a0ab601891aa2f26adc8870302b6';
+String _$dashboardStateHash() => r'e4dcc9f64a2af73d10cf43d1966f91be5599d9d2';
 
 @ProviderFor(moreToolsSelectorState)
 final moreToolsSelectorStateProvider = MoreToolsSelectorStateProvider._();

@@ -18,6 +18,72 @@ import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
 void main() {
+  test('cards of one size share a place, others stand alone', () {
+    expect(
+      dashboardStacksOf(const [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.routingBoard,
+        DashboardWidget.proxyGroups,
+        DashboardWidget.memoryInfo,
+        DashboardWidget.networkOverview,
+      ]),
+      const [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.routingBoard, DashboardWidget.proxyGroups],
+        [DashboardWidget.memoryInfo, DashboardWidget.networkOverview],
+      ],
+    );
+  });
+
+  test('cards of one size share a pile even when separated', () {
+    expect(
+      dashboardStacksOf(const [
+        DashboardWidget.proxyGroups,
+        DashboardWidget.memoryInfo,
+        DashboardWidget.routingBoard,
+      ]),
+      const [
+        [DashboardWidget.proxyGroups, DashboardWidget.routingBoard],
+        [DashboardWidget.memoryInfo],
+      ],
+    );
+  });
+
+  test('a lone card is never a pile', () {
+    expect(dashboardStacksOf(const []), isEmpty);
+    expect(dashboardStacksOf(const [DashboardWidget.memoryInfo]), const [
+      [DashboardWidget.memoryInfo],
+    ]);
+  });
+
+  test('dashboard state uses saved piles or groups cards by size', () {
+    const cards = [
+      DashboardWidget.currentOutbound,
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+      DashboardWidget.memoryInfo,
+    ];
+    const saved = [
+      [DashboardWidget.currentOutbound],
+      [DashboardWidget.memoryInfo, DashboardWidget.networkControl],
+      [DashboardWidget.proxyGroups],
+    ];
+    const automatic = DashboardState(dashboardWidgets: cards);
+    const custom = DashboardState(
+      dashboardWidgets: cards,
+      dashboardStacks: saved,
+    );
+    expect(
+      automatic.stacks,
+      const [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
+        [DashboardWidget.memoryInfo],
+      ],
+    );
+    expect(custom.stacks, saved);
+  });
+
   test('the window picks the density', () {
     DashboardDensity of(double width, double height) =>
         DashboardDensity.of(Size(width, height));

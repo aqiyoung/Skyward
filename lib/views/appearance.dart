@@ -4,7 +4,6 @@ import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/theme.dart';
-import 'package:skyward/views/theme_preview.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,9 +47,13 @@ class AppearanceView extends ConsumerWidget {
           bottom: 24 + context.bottomInset,
         ),
         children: [
-          const ThemeLivePreview(),
           const _Section(
-            items: [_LanguageItem(), _ThemeModeItem(), _PureBlackItem()],
+            items: [
+              _LiquidGlassItem(),
+              _LanguageItem(),
+              _ThemeModeItem(),
+              _PureBlackItem(),
+            ],
           ),
           _Section(
             title: appLocalizations.colorsSection,
@@ -82,7 +85,6 @@ class AppearanceView extends ConsumerWidget {
             title: appLocalizations.motionSection,
             items: [
               const _TabAnimationItem(),
-              const _LiquidGlassItem(),
               const _HapticFeedbackItem(),
               if (system.isMacOS || system.isWindows) const _SidebarBlurItem(),
             ],
@@ -134,7 +136,6 @@ class _LanguageItem extends ConsumerWidget {
     );
     final currentLocale = getLocaleForString(locale);
     return ListItem<Locale?>.options(
-      leading: const IconWell(AppGlyphs.language),
       title: Text(appLocalizations.language),
       options: [null, ...AppLocalizations.delegate.supportedLocales],
       onChanged: (Locale? locale) {
@@ -159,7 +160,6 @@ class _ThemeModeItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.themeMode),
     );
     return ListItem<ThemeMode>.options(
-      leading: const IconWell(AppGlyphs.sun),
       title: Text(appLocalizations.theme),
       options: ThemeMode.values,
       onChanged: (ThemeMode mode) {
@@ -187,7 +187,6 @@ class _PureBlackItem extends ConsumerWidget {
     );
     final isDark = ref.watch(currentBrightnessProvider) == Brightness.dark;
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.pureBlack),
       title: Text(context.appLocalizations.pureBlackMode),
       value: pureBlack,
       onChanged: (value) {
@@ -216,7 +215,6 @@ class _NavigationBarItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.navigationBarStyle),
     );
     return ListItem<NavigationBarStyle>.options(
-      leading: const IconWell(AppGlyphs.layers),
       title: Text(appLocalizations.navigationBarStyle),
       options: NavigationBarStyle.values,
       value: style,
@@ -268,7 +266,6 @@ class _DockScaleItemState extends ConsumerState<_DockScaleItem> {
                 _DockScaleItem._step)
             .round();
     return ListItem(
-      leading: const IconWell(AppGlyphs.textSize),
       title: Text(context.appLocalizations.dockScale),
       padding: const EdgeInsets.only(left: 16, right: 8),
       trailing: Row(
@@ -317,7 +314,6 @@ class _DockLabelItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.dockHideLabelOnScroll),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.motion),
       title: Text(appLocalizations.hideLabelOnScroll),
       subtitle: Text(appLocalizations.hideLabelOnScrollDesc),
       value: hideLabelOnScroll,
@@ -340,7 +336,6 @@ class _TabAnimationItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.tabAnimation),
     );
     return ListItem<TabAnimation>.options(
-      leading: const IconWell(AppGlyphs.motion),
       title: Text(appLocalizations.tabAnimation),
       options: TabAnimation.values,
       value: tabAnimation,
@@ -367,7 +362,6 @@ class _LiquidGlassItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.liquidGlass),
     );
     return ListItem<LiquidGlassMode>.options(
-      leading: const IconWell(AppGlyphs.liquidGlass),
       title: Text(appLocalizations.liquidGlass),
       options: LiquidGlassMode.values,
       value: mode,
@@ -394,7 +388,6 @@ class _SidebarBlurItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.sidebarBlur),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.blur),
       title: Text(context.appLocalizations.backgroundBlur),
       subtitle: Text(context.appLocalizations.sidebarBlurDesc),
       value: blur,
@@ -416,7 +409,6 @@ class _HapticFeedbackItem extends ConsumerWidget {
       appSettingProvider.select((state) => state.hapticFeedback),
     );
     return ListItem.toggle(
-      leading: const IconWell(AppGlyphs.devices),
       title: Text(context.appLocalizations.hapticFeedback),
       subtitle: Text(context.appLocalizations.hapticFeedbackDesc),
       value: enabled,

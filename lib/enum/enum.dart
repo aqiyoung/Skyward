@@ -551,7 +551,19 @@ enum DashboardWidget {
   final List<SupportPlatform> platforms;
 
   const DashboardWidget() : platforms = SupportPlatform.values;
+
+  DashboardCardSize get size => switch (this) {
+    DashboardWidget.currentOutbound => DashboardCardSize.hero,
+    DashboardWidget.networkControl ||
+    DashboardWidget.routingBoard ||
+    DashboardWidget.proxyGroups => DashboardCardSize.tall,
+    DashboardWidget.networkOverview ||
+    DashboardWidget.profiles ||
+    DashboardWidget.memoryInfo => DashboardCardSize.compact,
+  };
 }
+
+enum DashboardCardSize { hero, tall, compact }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
 

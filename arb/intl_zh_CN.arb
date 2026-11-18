@@ -1016,6 +1016,7 @@
   "editDashboard": "编辑仪表盘",
   "done": "完成",
   "dashboardAddableSection": "可添加",
+  "dashboardSplitStack": "拆开这一堆",
   "customImportDroppedSubRules": "{count, plural, other{自定义配置不支持子规则，已丢弃 {label} 条 SUB-RULE 规则}}",
   "autoInclude": "自动包含",
   "allReferencedProxies": "全部被引用的代理",
