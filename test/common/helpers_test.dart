@@ -142,8 +142,8 @@ void main() {
       // by orders of magnitude. Read literally it would be the newer of the
       // two forever, and the user of a preview would never be told a release
       // exists -- which is exactly how a preview stops receiving updates.
-      expect(compareVersions('1.0.0.14', '1.0.0.2090029702'), greaterThan(0));
-      expect(compareVersions('1.0.0.2090029702', '1.0.0.14'), lessThan(0));
+      expect(compareVersions('1.2.0.14', '1.0.0.2090029702'), greaterThan(0));
+      expect(compareVersions('1.0.0.2090029702', '1.2.0.14'), lessThan(0));
     });
 
     test('a preview still compares on the components above the slot', () {
@@ -166,17 +166,21 @@ void main() {
       expect(compareVersions('1.0.1.08-dev', '1.0.1.07-pre'), greaterThan(0));
     });
 
-    test('on the same number the release outranks its beta', () {
-      expect(compareVersions('1.0.1.6', '1.0.1.6-beta'), greaterThan(0));
-      expect(compareVersions('1.0.1.6-beta', '1.0.1.6'), lessThan(0));
+    test('the channel sits in the second component', () {
+      expect(compareVersions('1.2.1.6', '1.1.1.6'), greaterThan(0));
+      expect(compareVersions('1.1.1.6', '1.0.1.6'), greaterThan(0));
+      expect(compareVersions('1.0.1.6', '1.1.1.6'), lessThan(0));
     });
 
-    test('channelOf reads the suffix and nothing else', () {
+    test('channelOf reads the second component, suffix is legacy', () {
+      expect(channelOf('1.0.1.7'), 'dev');
+      expect(channelOf('1.1.1.7'), 'beta');
+      expect(channelOf('1.2.1.7'), isNull);
       expect(channelOf('1.0.1.07-pre'), 'pre');
       expect(channelOf('1.0.1.07-dev'), 'dev');
       expect(channelOf('1.0.1.6-beta'), 'beta');
-      expect(channelOf('1.0.1.6'), isNull);
       expect(channelOf('1.0.1+2090031333'), isNull);
+      expect(channelOf('1.0.1'), isNull);
     });
 
     test('handles missing minor/patch', () {
@@ -185,7 +189,7 @@ void main() {
   });
 
   group('shouldOfferUpdate', () {
-    const release = '1.0.0.14';
+    const release = '1.2.0.14';
     const releaseBuild = 2090029703;
 
     test('a release is offered to the preview it postdates', () {
@@ -215,9 +219,9 @@ void main() {
     test('a release compares by version on a build that is not a preview', () {
       expect(
         shouldOfferUpdate(
-          remoteVersion: '1.0.0.15',
+          remoteVersion: '1.2.0.15',
           remoteBuildNumber: releaseBuild,
-          installedVersion: '1.0.0.14',
+          installedVersion: '1.2.0.14',
         ),
         isTrue,
       );
@@ -234,9 +238,9 @@ void main() {
     test('falls back to the version when the notes carry no number', () {
       expect(
         shouldOfferUpdate(
-          remoteVersion: '1.0.0.15',
+          remoteVersion: '1.2.0.15',
           remoteBuildNumber: null,
-          installedVersion: '1.0.0.14',
+          installedVersion: '1.2.0.14',
         ),
         isTrue,
       );
@@ -280,7 +284,7 @@ void main() {
       );
       expect(
         shouldOfferUpdate(
-          remoteVersion: '1.0.0.15',
+          remoteVersion: '1.2.0.15',
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
@@ -291,8 +295,8 @@ void main() {
 
   group('releaseVersionOf', () {
     test('drops the tag prefix and nothing else', () {
-      expect(releaseVersionOf('v1.0.0.14'), '1.0.0.14');
-      expect(releaseVersionOf('1.0.0.14'), '1.0.0.14');
+      expect(releaseVersionOf('v1.2.0.14'), '1.2.0.14');
+      expect(releaseVersionOf('1.2.0.14'), '1.2.0.14');
       // A version that carries a `v` of its own keeps it.
       expect(releaseVersionOf('v1.0.0-dev'), '1.0.0-dev');
     });
@@ -315,13 +319,13 @@ void main() {
     }) => {'tag_name': tag, 'name': name, 'body': body, 'draft': draft};
 
     final stable23 = release(
-      'v1.0.0.23',
-      'Skyward 1.0.0.23（正式版）',
+      'v1.2.0.23',
+      'Skyward 1.2.0.23（正式版）',
       '- 构建号：`2090029901`',
     );
     final beta24 = release(
-      'v1.0.0.24',
-      'Skyward 1.0.0.24（beta）',
+      'v1.1.0.24',
+      'Skyward 1.1.0.24（beta）',
       '- 构建号：`2090029902`',
     );
     final preview9901 = release(
@@ -336,7 +340,7 @@ void main() {
           preview9901,
           beta24,
           stable23,
-        ], installedVersion: '1.0.0.23'),
+        ], installedVersion: '1.2.0.23'),
         beta24,
       );
     });
@@ -351,7 +355,7 @@ void main() {
         newestOfferableRelease([
           preview9905,
           stable23,
-        ], installedVersion: '1.0.0.23'),
+        ], installedVersion: '1.2.0.23'),
         preview9905,
       );
     });
@@ -373,7 +377,7 @@ void main() {
           preview9901,
           beta24,
           stable23,
-        ], installedVersion: '1.0.0.24'),
+        ], installedVersion: '1.1.0.24'),
         isNull,
       );
     });
@@ -389,13 +393,13 @@ void main() {
         newestOfferableRelease([
           draftPreview,
           stable23,
-        ], installedVersion: '1.0.0.23'),
+        ], installedVersion: '1.2.0.23'),
         isNull,
       );
     });
 
     test('without numbers only a version-newer release counts', () {
-      final nextStable = release('v1.0.0.24', 'Skyward 1.0.0.24', 'notes');
+      final nextStable = release('v1.2.0.24', 'Skyward 1.2.0.24', 'notes');
       final previewNoNumber = release(
         'preview-2090029905',
         'Skyward 1.0.0.2090029905（预览版）',
@@ -405,7 +409,7 @@ void main() {
         newestOfferableRelease([
           previewNoNumber,
           nextStable,
-        ], installedVersion: '1.0.0.23'),
+        ], installedVersion: '1.2.0.23'),
         nextStable,
       );
     });

@@ -9,9 +9,9 @@ import 'common.dart';
 /// pill wears it, and [PackageInfoExtension.labeledVersion] prints it after the
 /// number.
 ///
-/// Both sources are asked, version first: a package from the pipeline names its
-/// channel in the version (`1.0.1.07-dev`), while a build made by hand has only
-/// the env it was built with. A release has neither.
+/// The version carries it in the second component (0 = DEV, 1 = Beta, 2 =
+/// release). A build made by hand has no such component and falls back to the
+/// env it was built with; a release reads as empty and wears no label.
 String buildChannelLabel() =>
     _channelLabel(channelOf(buildVersion) ?? buildChannel);
 
@@ -29,14 +29,22 @@ String _channelLabel(String? channel) {
   }
 }
 
-/// The channel a version names as a suffix, lowercased: `pre`, `dev`, `beta`.
-/// A release carries none, which is what makes it a release.
+/// The channel a version names: `dev`, `beta`, or null for a release. New
+/// versions put it in component 2 (0/1/2); a suffix is still read for legacy.
 String? channelOf(String version) {
   final core = version.split('+').first;
   final dash = core.indexOf('-');
-  if (dash < 0) return null;
-  final channel = core.substring(dash + 1).trim().toLowerCase();
-  return channel.isEmpty ? null : channel;
+  if (dash >= 0) {
+    final suffix = core.substring(dash + 1).trim().toLowerCase();
+    return suffix.isEmpty ? null : suffix;
+  }
+  final parts = core.split('.');
+  if (parts.length < 4) return null;
+  return switch (parts[1]) {
+    '0' => 'dev',
+    '1' => 'beta',
+    _ => null,
+  };
 }
 
 /// Where a channel sits when two builds share a version number. A release is
@@ -69,7 +77,8 @@ extension PackageInfoExtension on PackageInfo {
     final built = displayVersion;
     if (channelOf(built) == null) return built;
     final core = built.split('+').first;
-    final number = core.substring(0, core.indexOf('-'));
+    final dash = core.indexOf('-');
+    final number = dash < 0 ? core : core.substring(0, dash);
     final label = buildChannelLabel();
     return label.isEmpty ? number : '$number $label';
   }
