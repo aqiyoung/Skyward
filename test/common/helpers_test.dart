@@ -133,8 +133,8 @@ void main() {
     });
 
     test('revision only counts when both sides carry one', () {
-      expect(compareVersions('1.0.0.1', '1.0.0'), 0);
-      expect(compareVersions('1.0.0', '1.0.0.1'), 0);
+      expect(compareVersions('1.2.0.1', '1.2.0'), 0);
+      expect(compareVersions('1.2.0', '1.2.0.1'), 0);
     });
 
     test('a preview build comes before the releases of its line', () {
@@ -160,8 +160,8 @@ void main() {
       // A snapshot's fourth component counts the day's builds, a release's
       // counts releases: reading them alike would make every preview look newer
       // than the release that supersedes it.
-      expect(compareVersions('1.0.1.6', '1.0.1.07-pre'), greaterThan(0));
-      expect(compareVersions('1.0.1.07-pre', '1.0.1.6'), lessThan(0));
+      expect(compareVersions('1.2.1.6', '1.0.1.07-pre'), greaterThan(0));
+      expect(compareVersions('1.0.1.07-pre', '1.2.1.6'), lessThan(0));
       expect(compareVersions('1.0.1.07-pre', '1.0.1.08-dev'), lessThan(0));
       expect(compareVersions('1.0.1.08-dev', '1.0.1.07-pre'), greaterThan(0));
     });
