@@ -120,11 +120,10 @@ jobs:
       # Numbering snapshots above the releases ended with a release refused as a
       # downgrade, which is why the counter is shared rather than offset.
       #
-      # The version a user reads is the four components plus `-dev`:
-      # `1.0.1.07-dev`. The fourth component is today's count, not a release
-      # number -- a snapshot spends none -- and the suffix says who built it.
-      # The versionCode above stays out of it, where it orders installs without
-      # being read as a version.
+      # The version a user reads is four components: major and patch from
+      # upstream, second component the channel code (0 here for DEV), and the
+      # fourth today's count. The versionCode above stays out of the name, where
+      # it orders installs without being read as a version.
       - name: Choose a dev version
         id: version
         env:
@@ -161,7 +160,11 @@ jobs:
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
           build_number=$(( day_prefix * 100 + stamp ))
-          version="${base}.$(printf '%02d' "$stamp")-dev"
+          # Component 2 is the channel code; a dev build is DEV tier (0). The
+          # pubspec below keeps upstream's three components for versionCode.
+          major="${base%%.*}"
+          patch="${base##*.}"
+          version="${major}.0.${patch}.$(printf '%02d' "$stamp")"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
