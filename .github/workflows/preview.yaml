@@ -165,7 +165,11 @@ jobs:
           # preview starts (a push, which numbers its own runs, and ci.yaml
           # calling in, which inherits the caller's numbering). Writing the tag
           # down is what makes the second half true -- see the next step.
-          version="${base}.${build_number}"
+          # Component 2 is the channel code; a preview is beta tier (1). The
+          # pubspec below keeps the upstream three components for versionCode.
+          major="${base%%.*}"
+          patch="${base##*.}"
+          version="${major}.1.${patch}.${build_number}"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml

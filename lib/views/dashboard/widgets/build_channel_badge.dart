@@ -7,7 +7,7 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// A release is the app and needs no label; a dev or beta package is a build
 /// being tried, and which one it is is the first thing worth knowing about it.
-/// The label is read from the build itself (APP_CHANNEL), so it says the same
+/// The label is read from the version's channel component, so it says the same
 /// thing the version string on the tools page does.
 ///
 /// Slanted and coloured, where the first version was a grey outline: at this

@@ -84,7 +84,7 @@ void main() {
       globalState.packageInfo = PackageInfo(
         appName: 'Skyward',
         packageName: 'com.threely.skyward',
-        version: '1.0.0.23',
+        version: '1.2.0.23',
         buildNumber: '2090029901',
       );
       final root = await Directory.systemTemp.createTemp('skyward-req-');
@@ -95,8 +95,8 @@ void main() {
       final request = requestAnswering({
         'api.github.com': () => ResponseBody.fromString(
           '[{"tag_name":"preview-2090029901","name":"Skyward 1.0.0.2090029901（预览版）","body":"- 构建号：`2090029901`","draft":false},'
-          '{"tag_name":"v1.0.0.24","name":"Skyward 1.0.0.24（beta）","body":"- 构建号：`2090029902`","draft":false},'
-          '{"tag_name":"v1.0.0.23","name":"Skyward 1.0.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
+          '{"tag_name":"v1.1.0.24","name":"Skyward 1.1.0.24（beta）","body":"- 构建号：`2090029902`","draft":false},'
+          '{"tag_name":"v1.2.0.23","name":"Skyward 1.2.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
           200,
           headers: {
             Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -107,13 +107,13 @@ void main() {
       // The test host is a desktop, where a preview has no package, so it
       // is skipped and the newer beta is the answer.
       final update = await request.checkForUpdate();
-      expect(update?['tag_name'], 'v1.0.0.24');
+      expect(update?['tag_name'], 'v1.1.0.24');
     });
 
     test('answers null when the installed build is already the newest', () async {
       final request = requestAnswering({
         'api.github.com': () => ResponseBody.fromString(
-          '[{"tag_name":"v1.0.0.23","name":"Skyward 1.0.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
+          '[{"tag_name":"v1.2.0.23","name":"Skyward 1.2.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
           200,
           headers: {
             Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -127,7 +127,7 @@ void main() {
     test('caches the release list on a successful fetch', () async {
       final request = requestAnswering({
         'api.github.com': () => ResponseBody.fromString(
-          '[{"tag_name":"v1.0.0.24","name":"Skyward 1.0.0.24（beta）","body":"- 构建号：`2090029902`","draft":false}]',
+          '[{"tag_name":"v1.1.0.24","name":"Skyward 1.1.0.24（beta）","body":"- 构建号：`2090029902`","draft":false}]',
           200,
           headers: {
             Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -143,7 +143,7 @@ void main() {
       expect(await cache.exists(), isTrue);
       final stored = (jsonDecode(await cache.readAsString()) as List)
           .cast<Map>();
-      expect(stored.any((r) => r['tag_name'] == 'v1.0.0.24'), isTrue);
+      expect(stored.any((r) => r['tag_name'] == 'v1.1.0.24'), isTrue);
     });
 
     test(
@@ -168,8 +168,8 @@ void main() {
               'draft': false,
             },
             {
-              'tag_name': 'v1.0.0.2090029902',
-              'name': 'Skyward 1.0.0.2090029902（beta）',
+              'tag_name': 'v1.1.0.2090029902',
+              'name': 'Skyward 1.1.0.2090029902（beta）',
               'body': '- 构建号：`2090029902`',
               'draft': false,
             },
@@ -184,7 +184,7 @@ void main() {
         // The cached beta outranks the installed preview on the shared build
         // counter, so the preview is offered it instead of being told nothing.
         final update = await request.checkForUpdate();
-        expect(update?['tag_name'], 'v1.0.0.2090029902');
+        expect(update?['tag_name'], 'v1.1.0.2090029902');
       },
     );
 
