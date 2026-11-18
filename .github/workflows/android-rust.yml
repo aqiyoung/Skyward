@@ -53,6 +53,8 @@ jobs:
           (cd /tmp/core-pkg && unzip -o /tmp/core.zip)
           ls -la /tmp/core-pkg
           test -f /tmp/core-pkg/libskyward_core.so
+          mkdir -p android/core/src/main/jniLibs/arm64-v8a
+          mkdir -p android/core/src/main/java/com/follow/clash/core/mobile
           cp /tmp/core-pkg/libskyward_core.so android/core/src/main/jniLibs/arm64-v8a/
           # JNI Java classes: only add if not already committed in this branch.
           mkdir -p android/core/src/main/java/com/follow/clash/core/mobile
