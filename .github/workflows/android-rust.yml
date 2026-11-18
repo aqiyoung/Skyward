@@ -42,6 +42,9 @@ jobs:
         with:
           # The Rust-core Gradle switches + JNI classes live on this branch.
           ref: rust-core
+          # pubspec.yaml bundles the Go submodule's CA cert as a Flutter asset;
+          # that file must exist even though the core itself is now Rust.
+          submodules: recursive
 
       - name: Download Rust core .so package
         env:
