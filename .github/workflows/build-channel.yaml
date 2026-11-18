@@ -321,7 +321,7 @@ jobs:
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
+        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} ${{ matrix.platform == 'android' && '--arch arm64' || '' }} -v
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
