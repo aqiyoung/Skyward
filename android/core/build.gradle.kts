@@ -32,6 +32,12 @@ kotlin {
     }
 }
 
+// When -PrustCore is set, the core is the Rust cdylib (libskyward_core.so) plus
+// the hand-written JNI classes in src/main/java/.../core/mobile, instead of the
+// gomobile-generated AAR. The .so is prebuilt by skyward-core's android-so
+// workflow and placed in src/main/jniLibs/arm64-v8a/.
+val useRustCore = (rootProject.findProperty("rustCore") as String?)?.toBoolean() ?: false
+
 val gomobileTargetByPlatform =
     linkedMapOf("android-arm" to "android/arm", "android-arm64" to "android/arm64", "android-x64" to "android/amd64")
 val gomobileTargets =
@@ -259,17 +265,21 @@ val bindCore =
     }
 
 // A library cannot bundle a local AAR into its own, so the gomobile AAR reaches AGP as a classes jar and generated jniLibs.
-androidComponents {
-    onVariants { variant ->
-        val unpack =
-            tasks.register<UnpackJniLibs>("unpack${variant.name.replaceFirstChar { it.uppercase() }}CoreJniLibs") {
-                aar.set(bindCore.flatMap { it.aar })
-                libraryName.set(coreLibraryName)
-            }
-        variant.sources.jniLibs?.addGeneratedSourceDirectory(unpack, UnpackJniLibs::outputDirectory)
+// In Rust-core mode the prebuilt .so (src/main/jniLibs) and hand-written JNI
+// classes are used instead, so none of the gomobile wiring runs.
+if (!useRustCore) {
+    androidComponents {
+        onVariants { variant ->
+            val unpack =
+                tasks.register<UnpackJniLibs>("unpack${variant.name.replaceFirstChar { it.uppercase() }}CoreJniLibs") {
+                    aar.set(bindCore.flatMap { it.aar })
+                    libraryName.set(coreLibraryName)
+                }
+            variant.sources.jniLibs?.addGeneratedSourceDirectory(unpack, UnpackJniLibs::outputDirectory)
+        }
     }
-}
 
-dependencies {
-    implementation(files(bindCore.flatMap { it.classesJar }))
+    dependencies {
+        implementation(files(bindCore.flatMap { it.classesJar }))
+    }
 }

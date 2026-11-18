@@ -13,6 +13,10 @@ val localProperties = Properties().apply {
     }
 }
 
+// Rust-core test build: distinct applicationId so it installs alongside the
+// Go version ("不能和现有 go 的冲突"). Signature is injected separately.
+val useRustCore = (project.findProperty("rustCore") as String?)?.toBoolean() ?: false
+
 val releaseStoreFile = file("keystore.jks")
 val releaseStorePassword = localProperties.getProperty("storePassword")
 val releaseKeyAlias = localProperties.getProperty("keyAlias")
@@ -81,7 +85,7 @@ android {
         // name, so it must not answer to upstream's id either. The namespace
         // above stays upstream's -- the Kotlin packages and the plugins' method
         // channels live there, and only the installed id is ours.
-        applicationId = "com.threely.skyward"
+        applicationId = if (useRustCore) "com.threely.skyward.rust" else "com.threely.skyward"
         minSdk = flutter.minSdkVersion
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = flutter.versionCode + (singleAbiBlock ?: 0) * 1000
