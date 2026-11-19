@@ -117,6 +117,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+  DashboardWidget.trafficUsage,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
@@ -137,6 +138,7 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.networkControl,
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
+        DashboardWidget.trafficUsage,
       ]
     : defaultDashboardWidgets;
 
@@ -332,6 +334,7 @@ List<List<DashboardWidget>>? dashboardStacksFromJson(
 Object? _readSidebarExpanded(Map<dynamic, dynamic> json, String key) {
   return json.containsKey(key) ? json[key] : json['showLabel'];
 }
+
 Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];

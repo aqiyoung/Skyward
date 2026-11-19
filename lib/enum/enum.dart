@@ -546,7 +546,8 @@ enum DashboardWidget {
   routingBoard,
   profiles,
   proxyGroups,
-  memoryInfo;
+  memoryInfo,
+  trafficUsage;
 
   final List<SupportPlatform> platforms;
 
@@ -562,7 +563,8 @@ enum DashboardWidget {
     DashboardWidget.currentOutbound => DashboardCardSize.hero,
     DashboardWidget.networkControl ||
     DashboardWidget.routingBoard ||
-    DashboardWidget.proxyGroups => DashboardCardSize.tall,
+    DashboardWidget.proxyGroups ||
+    DashboardWidget.trafficUsage => DashboardCardSize.tall,
     DashboardWidget.networkOverview ||
     DashboardWidget.profiles ||
     DashboardWidget.memoryInfo => DashboardCardSize.compact,
@@ -981,3 +983,9 @@ enum LoadingTag {
 enum CoreStatus { connecting, connected, disconnected }
 
 enum UpdatingScope { core, local }
+
+/// The span a traffic-statistics view aggregates over.
+enum TrafficPeriod { day, week, month }
+
+/// The dimension traffic is ranked and grouped by.
+enum TrafficRankKind { domain, rule, node, config }

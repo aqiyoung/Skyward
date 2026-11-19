@@ -49,6 +49,7 @@ export 'string.dart';
 export 'system.dart';
 export 'system_fonts.dart';
 export 'task.dart';
+export 'traffic_statistics_task.dart';
 export 'task_pool.dart';
 export 'webdav.dart';
 export 'yaml.dart';

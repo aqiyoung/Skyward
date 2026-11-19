@@ -4597,6 +4597,623 @@ class IpQualitiesCompanion extends UpdateCompanion<IpQualityRecord> {
   }
 }
 
+class $TrafficRecordsTable extends TrafficRecords
+    with TableInfo<$TrafficRecordsTable, TrafficRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrafficRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _connectionIdMeta = const VerificationMeta(
+    'connectionId',
+  );
+  @override
+  late final GeneratedColumn<String> connectionId = GeneratedColumn<String>(
+    'connection_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hostMeta = const VerificationMeta('host');
+  @override
+  late final GeneratedColumn<String> host = GeneratedColumn<String>(
+    'host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ruleMeta = const VerificationMeta('rule');
+  @override
+  late final GeneratedColumn<String> rule = GeneratedColumn<String>(
+    'rule',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rulePayloadMeta = const VerificationMeta(
+    'rulePayload',
+  );
+  @override
+  late final GeneratedColumn<String> rulePayload = GeneratedColumn<String>(
+    'rule_payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nodeMeta = const VerificationMeta('node');
+  @override
+  late final GeneratedColumn<String> node = GeneratedColumn<String>(
+    'node',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _networkMeta = const VerificationMeta(
+    'network',
+  );
+  @override
+  late final GeneratedColumn<String> network = GeneratedColumn<String>(
+    'network',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uploadMeta = const VerificationMeta('upload');
+  @override
+  late final GeneratedColumn<int> upload = GeneratedColumn<int>(
+    'upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _downloadMeta = const VerificationMeta(
+    'download',
+  );
+  @override
+  late final GeneratedColumn<int> download = GeneratedColumn<int>(
+    'download',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    connectionId,
+    startedAt,
+    endedAt,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    upload,
+    download,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'traffic_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrafficRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('connection_id')) {
+      context.handle(
+        _connectionIdMeta,
+        connectionId.isAcceptableOrUnknown(
+          data['connection_id']!,
+          _connectionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_connectionIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endedAtMeta);
+    }
+    if (data.containsKey('host')) {
+      context.handle(
+        _hostMeta,
+        host.isAcceptableOrUnknown(data['host']!, _hostMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hostMeta);
+    }
+    if (data.containsKey('rule')) {
+      context.handle(
+        _ruleMeta,
+        rule.isAcceptableOrUnknown(data['rule']!, _ruleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleMeta);
+    }
+    if (data.containsKey('rule_payload')) {
+      context.handle(
+        _rulePayloadMeta,
+        rulePayload.isAcceptableOrUnknown(
+          data['rule_payload']!,
+          _rulePayloadMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rulePayloadMeta);
+    }
+    if (data.containsKey('node')) {
+      context.handle(
+        _nodeMeta,
+        node.isAcceptableOrUnknown(data['node']!, _nodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nodeMeta);
+    }
+    if (data.containsKey('network')) {
+      context.handle(
+        _networkMeta,
+        network.isAcceptableOrUnknown(data['network']!, _networkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_networkMeta);
+    }
+    if (data.containsKey('upload')) {
+      context.handle(
+        _uploadMeta,
+        upload.isAcceptableOrUnknown(data['upload']!, _uploadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uploadMeta);
+    }
+    if (data.containsKey('download')) {
+      context.handle(
+        _downloadMeta,
+        download.isAcceptableOrUnknown(data['download']!, _downloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {connectionId};
+  @override
+  TrafficRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrafficRecord(
+      connectionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}connection_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      )!,
+      host: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}host'],
+      )!,
+      rule: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule'],
+      )!,
+      rulePayload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule_payload'],
+      )!,
+      node: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}node'],
+      )!,
+      network: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}network'],
+      )!,
+      upload: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}upload'],
+      )!,
+      download: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download'],
+      )!,
+    );
+  }
+
+  @override
+  $TrafficRecordsTable createAlias(String alias) {
+    return $TrafficRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class TrafficRecord extends DataClass implements Insertable<TrafficRecord> {
+  final String connectionId;
+  final DateTime startedAt;
+  final DateTime endedAt;
+  final String host;
+  final String rule;
+  final String rulePayload;
+
+  /// The leaf of the connection's chain -- the node it finally left through.
+  final String node;
+  final String network;
+  final int upload;
+  final int download;
+  const TrafficRecord({
+    required this.connectionId,
+    required this.startedAt,
+    required this.endedAt,
+    required this.host,
+    required this.rule,
+    required this.rulePayload,
+    required this.node,
+    required this.network,
+    required this.upload,
+    required this.download,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['connection_id'] = Variable<String>(connectionId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['ended_at'] = Variable<DateTime>(endedAt);
+    map['host'] = Variable<String>(host);
+    map['rule'] = Variable<String>(rule);
+    map['rule_payload'] = Variable<String>(rulePayload);
+    map['node'] = Variable<String>(node);
+    map['network'] = Variable<String>(network);
+    map['upload'] = Variable<int>(upload);
+    map['download'] = Variable<int>(download);
+    return map;
+  }
+
+  TrafficRecordsCompanion toCompanion(bool nullToAbsent) {
+    return TrafficRecordsCompanion(
+      connectionId: Value(connectionId),
+      startedAt: Value(startedAt),
+      endedAt: Value(endedAt),
+      host: Value(host),
+      rule: Value(rule),
+      rulePayload: Value(rulePayload),
+      node: Value(node),
+      network: Value(network),
+      upload: Value(upload),
+      download: Value(download),
+    );
+  }
+
+  factory TrafficRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrafficRecord(
+      connectionId: serializer.fromJson<String>(json['connectionId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime>(json['endedAt']),
+      host: serializer.fromJson<String>(json['host']),
+      rule: serializer.fromJson<String>(json['rule']),
+      rulePayload: serializer.fromJson<String>(json['rulePayload']),
+      node: serializer.fromJson<String>(json['node']),
+      network: serializer.fromJson<String>(json['network']),
+      upload: serializer.fromJson<int>(json['upload']),
+      download: serializer.fromJson<int>(json['download']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'connectionId': serializer.toJson<String>(connectionId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'endedAt': serializer.toJson<DateTime>(endedAt),
+      'host': serializer.toJson<String>(host),
+      'rule': serializer.toJson<String>(rule),
+      'rulePayload': serializer.toJson<String>(rulePayload),
+      'node': serializer.toJson<String>(node),
+      'network': serializer.toJson<String>(network),
+      'upload': serializer.toJson<int>(upload),
+      'download': serializer.toJson<int>(download),
+    };
+  }
+
+  TrafficRecord copyWith({
+    String? connectionId,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    String? host,
+    String? rule,
+    String? rulePayload,
+    String? node,
+    String? network,
+    int? upload,
+    int? download,
+  }) => TrafficRecord(
+    connectionId: connectionId ?? this.connectionId,
+    startedAt: startedAt ?? this.startedAt,
+    endedAt: endedAt ?? this.endedAt,
+    host: host ?? this.host,
+    rule: rule ?? this.rule,
+    rulePayload: rulePayload ?? this.rulePayload,
+    node: node ?? this.node,
+    network: network ?? this.network,
+    upload: upload ?? this.upload,
+    download: download ?? this.download,
+  );
+  TrafficRecord copyWithCompanion(TrafficRecordsCompanion data) {
+    return TrafficRecord(
+      connectionId: data.connectionId.present
+          ? data.connectionId.value
+          : this.connectionId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      host: data.host.present ? data.host.value : this.host,
+      rule: data.rule.present ? data.rule.value : this.rule,
+      rulePayload: data.rulePayload.present
+          ? data.rulePayload.value
+          : this.rulePayload,
+      node: data.node.present ? data.node.value : this.node,
+      network: data.network.present ? data.network.value : this.network,
+      upload: data.upload.present ? data.upload.value : this.upload,
+      download: data.download.present ? data.download.value : this.download,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficRecord(')
+          ..write('connectionId: $connectionId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    connectionId,
+    startedAt,
+    endedAt,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    upload,
+    download,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrafficRecord &&
+          other.connectionId == this.connectionId &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.host == this.host &&
+          other.rule == this.rule &&
+          other.rulePayload == this.rulePayload &&
+          other.node == this.node &&
+          other.network == this.network &&
+          other.upload == this.upload &&
+          other.download == this.download);
+}
+
+class TrafficRecordsCompanion extends UpdateCompanion<TrafficRecord> {
+  final Value<String> connectionId;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> endedAt;
+  final Value<String> host;
+  final Value<String> rule;
+  final Value<String> rulePayload;
+  final Value<String> node;
+  final Value<String> network;
+  final Value<int> upload;
+  final Value<int> download;
+  final Value<int> rowid;
+  const TrafficRecordsCompanion({
+    this.connectionId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.host = const Value.absent(),
+    this.rule = const Value.absent(),
+    this.rulePayload = const Value.absent(),
+    this.node = const Value.absent(),
+    this.network = const Value.absent(),
+    this.upload = const Value.absent(),
+    this.download = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrafficRecordsCompanion.insert({
+    required String connectionId,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required String host,
+    required String rule,
+    required String rulePayload,
+    required String node,
+    required String network,
+    required int upload,
+    required int download,
+    this.rowid = const Value.absent(),
+  }) : connectionId = Value(connectionId),
+       startedAt = Value(startedAt),
+       endedAt = Value(endedAt),
+       host = Value(host),
+       rule = Value(rule),
+       rulePayload = Value(rulePayload),
+       node = Value(node),
+       network = Value(network),
+       upload = Value(upload),
+       download = Value(download);
+  static Insertable<TrafficRecord> custom({
+    Expression<String>? connectionId,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
+    Expression<String>? host,
+    Expression<String>? rule,
+    Expression<String>? rulePayload,
+    Expression<String>? node,
+    Expression<String>? network,
+    Expression<int>? upload,
+    Expression<int>? download,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (connectionId != null) 'connection_id': connectionId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (host != null) 'host': host,
+      if (rule != null) 'rule': rule,
+      if (rulePayload != null) 'rule_payload': rulePayload,
+      if (node != null) 'node': node,
+      if (network != null) 'network': network,
+      if (upload != null) 'upload': upload,
+      if (download != null) 'download': download,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrafficRecordsCompanion copyWith({
+    Value<String>? connectionId,
+    Value<DateTime>? startedAt,
+    Value<DateTime>? endedAt,
+    Value<String>? host,
+    Value<String>? rule,
+    Value<String>? rulePayload,
+    Value<String>? node,
+    Value<String>? network,
+    Value<int>? upload,
+    Value<int>? download,
+    Value<int>? rowid,
+  }) {
+    return TrafficRecordsCompanion(
+      connectionId: connectionId ?? this.connectionId,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      host: host ?? this.host,
+      rule: rule ?? this.rule,
+      rulePayload: rulePayload ?? this.rulePayload,
+      node: node ?? this.node,
+      network: network ?? this.network,
+      upload: upload ?? this.upload,
+      download: download ?? this.download,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (connectionId.present) {
+      map['connection_id'] = Variable<String>(connectionId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (host.present) {
+      map['host'] = Variable<String>(host.value);
+    }
+    if (rule.present) {
+      map['rule'] = Variable<String>(rule.value);
+    }
+    if (rulePayload.present) {
+      map['rule_payload'] = Variable<String>(rulePayload.value);
+    }
+    if (node.present) {
+      map['node'] = Variable<String>(node.value);
+    }
+    if (network.present) {
+      map['network'] = Variable<String>(network.value);
+    }
+    if (upload.present) {
+      map['upload'] = Variable<int>(upload.value);
+    }
+    if (download.present) {
+      map['download'] = Variable<int>(download.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficRecordsCompanion(')
+          ..write('connectionId: $connectionId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4611,6 +5228,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
+  late final $TrafficRecordsTable trafficRecords = $TrafficRecordsTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4643,6 +5261,9 @@ abstract class _$Database extends GeneratedDatabase {
     this as Database,
   );
   late final IpQualitiesDao ipQualitiesDao = IpQualitiesDao(this as Database);
+  late final TrafficRecordsDao trafficRecordsDao = TrafficRecordsDao(
+    this as Database,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4659,6 +5280,7 @@ abstract class _$Database extends GeneratedDatabase {
     customProxies,
     proxyDialers,
     ipQualities,
+    trafficRecords,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
@@ -8434,6 +9056,314 @@ typedef $$IpQualitiesTableProcessedTableManager =
       IpQualityRecord,
       PrefetchHooks Function()
     >;
+typedef $$TrafficRecordsTableCreateCompanionBuilder =
+    TrafficRecordsCompanion Function({
+      required String connectionId,
+      required DateTime startedAt,
+      required DateTime endedAt,
+      required String host,
+      required String rule,
+      required String rulePayload,
+      required String node,
+      required String network,
+      required int upload,
+      required int download,
+      Value<int> rowid,
+    });
+typedef $$TrafficRecordsTableUpdateCompanionBuilder =
+    TrafficRecordsCompanion Function({
+      Value<String> connectionId,
+      Value<DateTime> startedAt,
+      Value<DateTime> endedAt,
+      Value<String> host,
+      Value<String> rule,
+      Value<String> rulePayload,
+      Value<String> node,
+      Value<String> network,
+      Value<int> upload,
+      Value<int> download,
+      Value<int> rowid,
+    });
+
+class $$TrafficRecordsTableFilterComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrafficRecordsTableOrderingComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrafficRecordsTableAnnotationComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get host =>
+      $composableBuilder(column: $table.host, builder: (column) => column);
+
+  GeneratedColumn<String> get rule =>
+      $composableBuilder(column: $table.rule, builder: (column) => column);
+
+  GeneratedColumn<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get node =>
+      $composableBuilder(column: $table.node, builder: (column) => column);
+
+  GeneratedColumn<String> get network =>
+      $composableBuilder(column: $table.network, builder: (column) => column);
+
+  GeneratedColumn<int> get upload =>
+      $composableBuilder(column: $table.upload, builder: (column) => column);
+
+  GeneratedColumn<int> get download =>
+      $composableBuilder(column: $table.download, builder: (column) => column);
+}
+
+class $$TrafficRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $TrafficRecordsTable,
+          TrafficRecord,
+          $$TrafficRecordsTableFilterComposer,
+          $$TrafficRecordsTableOrderingComposer,
+          $$TrafficRecordsTableAnnotationComposer,
+          $$TrafficRecordsTableCreateCompanionBuilder,
+          $$TrafficRecordsTableUpdateCompanionBuilder,
+          (
+            TrafficRecord,
+            BaseReferences<_$Database, $TrafficRecordsTable, TrafficRecord>,
+          ),
+          TrafficRecord,
+          PrefetchHooks Function()
+        > {
+  $$TrafficRecordsTableTableManager(_$Database db, $TrafficRecordsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrafficRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrafficRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrafficRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> connectionId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> endedAt = const Value.absent(),
+                Value<String> host = const Value.absent(),
+                Value<String> rule = const Value.absent(),
+                Value<String> rulePayload = const Value.absent(),
+                Value<String> node = const Value.absent(),
+                Value<String> network = const Value.absent(),
+                Value<int> upload = const Value.absent(),
+                Value<int> download = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficRecordsCompanion(
+                connectionId: connectionId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                upload: upload,
+                download: download,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String connectionId,
+                required DateTime startedAt,
+                required DateTime endedAt,
+                required String host,
+                required String rule,
+                required String rulePayload,
+                required String node,
+                required String network,
+                required int upload,
+                required int download,
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficRecordsCompanion.insert(
+                connectionId: connectionId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                upload: upload,
+                download: download,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrafficRecordsTable, TrafficRecord>(table),
+                  BaseReferences<
+                    _$Database,
+                    $TrafficRecordsTable,
+                    TrafficRecord
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrafficRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $TrafficRecordsTable,
+      TrafficRecord,
+      $$TrafficRecordsTableFilterComposer,
+      $$TrafficRecordsTableOrderingComposer,
+      $$TrafficRecordsTableAnnotationComposer,
+      $$TrafficRecordsTableCreateCompanionBuilder,
+      $$TrafficRecordsTableUpdateCompanionBuilder,
+      (
+        TrafficRecord,
+        BaseReferences<_$Database, $TrafficRecordsTable, TrafficRecord>,
+      ),
+      TrafficRecord,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -8460,6 +9390,8 @@ class $DatabaseManager {
       $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db, _db.ipQualities);
+  $$TrafficRecordsTableTableManager get trafficRecords =>
+      $$TrafficRecordsTableTableManager(_db, _db.trafficRecords);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -8598,4 +9530,19 @@ class IpQualitiesDaoManager {
   IpQualitiesDaoManager(this._db);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db.attachedDatabase, _db.ipQualities);
+}
+
+mixin _$TrafficRecordsDaoMixin on DatabaseAccessor<Database> {
+  $TrafficRecordsTable get trafficRecords => attachedDatabase.trafficRecords;
+  TrafficRecordsDaoManager get managers => TrafficRecordsDaoManager(this);
+}
+
+class TrafficRecordsDaoManager {
+  final _$TrafficRecordsDaoMixin _db;
+  TrafficRecordsDaoManager(this._db);
+  $$TrafficRecordsTableTableManager get trafficRecords =>
+      $$TrafficRecordsTableTableManager(
+        _db.attachedDatabase,
+        _db.trafficRecords,
+      );
 }
