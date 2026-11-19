@@ -29,6 +29,7 @@ export 'item_position.dart';
 export 'keep_scope.dart';
 export 'ring_chart.dart';
 export 'traffic_bar_chart.dart';
+export 'usage_bar.dart';
 export 'keyboard.dart';
 export 'keyboard_inset_hold.dart';
 export 'keyed_animated_list.dart';

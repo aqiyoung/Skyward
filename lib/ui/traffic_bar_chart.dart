@@ -86,7 +86,21 @@ class _BarPainter extends CustomPainter {
     }
 
     final slot = plotW / points.length;
-    final barW = math.min(slot * 0.6, 22.0).toDouble();
+    final barW = math.min(slot * 0.55, 18.0).toDouble();
+    // Vertical gradients give each bar a little depth instead of reading as a
+    // flat block of colour.
+    final downPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [downloadColor.withValues(alpha: 0.65), downloadColor],
+      ).createShader(Rect.fromLTWH(0, _top, 0, plotH));
+    final upPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [uploadColor.withValues(alpha: 0.65), uploadColor],
+      ).createShader(Rect.fromLTWH(0, _top, 0, plotH));
     for (var i = 0; i < points.length; i++) {
       final p = points[i];
       final cx = _left + slot * (i + 0.5);
@@ -94,15 +108,9 @@ class _BarPainter extends CustomPainter {
       final upH = plotH * p.upload / axisMax;
       final x = cx - barW / 2;
       var y = _top + plotH - downH;
-      canvas.drawRect(
-        Rect.fromLTWH(x, y, barW, downH),
-        Paint()..color = downloadColor,
-      );
+      canvas.drawRect(Rect.fromLTWH(x, y, barW, downH), downPaint);
       y = y - upH;
-      canvas.drawRect(
-        Rect.fromLTWH(x, y, barW, upH),
-        Paint()..color = uploadColor,
-      );
+      canvas.drawRect(Rect.fromLTWH(x, y, barW, upH), upPaint);
       if (i % math.max(1, points.length ~/ 4) == 0) {
         _drawText(
           canvas,

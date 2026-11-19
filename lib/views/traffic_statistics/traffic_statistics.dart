@@ -226,6 +226,7 @@ class _OverviewCard extends ConsumerWidget {
                 center: '${(proxyPct * 100).round()}%',
                 subtitle: '代理',
                 size: 84,
+                trackColor: cs.surfaceContainerHighest,
               ),
             ],
           ),
@@ -421,6 +422,7 @@ class _RuleHits extends StatelessWidget {
                   center: '${(hit.percent * 100).round()}%',
                   size: 56,
                   strokeWidth: 6,
+                  trackColor: cs.surfaceContainerHighest,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -523,16 +525,12 @@ class _Ranking extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                ClipRSuperellipse(
-                  borderRadius: AppRadius.full,
-                  child: SizedBox(
-                    height: 6,
-                    child: FractionallySizedBox(
-                      alignment: AlignmentDirectional.centerStart,
-                      widthFactor: item.percent.clamp(0.0, 1.0),
-                      child: ColoredBox(color: cs.primary),
-                    ),
+                UsageBar(
+                  fraction: item.percent,
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.primary.withValues(alpha: 0.55)],
                   ),
+                  trackColor: cs.surfaceContainerHighest,
                 ),
                 const SizedBox(height: 6),
                 Text(

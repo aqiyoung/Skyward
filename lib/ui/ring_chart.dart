@@ -93,7 +93,7 @@ class _RingPainter extends CustomPainter {
     canvas.drawCircle(
       center,
       radius,
-      stroke..color = trackColor ?? const Color(0x1F000000),
+      stroke..color = trackColor ?? const Color(0x1A000000),
     );
 
     var start = -math.pi / 2;
@@ -107,7 +107,7 @@ class _RingPainter extends CustomPainter {
         false,
         stroke
           ..color = colors[i % colors.length]
-          ..strokeCap = StrokeCap.butt,
+          ..strokeCap = StrokeCap.round,
       );
       start += sweep;
     }
