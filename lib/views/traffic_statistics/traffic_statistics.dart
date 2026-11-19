@@ -341,7 +341,7 @@ class _SplitBar extends StatelessWidget {
   final Color directColor;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
+  Widget build(BuildContext context) => ClipRSuperellipse(
     borderRadius: BorderRadius.circular(999),
     child: Container(
       height: 10,
@@ -616,7 +616,7 @@ class _Ranking extends StatelessWidget {
     TrafficRankKind.config => AppGlyphs.settings,
   };
 
-  /// The 22px leading slot of a ranking row: for the node ranking, the
+  /// The 22dp leading slot of a ranking row: for the node ranking, the
   /// group's own official logo (the same resolution the proxies page
   /// uses: the icon its config declares wins, then the bundled service
   /// marks); other kinds keep their generic glyph.
@@ -681,7 +681,7 @@ class _Ranking extends StatelessWidget {
   }
 }
 
-/// A ranking row's icon slot: the item's own picture at 22px, softly
+/// A ranking row's icon slot: the item's own picture at 22dp, softly
 /// rounded, with [fallback] shown while it loads or when it cannot be
 /// fetched.
 class _ItemIcon extends StatelessWidget {
@@ -691,7 +691,7 @@ class _ItemIcon extends StatelessWidget {
   final Widget fallback;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
+  Widget build(BuildContext context) => ClipRSuperellipse(
     borderRadius: BorderRadius.circular(6),
     child: SizedBox.square(
       dimension: 22,
