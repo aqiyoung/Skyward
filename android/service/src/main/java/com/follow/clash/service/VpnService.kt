@@ -160,7 +160,10 @@ class VpnService : SystemVpnService(), ManagedService {
                 // reporting a start that only looks successful.
                 check(
                     Core.startTun(
-                        fd = descriptor.detachFd(),
+                        // Keep ownership of the ParcelFileDescriptor. The core
+                        // dup()s the fd; on stop we close this descriptor, which
+                        // is what actually removes the system VPN status icon.
+                        fd = descriptor.fd,
                         protect = this::protect,
                         resolveUid = this::resolveUid,
                         resolvePackage = this::resolvePackage,
