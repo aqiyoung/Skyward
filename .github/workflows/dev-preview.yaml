@@ -172,19 +172,24 @@ jobs:
           # increments on every build, carrying into component 3 at 99. The
           # lightweight v<major>.<chan>.<patch>.<rev> tag is its only ledger.
           major="${base%%.*}"
-          base_patch="${base##*.}"
           version_tags=$(gh api \
             "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/v${major}.0." \
             --jq '.[].ref' 2>/dev/null || true)
+          # The last published counter is patch*100 + revision, read from the
+          # version tags themselves. The next build increments it; the patch is
+          # derived from the counter alone so it never double-carries.
           last=$(printf '%s\n' "$version_tags" \
             | grep -oE "v${major}\.0\.[0-9]+\.[0-9]+$" \
             | awk -F. '{n=$3*100+$4; if(n>m)m=n} END{print m+0}')
           total=$(( last + 1 ))
-          patch=$(( base_patch + total / 100 ))
+          patch=$(( total / 100 ))
           revision=$(( total % 100 ))
           version="${major}.0.${patch}.$(printf '%02d' "$revision")"
           echo "VERSION_TAG=v${version}" >> "$GITHUB_OUTPUT"
-          awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
+          # Keep pubspec's base in step with the carried patch so the package
+          # name produced by the build matches the visible version.
+          pubspec_base="${major}.0.${patch}"
+          awk -v v="${pubspec_base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
