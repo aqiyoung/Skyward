@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/manager/core_manager.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/models/record_filter.dart';
 import 'package:skyward/providers/providers.dart';
@@ -59,6 +60,9 @@ class _LogsViewState extends ConsumerState<LogsView>
   @override
   void initState() {
     super.initState();
+    // Re-arm the log stream: it may have been lost with an earlier core
+    // process even though the core is connected now.
+    syncCoreLogStream(ref);
     _scrollController = sheetScrollController(
       context,
       initialScrollOffset: double.maxFinite,
