@@ -162,6 +162,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+          CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
@@ -170,9 +171,8 @@ jobs:
           # The update log rides along with the APK; Telegram captions are capped
           # at 1024 bytes, so keep it to the first lines that matter.
           caption="Skyward ${{ inputs.version }} (Rust core test, arm64)"
-          if [ -n "${{ inputs.changelog }}" ]; then
-            caption="$caption
-${{ inputs.changelog }}"
+          if [ -n "${CHANGELOG:-}" ]; then
+            caption=$(printf '%s\n%s' "$caption" "$CHANGELOG")
           fi
           caption=$(printf '%s' "$caption" | head -c 1000)
           echo "--- caption ---"
