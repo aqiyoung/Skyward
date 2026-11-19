@@ -242,7 +242,6 @@ const _legacyDashboardWidgets = {
   'dnsQueries': DashboardWidget.networkOverview,
   'serviceStatus': DashboardWidget.networkOverview,
   'connectionStats': DashboardWidget.networkOverview,
-  'trafficUsage': DashboardWidget.currentOutbound,
   'networkSpeed': DashboardWidget.currentOutbound,
 };
 

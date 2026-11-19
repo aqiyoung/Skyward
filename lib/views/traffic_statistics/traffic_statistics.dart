@@ -73,7 +73,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
               ),
               loading: () => const Padding(
                 padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: CommonCircleLoading.page()),
               ),
               error: (error, _) => Padding(
                 padding: const EdgeInsets.all(48),
@@ -109,12 +109,14 @@ class _DateStrip extends ConsumerWidget {
       children: [
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronBack),
+          tooltip: '上一段',
           onPressed: () =>
               ref.read(trafficRangeProvider.notifier).shift(period, -1),
         ),
-        Text(_label()),
+        Text(_label(), style: AppTextStyle.body.of(context)),
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronForward),
+          tooltip: '下一段',
           onPressed: () =>
               ref.read(trafficRangeProvider.notifier).shift(period, 1),
         ),
@@ -140,11 +142,16 @@ class _TotalsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('总流量', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          Text(
+            '总流量',
+            style: AppTextStyle.caption1
+                .of(context)
+                .copyWith(color: colorScheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 6),
           Text(
             (data.totalUpload + data.totalDownload).traffic.show,
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+            style: AppTextStyle.title1.of(context),
           ),
           const SizedBox(height: 12),
           Row(
@@ -157,7 +164,9 @@ class _TotalsCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${data.connectionCount} 条连接',
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -171,10 +180,8 @@ class _SectionLabel extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-  );
+  Widget build(BuildContext context) =>
+      Text(text, style: AppTextStyle.subheadline.of(context, emphasized: true));
 }
 
 class _RuleHits extends StatelessWidget {
@@ -201,8 +208,13 @@ class _RuleHits extends StatelessWidget {
                   center: '${(hit.percent * 100).round()}%',
                 ),
                 const SizedBox(height: 4),
-                Text(hit.key, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text('${hit.hits} 次', style: const TextStyle(fontSize: 11)),
+                Text(
+                  hit.key,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.caption1.of(context),
+                ),
+                Text('${hit.hits} 次', style: AppTextStyle.caption2.of(context)),
               ],
             ),
           ),
@@ -244,7 +256,9 @@ class _Ranking extends StatelessWidget {
                     ),
                     Text(
                       '${(item.percent * 100).toStringAsFixed(1)}%',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyle.caption1
+                          .of(context)
+                          .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -263,10 +277,9 @@ class _Ranking extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '↑ ${item.upload.traffic.show}   ↓ ${item.download.traffic.show}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.caption2
+                      .of(context)
+                      .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
