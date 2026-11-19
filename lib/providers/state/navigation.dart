@@ -80,10 +80,9 @@ DashboardState dashboardState(Ref ref) {
       (state) => (state.dashboardWidgets, state.dashboardStacks),
     ),
   );
-  final migrated = withDefaultDashboardCards(setting.$1, setting.$2);
   return DashboardState(
-    dashboardWidgets: migrated.widgets,
-    dashboardStacks: migrated.stacks,
+    dashboardWidgets: setting.$1,
+    dashboardStacks: setting.$2,
   );
 }
 
