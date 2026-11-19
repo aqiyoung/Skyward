@@ -73,7 +73,6 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
   late var _stacks = _copyOf(widget.stacks);
   final _leaving = <DashboardWidget>{};
   final _entering = <DashboardWidget>{};
-  var _dragging = false;
 
   /// Set while a pile is in the air, so the drop rows only take the pointer
   /// once there is something to drop.
@@ -529,8 +528,6 @@ class _EditableStack extends StatelessWidget {
   final VoidCallback onTurn;
   final VoidCallback? onSplit;
   final VoidCallback? onRemove;
-  final void Function(int from, int insertAt, {required bool stack}) onDrop;
-  final ValueChanged<bool> onLift;
 
   /// [insertAt] is the row the held pile lands in front of, and [stack] asks
   /// for it to join that row's pile rather than stand on its own.
