@@ -289,7 +289,15 @@ as String,
 /// @nodoc
 mixin _$AppSettingProps {
 
- String? get locale;@JsonKey(fromJson: dashboardWidgetsFromJson) List<DashboardWidget> get dashboardWidgets;@JsonKey(fromJson: dashboardStacksFromJson) List<List<DashboardWidget>>? get dashboardStacks; bool get onlyStatisticsProxy; bool get showNotificationStopAction;/// Draws the dashboard's route on a globe instead of the flat sheet. Off
+ String? get locale;@JsonKey(fromJson: dashboardWidgetsFromJson) List<DashboardWidget> get dashboardWidgets;/// The piles the reader stacked by hand, each top card first. Null means
+/// nobody has stacked them yet, and the cards fall into piles by size on
+/// their own; once a pile is dragged together or apart, this holds the
+/// arrangement and the automatic one stops applying.
+///
+/// [dashboardWidgets] still lists every card in reading order, so a build
+/// that predates stacking, a backup, and the plain editor all keep working
+/// off the same set.
+@JsonKey(fromJson: dashboardStacksFromJson) List<List<DashboardWidget>>? get dashboardStacks; bool get onlyStatisticsProxy; bool get showNotificationStopAction;/// Draws the dashboard's route on a globe instead of the flat sheet. Off
 /// by default: the sheet fits more of the world into the same height, and
 /// the globe is there for the shape of a route, not for reading its legs.
  bool get routeMapGlobe;/// Keeps the service's own notification out of sight. Android requires a
@@ -544,7 +552,23 @@ class _AppSettingProps implements AppSettingProps {
   return EqualUnmodifiableListView(_dashboardWidgets);
 }
 
+/// The piles the reader stacked by hand, each top card first. Null means
+/// nobody has stacked them yet, and the cards fall into piles by size on
+/// their own; once a pile is dragged together or apart, this holds the
+/// arrangement and the automatic one stops applying.
+///
+/// [dashboardWidgets] still lists every card in reading order, so a build
+/// that predates stacking, a backup, and the plain editor all keep working
+/// off the same set.
  final  List<List<DashboardWidget>>? _dashboardStacks;
+/// The piles the reader stacked by hand, each top card first. Null means
+/// nobody has stacked them yet, and the cards fall into piles by size on
+/// their own; once a pile is dragged together or apart, this holds the
+/// arrangement and the automatic one stops applying.
+///
+/// [dashboardWidgets] still lists every card in reading order, so a build
+/// that predates stacking, a backup, and the plain editor all keep working
+/// off the same set.
 @override@JsonKey(fromJson: dashboardStacksFromJson) List<List<DashboardWidget>>? get dashboardStacks {
   final value = _dashboardStacks;
   if (value == null) return null;

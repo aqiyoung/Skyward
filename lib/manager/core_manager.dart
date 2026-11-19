@@ -23,7 +23,7 @@ class CoreManager extends ConsumerStatefulWidget {
 }
 
 class _CoreContainerState extends ConsumerState<CoreManager>
-    with CoreEventListener {
+    with CoreEventListener, WidgetsBindingObserver {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   @override
@@ -35,6 +35,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void initState() {
     super.initState();
     coreEventManager.addListener(this);
+    WidgetsBinding.instance.addObserver(this);
     ref.read(updatingActionProvider.notifier);
     // A rejected profile stays selected on purpose: silently reverting to
     // the previous one hides the error and looks like the switch was lost.
@@ -61,31 +62,31 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       next,
     ) {
       if (prev != next) {
-        _syncLogStream();
+        syncCoreLogStream(ref);
       }
     });
     // Every Core process starts without a log stream.
     ref.listenManual(coreStatusProvider, (prev, next) {
       if (next == CoreStatus.connected && prev != CoreStatus.connected) {
-        _syncLogStream();
+        syncCoreLogStream(ref);
       }
     }, fireImmediately: true);
   }
 
-  void _syncLogStream() {
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
-      return;
-    }
-    if (ref.read(appSettingProvider).openLogs) {
-      _core.startLog();
-    } else {
-      _core.stopLog();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Returning to the foreground is a chance to re-arm a log stream
+    // that died with an earlier core process; syncCoreLogStream is
+    // idempotent, so this is a no-op while the stream is live.
+    if (state == AppLifecycleState.resumed) {
+      syncCoreLogStream(ref);
     }
   }
 
   @override
   void dispose() {
     coreEventManager.removeListener(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -187,5 +188,25 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void onRouteChanged(RouteSnapshot snapshot) {
     ref.read(routeTrackerProvider.notifier).applySnapshot(snapshot);
     super.onRouteChanged(snapshot);
+  }
+}
+
+/// Starts or stops the core log stream to match the openLogs setting.
+///
+/// Safe to call repeatedly — the core replaces any existing subscription
+/// when startLog arrives — so callers re-arm the stream wherever it may
+/// have been lost: it otherwise starts only on the coreStatus connected
+/// edge, and a rebuilt UI process over a still-running core service
+/// never sees that edge again, which left the logs page frozen while
+/// traffic kept flowing.
+void syncCoreLogStream(WidgetRef ref) {
+  if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+    return;
+  }
+  final core = ref.read(coreHandlerProvider);
+  if (ref.read(appSettingProvider).openLogs) {
+    core.startLog();
+  } else {
+    core.stopLog();
   }
 }

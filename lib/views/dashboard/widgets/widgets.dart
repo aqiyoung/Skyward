@@ -13,3 +13,4 @@ export 'proxy_groups.dart';
 export 'routing_board.dart';
 export 'service_status.dart';
 export 'traffic.dart';
+export 'traffic_usage.dart';

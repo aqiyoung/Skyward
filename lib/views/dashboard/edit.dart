@@ -28,7 +28,15 @@ const _appearDuration = Duration(milliseconds: 200);
 const _appearScale = 0.92;
 const _liftGrowth = 0.03;
 
-/// Drop a held pile in a row's center to stack it; use the edges to reorder.
+/// Edits the shown cards where they stand: each pile sways, a removable card
+/// wears a remove badge, and a held pile drags onto another to stack with it.
+///
+/// A pile is one row here, the way it is one place on the board. Holding it
+/// lifts it; letting it go over the middle of another row stacks the two
+/// together, and letting it go over the top or bottom edge of a row drops it
+/// before or after that row instead. A pile of more than one card wears its
+/// count, which splits the pile back into single cards when tapped, and a tap
+/// on the card turns it to the next one so a different card can be on top.
 class DashboardEditor extends ConsumerStatefulWidget {
   const DashboardEditor({
     super.key,
@@ -41,6 +49,10 @@ class DashboardEditor extends ConsumerStatefulWidget {
   });
 
   final SupportPlatform platform;
+
+  /// The piles as the board draws them, top card first. Only cards this
+  /// platform shows are in here; the rest are put back where they stood when
+  /// the arrangement is saved.
   final List<List<DashboardWidget>> stacks;
 
   /// Shared with the cards outside edit mode, so each keeps its state.
@@ -57,9 +69,13 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     with SingleTickerProviderStateMixin {
   late final _sway = AnimationController(vsync: this, duration: _swayLoop);
 
+  /// The saved piles and any removed card still on its way out.
   late var _stacks = _copyOf(widget.stacks);
   final _leaving = <DashboardWidget>{};
   final _entering = <DashboardWidget>{};
+
+  /// Set while a pile is in the air, so the drop rows only take the pointer
+  /// once there is something to drop.
   var _dragging = false;
 
   static List<List<DashboardWidget>> _copyOf(
@@ -68,6 +84,8 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     for (final pile in stacks) [...pile],
   ];
 
+  /// What the board will show once this is saved: the cards that are not on
+  /// their way out, in the order the piles now read.
   List<List<DashboardWidget>> get _settled => [
     for (final pile in _stacks)
       [
@@ -124,7 +142,10 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
         });
   }
 
-  // Keep unsupported cards in their saved slots as standalone piles.
+  /// Cards this platform cannot show are not in the editor at all, so they are
+  /// put back as piles of their own where they stood. The saved piles are the
+  /// best guide to that place; before there are any, every card stood on its
+  /// own, so the flat list is read that way instead.
   List<List<DashboardWidget>> _withOtherPlatforms(
     List<List<DashboardWidget>>? savedStacks,
     List<DashboardWidget> savedWidgets,
@@ -166,6 +187,8 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     _save();
   }
 
+  /// Brings the next card of a pile to the top, so a pile can be read through
+  /// and the card that should show first can be chosen.
   void _turn(int at) {
     final pile = _stacks[at];
     if (pile.length < 2) {
@@ -175,6 +198,7 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     _save();
   }
 
+  /// Takes a pile apart into one card each, in the same row they stood in.
   void _split(int at) {
     final pile = _stacks[at];
     if (pile.length < 2) {
@@ -190,7 +214,9 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     _save();
   }
 
-  // Center drops merge piles; edge drops only reorder.
+  /// Drops the held pile at [from] onto [to]. Stacking appends it under the
+  /// cards already there, which is what "put them together" reads as; a plain
+  /// drop only moves the row.
   void _drop(int from, int to, {required bool stack}) {
     if (from == to) {
       return;
@@ -473,7 +499,13 @@ class _PresenceState extends State<_Presence>
   }
 }
 
-/// The center drop zone stacks; the edge zones only reorder.
+/// One row of the editor: the card that shows, how many cards stand behind it,
+/// and the places another pile can be dropped on it.
+///
+/// The three drop bands are what makes one gesture mean two things: over the
+/// middle the held pile joins this one as a stack, over either edge it only
+/// takes this row's place. They are only there while a pile is in the air, so
+/// a plain tap still reaches the card.
 class _EditableStack extends StatelessWidget {
   const _EditableStack({
     required this.pile,
@@ -496,6 +528,9 @@ class _EditableStack extends StatelessWidget {
   final VoidCallback onTurn;
   final VoidCallback? onSplit;
   final VoidCallback? onRemove;
+
+  /// [insertAt] is the row the held pile lands in front of, and [stack] asks
+  /// for it to join that row's pile rather than stand on its own.
   final void Function(int from, int insertAt, {required bool stack}) onDrop;
   final ValueChanged<bool> onLift;
 
@@ -588,7 +623,9 @@ class _EditableStack extends StatelessWidget {
   }
 }
 
-/// The overlay must not mount a card with the same key as its source.
+/// The card as it rides under the finger: the same card, a little larger, with
+/// the shadow the board gives a held pile. Built without the card's key -- a
+/// widget cannot be in two places at once.
 class _HeldPile extends StatelessWidget {
   const _HeldPile({required this.card, required this.width});
 
@@ -614,6 +651,8 @@ class _HeldPile extends StatelessWidget {
   }
 }
 
+/// How many cards stand behind the one on show. Tapping it lays them out as
+/// single cards again, which is the way back out of a stack built by mistake.
 class _PileCount extends StatelessWidget {
   const _PileCount({required this.count, required this.onSplit});
 
@@ -652,6 +691,9 @@ class _PileCount extends StatelessWidget {
   }
 }
 
+/// A band of a row that takes a held pile. Over the middle it means "stack
+/// these together"; over an edge it only means "put it before/after this row",
+/// and says so by drawing a line where the row would go.
 class _DropBand extends StatelessWidget {
   const _DropBand({
     required this.row,
@@ -661,6 +703,8 @@ class _DropBand extends StatelessWidget {
 
   final int row;
   final ValueChanged<int> onAccept;
+
+  /// 0 for the middle of the row, -1 for its top edge, 1 for its bottom edge.
   final int edge;
 
   bool get _stack => edge == 0;
@@ -676,6 +720,8 @@ class _DropBand extends StatelessWidget {
           return const SizedBox.expand();
         }
         if (_stack) {
+          // A wash over the row rather than a frame around it: the card under
+          // it is the thing being read, and a border would redraw its edge.
           return Padding(
             padding: const EdgeInsets.all(2),
             child: DecoratedBox(
