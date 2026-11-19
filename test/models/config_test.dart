@@ -293,9 +293,7 @@ void main() {
     });
 
     test('every dashboard widget survives round-trip', () {
-      const props = AppSettingProps(
-        dashboardWidgets: DashboardWidget.values,
-      );
+      const props = AppSettingProps(dashboardWidgets: DashboardWidget.values);
       final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
       expect(restored.dashboardWidgets, DashboardWidget.values);
     });
@@ -968,6 +966,29 @@ void main() {
         ]),
         [DashboardWidget.currentOutbound, DashboardWidget.memoryInfo],
       );
+    });
+
+    test('adds default cards a saved layout predates', () {
+      final saved = [DashboardWidget.currentOutbound, DashboardWidget.profiles];
+      final stacks = [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.profiles],
+      ];
+      final migrated = withDefaultDashboardCards(saved, stacks);
+
+      for (final card in platformDefaultDashboardWidgets) {
+        expect(migrated.widgets, contains(card), reason: 'missing $card');
+        expect(migrated.stacks!.expand((pile) => pile), contains(card));
+      }
+      // The reader's own order is kept at the front.
+      expect(migrated.widgets.take(2), saved);
+    });
+
+    test('withDefaultDashboardCards leaves a complete layout untouched', () {
+      final complete = List.of(platformDefaultDashboardWidgets);
+      final migrated = withDefaultDashboardCards(complete, null);
+      expect(migrated.widgets, complete);
+      expect(migrated.stacks, isNull);
     });
 
     test('fromJson keeps everything but the values it cannot read', () {

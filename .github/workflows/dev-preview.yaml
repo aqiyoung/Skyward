@@ -159,16 +159,31 @@ jobs:
           highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
-          if [ "$stamp" -ge 80 ]; then
+          # The whole day's hundred codes are shared with the other channels;
+          # a dev built after them must still out-rank their versionCode.
+          if [ "$stamp" -ge 99 ]; then
             echo "::error::dev build numbers for today are exhausted"
             exit 1
           fi
           build_number=$(( day_prefix * 100 + stamp ))
-          # Component 2 is the channel code; a dev build is DEV tier (0). The
-          # pubspec below keeps upstream's three components for versionCode.
+
+          # The visible four-component version is a running counter independent
+          # of the day: component 2 is the channel (0 = dev) and component 4
+          # increments on every build, carrying into component 3 at 99. The
+          # lightweight v<major>.<chan>.<patch>.<rev> tag is its only ledger.
           major="${base%%.*}"
-          patch="${base##*.}"
-          version="${major}.0.${patch}.$(printf '%02d' "$stamp")"
+          base_patch="${base##*.}"
+          version_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/v${major}.0." \
+            --jq '.[].ref' 2>/dev/null || true)
+          last=$(printf '%s\n' "$version_tags" \
+            | sed -n "s#.*refs/tags/v${major}\\.0\\.\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\)$#\1 \2#p" \
+            | awk '{n=$1*100+$2; if(n>m)m=n} END{print m+0}')
+          total=$(( last + 1 ))
+          patch=$(( base_patch + total / 100 ))
+          revision=$(( total % 100 ))
+          version="${major}.0.${patch}.$(printf '%02d' "$revision")"
+          echo "VERSION_TAG=v${version}" >> "$GITHUB_OUTPUT"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
@@ -194,26 +209,30 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: dev-${{ steps.version.outputs.build_number }}
+          VERSION_TAG: ${{ steps.version.outputs.VERSION_TAG }}
         run: |
           set -euo pipefail
           sha="$(git rev-parse HEAD)"
-          claimed="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" \
-            --jq '.object.sha' 2>/dev/null || true)"
-          # An unknown ref answers 404 with a JSON body on stdout rather than an
-          # empty string, so anything that is not a commit sha means the number
-          # is still free.
-          if ! printf '%s' "$claimed" | grep -Eq '^[0-9a-f]{40}$'; then
-            claimed=""
-          fi
-          if [ -n "$claimed" ] && [ "$claimed" != "$sha" ]; then
-            echo "::error::${TAG} is already claimed by ${claimed}; another run took this number"
-            exit 1
-          fi
-          if [ -z "$claimed" ]; then
-            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-              -f ref="refs/tags/${TAG}" -f sha="$sha" > /dev/null
-          fi
-          echo "counter: ${TAG} claimed on ${sha}"
+          for tag in "$TAG" "$VERSION_TAG"; do
+            [ -n "$tag" ] || continue
+            claimed="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
+              --jq '.object.sha' 2>/dev/null || true)"
+            # An unknown ref answers 404 with a JSON body on stdout rather than an
+            # empty string, so anything that is not a commit sha means the number
+            # is still free.
+            if ! printf '%s' "$claimed" | grep -Eq '^[0-9a-f]{40}$'; then
+              claimed=""
+            fi
+            if [ -n "$claimed" ] && [ "$claimed" != "$sha" ]; then
+              echo "::error::${tag} is already claimed by ${claimed}; another run took this number"
+              exit 1
+            fi
+            if [ -z "$claimed" ]; then
+              gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+                -f ref="refs/tags/${tag}" -f sha="$sha" > /dev/null
+            fi
+            echo "counter: ${tag} claimed on ${sha}"
+          done
 
       # What changed since the previous preview, so the phone shows the point of
       # the build rather than a bare version number.

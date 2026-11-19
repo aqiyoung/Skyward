@@ -784,3 +784,38 @@ Map<String, Object?> _withLegacyRouteMode(Map<String, Object?> json) {
       },
   };
 }
+
+/// Adds default cards a saved layout predates, keeping the reader's own order.
+({List<DashboardWidget> widgets, List<List<DashboardWidget>>? stacks})
+withDefaultDashboardCards(
+  List<DashboardWidget> saved,
+  List<List<DashboardWidget>>? savedStacks,
+) {
+  final present = saved.toSet();
+  final missing = [
+    for (final card in platformDefaultDashboardWidgets)
+      if (!present.contains(card)) card,
+  ];
+  if (missing.isEmpty) {
+    return (widgets: saved, stacks: savedStacks);
+  }
+  final widgets = [...saved, ...missing];
+  if (savedStacks == null) {
+    return (widgets: widgets, stacks: null);
+  }
+  final stacks = [
+    for (final pile in savedStacks) [...pile],
+  ];
+  for (final card in missing) {
+    final sameSize = stacks.firstWhere(
+      (pile) => pile.isNotEmpty && pile.first.size == card.size,
+      orElse: () => <DashboardWidget>[],
+    );
+    if (sameSize.isEmpty) {
+      stacks.add([card]);
+    } else {
+      sameSize.add(card);
+    }
+  }
+  return (widgets: widgets, stacks: stacks);
+}
