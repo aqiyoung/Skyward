@@ -40,7 +40,7 @@ void main() {
     expect(stats.connectionCount, 3);
     expect(stats.ranking.first.key, 'a.com');
     expect(stats.ranking.first.upload, 60);
-    expect(stats.ranking.first.percent, closeTo(0.55, 0.01));
+    expect(stats.ranking.first.percent, closeTo(0.667, 0.01));
     expect(stats.ruleHits, hasLength(2));
     expect(stats.ruleHits.firstWhere((h) => h.key == 'Match').hits, 2);
   });

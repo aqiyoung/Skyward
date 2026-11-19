@@ -547,7 +547,7 @@ enum DashboardWidget {
   profiles,
   proxyGroups,
   memoryInfo,
-  trafficUsage;
+  trafficStats;
 
   final List<SupportPlatform> platforms;
 
@@ -564,7 +564,7 @@ enum DashboardWidget {
     DashboardWidget.networkControl ||
     DashboardWidget.routingBoard ||
     DashboardWidget.proxyGroups ||
-    DashboardWidget.trafficUsage => DashboardCardSize.tall,
+    DashboardWidget.trafficStats => DashboardCardSize.tall,
     DashboardWidget.networkOverview ||
     DashboardWidget.profiles ||
     DashboardWidget.memoryInfo => DashboardCardSize.compact,

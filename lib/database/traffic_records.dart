@@ -38,21 +38,26 @@ class TrafficRecordsDao extends DatabaseAccessor<Database>
   TrafficRecordsDao(super.attachedDatabase);
 
   /// Upserts the latest totals of a connection, keeping its first-seen time.
-  Future<void> upsert(TrafficRecord record) =>
-      into(trafficRecords).insertOnConflictUpdate(
-        TrafficRecordsCompanion.insert(
-          connectionId: record.connectionId,
-          startedAt: record.startedAt,
-          endedAt: record.endedAt,
-          host: record.host,
-          rule: record.rule,
-          rulePayload: record.rulePayload,
-          node: record.node,
-          network: record.network,
-          upload: record.upload,
-          download: record.download,
-        ),
-      );
+  Future<void> upsert(TrafficRecord record) async {
+    final existing =
+        await (select(trafficRecords)
+              ..where((t) => t.connectionId.equals(record.connectionId)))
+            .getSingleOrNull();
+    await into(trafficRecords).insertOnConflictUpdate(
+      TrafficRecordsCompanion.insert(
+        connectionId: record.connectionId,
+        startedAt: existing?.startedAt ?? record.startedAt,
+        endedAt: record.endedAt,
+        host: record.host,
+        rule: record.rule,
+        rulePayload: record.rulePayload,
+        node: record.node,
+        network: record.network,
+        upload: record.upload,
+        download: record.download,
+      ),
+    );
+  }
 
   /// Rows whose lifetime overlaps [start]..[end].
   Future<List<TrafficRecord>> between(DateTime start, DateTime end) =>

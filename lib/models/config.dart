@@ -117,7 +117,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
-  DashboardWidget.trafficUsage,
+  DashboardWidget.trafficStats,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
@@ -138,7 +138,7 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.networkControl,
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
-        DashboardWidget.trafficUsage,
+        DashboardWidget.trafficStats,
       ]
     : defaultDashboardWidgets;
 
@@ -242,6 +242,7 @@ const _legacyDashboardWidgets = {
   'dnsQueries': DashboardWidget.networkOverview,
   'serviceStatus': DashboardWidget.networkOverview,
   'connectionStats': DashboardWidget.networkOverview,
+  'trafficUsage': DashboardWidget.currentOutbound,
   'networkSpeed': DashboardWidget.currentOutbound,
 };
 

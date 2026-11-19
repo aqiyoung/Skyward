@@ -13,7 +13,7 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => const ProfilesCard(),
     DashboardWidget.proxyGroups => const ProxyGroupsCard(),
     DashboardWidget.memoryInfo => const MemoryInfo(),
-    DashboardWidget.trafficUsage => const TrafficUsageCard(),
+    DashboardWidget.trafficStats => const TrafficUsageCard(),
   };
 
   Glyph get glyph => switch (this) {
@@ -24,7 +24,7 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => AppGlyphs.profiles,
     DashboardWidget.proxyGroups => AppGlyphs.layers,
     DashboardWidget.memoryInfo => AppGlyphs.memory,
-    DashboardWidget.trafficUsage => AppGlyphs.connections,
+    DashboardWidget.trafficStats => AppGlyphs.connections,
   };
 
   String label(BuildContext context) {
@@ -37,7 +37,7 @@ extension DashboardWidgetView on DashboardWidget {
       DashboardWidget.profiles => appLocalizations.profile,
       DashboardWidget.proxyGroups => appLocalizations.proxyGroup,
       DashboardWidget.memoryInfo => appLocalizations.memoryInfo,
-      DashboardWidget.trafficUsage => appLocalizations.trafficUsage,
+      DashboardWidget.trafficStats => appLocalizations.trafficUsage,
     };
   }
 
