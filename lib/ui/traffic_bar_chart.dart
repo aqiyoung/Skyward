@@ -15,12 +15,14 @@ class TrafficBarChart extends StatelessWidget {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.labelColor,
     this.height = 180,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+  final Color labelColor;
   final double height;
 
   @override
@@ -28,7 +30,9 @@ class TrafficBarChart extends StatelessWidget {
     if (points.isEmpty) {
       return SizedBox(
         height: height,
-        child: const Center(child: Text('暂无数据')),
+        child: Center(
+          child: Text('暂无数据', style: TextStyle(color: labelColor)),
+        ),
       );
     }
     return CustomPaint(
@@ -36,6 +40,7 @@ class TrafficBarChart extends StatelessWidget {
         points: points,
         downloadColor: downloadColor,
         uploadColor: uploadColor,
+        labelColor: labelColor,
       ),
       child: SizedBox(height: height, width: double.infinity),
     );
@@ -47,11 +52,13 @@ class _BarPainter extends CustomPainter {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.labelColor,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+  final Color labelColor;
 
   static const _left = 46.0;
   static const _bottom = 22.0;
@@ -81,7 +88,7 @@ class _BarPainter extends CustomPainter {
         canvas,
         _formatAxis(value),
         Offset(0, y - 6),
-        const TextStyle(fontSize: 10, color: Color(0x99000000)),
+        TextStyle(fontSize: 10, color: labelColor),
       );
     }
 
@@ -116,7 +123,7 @@ class _BarPainter extends CustomPainter {
           canvas,
           '${p.hour.hour}',
           Offset(cx - 8, _top + plotH + 5),
-          const TextStyle(fontSize: 10, color: Color(0x99000000)),
+          TextStyle(fontSize: 10, color: labelColor),
         );
       }
     }
@@ -150,5 +157,6 @@ class _BarPainter extends CustomPainter {
   bool shouldRepaint(_BarPainter old) =>
       old.points != points ||
       old.downloadColor != downloadColor ||
-      old.uploadColor != uploadColor;
+      old.uploadColor != uploadColor ||
+      old.labelColor != labelColor;
 }
