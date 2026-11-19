@@ -1134,4 +1134,559 @@ as List<TrafficHourPoint>,
 
 }
 
+/// @nodoc
+mixin _$AppTraffic {
+
+ String get packageName; String get label; int get upload; int get download; double get percent;
+/// Create a copy of AppTraffic
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AppTrafficCopyWith<AppTraffic> get copyWith => _$AppTrafficCopyWithImpl<AppTraffic>(this as AppTraffic, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as AppTraffic;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppTraffic&&(identical(other.packageName, _this.packageName) || other.packageName == _this.packageName)&&(identical(other.label, _this.label) || other.label == _this.label)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.download, _this.download) || other.download == _this.download)&&(identical(other.percent, _this.percent) || other.percent == _this.percent));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as AppTraffic;
+  return Object.hash(runtimeType,_this.packageName,_this.label,_this.upload,_this.download,_this.percent);
+}
+
+@override
+String toString() {
+  final _this = this as AppTraffic;
+  return 'AppTraffic(packageName: ${_this.packageName}, label: ${_this.label}, upload: ${_this.upload}, download: ${_this.download}, percent: ${_this.percent})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AppTrafficCopyWith<$Res>  {
+  factory $AppTrafficCopyWith(AppTraffic value, $Res Function(AppTraffic) _then) = _$AppTrafficCopyWithImpl;
+@useResult
+$Res call({
+ String packageName, String label, int upload, int download, double percent
+});
+
+
+
+
+}
+/// @nodoc
+class _$AppTrafficCopyWithImpl<$Res>
+    implements $AppTrafficCopyWith<$Res> {
+  _$AppTrafficCopyWithImpl(this._self, this._then);
+
+  final AppTraffic _self;
+  final $Res Function(AppTraffic) _then;
+
+/// Create a copy of AppTraffic
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? packageName = null,Object? label = null,Object? upload = null,Object? download = null,Object? percent = null,}) {
+  return _then(AppTraffic(
+packageName: null == packageName ? _self.packageName : packageName // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
+as int,download: null == download ? _self.download : download // ignore: cast_nullable_to_non_nullable
+as int,percent: null == percent ? _self.percent : percent // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AppTraffic].
+extension AppTrafficPatterns on AppTraffic {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AppTraffic value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AppTraffic() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AppTraffic value)  $default,){
+final _that = this;
+switch (_that) {
+case _AppTraffic():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AppTraffic value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AppTraffic() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String packageName,  String label,  int upload,  int download,  double percent)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AppTraffic() when $default != null:
+return $default(_that.packageName,_that.label,_that.upload,_that.download,_that.percent);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String packageName,  String label,  int upload,  int download,  double percent)  $default,) {final _that = this;
+switch (_that) {
+case _AppTraffic():
+return $default(_that.packageName,_that.label,_that.upload,_that.download,_that.percent);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String packageName,  String label,  int upload,  int download,  double percent)?  $default,) {final _that = this;
+switch (_that) {
+case _AppTraffic() when $default != null:
+return $default(_that.packageName,_that.label,_that.upload,_that.download,_that.percent);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _AppTraffic implements AppTraffic {
+  const _AppTraffic({required this.packageName, required this.label, required this.upload, required this.download, required this.percent});
+  
+
+@override final  String packageName;
+@override final  String label;
+@override final  int upload;
+@override final  int download;
+@override final  double percent;
+
+/// Create a copy of AppTraffic
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AppTrafficCopyWith<_AppTraffic> get copyWith => __$AppTrafficCopyWithImpl<_AppTraffic>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppTraffic&&(identical(other.packageName, packageName) || other.packageName == packageName)&&(identical(other.label, label) || other.label == label)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.percent, percent) || other.percent == percent));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,packageName,label,upload,download,percent);
+}
+
+@override
+String toString() {
+    return 'AppTraffic(packageName: $packageName, label: $label, upload: $upload, download: $download, percent: $percent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AppTrafficCopyWith<$Res> implements $AppTrafficCopyWith<$Res> {
+  factory _$AppTrafficCopyWith(_AppTraffic value, $Res Function(_AppTraffic) _then) = __$AppTrafficCopyWithImpl;
+@override @useResult
+$Res call({
+ String packageName, String label, int upload, int download, double percent
+});
+
+
+
+
+}
+/// @nodoc
+class __$AppTrafficCopyWithImpl<$Res>
+    implements _$AppTrafficCopyWith<$Res> {
+  __$AppTrafficCopyWithImpl(this._self, this._then);
+
+  final _AppTraffic _self;
+  final $Res Function(_AppTraffic) _then;
+
+/// Create a copy of AppTraffic
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? packageName = null,Object? label = null,Object? upload = null,Object? download = null,Object? percent = null,}) {
+  return _then(_AppTraffic(
+packageName: null == packageName ? _self.packageName : packageName // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
+as int,download: null == download ? _self.download : download // ignore: cast_nullable_to_non_nullable
+as int,percent: null == percent ? _self.percent : percent // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$AppUsage {
+
+ int get totalUpload; int get totalDownload; int get appCount; List<AppTraffic> get apps;
+/// Create a copy of AppUsage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AppUsageCopyWith<AppUsage> get copyWith => _$AppUsageCopyWithImpl<AppUsage>(this as AppUsage, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as AppUsage;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppUsage&&(identical(other.totalUpload, _this.totalUpload) || other.totalUpload == _this.totalUpload)&&(identical(other.totalDownload, _this.totalDownload) || other.totalDownload == _this.totalDownload)&&(identical(other.appCount, _this.appCount) || other.appCount == _this.appCount)&&const DeepCollectionEquality().equals(other.apps, _this.apps));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as AppUsage;
+  return Object.hash(runtimeType,_this.totalUpload,_this.totalDownload,_this.appCount,const DeepCollectionEquality().hash(_this.apps));
+}
+
+@override
+String toString() {
+  final _this = this as AppUsage;
+  return 'AppUsage(totalUpload: ${_this.totalUpload}, totalDownload: ${_this.totalDownload}, appCount: ${_this.appCount}, apps: ${_this.apps})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AppUsageCopyWith<$Res>  {
+  factory $AppUsageCopyWith(AppUsage value, $Res Function(AppUsage) _then) = _$AppUsageCopyWithImpl;
+@useResult
+$Res call({
+ int totalUpload, int totalDownload, int appCount, List<AppTraffic> apps
+});
+
+
+
+
+}
+/// @nodoc
+class _$AppUsageCopyWithImpl<$Res>
+    implements $AppUsageCopyWith<$Res> {
+  _$AppUsageCopyWithImpl(this._self, this._then);
+
+  final AppUsage _self;
+  final $Res Function(AppUsage) _then;
+
+/// Create a copy of AppUsage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? appCount = null,Object? apps = null,}) {
+  return _then(AppUsage(
+totalUpload: null == totalUpload ? _self.totalUpload : totalUpload // ignore: cast_nullable_to_non_nullable
+as int,totalDownload: null == totalDownload ? _self.totalDownload : totalDownload // ignore: cast_nullable_to_non_nullable
+as int,appCount: null == appCount ? _self.appCount : appCount // ignore: cast_nullable_to_non_nullable
+as int,apps: null == apps ? _self.apps : apps // ignore: cast_nullable_to_non_nullable
+as List<AppTraffic>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AppUsage].
+extension AppUsagePatterns on AppUsage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AppUsage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AppUsage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AppUsage value)  $default,){
+final _that = this;
+switch (_that) {
+case _AppUsage():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AppUsage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AppUsage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int appCount,  List<AppTraffic> apps)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AppUsage() when $default != null:
+return $default(_that.totalUpload,_that.totalDownload,_that.appCount,_that.apps);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int appCount,  List<AppTraffic> apps)  $default,) {final _that = this;
+switch (_that) {
+case _AppUsage():
+return $default(_that.totalUpload,_that.totalDownload,_that.appCount,_that.apps);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalUpload,  int totalDownload,  int appCount,  List<AppTraffic> apps)?  $default,) {final _that = this;
+switch (_that) {
+case _AppUsage() when $default != null:
+return $default(_that.totalUpload,_that.totalDownload,_that.appCount,_that.apps);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _AppUsage implements AppUsage {
+  const _AppUsage({required this.totalUpload, required this.totalDownload, required this.appCount, required  List<AppTraffic> apps}): _apps = apps;
+  
+
+@override final  int totalUpload;
+@override final  int totalDownload;
+@override final  int appCount;
+ final  List<AppTraffic> _apps;
+@override List<AppTraffic> get apps {
+  if (_apps is EqualUnmodifiableListView) return _apps;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_apps);
+}
+
+
+/// Create a copy of AppUsage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AppUsageCopyWith<_AppUsage> get copyWith => __$AppUsageCopyWithImpl<_AppUsage>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppUsage&&(identical(other.totalUpload, totalUpload) || other.totalUpload == totalUpload)&&(identical(other.totalDownload, totalDownload) || other.totalDownload == totalDownload)&&(identical(other.appCount, appCount) || other.appCount == appCount)&&const DeepCollectionEquality().equals(other.apps, _apps));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,totalUpload,totalDownload,appCount,const DeepCollectionEquality().hash(_apps));
+}
+
+@override
+String toString() {
+    return 'AppUsage(totalUpload: $totalUpload, totalDownload: $totalDownload, appCount: $appCount, apps: $apps)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AppUsageCopyWith<$Res> implements $AppUsageCopyWith<$Res> {
+  factory _$AppUsageCopyWith(_AppUsage value, $Res Function(_AppUsage) _then) = __$AppUsageCopyWithImpl;
+@override @useResult
+$Res call({
+ int totalUpload, int totalDownload, int appCount, List<AppTraffic> apps
+});
+
+
+
+
+}
+/// @nodoc
+class __$AppUsageCopyWithImpl<$Res>
+    implements _$AppUsageCopyWith<$Res> {
+  __$AppUsageCopyWithImpl(this._self, this._then);
+
+  final _AppUsage _self;
+  final $Res Function(_AppUsage) _then;
+
+/// Create a copy of AppUsage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? appCount = null,Object? apps = null,}) {
+  return _then(_AppUsage(
+totalUpload: null == totalUpload ? _self.totalUpload : totalUpload // ignore: cast_nullable_to_non_nullable
+as int,totalDownload: null == totalDownload ? _self.totalDownload : totalDownload // ignore: cast_nullable_to_non_nullable
+as int,appCount: null == appCount ? _self.appCount : appCount // ignore: cast_nullable_to_non_nullable
+as int,apps: null == apps ? _self._apps : apps // ignore: cast_nullable_to_non_nullable
+as List<AppTraffic>,
+  ));
+}
+
+
+}
+
 // dart format on

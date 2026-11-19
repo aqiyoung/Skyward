@@ -49,3 +49,28 @@ abstract class TrafficStatistics with _$TrafficStatistics {
     required List<TrafficHourPoint> trend,
   }) = _TrafficStatistics;
 }
+
+/// One app's traffic in the usage sheet. [packageName] is the raw process
+/// name used for the icon; [label] is filled from the installed-app list when
+/// available, otherwise it falls back to the package name.
+@freezed
+abstract class AppTraffic with _$AppTraffic {
+  const factory AppTraffic({
+    required String packageName,
+    required String label,
+    required int upload,
+    required int download,
+    required double percent,
+  }) = _AppTraffic;
+}
+
+/// The per-app totals for one usage period.
+@freezed
+abstract class AppUsage with _$AppUsage {
+  const factory AppUsage({
+    required int totalUpload,
+    required int totalDownload,
+    required int appCount,
+    required List<AppTraffic> apps,
+  }) = _AppUsage;
+}

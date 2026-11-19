@@ -65,7 +65,6 @@
   "textSection": "Texte",
   "configuration": "Configuration",
   "data": "Data",
-
   "extend": "Extension",
   "runtimeConfig": "Configuration d’exécution",
   "allowLan": "Autoriser l'accès LAN",
@@ -1090,5 +1089,10 @@
   "webrtcLeakAdvice": "En mode « Bloquer », l’absence d’adresse réfléchie est normale. Pour tester une fuite réelle, passez temporairement WebRTC sur « Laisser passer » dans « Avancé → Réseau », vérifiez, puis rétablissez le réglage.",
   "webrtcLeakExternal": "Vérifier WebRTC dans un navigateur",
   "hapticFeedback": "Retour haptique",
-  "hapticFeedbackDesc": "Légère vibration lors des appuis dans l'application."
+  "hapticFeedbackDesc": "Légère vibration lors des appuis dans l'application.",
+  "usageStats": "Statistiques d’utilisation",
+  "usageDetails": "Détails d’utilisation",
+  "last7Days": "7 derniers jours",
+  "thisMonth": "Ce mois-ci",
+  "today": "Aujourd’hui"
 }

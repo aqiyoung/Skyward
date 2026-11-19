@@ -141,7 +141,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'fd2615333226f3f180b1e25c98136adb752b8a9c';
+String _$trafficSamplerHash() => r'dee23f8e8589ec7d54edb1370e61cc78568ecc4f';
 
 /// Periodically persists the live connection list so the statistics page has
 /// history. Runs only while the core is connected and the app is visible.
@@ -310,4 +310,83 @@ final class TrafficStatisticsFamily extends $Family
 
   @override
   String toString() => r'trafficStatisticsProvider';
+}
+
+/// Per-app traffic for one usage period, with installed-app labels resolved.
+
+@ProviderFor(appUsage)
+final appUsageProvider = AppUsageFamily._();
+
+/// Per-app traffic for one usage period, with installed-app labels resolved.
+
+final class AppUsageProvider
+    extends
+        $FunctionalProvider<AsyncValue<AppUsage>, AppUsage, FutureOr<AppUsage>>
+    with $FutureModifier<AppUsage>, $FutureProvider<AppUsage> {
+  /// Per-app traffic for one usage period, with installed-app labels resolved.
+  AppUsageProvider._({
+    required AppUsageFamily super.from,
+    required AppUsagePeriod super.argument,
+  }) : super(
+         retry: null,
+         name: r'appUsageProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$appUsageHash();
+
+  @override
+  String toString() {
+    return r'appUsageProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<AppUsage> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AppUsage> create(Ref ref) {
+    final argument = this.argument as AppUsagePeriod;
+    return appUsage(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AppUsageProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$appUsageHash() => r'5447bbeb17fcbb0839cb59356de2fadae9693096';
+
+/// Per-app traffic for one usage period, with installed-app labels resolved.
+
+final class AppUsageFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<AppUsage>, AppUsagePeriod> {
+  AppUsageFamily._()
+    : super(
+        retry: null,
+        name: r'appUsageProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// Per-app traffic for one usage period, with installed-app labels resolved.
+
+  AppUsageProvider call(AppUsagePeriod period) =>
+      AppUsageProvider._(argument: period, from: this);
+
+  @override
+  String toString() => r'appUsageProvider';
 }

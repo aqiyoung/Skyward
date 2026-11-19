@@ -65,7 +65,6 @@
   "textSection": "Text",
   "configuration": "Configuration",
   "data": "Data",
-
   "extend": "Extend",
   "runtimeConfig": "Runtime config",
   "allowLan": "Allow LAN",
@@ -1090,5 +1089,10 @@
   "webrtcLeakAdvice": "With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.",
   "webrtcLeakExternal": "Verify WebRTC in a browser",
   "hapticFeedback": "Haptic feedback",
-  "hapticFeedbackDesc": "A light vibration on taps across the app."
+  "hapticFeedbackDesc": "A light vibration on taps across the app.",
+  "usageStats": "Usage stats",
+  "usageDetails": "Usage details",
+  "last7Days": "Last 7 days",
+  "thisMonth": "This month",
+  "today": "Today"
 }

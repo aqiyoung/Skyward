@@ -103,6 +103,14 @@ class TrafficSampler extends _$TrafficSampler {
               proxied: proxied,
             ),
           );
+          await _safeWrite(
+            database.appTrafficHourlyDao.add(
+              hour: hour,
+              process: r.metadata.process,
+              download: downDelta,
+              upload: upDelta,
+            ),
+          );
         }
       }
       trafficLastBytes[r.id] = (up: r.upload, down: r.download);
@@ -111,6 +119,7 @@ class TrafficSampler extends _$TrafficSampler {
     await _safeWrite(() async {
       await database.trafficRecordsDao.pruneBefore(cutoff);
       await database.trafficHourlyDao.pruneBefore(cutoff);
+      await database.appTrafficHourlyDao.pruneBefore(cutoff);
     }());
   }
 
@@ -185,5 +194,50 @@ Future<TrafficStatistics> trafficStatistics(
         ),
     ],
     kind.index,
+  );
+}
+
+/// The inclusive range an app-usage period covers. "近7天" is a rolling window
+/// (unlike TrafficPeriod.week which is anchored to the selected date).
+({DateTime start, DateTime end}) appUsageRange(AppUsagePeriod period) {
+  final now = DateTime.now();
+  final tomorrow = DateTime(now.year, now.month, now.day + 1);
+  return switch (period) {
+    AppUsagePeriod.today => (
+      start: DateTime(now.year, now.month, now.day),
+      end: tomorrow,
+    ),
+    AppUsagePeriod.last7Days => (
+      start: DateTime(now.year, now.month, now.day - 6),
+      end: tomorrow,
+    ),
+    AppUsagePeriod.thisMonth => (
+      start: DateTime(now.year, now.month, 1),
+      end: DateTime(now.year, now.month + 1, 1),
+    ),
+    // History is retained for a bounded window; this covers all of it.
+    AppUsagePeriod.total => (start: DateTime(2000), end: tomorrow),
+  };
+}
+
+/// Per-app traffic for one usage period, with installed-app labels resolved.
+@Riverpod(keepAlive: true)
+Future<AppUsage> appUsage(Ref ref, AppUsagePeriod period) async {
+  ref.watch(trafficSamplerProvider);
+  final range = appUsageRange(period);
+  final buckets = await database.appTrafficHourlyDao.between(
+    range.start,
+    range.end,
+  );
+  final labels = {
+    for (final p in ref.read(packagesProvider)) p.packageName: p.label,
+  };
+  return aggregateAppUsageTask(
+    [
+      for (final b in buckets)
+        (process: b.process, direction: b.direction, bytes: b.bytes),
+    ],
+    labels,
+    currentAppLocalizations.unknown,
   );
 }

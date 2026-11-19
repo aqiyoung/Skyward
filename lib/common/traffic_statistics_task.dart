@@ -157,3 +157,68 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
     trend: trend,
   );
 }
+
+/// One per-app hourly bucket, plain for the isolate.
+typedef AppHourSample = ({
+  String process,
+  int direction,
+  int bytes,
+});
+
+/// Aggregates per-app hourly deltas into sorted app traffic. [labels] maps a
+/// package name to its installed-app label; unknown packages fall back to the
+/// package name. Built off-isolate so the map stays plain and sendable.
+Future<AppUsage> aggregateAppUsageTask(
+  List<AppHourSample> buckets,
+  Map<String, String> labels,
+  String unknownLabel,
+) => compute<_AppUsageArgs, AppUsage>(
+  _aggregateAppUsage,
+  _AppUsageArgs(buckets, labels, unknownLabel),
+);
+
+class _AppUsageArgs {
+  const _AppUsageArgs(this.buckets, this.labels, this.unknownLabel);
+
+  final List<AppHourSample> buckets;
+  final Map<String, String> labels;
+  final String unknownLabel;
+}
+
+AppUsage _aggregateAppUsage(_AppUsageArgs args) {
+  final byApp = <String, ({int up, int down})>{};
+  var totalUp = 0;
+  var totalDown = 0;
+  for (final b in args.buckets) {
+    if (b.direction == 1) {
+      totalUp += b.bytes;
+    } else {
+      totalDown += b.bytes;
+    }
+    final entry = byApp[b.process] ?? (up: 0, down: 0);
+    byApp[b.process] = b.direction == 1
+        ? (up: entry.up + b.bytes, down: entry.down)
+        : (up: entry.up, down: entry.down + b.bytes);
+  }
+  final total = totalUp + totalDown;
+  final apps = byApp.entries
+      .map(
+        (e) => AppTraffic(
+          packageName: e.key,
+          label: e.key.isEmpty
+              ? args.unknownLabel
+              : args.labels[e.key] ?? e.key,
+          upload: e.value.up,
+          download: e.value.down,
+          percent: total == 0 ? 0 : (e.value.up + e.value.down) / total,
+        ),
+      )
+      .toList()
+    ..sort((a, b) => (b.upload + b.download).compareTo(a.upload + a.download));
+  return AppUsage(
+    totalUpload: totalUp,
+    totalDownload: totalDown,
+    appCount: apps.length,
+    apps: apps,
+  );
+}
