@@ -58,6 +58,34 @@ void main() {
     ]);
   });
 
+  test('dashboard state uses saved piles or groups cards by size', () {
+    const cards = [
+      DashboardWidget.currentOutbound,
+      DashboardWidget.networkControl,
+      DashboardWidget.proxyGroups,
+      DashboardWidget.memoryInfo,
+    ];
+    const saved = [
+      [DashboardWidget.currentOutbound],
+      [DashboardWidget.memoryInfo, DashboardWidget.networkControl],
+      [DashboardWidget.proxyGroups],
+    ];
+    const automatic = DashboardState(dashboardWidgets: cards);
+    const custom = DashboardState(
+      dashboardWidgets: cards,
+      dashboardStacks: saved,
+    );
+    expect(
+      automatic.stacks,
+      const [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
+        [DashboardWidget.memoryInfo],
+      ],
+    );
+    expect(custom.stacks, saved);
+  });
+
   test('the window picks the density', () {
     DashboardDensity of(double width, double height) =>
         DashboardDensity.of(Size(width, height));

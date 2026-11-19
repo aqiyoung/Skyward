@@ -5,8 +5,9 @@ name: build
 # two so a failing test blocks the release while a single failing platform
 # still publishes the rest.
 #
-# ci.yaml is the only caller: it leaves `platforms` at its default, so every
-# channel builds every platform.
+# Two callers pass the platform set: ci.yaml asks for `all`, ci-android.yaml
+# asks for `android` only -- the phone builds stay on the fast channel while the
+# desktop ones are paused.
 #
 # The signing keystore is injected from repository secrets; without it
 # upstream's Gradle falls back to the debug key and appends a `.dev` suffix, so
@@ -45,11 +46,6 @@ on:
         required: false
         type: string
         default: all
-      android_abi:
-        description: Build one APK for this ABI instead of one per ABI; empty keeps the split
-        required: false
-        type: string
-        default: ''
 
 env:
   FLUTTER_VERSION: '3.47.6'
@@ -159,11 +155,7 @@ jobs:
             exit 1
           fi
           echo "upstream had: $(grep '^version:' pubspec.yaml)"
-          # The version carries the channel as a suffix (`1.0.1.6-beta`); the
-          # pubspec takes only the three components, which are the same for
-          # every channel.
-          stem="${VERSION%%-*}"
-          base="${stem%.*}"
+          base="${VERSION%.*}"
           if ! printf '%s' "$base" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::expected a four-component version, got '$VERSION'"
             exit 1
@@ -323,22 +315,29 @@ jobs:
           curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
           echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
 
-      - name: Build
+      # A release ships one arm64 APK, the same shape as the preview channel:
+      # `--arch arm64` keeps Flutter from adding `--split-per-abi`, which would
+      # collide with the app module's `ndk.abiFilters` in AGP. Keep both
+      # commands single-line: the Build step has no `shell:` override, so
+      # Windows runs it under PowerShell and bash syntax there is a parse error.
+      - name: Build (Android)
+        if: matrix.platform == 'android'
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           # The version the app reports in-app and Android's versionName carries.
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
-          # What Android orders installs by. The version above no longer holds
-          # it, so the app reads it back to tell whether a release is newer than
-          # the build on the phone.
           APP_BUILD_NUMBER: ${{ inputs.build_number }}
-          # The channel the home corner wears (`Beta`). A release leaves this
-          # empty: it is the app, and the badge is only for a build being tried.
-          APP_CHANNEL_NAME: ${{ inputs.channel == 'beta' && 'beta' || '' }}
-        # `android_abi` narrows Android to a single architecture, which also
-        # stops setup.dart from splitting: one APK, not one per ABI.
-        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} ${{ inputs.android_abi != '' && format('--arch {0}', inputs.android_abi) || '' }} -v
+        run: dart setup.dart android --env ${{ inputs.env }} --arch arm64 -v
+
+      - name: Build
+        if: matrix.platform != 'android'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          # The version the app reports in-app and Android's versionName carries.
+          # Harmless for the other platforms, which take the pubspec's three.
+          APP_VERSION_NAME: ${{ inputs.version }}
+        run: dart setup.dart ${{ matrix.platform }} --env ${{ inputs.env }} -v
 
       # The packaging tools name their output after the pubspec version, which
       # has to stay at upstream's three components -- pub refuses a four-part
@@ -351,11 +350,7 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          # The suffix comes off first: the packaging names files after the
-          # three components, and only the last component of the version is
-          # dropped to find them.
-          stem="${VERSION%%-*}"
-          base="${stem%.*}"
+          base="${VERSION%.*}"
           shopt -s nullglob
           renamed=0
           for file in dist/*; do
@@ -380,37 +375,16 @@ jobs:
               FlClash-*) mv "$file" "dist/Skyward-${name#FlClash-}" ;;
             esac
           done
-          echo "renamed ${renamed} artifact(s) to ${VERSION}:"
-          ls -l dist
-
-      # A single-ABI build does not carry its ABI in the name -- Flutter only
-      # appends the `-arm64-v8a` part when it splits. Both the in-app updater
-      # (it picks the asset whose name holds the device's own ABI) and the
-      # release announcement (`dist/*android-arm64*.apk`) match on that part,
-      # so a nameless APK would quietly degrade to a link-only message. Give
-      # the lone APK the same name a split build gives that ABI.
-      - name: Name the single APK after its ABI
-        if: matrix.platform == 'android' && inputs.android_abi != ''
-        shell: bash
-        env:
-          VERSION: ${{ inputs.version }}
-          ABI: ${{ inputs.android_abi }}
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          apks=(dist/*.apk)
-          if [ "${#apks[@]}" -ne 1 ]; then
-            echo "::error::a single-ABI build must leave exactly one APK, found ${#apks[@]}"
-            printf '%s\n' "${apks[@]}"
-            exit 1
+          # A single-ABI build is packaged as `...-android.apk`. Give it the
+          # same name the preview does, so publish-release.yaml's
+          # `dist/*android-arm64*.apk` finds it and Telegram receives the APK
+          # itself instead of a links-only message.
+          if [ "${{ matrix.platform }}" = "android" ]; then
+            for file in dist/*-android.apk; do
+              mv "$file" "${file%-android.apk}-android-arm64-v8a.apk"
+            done
           fi
-          case "$ABI" in
-            arm64) suffix=arm64-v8a ;;
-            arm) suffix=armeabi-v7a ;;
-            amd64) suffix=x86_64 ;;
-            *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
-          esac
-          mv "${apks[0]}" "dist/Skyward-${VERSION}-android-${suffix}.apk"
+          echo "renamed ${renamed} artifact(s) to ${VERSION}:"
           ls -l dist
 
       # Guards the whole point of this repository. Any certificate other than
@@ -422,6 +396,7 @@ jobs:
         if: matrix.platform == 'android'
         env:
           VERSION: ${{ inputs.version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
           # This fork ships under its own id, not upstream's com.follow.clash --
           # and a merge that quietly restored upstream's while keeping our
           # signature would still build and still upload.
@@ -430,9 +405,6 @@ jobs:
           # separators. Rotating the keystore means updating this line, which is
           # the point: a swap cannot happen without saying so here.
           CERT_SHA256: 65379ed725abfd2330bc2134aaa276ba59a50d5e606f443818003f362c593570
-          # Empty for a split build, which has one APK per ABI by construction.
-          ABI: ${{ inputs.android_abi }}
-          BASE_NUMBER: ${{ inputs.build_number }}
         run: |
           set -euo pipefail
           build_tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
@@ -446,6 +418,12 @@ jobs:
             certs="$("$build_tools/apksigner" verify --print-certs "$apk" | tr -d ':')"
             sed -n '1p' <<<"$badging"
             sed -n '1,4p' <<<"$certs"
+            version_code="$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$badging" | head -1)"
+            expected_code=$(( BUILD_NUMBER + 2000 ))
+            if [ "$version_code" != "$expected_code" ]; then
+              echo "::error::expected arm64 versionCode ${expected_code}, got ${version_code}"
+              exit 1
+            fi
             # The exact id, not merely "no .dev suffix": this also catches a
             # merge that restored upstream's package name without saying so.
             if ! grep -q "package: name='${APPLICATION_ID}'" <<<"$badging"; then
@@ -466,35 +444,6 @@ jobs:
             if ! grep -q "versionName='${VERSION}'" <<<"$badging"; then
               echo "::error::$(basename "$apk") does not carry ${VERSION} as its versionName"
               exit 1
-            fi
-            # A package named after one architecture has to hold one
-            # architecture. The engine follows --target-platform, but the core
-            # ships a library per ABI and the packaging packs every one it is
-            # given -- so without the filter this is a 68 MB file of which two
-            # thirds can never load.
-            if [ -n "${ABI}" ]; then
-              case "$ABI" in
-                arm64) want=arm64-v8a; block=2000 ;;
-                arm) want=armeabi-v7a; block=1000 ;;
-                amd64) want=x86_64; block=4000 ;;
-                *) echo "::error::unknown ABI '${ABI}'"; exit 1 ;;
-              esac
-              # The architecture's thousand-block has to be in the number, not
-              # only in the file name. Android compares versionCode alone, and a
-              # single-ABI package that skipped the block came out 2000 below
-              # the one already on the phone -- refused as a downgrade while its
-              # versionName read newer.
-              version_code="$(sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" <<<"$badging" | head -1)"
-              expected_code=$(( BASE_NUMBER + block ))
-              if [ "$version_code" != "$expected_code" ]; then
-                echo "::error::$(basename "$apk") carries versionCode ${version_code}, expected ${expected_code} (base ${BASE_NUMBER} plus the ${want} block)"
-                exit 1
-              fi
-              carried="$(unzip -l "$apk" | grep -oE 'lib/[^/]+/' | cut -d/ -f2 | sort -u)"
-              if [ "$carried" != "$want" ]; then
-                echo "::error::$(basename "$apk") carries [$(printf '%s ' $carried)] but was built for ${want}"
-                exit 1
-              fi
             fi
           done
 

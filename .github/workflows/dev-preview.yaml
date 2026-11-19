@@ -159,6 +159,10 @@ jobs:
           highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
             | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
           stamp=$(( 10#${highest_stamp:-0} + 1 ))
+          if [ "$stamp" -ge 80 ]; then
+            echo "::error::dev build numbers for today are exhausted"
+            exit 1
+          fi
           build_number=$(( day_prefix * 100 + stamp ))
           # Component 2 is the channel code; a dev build is DEV tier (0). The
           # pubspec below keeps upstream's three components for versionCode.

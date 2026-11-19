@@ -300,6 +300,19 @@ void main() {
       expect(restored.dashboardWidgets, DashboardWidget.values);
     });
 
+    test('dashboard piles survive round-trip', () {
+      const stacks = [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
+      ];
+      const props = AppSettingProps(
+        dashboardWidgets: DashboardWidget.values,
+        dashboardStacks: stacks,
+      );
+      final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
+      expect(restored.dashboardStacks, stacks);
+    });
+
     test('custom values survive round-trip', () {
       const props = AppSettingProps(
         locale: 'zh_CN',
