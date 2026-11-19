@@ -204,11 +204,11 @@ jobs:
 
           # Two numbers per release.
           #
-          # The one users see is our own three-component base -- taken from this
-          # repository's pubspec.yaml, not from any upstream -- plus a fourth of
-          # our own, counting the releases of the line it belongs to: a new version
-          # line starts at .0, and a promoted beta takes a fresh number so that
-          # beta users are offered the stable build as well. The app carries it
+          # The one users see is four components of our own: the major and
+          # patch of this repository's pubspec base -- not from any upstream --
+          # with the channel code as the second component (1 beta, 2 stable)
+          # and a fourth counting the releases of the line it belongs to:
+          # 1.1.1.8 is a beta on the 1.x.1 line. The app carries it
           # as APP_VERSION (see the build workflow), and the release tag is
           # exactly it -- so the update check, which compares the latest tag
           # against that version, compares like with like.
@@ -275,22 +275,31 @@ jobs:
             br=$(branch_of "$ch")
             git rev-parse --verify --quiet "refs/heads/$br" >/dev/null || continue
             base_version=$(git show "$br:pubspec.yaml" | sed -n 's/^version: *\([^+]*\).*/\1/p' | tr -d '\r')
-            # The fourth component counts the releases of this line, so a new
-            # line starts at .0 instead of inheriting the last line's count.
-            # Past the highest tag of the line, so a tag that went missing never
-            # hands the same number out twice.
-            highest_revision=$(git tag --list "v${base_version}.*" \
-              | sed -n "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
+            # A line is told apart by the base's major and patch alone, so the
+            # revision scan reads every tag the line carries: the ones this
+            # scheme writes (v<major>.<code>.<patch>.<revision>) and the legacy
+            # ones written before it (v<base>.<revision>, beta's with a -beta
+            # suffix). Past the highest tag of the line, so a tag that went
+            # missing never hands the same number out twice.
+            major_version="${base_version%%.*}"
+            patch_version="${base_version##*.}"
+            highest_revision=$(git tag --list "v${major_version}.*" \
+              | sed -n -e "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
+                -e "s/^v${major_version}\.[0-9]\.${patch_version}\.\([0-9][0-9]*\)$/\1/p" \
               | sort -n | tail -1)
             if [[ -n "$highest_revision" ]]; then
               revision=$(( 10#${highest_revision} + 1 ))
             else
               revision=0
             fi
-            while [[ " $taken " == *" ${base_version}.${revision} "* ]]; do
+            channel_code=2
+            [ "$ch" = beta ] && channel_code=1
+            version="$major_version.$channel_code.$patch_version.$revision"
+            while [[ " $taken " == *" $version "* ]]; do
               revision=$(( revision + 1 ))
+              version="$major_version.$channel_code.$patch_version.$revision"
             done
-            taken="$taken ${base_version}.${revision}"
+            taken="$taken $version"
             if [ "$ch" = beta ] && [ "$stamp" -lt 80 ]; then
               stamp=80
             elif [ "$ch" = stable ] && [ "$stamp" -lt 90 ]; then
@@ -307,14 +316,12 @@ jobs:
             if [ -n "${last_code:-}" ] && [ "$code" -le "$last_code" ]; then
               code=$(( last_code + 1 ))
             fi
-            # The channel rides as a suffix, never as digits. A promoted beta
-            # takes the next revision of the line so beta users are offered
-            # the stable build too.
-            suffix=""
-            [ "$ch" = beta ] && suffix="-beta"
-            echo "version_$ch=${base_version}.${revision}${suffix}" >> "$GITHUB_OUTPUT"
+            # The channel rides in the version's second component, never as a
+            # suffix: the higher code wins the update check on its own, so a
+            # promoted beta is offered to beta users without a revision bump.
+            echo "version_$ch=$version" >> "$GITHUB_OUTPUT"
             echo "build_number_$ch=${code}" >> "$GITHUB_OUTPUT"
-            echo "$ch ($br): next version ${base_version}.${revision}${suffix}, build number ${code}"
+            echo "$ch ($br): next version $version, build number ${code}"
             stamp=$(( code - day_prefix * 100 + 1 ))
           done
 
