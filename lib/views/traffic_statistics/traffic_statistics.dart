@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
@@ -8,8 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
-/// rule-hit rings, a traffic ranking and running time. Opened from the
-/// dashboard's traffic card.
+/// rule-hit distribution, a traffic ranking and running time. Opened from
+/// the dashboard's traffic card.
+///
+/// Layout: one grouped card per section with hairline-separated compact
+/// rows, instead of a floating card per row. Ranking bars are scaled
+/// relative to the top entry so small shares stay visible; the share of
+/// the total is kept as a caption.
 class TrafficStatisticsView extends ConsumerStatefulWidget {
   const TrafficStatisticsView({super.key});
 
@@ -39,14 +46,6 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
           glyph: AppGlyphs.refresh,
           tooltip: '刷新',
           onPressed: _refresh,
-        ),
-        IconButtonData(
-          glyph: AppGlyphs.filter,
-          tooltip: '排行维度',
-          onPressed: () => setState(() {
-            _kind = TrafficRankKind
-                .values[(_kind.index + 1) % TrafficRankKind.values.length];
-          }),
         ),
       ],
       body: SafeArea(
@@ -113,6 +112,26 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
   }
 }
 
+/// Adaptive percent text: whole numbers once the share is big enough for
+/// them to be meaningful, one decimal below that.
+String _pct(double p) {
+  final v = p * 100;
+  return v >= 9.95 ? '${v.round()}%' : '${v.toStringAsFixed(1)}%';
+}
+
+class _Hairline extends StatelessWidget {
+  const _Hairline({required this.color, this.inset = 16});
+
+  final Color color;
+  final double inset;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(left: inset),
+    child: Container(height: 1, color: color),
+  );
+}
+
 class _DateStrip extends ConsumerWidget {
   const _DateStrip({required this.period, required this.range});
 
@@ -167,12 +186,11 @@ class _OverviewCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = context.colorScheme;
-    final proxyPct = (data.proxyBytes + data.directBytes) == 0
-        ? 0.0
-        : data.proxyBytes / (data.proxyBytes + data.directBytes);
+    final splitTotal = data.proxyBytes + data.directBytes;
+    final proxyPct = splitTotal == 0 ? 0.0 : data.proxyBytes / splitTotal;
     final runMs = ref.watch(runTimeProvider);
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: ShapeDecoration(
         color: cs.surfaceContainerLowest,
         shape: AppShape.all(20),
@@ -181,72 +199,82 @@ class _OverviewCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        GlyphIcon(
-                          AppGlyphs.connections,
-                          size: 16,
-                          color: cs.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '流量概览',
-                          style: AppTextStyle.subheadline.of(
-                            context,
-                            emphasized: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text('总流量', style: AppTextStyle.caption1.of(context)),
-                    Text(
-                      (data.totalUpload + data.totalDownload).traffic.show,
-                      style: AppTextStyle.title1.of(context),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _Pill('↓ ${data.totalDownload.traffic.show}'),
-                        _Pill('↑ ${data.totalUpload.traffic.show}'),
-                      ],
-                    ),
-                  ],
-                ),
+              GlyphIcon(AppGlyphs.connections, size: 16, color: cs.primary),
+              const SizedBox(width: 6),
+              Text(
+                '流量概览',
+                style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
-              RingChart(
-                segments: [proxyPct],
-                center: '${(proxyPct * 100).round()}%',
-                subtitle: '代理',
-                size: 84,
-                trackColor: cs.surfaceContainerHighest,
+              const Spacer(),
+              Text(
+                '${data.connectionCount} 条连接',
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('总流量', style: AppTextStyle.caption1.of(context)),
+          Text(
+            (data.totalUpload + data.totalDownload).traffic.show,
+            style: AppTextStyle.title1.of(context),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _FlowStat(
+                dotColor: cs.primary,
+                label: '下载',
+                bytes: data.totalDownload,
+              ),
+              const SizedBox(width: 28),
+              _FlowStat(
+                dotColor: cs.tertiary,
+                label: '上传',
+                bytes: data.totalUpload,
               ),
             ],
           ),
           const SizedBox(height: 16),
+          _SplitBar(
+            proxyFraction: proxyPct,
+            proxyColor: cs.primary,
+            directColor: cs.onSurfaceVariant.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: _Stat(
-                  icon: AppGlyphs.clock,
-                  label: '累计运行',
-                  value: _duration(runMs),
-                ),
+              Text(
+                '代理 ${data.proxyBytes.traffic.show} · ${_pct(proxyPct)}',
+                style: AppTextStyle.caption1.of(context),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Stat(
-                  label: '代理 / 直连',
-                  value:
-                      '${data.proxyBytes.traffic.show} / ${data.directBytes.traffic.show}',
-                ),
+              const Spacer(),
+              Text(
+                '直连 ${data.directBytes.traffic.show} · ${_pct(1 - proxyPct)}',
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(height: 1, color: cs.surfaceContainerHighest),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              GlyphIcon(
+                AppGlyphs.clock,
+                size: 14,
+                color: cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text('累计运行', style: AppTextStyle.caption1.of(context)),
+              const SizedBox(width: 8),
+              Text(
+                _duration(runMs),
+                style: AppTextStyle.body.of(context, emphasized: true),
               ),
             ],
           ),
@@ -256,56 +284,64 @@ class _OverviewCard extends ConsumerWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill(this.text);
+class _FlowStat extends StatelessWidget {
+  const _FlowStat({
+    required this.dotColor,
+    required this.label,
+    required this.bytes,
+  });
 
-  final String text;
+  final Color dotColor;
+  final String label;
+  final int bytes;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: ShapeDecoration(
-      color: context.colorScheme.surfaceContainerHighest,
-      shape: AppShape.full,
-    ),
-    child: Text(text, style: AppTextStyle.caption1.of(context)),
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: ShapeDecoration(color: dotColor, shape: AppShape.circle),
+      ),
+      const SizedBox(width: 6),
+      Text(label, style: AppTextStyle.caption1.of(context)),
+      const SizedBox(width: 6),
+      Text(
+        bytes.traffic.show,
+        style: AppTextStyle.body.of(context, emphasized: true),
+      ),
+    ],
   );
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({this.icon, required this.label, required this.value});
+/// A two-segment horizontal bar: proxy share filled from the start, the
+/// rest is direct traffic. Reads clearly even at 100% / 0%, where a ring
+/// shows nothing.
+class _SplitBar extends StatelessWidget {
+  const _SplitBar({
+    required this.proxyFraction,
+    required this.proxyColor,
+    required this.directColor,
+  });
 
-  final Glyph? icon;
-  final String label;
-  final String value;
+  final double proxyFraction;
+  final Color proxyColor;
+  final Color directColor;
 
   @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerHighest,
-        shape: AppShape.all(14),
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(999),
+    child: Container(
+      height: 10,
+      color: directColor,
+      child: FractionallySizedBox(
+        alignment: AlignmentDirectional.centerStart,
+        widthFactor: proxyFraction.clamp(0.0, 1.0),
+        child: Container(color: proxyColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (icon case final icon?) ...[
-                GlyphIcon(icon, size: 14, color: cs.onSurfaceVariant),
-                const SizedBox(width: 4),
-              ],
-              Text(label, style: AppTextStyle.caption2.of(context)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(value, style: AppTextStyle.body.of(context, emphasized: true)),
-        ],
-      ),
-    );
-  }
+    ),
+  );
 }
 
 class _TrendCard extends StatelessWidget {
@@ -321,10 +357,19 @@ class _TrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    TrafficHourPoint? peak;
+    for (final p in data.trend) {
+      if (peak == null ||
+          (p.download + p.upload) > (peak.download + peak.upload)) {
+        peak = p;
+      }
+    }
+    final hasData = peak != null && (peak.download + peak.upload) > 0;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: ShapeDecoration(
-        color: context.colorScheme.surfaceContainerLowest,
+        color: cs.surfaceContainerLowest,
         shape: AppShape.all(20),
       ),
       child: Column(
@@ -332,11 +377,7 @@ class _TrendCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              GlyphIcon(
-                AppGlyphs.speed,
-                size: 16,
-                color: context.colorScheme.primary,
-              ),
+              GlyphIcon(AppGlyphs.speed, size: 16, color: cs.primary),
               const SizedBox(width: 6),
               Text(
                 '流量趋势',
@@ -348,15 +389,32 @@ class _TrendCard extends StatelessWidget {
               _LegendDot(color: uploadColor, label: '上传'),
             ],
           ),
+          if (hasData) ...[
+            const SizedBox(height: 4),
+            Text(
+              '峰值 ${peak.hour.hour}:00 · '
+              '${(peak.download + peak.upload).traffic.show}',
+              style: AppTextStyle.caption2
+                  .of(context)
+                  .copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
           const SizedBox(height: 8),
-          TrafficBarChart(
-            points: [
-              for (final p in data.trend)
-                (hour: p.hour, download: p.download, upload: p.upload),
-            ],
-            downloadColor: downloadColor,
-            uploadColor: uploadColor,
-          ),
+          if (hasData)
+            TrafficBarChart(
+              points: [
+                for (final p in data.trend)
+                  (hour: p.hour, download: p.download, upload: p.upload),
+              ],
+              downloadColor: downloadColor,
+              uploadColor: uploadColor,
+              height: 150,
+            )
+          else
+            const SizedBox(
+              height: 150,
+              child: Center(child: Text('暂无数据')),
+            ),
         ],
       ),
     );
@@ -405,59 +463,56 @@ class _RuleHits extends StatelessWidget {
       return const Text('暂无数据');
     }
     final cs = context.colorScheme;
-    return Column(
-      children: [
-        for (final hit in hits.take(8))
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: ShapeDecoration(
-              color: cs.surfaceContainerLowest,
-              shape: AppShape.all(16),
-            ),
+    final shown = hits.take(8).toList();
+    final totalHits = hits.fold<int>(0, (sum, h) => sum + h.hits);
+    final top = hits.first;
+    return Container(
+      decoration: ShapeDecoration(
+        color: cs.surfaceContainerLowest,
+        shape: AppShape.all(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 RingChart(
-                  segments: [hit.percent],
-                  center: '${(hit.percent * 100).round()}%',
-                  size: 56,
-                  strokeWidth: 6,
+                  segments: [for (final h in hits.take(5)) h.percent],
+                  center: '$totalHits',
+                  subtitle: '次命中',
+                  size: 76,
+                  strokeWidth: 7,
                   trackColor: cs.surfaceContainerHighest,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hit.key,
+                        top.key,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.body.of(context, emphasized: true),
+                        style: AppTextStyle.body.of(
+                          context,
+                          emphasized: true,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: cs.primaryContainer,
-                              shape: AppShape.full,
-                            ),
-                            child: Text(
-                              hit.key.startsWith('Match') ? 'Match' : 'RuleSet',
-                              style: AppTextStyle.caption2.of(context),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${hit.hits} 次 · ${(hit.upload + hit.download).traffic.show}',
-                            style: AppTextStyle.caption2.of(context),
-                          ),
-                        ],
+                      Text(
+                        '占命中流量 ${_pct(top.percent)} · ${top.hits} 次',
+                        style: AppTextStyle.caption1
+                            .of(context)
+                            .copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '共 ${hits.length} 条规则有命中',
+                        style: AppTextStyle.caption2
+                            .of(context)
+                            .copyWith(color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -465,7 +520,67 @@ class _RuleHits extends StatelessWidget {
               ],
             ),
           ),
-      ],
+          _Hairline(color: cs.surfaceContainerHighest),
+          for (var i = 0; i < shown.length; i++) ...[
+            if (i > 0) _Hairline(color: cs.surfaceContainerHighest),
+            _RuleRow(hit: shown[i]),
+          ],
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+}
+
+class _RuleRow extends StatelessWidget {
+  const _RuleRow({required this.hit});
+
+  final RuleHit hit;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  hit.key,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.body.of(context, emphasized: true),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                _pct(hit.percent),
+                style: AppTextStyle.body.of(context, emphasized: true),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${hit.hits} 次 · ↑ ${hit.upload.traffic.show} '
+            '↓ ${hit.download.traffic.show}',
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 6),
+          UsageBar(
+            fraction: hit.percent,
+            height: 4,
+            gradient: LinearGradient(
+              colors: [cs.primary, cs.primary.withValues(alpha: 0.55)],
+            ),
+            trackColor: cs.surfaceContainerHighest,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -492,57 +607,109 @@ class _Ranking extends StatelessWidget {
       );
     }
     final cs = context.colorScheme;
-    return Column(
-      children: [
-        for (final item in items.take(30))
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: ShapeDecoration(
-              color: cs.surfaceContainerLowest,
-              shape: AppShape.all(16),
+    final shown = items.take(30).toList();
+    final maxTotal = shown.fold<int>(
+      0,
+      (m, e) => math.max(m, e.upload + e.download),
+    );
+    return Container(
+      decoration: ShapeDecoration(
+        color: cs.surfaceContainerLowest,
+        shape: AppShape.all(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 6),
+          for (var i = 0; i < shown.length; i++) ...[
+            if (i > 0) _Hairline(color: cs.surfaceContainerHighest),
+            _RankRow(
+              index: i,
+              item: shown[i],
+              glyph: _glyph(),
+              relativeFraction: maxTotal == 0
+                  ? 0
+                  : (shown[i].upload + shown[i].download) / maxTotal,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    GlyphIcon(_glyph(), size: 16, color: cs.onSurfaceVariant),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        item.key,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      '${(item.percent * 100).toStringAsFixed(1)}%',
-                      style: AppTextStyle.caption1
-                          .of(context)
-                          .copyWith(color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                UsageBar(
-                  fraction: item.percent,
-                  gradient: LinearGradient(
-                    colors: [cs.primary, cs.primary.withValues(alpha: 0.55)],
+          ],
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  const _RankRow({
+    required this.index,
+    required this.item,
+    required this.glyph,
+    required this.relativeFraction,
+  });
+
+  final int index;
+  final TrafficRankItem item;
+  final Glyph glyph;
+  final double relativeFraction;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    final total = item.upload + item.download;
+    final isTop = index < 3;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: Text(
+                  '${index + 1}',
+                  style: AppTextStyle.caption1.of(context).copyWith(
+                    color: isTop ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: isTop ? FontWeight.w700 : FontWeight.w400,
                   ),
-                  trackColor: cs.surfaceContainerHighest,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '↑ ${item.upload.traffic.show}   ↓ ${item.download.traffic.show}',
-                  style: AppTextStyle.caption2
-                      .of(context)
-                      .copyWith(color: cs.onSurfaceVariant),
+              ),
+              GlyphIcon(glyph, size: 15, color: cs.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.key,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.body.of(context, emphasized: true),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                total.traffic.show,
+                style: AppTextStyle.body.of(context, emphasized: true),
+              ),
+            ],
           ),
-      ],
+          const SizedBox(height: 6),
+          UsageBar(
+            fraction: relativeFraction,
+            height: 4,
+            gradient: LinearGradient(
+              colors: [cs.primary, cs.primary.withValues(alpha: 0.55)],
+            ),
+            trackColor: cs.surfaceContainerHighest,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '占 ${item.percent.toStringAsFixed(1)}% · '
+            '↑ ${item.upload.traffic.show} ↓ ${item.download.traffic.show}',
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }
