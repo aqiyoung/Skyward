@@ -6,6 +6,7 @@ import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
+import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -37,6 +38,12 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
   Widget build(BuildContext context) {
     final stats = ref.watch(trafficStatisticsProvider(_period, _kind));
     final range = ref.watch(trafficRangeProvider);
+    final groups = ref.watch(
+      proxiesListStateProvider.select((state) => state.groups),
+    );
+    final groupIcons = <String, String>{
+      for (final g in groups) g.name: g.icon,
+    };
     final cs = context.colorScheme;
 
     return CommonScaffold(
@@ -93,7 +100,11 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                     onChanged: (v) => setState(() => _kind = v),
                   ),
                   const SizedBox(height: 8),
-                  _Ranking(items: data.ranking, kind: _kind),
+                  _Ranking(
+                    items: data.ranking,
+                    kind: _kind,
+                    groupIcons: groupIcons,
+                  ),
                 ],
               ),
               loading: () => const Padding(
@@ -586,10 +597,17 @@ class _RuleRow extends StatelessWidget {
 }
 
 class _Ranking extends StatelessWidget {
-  const _Ranking({required this.items, required this.kind});
+  const _Ranking({
+    required this.items,
+    required this.kind,
+    required this.groupIcons,
+  });
 
   final List<TrafficRankItem> items;
   final TrafficRankKind kind;
+
+  /// Group name -> the icon its config declares ('' when it declares none).
+  final Map<String, String> groupIcons;
 
   Glyph _glyph() => switch (kind) {
     TrafficRankKind.domain => AppGlyphs.connections,
@@ -597,6 +615,30 @@ class _Ranking extends StatelessWidget {
     TrafficRankKind.node => AppGlyphs.proxies,
     TrafficRankKind.config => AppGlyphs.settings,
   };
+
+  /// The 22px leading slot of a ranking row: for the node ranking, the
+  /// group's own official logo (the same resolution the proxies page
+  /// uses: the icon its config declares wins, then the bundled service
+  /// marks); other kinds keep their generic glyph.
+  Widget _leading(BuildContext context, TrafficRankItem item) {
+    final cs = context.colorScheme;
+    final glyph = SizedBox.square(
+      dimension: 22,
+      child: Center(
+        child: GlyphIcon(_glyph(), size: 16, color: cs.onSurfaceVariant),
+      ),
+    );
+    return switch (kind) {
+      TrafficRankKind.node => _ItemIcon(
+        src: GroupIconSource.of(
+          name: item.key,
+          icon: groupIcons[item.key] ?? '',
+        ),
+        fallback: GroupBadge(name: item.key),
+      ),
+      _ => glyph,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -626,7 +668,7 @@ class _Ranking extends StatelessWidget {
             _RankRow(
               index: i,
               item: shown[i],
-              glyph: _glyph(),
+              leading: _leading(context, shown[i]),
               relativeFraction: maxTotal == 0
                   ? 0
                   : (shown[i].upload + shown[i].download) / maxTotal,
@@ -639,17 +681,39 @@ class _Ranking extends StatelessWidget {
   }
 }
 
+/// A ranking row's icon slot: the item's own picture at 22px, softly
+/// rounded, with [fallback] shown while it loads or when it cannot be
+/// fetched.
+class _ItemIcon extends StatelessWidget {
+  const _ItemIcon({required this.src, required this.fallback});
+
+  final String src;
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(6),
+    child: SizedBox.square(
+      dimension: 22,
+      child: IconTheme.merge(
+        data: const IconThemeData(size: 22),
+        child: CommonTargetIcon(src: src, fallback: fallback),
+      ),
+    ),
+  );
+}
+
 class _RankRow extends StatelessWidget {
   const _RankRow({
     required this.index,
     required this.item,
-    required this.glyph,
+    required this.leading,
     required this.relativeFraction,
   });
 
   final int index;
   final TrafficRankItem item;
-  final Glyph glyph;
+  final Widget leading;
   final double relativeFraction;
 
   @override
@@ -674,11 +738,11 @@ class _RankRow extends StatelessWidget {
                   ),
                 ),
               ),
-              GlyphIcon(glyph, size: 15, color: cs.onSurfaceVariant),
-              const SizedBox(width: 8),
+              leading,
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item.key,
+                  item.key.isEmpty ? '未知' : item.key,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.body.of(context, emphasized: true),
