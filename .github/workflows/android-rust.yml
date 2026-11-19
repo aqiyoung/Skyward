@@ -21,6 +21,10 @@ on:
         description: 'Version shown in the app'
         required: false
         default: '1.0.0.99-rust'
+      changelog:
+        description: 'Update log sent with the Telegram message'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -163,7 +167,17 @@ jobs:
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
             echo "::error::TG secrets missing"; exit 1
           fi
+          # The update log rides along with the APK; Telegram captions are capped
+          # at 1024 bytes, so keep it to the first lines that matter.
           caption="Skyward ${{ inputs.version }} (Rust core test, arm64)"
+          if [ -n "${{ inputs.changelog }}" ]; then
+            caption="$caption
+${{ inputs.changelog }}"
+          fi
+          caption=$(printf '%s' "$caption" | head -c 1000)
+          echo "--- caption ---"
+          printf '%s\n' "$caption"
+          echo "---------------"
           curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "document=@dist/skyward-rust-core-arm64.apk" \
