@@ -1,7 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:skyward/models/models.dart';
 import 'package:flutter/widgets.dart';
+
+/// One hour's bytes, in the UI's own plain type so the chart stays independent
+/// of the app's models (lib/ui may not reach lib/models).
+typedef TrafficBarPoint = ({DateTime hour, int download, int upload});
 
 /// A per-hour stacked bar chart: download on the bottom, upload above it,
 /// with a few axis ticks and time labels. Self-drawn to match the repo's
@@ -15,7 +18,7 @@ class TrafficBarChart extends StatelessWidget {
     this.height = 180,
   });
 
-  final List<TrafficHourPoint> points;
+  final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
   final double height;
@@ -46,7 +49,7 @@ class _BarPainter extends CustomPainter {
     required this.uploadColor,
   });
 
-  final List<TrafficHourPoint> points;
+  final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
 

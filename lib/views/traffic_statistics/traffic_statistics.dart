@@ -44,8 +44,8 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
           glyph: AppGlyphs.filter,
           tooltip: '排行维度',
           onPressed: () => setState(() {
-            _kind = TrafficRankKind.values[
-                (_kind.index + 1) % TrafficRankKind.values.length];
+            _kind = TrafficRankKind
+                .values[(_kind.index + 1) % TrafficRankKind.values.length];
           }),
         ),
       ],
@@ -71,7 +71,11 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                 children: [
                   _OverviewCard(data: data),
                   const SizedBox(height: 12),
-                  _TrendCard(data: data, downloadColor: cs.primary, uploadColor: cs.tertiary),
+                  _TrendCard(
+                    data: data,
+                    downloadColor: cs.primary,
+                    uploadColor: cs.tertiary,
+                  ),
                   const SizedBox(height: 16),
                   const _SectionLabel('规则命中'),
                   const SizedBox(height: 8),
@@ -152,9 +156,9 @@ class _OverviewCard extends ConsumerWidget {
 
   String _duration(int? startMs) {
     if (startMs == null) return '—';
-    final minutes = DateTime.now().difference(
-      DateTime.fromMillisecondsSinceEpoch(startMs),
-    ).inMinutes;
+    final minutes = DateTime.now()
+        .difference(DateTime.fromMillisecondsSinceEpoch(startMs))
+        .inMinutes;
     if (minutes < 60) return '$minutes 分钟';
     return '${minutes ~/ 60} 小时 ${minutes % 60} 分';
   }
@@ -184,9 +188,19 @@ class _OverviewCard extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        GlyphIcon(AppGlyphs.connections, size: 16, color: cs.primary),
+                        GlyphIcon(
+                          AppGlyphs.connections,
+                          size: 16,
+                          color: cs.primary,
+                        ),
                         const SizedBox(width: 6),
-                        Text('流量概览', style: AppTextStyle.subheadline.of(context, emphasized: true)),
+                        Text(
+                          '流量概览',
+                          style: AppTextStyle.subheadline.of(
+                            context,
+                            emphasized: true,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -227,7 +241,8 @@ class _OverviewCard extends ConsumerWidget {
               Expanded(
                 child: _Stat(
                   label: '代理 / 直连',
-                  value: '${data.proxyBytes.traffic.show} / ${data.directBytes.traffic.show}',
+                  value:
+                      '${data.proxyBytes.traffic.show} / ${data.directBytes.traffic.show}',
                 ),
               ),
             ],
@@ -314,9 +329,16 @@ class _TrendCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              GlyphIcon(AppGlyphs.speed, size: 16, color: context.colorScheme.primary),
+              GlyphIcon(
+                AppGlyphs.speed,
+                size: 16,
+                color: context.colorScheme.primary,
+              ),
               const SizedBox(width: 6),
-              Text('流量趋势', style: AppTextStyle.subheadline.of(context, emphasized: true)),
+              Text(
+                '流量趋势',
+                style: AppTextStyle.subheadline.of(context, emphasized: true),
+              ),
               const Spacer(),
               _LegendDot(color: downloadColor, label: '下载'),
               const SizedBox(width: 10),
@@ -325,7 +347,10 @@ class _TrendCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TrafficBarChart(
-            points: data.trend,
+            points: [
+              for (final p in data.trend)
+                (hour: p.hour, download: p.download, upload: p.upload),
+            ],
             downloadColor: downloadColor,
             uploadColor: uploadColor,
           ),
@@ -389,26 +414,45 @@ class _RuleHits extends StatelessWidget {
             ),
             child: Row(
               children: [
-                RingChart(segments: [hit.percent], center: '${(hit.percent * 100).round()}%', size: 56, strokeWidth: 6),
+                RingChart(
+                  segments: [hit.percent],
+                  center: '${(hit.percent * 100).round()}%',
+                  size: 56,
+                  strokeWidth: 6,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(hit.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyle.body.of(context, emphasized: true)),
+                      Text(
+                        hit.key,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.body.of(context, emphasized: true),
+                      ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: ShapeDecoration(
                               color: cs.primaryContainer,
                               shape: AppShape.full,
                             ),
-                            child: Text(hit.key.startsWith('Match') ? 'Match' : 'RuleSet', style: AppTextStyle.caption2.of(context)),
+                            child: Text(
+                              hit.key.startsWith('Match') ? 'Match' : 'RuleSet',
+                              style: AppTextStyle.caption2.of(context),
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          Text('${hit.hits} 次 · ${(hit.upload + hit.download).traffic.show}', style: AppTextStyle.caption2.of(context)),
+                          Text(
+                            '${hit.hits} 次 · ${(hit.upload + hit.download).traffic.show}',
+                            style: AppTextStyle.caption2.of(context),
+                          ),
                         ],
                       ),
                     ],
