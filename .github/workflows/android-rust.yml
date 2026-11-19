@@ -25,6 +25,8 @@ on:
         description: 'Update log sent with the Telegram message'
         required: false
         default: ''
+  push:
+    branches: [ rust-core ]
 
 permissions:
   contents: read
@@ -52,7 +54,7 @@ jobs:
 
       - name: Download Rust core .so package
         env:
-          SO_URL: ${{ inputs.so_url }}
+          SO_URL: ${{ inputs.so_url || 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip' }}
         run: |
           set -euo pipefail
           curl -fsSL "$SO_URL" -o /tmp/core.zip
@@ -123,7 +125,7 @@ jobs:
       - name: Build arm64 APK (Rust core)
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-          APP_VERSION_NAME: ${{ inputs.version }}
+          APP_VERSION_NAME: ${{ inputs.version || '1.0.0.99-rust' }}
           APP_CHANNEL_NAME: rust
           APP_BUILD_NUMBER: ${{ github.run_number }}
         run: |
