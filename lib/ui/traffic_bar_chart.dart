@@ -88,7 +88,7 @@ class _BarPainter extends CustomPainter {
         canvas,
         _formatAxis(value),
         Offset(0, y - 6),
-        TextStyle(fontSize: 10, color: labelColor),
+        TextStyle(fontSize: 11, color: labelColor, fontWeight: FontWeight.w600),
       );
     }
 
@@ -123,7 +123,11 @@ class _BarPainter extends CustomPainter {
           canvas,
           '${p.hour.hour}',
           Offset(cx - 8, _top + plotH + 5),
-          TextStyle(fontSize: 10, color: labelColor),
+          TextStyle(
+            fontSize: 11,
+            color: labelColor,
+            fontWeight: FontWeight.w600,
+          ),
         );
       }
     }

@@ -421,7 +421,7 @@ class _TrendCard extends StatelessWidget {
               ],
               downloadColor: downloadColor,
               uploadColor: uploadColor,
-              labelColor: context.colorScheme.onSurfaceVariant,
+              labelColor: context.colorScheme.onSurface,
               height: 150,
             )
           else
