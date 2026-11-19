@@ -2,6 +2,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/views/traffic_statistics/traffic_statistics.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,13 +132,9 @@ class _TotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -176,10 +173,7 @@ class _AppRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(16),
-      ),
+      decoration: panelDecoration(context, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
