@@ -8,6 +8,9 @@ package com.follow.clash.core.mobile;
 public final class Mobile {
     static {
         System.loadLibrary("skyward_core");
+        // Register the JavaVM so native threads can deliver callbacks (events,
+        // logs) to the App. The host does not call this explicitly.
+        initVm();
     }
 
     /** Register the JavaVM so native threads can deliver callbacks. */
