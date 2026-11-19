@@ -141,7 +141,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'976ba27263e91019e15c51d6b041a69cf8052164';
+String _$trafficSamplerHash() => r'fd2615333226f3f180b1e25c98136adb752b8a9c';
 
 /// Periodically persists the live connection list so the statistics page has
 /// history. Runs only while the core is connected and the app is visible.
@@ -284,7 +284,7 @@ final class TrafficStatisticsProvider
   }
 }
 
-String _$trafficStatisticsHash() => r'd62d8c90806209d178a16b05e5c5e22a3bacf143';
+String _$trafficStatisticsHash() => r'e517e02f40bc12633c5ed6cc9da548477755667e';
 
 /// Loads history for the selected period and aggregates it off-isolate.
 

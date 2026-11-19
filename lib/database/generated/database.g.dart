@@ -5214,6 +5214,318 @@ class TrafficRecordsCompanion extends UpdateCompanion<TrafficRecord> {
   }
 }
 
+class $TrafficHourlyTable extends TrafficHourly
+    with TableInfo<$TrafficHourlyTable, TrafficHour> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrafficHourlyTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<int> direction = GeneratedColumn<int>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proxiedMeta = const VerificationMeta(
+    'proxied',
+  );
+  @override
+  late final GeneratedColumn<int> proxied = GeneratedColumn<int>(
+    'proxied',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  @override
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [hour, direction, proxied, bytes];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'traffic_hourly';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrafficHour> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hourMeta);
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_directionMeta);
+    }
+    if (data.containsKey('proxied')) {
+      context.handle(
+        _proxiedMeta,
+        proxied.isAcceptableOrUnknown(data['proxied']!, _proxiedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proxiedMeta);
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bytesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {hour, direction, proxied};
+  @override
+  TrafficHour map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrafficHour(
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}direction'],
+      )!,
+      proxied: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}proxied'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+    );
+  }
+
+  @override
+  $TrafficHourlyTable createAlias(String alias) {
+    return $TrafficHourlyTable(attachedDatabase, alias);
+  }
+}
+
+class TrafficHour extends DataClass implements Insertable<TrafficHour> {
+  /// The hour start, as milliseconds since epoch (UTC).
+  final int hour;
+
+  /// 0 = download, 1 = upload.
+  final int direction;
+
+  /// 0 = proxied, 1 = direct.
+  final int proxied;
+  final int bytes;
+  const TrafficHour({
+    required this.hour,
+    required this.direction,
+    required this.proxied,
+    required this.bytes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['hour'] = Variable<int>(hour);
+    map['direction'] = Variable<int>(direction);
+    map['proxied'] = Variable<int>(proxied);
+    map['bytes'] = Variable<int>(bytes);
+    return map;
+  }
+
+  TrafficHourlyCompanion toCompanion(bool nullToAbsent) {
+    return TrafficHourlyCompanion(
+      hour: Value(hour),
+      direction: Value(direction),
+      proxied: Value(proxied),
+      bytes: Value(bytes),
+    );
+  }
+
+  factory TrafficHour.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrafficHour(
+      hour: serializer.fromJson<int>(json['hour']),
+      direction: serializer.fromJson<int>(json['direction']),
+      proxied: serializer.fromJson<int>(json['proxied']),
+      bytes: serializer.fromJson<int>(json['bytes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'hour': serializer.toJson<int>(hour),
+      'direction': serializer.toJson<int>(direction),
+      'proxied': serializer.toJson<int>(proxied),
+      'bytes': serializer.toJson<int>(bytes),
+    };
+  }
+
+  TrafficHour copyWith({int? hour, int? direction, int? proxied, int? bytes}) =>
+      TrafficHour(
+        hour: hour ?? this.hour,
+        direction: direction ?? this.direction,
+        proxied: proxied ?? this.proxied,
+        bytes: bytes ?? this.bytes,
+      );
+  TrafficHour copyWithCompanion(TrafficHourlyCompanion data) {
+    return TrafficHour(
+      hour: data.hour.present ? data.hour.value : this.hour,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      proxied: data.proxied.present ? data.proxied.value : this.proxied,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficHour(')
+          ..write('hour: $hour, ')
+          ..write('direction: $direction, ')
+          ..write('proxied: $proxied, ')
+          ..write('bytes: $bytes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(hour, direction, proxied, bytes);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrafficHour &&
+          other.hour == this.hour &&
+          other.direction == this.direction &&
+          other.proxied == this.proxied &&
+          other.bytes == this.bytes);
+}
+
+class TrafficHourlyCompanion extends UpdateCompanion<TrafficHour> {
+  final Value<int> hour;
+  final Value<int> direction;
+  final Value<int> proxied;
+  final Value<int> bytes;
+  final Value<int> rowid;
+  const TrafficHourlyCompanion({
+    this.hour = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.proxied = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrafficHourlyCompanion.insert({
+    required int hour,
+    required int direction,
+    required int proxied,
+    required int bytes,
+    this.rowid = const Value.absent(),
+  }) : hour = Value(hour),
+       direction = Value(direction),
+       proxied = Value(proxied),
+       bytes = Value(bytes);
+  static Insertable<TrafficHour> custom({
+    Expression<int>? hour,
+    Expression<int>? direction,
+    Expression<int>? proxied,
+    Expression<int>? bytes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (hour != null) 'hour': hour,
+      if (direction != null) 'direction': direction,
+      if (proxied != null) 'proxied': proxied,
+      if (bytes != null) 'bytes': bytes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrafficHourlyCompanion copyWith({
+    Value<int>? hour,
+    Value<int>? direction,
+    Value<int>? proxied,
+    Value<int>? bytes,
+    Value<int>? rowid,
+  }) {
+    return TrafficHourlyCompanion(
+      hour: hour ?? this.hour,
+      direction: direction ?? this.direction,
+      proxied: proxied ?? this.proxied,
+      bytes: bytes ?? this.bytes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<int>(direction.value);
+    }
+    if (proxied.present) {
+      map['proxied'] = Variable<int>(proxied.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficHourlyCompanion(')
+          ..write('hour: $hour, ')
+          ..write('direction: $direction, ')
+          ..write('proxied: $proxied, ')
+          ..write('bytes: $bytes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -5229,6 +5541,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
   late final $TrafficRecordsTable trafficRecords = $TrafficRecordsTable(this);
+  late final $TrafficHourlyTable trafficHourly = $TrafficHourlyTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -5264,6 +5577,9 @@ abstract class _$Database extends GeneratedDatabase {
   late final TrafficRecordsDao trafficRecordsDao = TrafficRecordsDao(
     this as Database,
   );
+  late final TrafficHourlyDao trafficHourlyDao = TrafficHourlyDao(
+    this as Database,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5281,6 +5597,7 @@ abstract class _$Database extends GeneratedDatabase {
     proxyDialers,
     ipQualities,
     trafficRecords,
+    trafficHourly,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
@@ -9364,6 +9681,196 @@ typedef $$TrafficRecordsTableProcessedTableManager =
       TrafficRecord,
       PrefetchHooks Function()
     >;
+typedef $$TrafficHourlyTableCreateCompanionBuilder =
+    TrafficHourlyCompanion Function({
+      required int hour,
+      required int direction,
+      required int proxied,
+      required int bytes,
+      Value<int> rowid,
+    });
+typedef $$TrafficHourlyTableUpdateCompanionBuilder =
+    TrafficHourlyCompanion Function({
+      Value<int> hour,
+      Value<int> direction,
+      Value<int> proxied,
+      Value<int> bytes,
+      Value<int> rowid,
+    });
+
+class $$TrafficHourlyTableFilterComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get proxied => $composableBuilder(
+    column: $table.proxied,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrafficHourlyTableOrderingComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get proxied => $composableBuilder(
+    column: $table.proxied,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrafficHourlyTableAnnotationComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<int> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<int> get proxied =>
+      $composableBuilder(column: $table.proxied, builder: (column) => column);
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+}
+
+class $$TrafficHourlyTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $TrafficHourlyTable,
+          TrafficHour,
+          $$TrafficHourlyTableFilterComposer,
+          $$TrafficHourlyTableOrderingComposer,
+          $$TrafficHourlyTableAnnotationComposer,
+          $$TrafficHourlyTableCreateCompanionBuilder,
+          $$TrafficHourlyTableUpdateCompanionBuilder,
+          (
+            TrafficHour,
+            BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>,
+          ),
+          TrafficHour,
+          PrefetchHooks Function()
+        > {
+  $$TrafficHourlyTableTableManager(_$Database db, $TrafficHourlyTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrafficHourlyTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrafficHourlyTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrafficHourlyTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> hour = const Value.absent(),
+                Value<int> direction = const Value.absent(),
+                Value<int> proxied = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficHourlyCompanion(
+                hour: hour,
+                direction: direction,
+                proxied: proxied,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int hour,
+                required int direction,
+                required int proxied,
+                required int bytes,
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficHourlyCompanion.insert(
+                hour: hour,
+                direction: direction,
+                proxied: proxied,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrafficHourlyTable, TrafficHour>(table),
+                  BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrafficHourlyTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $TrafficHourlyTable,
+      TrafficHour,
+      $$TrafficHourlyTableFilterComposer,
+      $$TrafficHourlyTableOrderingComposer,
+      $$TrafficHourlyTableAnnotationComposer,
+      $$TrafficHourlyTableCreateCompanionBuilder,
+      $$TrafficHourlyTableUpdateCompanionBuilder,
+      (
+        TrafficHour,
+        BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>,
+      ),
+      TrafficHour,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -9392,6 +9899,8 @@ class $DatabaseManager {
       $$IpQualitiesTableTableManager(_db, _db.ipQualities);
   $$TrafficRecordsTableTableManager get trafficRecords =>
       $$TrafficRecordsTableTableManager(_db, _db.trafficRecords);
+  $$TrafficHourlyTableTableManager get trafficHourly =>
+      $$TrafficHourlyTableTableManager(_db, _db.trafficHourly);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -9545,4 +10054,16 @@ class TrafficRecordsDaoManager {
         _db.attachedDatabase,
         _db.trafficRecords,
       );
+}
+
+mixin _$TrafficHourlyDaoMixin on DatabaseAccessor<Database> {
+  $TrafficHourlyTable get trafficHourly => attachedDatabase.trafficHourly;
+  TrafficHourlyDaoManager get managers => TrafficHourlyDaoManager(this);
+}
+
+class TrafficHourlyDaoManager {
+  final _$TrafficHourlyDaoMixin _db;
+  TrafficHourlyDaoManager(this._db);
+  $$TrafficHourlyTableTableManager get trafficHourly =>
+      $$TrafficHourlyTableTableManager(_db.attachedDatabase, _db.trafficHourly);
 }

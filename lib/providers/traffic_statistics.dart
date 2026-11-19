@@ -21,6 +21,10 @@ Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
 /// upsert never moves a connection's start.
 final trafficFirstSeen = <String, DateTime>{};
 
+/// The last cumulative byte totals we sampled per connection, used to derive
+/// the per-hour deltas the trend chart is built from.
+final trafficLastBytes = <String, ({int up, int down})>{};
+
 /// Periodically persists the live connection list so the statistics page has
 /// history. Runs only while the core is connected and the app is visible.
 @Riverpod(keepAlive: true)
@@ -62,6 +66,7 @@ class TrafficSampler extends _$TrafficSampler {
 
   Future<void> _sample() async {
     final now = DateTime.now();
+    final hour = DateTime(now.year, now.month, now.day, now.hour);
     final requests = ref.read(requestsProvider);
     for (final r in requests.list) {
       final started = trafficFirstSeen.putIfAbsent(r.id, () => now);
@@ -81,10 +86,31 @@ class TrafficSampler extends _$TrafficSampler {
           ),
         ),
       );
+
+      // Derive the delta since the previous sample and add it to this hour.
+      final last = trafficLastBytes[r.id];
+      if (last != null) {
+        final upDelta = r.upload - last.up;
+        final downDelta = r.download - last.down;
+        final node = r.chains.isEmpty ? '' : r.chains.last;
+        final proxied = node.isNotEmpty && node.toUpperCase() != 'DIRECT';
+        if (upDelta > 0 || downDelta > 0) {
+          await _safeWrite(
+            database.trafficHourlyDao.add(
+              hour: hour,
+              download: downDelta,
+              upload: upDelta,
+              proxied: proxied,
+            ),
+          );
+        }
+      }
+      trafficLastBytes[r.id] = (up: r.upload, down: r.download);
     }
     final cutoff = now.subtract(ref.read(trafficHistoryRetentionProvider));
     await _safeWrite(() async {
       await database.trafficRecordsDao.pruneBefore(cutoff);
+      await database.trafficHourlyDao.pruneBefore(cutoff);
     }());
   }
 
@@ -136,15 +162,28 @@ Future<TrafficStatistics> trafficStatistics(
     ),
   };
   final records = await database.trafficRecordsDao.between(start, end);
-  return aggregateTrafficTask([
-    for (final r in records)
-      (
-        host: r.host,
-        rule: r.rule,
-        rulePayload: r.rulePayload,
-        node: r.node,
-        upload: r.upload,
-        download: r.download,
-      ),
-  ], kind.index);
+  final hours = await database.trafficHourlyDao.between(start, end);
+  return aggregateTrafficTask(
+    [
+      for (final r in records)
+        (
+          host: r.host,
+          rule: r.rule,
+          rulePayload: r.rulePayload,
+          node: r.node,
+          upload: r.upload,
+          download: r.download,
+        ),
+    ],
+    [
+      for (final h in hours)
+        (
+          hour: DateTime.fromMillisecondsSinceEpoch(h.hour),
+          direction: h.direction,
+          proxied: h.proxied,
+          bytes: h.bytes,
+        ),
+    ],
+    kind.index,
+  );
 }

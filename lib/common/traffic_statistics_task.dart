@@ -13,27 +13,41 @@ typedef TrafficSample = ({
   int download,
 });
 
-/// Aggregates [samples] off the UI isolate. [kind] is the TrafficRankKind index.
+/// One hourly bucket reduced to plain types for the isolate.
+typedef TrafficHourSample = ({
+  DateTime hour,
+  int direction,
+  int proxied,
+  int bytes,
+});
+
+/// Aggregates connection samples and hourly deltas off the UI isolate.
+/// [kind] is the TrafficRankKind index.
 Future<TrafficStatistics> aggregateTrafficTask(
   List<TrafficSample> samples,
+  List<TrafficHourSample> hours,
   int kind,
 ) => compute<_AggregateArgs, TrafficStatistics>(
   _aggregate,
-  _AggregateArgs(samples, kind),
+  _AggregateArgs(samples, hours, kind),
 );
 
 class _AggregateArgs {
-  const _AggregateArgs(this.samples, this.kind);
+  const _AggregateArgs(this.samples, this.hours, this.kind);
 
   final List<TrafficSample> samples;
+  final List<TrafficHourSample> hours;
   final int kind;
 }
 
 TrafficStatistics _aggregate(_AggregateArgs args) {
   var totalUp = 0;
   var totalDown = 0;
+  var proxyBytes = 0;
+  var directBytes = 0;
   final ranks = <String, ({int up, int down, int hits})>{};
   final ruleHits = <String, ({int up, int down, int hits})>{};
+  final byHour = <int, ({int up, int down})>{};
 
   String keyOf(TrafficSample s) => switch (TrafficRankKind.values[args.kind]) {
     TrafficRankKind.domain => s.host.isNotEmpty ? s.host : s.rulePayload,
@@ -43,8 +57,6 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
   };
 
   for (final s in args.samples) {
-    totalUp += s.upload;
-    totalDown += s.download;
     final key = keyOf(s);
     ranks[key] = (
       up: (ranks[key]?.up ?? 0) + s.upload,
@@ -57,6 +69,24 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
       down: (ruleHits[ruleKey]?.down ?? 0) + s.download,
       hits: (ruleHits[ruleKey]?.hits ?? 0) + 1,
     );
+  }
+
+  for (final h in args.hours) {
+    if (h.direction == 1) {
+      totalUp += h.bytes;
+    } else {
+      totalDown += h.bytes;
+    }
+    if (h.proxied == 0) {
+      proxyBytes += h.bytes;
+    } else {
+      directBytes += h.bytes;
+    }
+    final key = h.hour.millisecondsSinceEpoch;
+    final bucket = byHour[key] ?? (up: 0, down: 0);
+    byHour[key] = h.direction == 1
+        ? (up: bucket.up + h.bytes, down: bucket.down)
+        : (up: bucket.up, down: bucket.down + h.bytes);
   }
 
   final totalBytes = totalUp + totalDown;
@@ -94,11 +124,26 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
           (a, b) => (b.upload + b.download).compareTo(a.upload + a.download),
         );
 
+  final trend =
+      byHour.entries
+          .map(
+            (e) => TrafficHourPoint(
+              hour: DateTime.fromMillisecondsSinceEpoch(e.key),
+              download: e.value.down,
+              upload: e.value.up,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => a.hour.compareTo(b.hour));
+
   return TrafficStatistics(
     totalUpload: totalUp,
     totalDownload: totalDown,
     connectionCount: args.samples.length,
+    proxyBytes: proxyBytes,
+    directBytes: directBytes,
     ruleHits: hits,
     ranking: ranking,
+    trend: trend,
   );
 }

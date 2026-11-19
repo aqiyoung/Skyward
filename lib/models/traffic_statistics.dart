@@ -25,6 +25,16 @@ abstract class RuleHit with _$RuleHit {
   }) = _RuleHit;
 }
 
+/// Bytes in one hour of the trend chart.
+@freezed
+abstract class TrafficHourPoint with _$TrafficHourPoint {
+  const factory TrafficHourPoint({
+    required DateTime hour,
+    required int download,
+    required int upload,
+  }) = _TrafficHourPoint;
+}
+
 /// The aggregate a statistics page needs for one period and dimension.
 @freezed
 abstract class TrafficStatistics with _$TrafficStatistics {
@@ -32,7 +42,10 @@ abstract class TrafficStatistics with _$TrafficStatistics {
     required int totalUpload,
     required int totalDownload,
     required int connectionCount,
+    required int proxyBytes,
+    required int directBytes,
     required List<RuleHit> ruleHits,
     required List<TrafficRankItem> ranking,
+    required List<TrafficHourPoint> trend,
   }) = _TrafficStatistics;
 }

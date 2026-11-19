@@ -7,8 +7,8 @@ import 'package:skyward/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A full-page traffic statistics view: day/week/month totals, rule-hit rings
-/// and a traffic ranking by domain / rule / node / config. Opened from the
+/// A full-page traffic statistics view: hourly trend, proxy/direct split,
+/// rule-hit rings, a traffic ranking and running time. Opened from the
 /// dashboard's traffic card.
 class TrafficStatisticsView extends ConsumerStatefulWidget {
   const TrafficStatisticsView({super.key});
@@ -22,13 +22,33 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
   TrafficPeriod _period = TrafficPeriod.day;
   TrafficRankKind _kind = TrafficRankKind.domain;
 
+  void _refresh() {
+    ref.invalidate(trafficStatisticsProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(trafficStatisticsProvider(_period, _kind));
     final range = ref.watch(trafficRangeProvider);
+    final cs = context.colorScheme;
 
     return CommonScaffold(
       title: context.appLocalizations.trafficUsage,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.refresh,
+          tooltip: '刷新',
+          onPressed: _refresh,
+        ),
+        IconButtonData(
+          glyph: AppGlyphs.filter,
+          tooltip: '排行维度',
+          onPressed: () => setState(() {
+            _kind = TrafficRankKind.values[
+                (_kind.index + 1) % TrafficRankKind.values.length];
+          }),
+        ),
+      ],
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -44,12 +64,14 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
             ),
             const SizedBox(height: 12),
             _DateStrip(period: _period, range: range),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             stats.when(
               data: (data) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _TotalsCard(data: data),
+                  _OverviewCard(data: data),
+                  const SizedBox(height: 12),
+                  _TrendCard(data: data, downloadColor: cs.primary, uploadColor: cs.tertiary),
                   const SizedBox(height: 16),
                   const _SectionLabel('规则命中'),
                   const SizedBox(height: 8),
@@ -68,7 +90,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                     onChanged: (v) => setState(() => _kind = v),
                   ),
                   const SizedBox(height: 8),
-                  _Ranking(items: data.ranking),
+                  _Ranking(items: data.ranking, kind: _kind),
                 ],
               ),
               loading: () => const Padding(
@@ -93,14 +115,12 @@ class _DateStrip extends ConsumerWidget {
   final TrafficPeriod period;
   final DateTime range;
 
-  String _label() {
-    return switch (period) {
-      TrafficPeriod.day =>
-        '${range.year}-${range.month.toString().padLeft(2, '0')}-${range.day.toString().padLeft(2, '0')}',
-      TrafficPeriod.week => '${range.month}/${range.day} 起',
-      TrafficPeriod.month => '${range.year}/${range.month}',
-    };
-  }
+  String _label() => switch (period) {
+    TrafficPeriod.day =>
+      '${range.year}-${range.month.toString().padLeft(2, '0')}-${range.day.toString().padLeft(2, '0')}',
+    TrafficPeriod.week => '${range.month}/${range.day} 起',
+    TrafficPeriod.month => '${range.year}/${range.month}',
+  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,53 +145,215 @@ class _DateStrip extends ConsumerWidget {
   }
 }
 
-class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.data});
+class _OverviewCard extends ConsumerWidget {
+  const _OverviewCard({required this.data});
 
   final TrafficStatistics data;
 
+  String _duration(int? startMs) {
+    if (startMs == null) return '—';
+    final minutes = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(startMs),
+    ).inMinutes;
+    if (minutes < 60) return '$minutes 分钟';
+    return '${minutes ~/ 60} 小时 ${minutes % 60} 分';
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = context.colorScheme;
+    final proxyPct = (data.proxyBytes + data.directBytes) == 0
+        ? 0.0
+        : data.proxyBytes / (data.proxyBytes + data.directBytes);
+    final runMs = ref.watch(runTimeProvider);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: ShapeDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: cs.surfaceContainerLowest,
         shape: AppShape.all(20),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '总流量',
-            style: AppTextStyle.caption1
-                .of(context)
-                .copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            (data.totalUpload + data.totalDownload).traffic.show,
-            style: AppTextStyle.title1.of(context),
-          ),
-          const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('↑ ${data.totalUpload.traffic.show}'),
-              const SizedBox(width: 20),
-              Text('↓ ${data.totalDownload.traffic.show}'),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GlyphIcon(AppGlyphs.connections, size: 16, color: cs.primary),
+                        const SizedBox(width: 6),
+                        Text('流量概览', style: AppTextStyle.subheadline.of(context, emphasized: true)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text('总流量', style: AppTextStyle.caption1.of(context)),
+                    Text(
+                      (data.totalUpload + data.totalDownload).traffic.show,
+                      style: AppTextStyle.title1.of(context),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        _Pill('↓ ${data.totalDownload.traffic.show}'),
+                        _Pill('↑ ${data.totalUpload.traffic.show}'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              RingChart(
+                segments: [proxyPct],
+                center: '${(proxyPct * 100).round()}%',
+                subtitle: '代理',
+                size: 84,
+              ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            '${data.connectionCount} 条连接',
-            style: AppTextStyle.caption2
-                .of(context)
-                .copyWith(color: colorScheme.onSurfaceVariant),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _Stat(
+                  icon: AppGlyphs.clock,
+                  label: '累计运行',
+                  value: _duration(runMs),
+                ),
+              ),
+              Expanded(
+                child: _Stat(
+                  label: '代理 / 直连',
+                  value: '${data.proxyBytes.traffic.show} / ${data.directBytes.traffic.show}',
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: ShapeDecoration(
+      color: context.colorScheme.surfaceContainerHighest,
+      shape: AppShape.full,
+    ),
+    child: Text(text, style: AppTextStyle.caption1.of(context)),
+  );
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({this.icon, required this.label, required this.value});
+
+  final Glyph? icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: ShapeDecoration(
+        color: cs.surfaceContainerHighest,
+        shape: AppShape.all(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon case final icon?) ...[
+                GlyphIcon(icon, size: 14, color: cs.onSurfaceVariant),
+                const SizedBox(width: 4),
+              ],
+              Text(label, style: AppTextStyle.caption2.of(context)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(value, style: AppTextStyle.body.of(context, emphasized: true)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendCard extends StatelessWidget {
+  const _TrendCard({
+    required this.data,
+    required this.downloadColor,
+    required this.uploadColor,
+  });
+
+  final TrafficStatistics data;
+  final Color downloadColor;
+  final Color uploadColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: ShapeDecoration(
+        color: context.colorScheme.surfaceContainerLowest,
+        shape: AppShape.all(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              GlyphIcon(AppGlyphs.speed, size: 16, color: context.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text('流量趋势', style: AppTextStyle.subheadline.of(context, emphasized: true)),
+              const Spacer(),
+              _LegendDot(color: downloadColor, label: '下载'),
+              const SizedBox(width: 10),
+              _LegendDot(color: uploadColor, label: '上传'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TrafficBarChart(
+            points: data.trend,
+            downloadColor: downloadColor,
+            uploadColor: uploadColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: ShapeDecoration(color: color, shape: AppShape.circle),
+      ),
+      const SizedBox(width: 4),
+      Text(label, style: AppTextStyle.caption2.of(context)),
+    ],
+  );
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -194,27 +376,44 @@ class _RuleHits extends StatelessWidget {
     if (hits.isEmpty) {
       return const Text('暂无数据');
     }
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    final cs = context.colorScheme;
+    return Column(
       children: [
         for (final hit in hits.take(8))
-          SizedBox(
-            width: 96,
-            child: Column(
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: ShapeDecoration(
+              color: cs.surfaceContainerLowest,
+              shape: AppShape.all(16),
+            ),
+            child: Row(
               children: [
-                RingChart(
-                  segments: [hit.percent],
-                  center: '${(hit.percent * 100).round()}%',
+                RingChart(segments: [hit.percent], center: '${(hit.percent * 100).round()}%', size: 56, strokeWidth: 6),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(hit.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyle.body.of(context, emphasized: true)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: ShapeDecoration(
+                              color: cs.primaryContainer,
+                              shape: AppShape.full,
+                            ),
+                            child: Text(hit.key.startsWith('Match') ? 'Match' : 'RuleSet', style: AppTextStyle.caption2.of(context)),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('${hit.hits} 次 · ${(hit.upload + hit.download).traffic.show}', style: AppTextStyle.caption2.of(context)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  hit.key,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1.of(context),
-                ),
-                Text('${hit.hits} 次', style: AppTextStyle.caption2.of(context)),
               ],
             ),
           ),
@@ -224,9 +423,17 @@ class _RuleHits extends StatelessWidget {
 }
 
 class _Ranking extends StatelessWidget {
-  const _Ranking({required this.items});
+  const _Ranking({required this.items, required this.kind});
 
   final List<TrafficRankItem> items;
+  final TrafficRankKind kind;
+
+  Glyph _glyph() => switch (kind) {
+    TrafficRankKind.domain => AppGlyphs.connections,
+    TrafficRankKind.rule => AppGlyphs.filter,
+    TrafficRankKind.node => AppGlyphs.proxies,
+    TrafficRankKind.config => AppGlyphs.settings,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +443,7 @@ class _Ranking extends StatelessWidget {
         child: Center(child: Text('暂无数据')),
       );
     }
-    final colorScheme = context.colorScheme;
+    final cs = context.colorScheme;
     return Column(
       children: [
         for (final item in items.take(30))
@@ -247,6 +454,8 @@ class _Ranking extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    GlyphIcon(_glyph(), size: 16, color: cs.onSurfaceVariant),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         item.key,
@@ -258,7 +467,7 @@ class _Ranking extends StatelessWidget {
                       '${(item.percent * 100).toStringAsFixed(1)}%',
                       style: AppTextStyle.caption1
                           .of(context)
-                          .copyWith(color: colorScheme.onSurfaceVariant),
+                          .copyWith(color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -270,7 +479,7 @@ class _Ranking extends StatelessWidget {
                     child: FractionallySizedBox(
                       alignment: AlignmentDirectional.centerStart,
                       widthFactor: item.percent.clamp(0.0, 1.0),
-                      child: ColoredBox(color: colorScheme.primary),
+                      child: ColoredBox(color: cs.primary),
                     ),
                   ),
                 ),
@@ -279,7 +488,7 @@ class _Ranking extends StatelessWidget {
                   '↑ ${item.upload.traffic.show}   ↓ ${item.download.traffic.show}',
                   style: AppTextStyle.caption2
                       .of(context)
-                      .copyWith(color: colorScheme.onSurfaceVariant),
+                      .copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
             ),

@@ -58,6 +58,34 @@ void main() {
   });
 
   test(
+    'hourly buckets accumulate deltas split by direction and proxy',
+    () async {
+      final dao = database.trafficHourlyDao;
+      final hour = DateTime(2026, 11, 19, 8);
+      await dao.add(hour: hour, download: 100, upload: 20, proxied: true);
+      await dao.add(hour: hour, download: 50, upload: 10, proxied: true);
+      await dao.add(hour: hour, download: 30, upload: 5, proxied: false);
+
+      final rows = await dao.between(
+        DateTime(2026, 11, 19),
+        DateTime(2026, 11, 20),
+      );
+      final proxiedDown = rows.firstWhere(
+        (r) => r.direction == 0 && r.proxied == 0,
+      );
+      final directDown = rows.firstWhere(
+        (r) => r.direction == 0 && r.proxied == 1,
+      );
+      expect(proxiedDown.bytes, 150);
+      expect(directDown.bytes, 30);
+      expect(
+        rows.firstWhere((r) => r.direction == 1 && r.proxied == 0).bytes,
+        30,
+      );
+    },
+  );
+
+  test(
     'between filters by overlapping lifetime and prune removes old rows',
     () async {
       final dao = database.trafficRecordsDao;
