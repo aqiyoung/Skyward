@@ -52,6 +52,16 @@ void main() {
     expect(stats.ranking.first.key, 'a.com');
     expect(stats.ranking.first.upload, 60);
     expect(stats.ranking.first.percent, closeTo(0.667, 0.01));
+    // Percentages are each ranking's share of its own sum, never > 100%.
+    expect(
+      stats.ranking.every((e) => e.percent >= 0 && e.percent <= 1),
+      isTrue,
+    );
+    expect(
+      stats.ranking.fold<double>(0, (sum, e) => sum + e.percent),
+      closeTo(1, 0.01),
+    );
+    expect(stats.ruleHits.every((e) => e.percent <= 1), isTrue);
     expect(stats.ruleHits, hasLength(2));
     expect(stats.ruleHits.firstWhere((h) => h.key == 'Match').hits, 2);
     expect(stats.trend, hasLength(1));

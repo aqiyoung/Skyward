@@ -154,13 +154,14 @@ class _OverviewCard extends ConsumerWidget {
 
   final TrafficStatistics data;
 
-  String _duration(int? startMs) {
-    if (startMs == null) return '—';
-    final minutes = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(startMs))
-        .inMinutes;
+  // runTimeProvider is the already-elapsed milliseconds, not a timestamp.
+  String _duration(int? elapsedMs) {
+    if (elapsedMs == null || elapsedMs <= 0) return '—';
+    final minutes = Duration(milliseconds: elapsedMs).inMinutes;
     if (minutes < 60) return '$minutes 分钟';
-    return '${minutes ~/ 60} 小时 ${minutes % 60} 分';
+    final hours = minutes ~/ 60;
+    if (hours < 24) return '$hours 小时 ${minutes % 60} 分';
+    return '${hours ~/ 24} 天 ${hours % 24} 小时';
   }
 
   @override
@@ -238,6 +239,7 @@ class _OverviewCard extends ConsumerWidget {
                   value: _duration(runMs),
                 ),
               ),
+              const SizedBox(width: 10),
               Expanded(
                 child: _Stat(
                   label: '代理 / 直连',
@@ -491,8 +493,13 @@ class _Ranking extends StatelessWidget {
     return Column(
       children: [
         for (final item in items.take(30))
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: ShapeDecoration(
+              color: cs.surfaceContainerLowest,
+              shape: AppShape.all(16),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -515,7 +522,7 @@ class _Ranking extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 ClipRSuperellipse(
                   borderRadius: AppRadius.full,
                   child: SizedBox(
@@ -527,7 +534,7 @@ class _Ranking extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 Text(
                   '↑ ${item.upload.traffic.show}   ↓ ${item.download.traffic.show}',
                   style: AppTextStyle.caption2

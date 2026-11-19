@@ -89,9 +89,19 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
         : (up: bucket.up, down: bucket.down + h.bytes);
   }
 
-  final totalBytes = totalUp + totalDown;
-  double share(int up, int down) =>
-      totalBytes == 0 ? 0 : (up + down) / totalBytes;
+  // Each ranking is a share of its own sum, so the two sources (per-connection
+  // records for ranks, hourly deltas for totals) never cross as numerator and
+  // denominator -- mixing them made percentages exceed 100%.
+  final rankTotal = ranks.values.fold<int>(0, (sum, v) => sum + v.up + v.down);
+  final hitTotal = ruleHits.values.fold<int>(
+    0,
+    (sum, v) => sum + v.up + v.down,
+  );
+
+  double rankShare(int up, int down) =>
+      rankTotal == 0 ? 0.0 : (up + down) / rankTotal;
+  double hitShare(int up, int down) =>
+      hitTotal == 0 ? 0.0 : (up + down) / hitTotal;
 
   final ranking =
       ranks.entries
@@ -100,7 +110,7 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
               key: e.key,
               upload: e.value.up,
               download: e.value.down,
-              percent: share(e.value.up, e.value.down),
+              percent: rankShare(e.value.up, e.value.down),
             ),
           )
           .toList()
@@ -116,7 +126,7 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
               hits: e.value.hits,
               upload: e.value.up,
               download: e.value.down,
-              percent: share(e.value.up, e.value.down),
+              percent: hitShare(e.value.up, e.value.down),
             ),
           )
           .toList()
