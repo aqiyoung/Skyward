@@ -83,4 +83,29 @@ void main() {
     );
     expect(byRule.ranking.first.key, 'Match');
   });
+
+  test('aggregates per-app usage with labels and sorted percentages', () async {
+    final buckets = [
+      (process: 'com.douyin', direction: 0, bytes: 100),
+      (process: 'com.douyin', direction: 1, bytes: 50),
+      (process: 'com.gallery', direction: 0, bytes: 30),
+      (process: '', direction: 0, bytes: 20),
+    ];
+    final usage = await aggregateAppUsageTask(buckets, {
+      'com.douyin': '抖音',
+      'com.gallery': '相册',
+    }, '未知');
+    expect(usage.totalUpload, 50);
+    expect(usage.totalDownload, 150);
+    expect(usage.appCount, 3);
+    expect(usage.apps.first.packageName, 'com.douyin');
+    expect(usage.apps.first.label, '抖音');
+    expect(usage.apps.first.percent, closeTo(150 / 200, 0.01));
+    final unknown = usage.apps.firstWhere((a) => a.packageName.isEmpty);
+    expect(unknown.label, '未知');
+    expect(
+      usage.apps.fold<double>(0, (sum, a) => sum + a.percent),
+      closeTo(1, 0.01),
+    );
+  });
 }

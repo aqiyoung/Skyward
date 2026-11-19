@@ -547,7 +547,8 @@ enum DashboardWidget {
   profiles,
   proxyGroups,
   memoryInfo,
-  trafficStats;
+  trafficStats,
+  appUsage;
 
   final List<SupportPlatform> platforms;
 
@@ -564,7 +565,7 @@ enum DashboardWidget {
     DashboardWidget.networkControl ||
     DashboardWidget.routingBoard ||
     DashboardWidget.proxyGroups ||
-    DashboardWidget.trafficStats => DashboardCardSize.tall,
+    DashboardWidget.trafficStats || DashboardWidget.appUsage => DashboardCardSize.tall,
     DashboardWidget.networkOverview ||
     DashboardWidget.profiles ||
     DashboardWidget.memoryInfo => DashboardCardSize.compact,
@@ -989,3 +990,7 @@ enum TrafficPeriod { day, week, month }
 
 /// The dimension traffic is ranked and grouped by.
 enum TrafficRankKind { domain, rule, node, config }
+
+/// The periods of the per-app usage sheet. 近7天 is a rolling window, unlike
+/// TrafficPeriod.week which is anchored to the selected date.
+enum AppUsagePeriod { today, last7Days, thisMonth, total }

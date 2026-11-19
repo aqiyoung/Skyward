@@ -121,4 +121,28 @@ void main() {
       );
     },
   );
+
+  test('app hourly buckets accumulate per process and direction', () async {
+    final dao = database.appTrafficHourlyDao;
+    final hour = DateTime(2026, 11, 19, 8);
+    await dao.add(hour: hour, process: 'com.douyin', download: 100, upload: 20);
+    await dao.add(hour: hour, process: 'com.douyin', download: 50, upload: 10);
+    await dao.add(hour: hour, process: 'com.gallery', download: 30, upload: 5);
+
+    final rows = await dao.between(
+      DateTime(2026, 11, 19),
+      DateTime(2026, 11, 20),
+    );
+    expect(rows, hasLength(4));
+    final douyinDown = rows.firstWhere(
+      (r) => r.process == 'com.douyin' && r.direction == 0,
+    );
+    expect(douyinDown.bytes, 150);
+    expect(
+      rows
+          .firstWhere((r) => r.process == 'com.gallery' && r.direction == 1)
+          .bytes,
+      5,
+    );
+  });
 }

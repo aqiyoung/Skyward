@@ -118,6 +118,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
   DashboardWidget.trafficStats,
+  DashboardWidget.appUsage,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
@@ -139,6 +140,7 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
         DashboardWidget.trafficStats,
+        DashboardWidget.appUsage,
       ]
     : defaultDashboardWidgets;
 

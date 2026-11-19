@@ -5,7 +5,6 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -41,9 +40,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
     final groups = ref.watch(
       proxiesListStateProvider.select((state) => state.groups),
     );
-    final groupIcons = <String, String>{
-      for (final g in groups) g.name: g.icon,
-    };
+    final groupIcons = <String, String>{for (final g in groups) g.name: g.icon};
     final cs = context.colorScheme;
 
     return CommonScaffold(
@@ -275,11 +272,7 @@ class _OverviewCard extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              GlyphIcon(
-                AppGlyphs.clock,
-                size: 14,
-                color: cs.onSurfaceVariant,
-              ),
+              GlyphIcon(AppGlyphs.clock, size: 14, color: cs.onSurfaceVariant),
               const SizedBox(width: 6),
               Text('累计运行', style: AppTextStyle.caption1.of(context)),
               const SizedBox(width: 8),
@@ -422,10 +415,7 @@ class _TrendCard extends StatelessWidget {
               height: 150,
             )
           else
-            const SizedBox(
-              height: 150,
-              child: Center(child: Text('暂无数据')),
-            ),
+            const SizedBox(height: 150, child: Center(child: Text('暂无数据'))),
         ],
       ),
     );
@@ -506,10 +496,7 @@ class _RuleHits extends StatelessWidget {
                         top.key,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.body.of(
-                          context,
-                          emphasized: true,
-                        ),
+                        style: AppTextStyle.body.of(context, emphasized: true),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -732,10 +719,12 @@ class _RankRow extends StatelessWidget {
                 width: 24,
                 child: Text(
                   '${index + 1}',
-                  style: AppTextStyle.caption1.of(context).copyWith(
-                    color: isTop ? cs.primary : cs.onSurfaceVariant,
-                    fontWeight: isTop ? FontWeight.w700 : FontWeight.w400,
-                  ),
+                  style: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(
+                        color: isTop ? cs.primary : cs.onSurfaceVariant,
+                        fontWeight: isTop ? FontWeight.w700 : FontWeight.w400,
+                      ),
                 ),
               ),
               leading,
