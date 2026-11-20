@@ -317,7 +317,7 @@ final class TrafficStatisticsProvider
   }
 }
 
-String _$trafficStatisticsHash() => r'55a88728bff2e4b10719aa97e70b45f5b1066076';
+String _$trafficStatisticsHash() => r'831d89333d2fc0133c5364ecc65f3f613f5c8123';
 
 /// Loads history for the selected period and aggregates it off-isolate.
 

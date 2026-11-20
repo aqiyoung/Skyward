@@ -83,7 +83,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
             _DateStrip(period: _period, range: range),
             const SizedBox(height: 8),
             Text(
-              '历史保留90天；旧版排行显示为历史汇总，未记录的流量与时长无法补回。',
+              '历史保留90天；旧版未记录的流量与时长无法补回。',
               style: AppTextStyle.caption1
                   .of(context)
                   .copyWith(color: cs.onSurfaceVariant),

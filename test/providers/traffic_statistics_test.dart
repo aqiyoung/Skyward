@@ -117,21 +117,23 @@ void main() {
       container.listen(stats, (_, _) {});
       final current = await container.read(stats.future);
       expect(current.totalDownload, 60);
-      expect(current.ranking.fold(0, (sum, row) => sum + row.download), 60);
+      expect(current.ranking.fold(0, (sum, row) => sum + row.download), 10049);
       expect(
         current.ranking.firstWhere((row) => row.key == 'example.com').download,
         50,
       );
       expect(
-        current.ranking.firstWhere((row) => row.key == '旧版历史汇总').download,
-        10,
+        current.ranking
+            .firstWhere((row) => row.key == 'old.example.com')
+            .download,
+        9999,
       );
       expect(current.runtimeMs, 60000);
       expect(current.connectionCount, 2);
       container.read(trafficRangeProvider.notifier).set(yesterday);
       final previous = await container.read(stats.future);
       expect(previous.totalDownload, 120);
-      expect(previous.ranking.fold(0, (sum, row) => sum + row.download), 120);
+      expect(previous.ranking.fold(0, (sum, row) => sum + row.download), 10099);
       expect(previous.runtimeMs, 3600000);
       final appUsage = await container.read(
         appUsageProvider(AppUsagePeriod.last7Days).future,

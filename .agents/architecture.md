@@ -1247,8 +1247,9 @@ already committed history. Retention is 90 days, not lifetime.
 advancing its in-memory cursor only after the SQLite transaction succeeds. A new Flutter engine starts at revision
 zero: replay is idempotent. Android must not also sample the request list into the legacy tables, or traffic doubles.
 Totals, application usage, rankings and recorded runtime use the same selected hourly range. Legacy hourly bytes remain
-visible; legacy connection lifetime totals cannot be split accurately across days and appear as a legacy ranking
-summary instead. Historical runtime that was never recorded is not inferred from simultaneous connection lifetimes.
+visible with their existing domain, rule and node ranking details. Legacy rankings retain connection lifetime totals,
+which cannot be split accurately across days and can differ from hourly overview totals. Historical runtime that was
+never recorded is not inferred from simultaneous connection lifetimes.
 
 A proxy client runs for days with nobody looking at it, so work that only feeds the UI stops when the UI cannot be
 seen. There are three levels of gating:

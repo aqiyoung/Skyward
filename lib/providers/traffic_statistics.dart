@@ -220,18 +220,14 @@ Future<TrafficStatistics> trafficStatistics(
   final native = await database.nativeTrafficDao.between(start, end);
   final result = await aggregateTrafficTask(
     [
-      if (hours.isNotEmpty)
+      for (final r in records)
         (
-          host: '旧版历史汇总',
-          rule: '旧版历史汇总',
-          rulePayload: '',
-          node: '旧版历史汇总',
-          upload: hours
-              .where((h) => h.direction == 1)
-              .fold<int>(0, (sum, h) => sum + h.bytes),
-          download: hours
-              .where((h) => h.direction == 0)
-              .fold<int>(0, (sum, h) => sum + h.bytes),
+          host: r.host,
+          rule: r.rule,
+          rulePayload: r.rulePayload,
+          node: r.node,
+          upload: r.upload,
+          download: r.download,
         ),
       for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
         (
@@ -264,7 +260,7 @@ Future<TrafficStatistics> trafficStatistics(
     ],
     kind.index,
     connectionCounts: [
-      if (hours.isNotEmpty) records.length,
+      for (final _ in records) 1,
       for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
         r.connections,
     ],
