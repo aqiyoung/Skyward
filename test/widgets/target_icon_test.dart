@@ -307,15 +307,15 @@ void main() {
     });
 
     test('a config icon wins for a group the set does not know, and the '
-        'Core GLOBAL wears the app mark whatever it is handed', () {
+        'Core GLOBAL wears its globe whatever it is handed', () {
       expect(GroupIconSource.of(name: 'mine', icon: own), own);
       expect(
         GroupIconSource.of(name: 'GLOBAL', icon: ''),
-        GroupIconSource.logo,
+        GroupIconSource.global,
       );
       expect(
         GroupIconSource.of(name: 'GLOBAL', icon: own),
-        GroupIconSource.logo,
+        GroupIconSource.global,
       );
     });
 

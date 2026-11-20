@@ -232,6 +232,11 @@ abstract final class GroupIconSource {
   /// The app's own mark, which stands in for a group no picture suits.
   static const logo = 'assets/images/icon.png';
 
+  /// The globe the Core's own GLOBAL group wears: that group is the
+  /// Core's, not a profile's, so it keeps this picture whatever icon a
+  /// profile names for it.
+  static const global = 'assets/images/global.png';
+
   /// The routing groups the default config builds, by the name it gives them:
   /// each wears the picture that says what it does.
   static const _routing = {
@@ -287,11 +292,11 @@ abstract final class GroupIconSource {
   /// only the face a group wears when its config leaves it bare. That keeps a
   /// subscription's icons authoritative — the same fix [262523e0] first gave
   /// GoogleFCM, now extended to every group. The one exception is the Core's
-  /// own GLOBAL: that group is the Core's, not the profile's, so it wears the
-  /// app's mark whatever a profile draws on it.
+  /// own GLOBAL: that group is the Core's, not the profile's, so it wears its
+  /// globe whatever a profile draws on it.
   static String of({required String name, required String icon}) {
     if (GroupMonogram.isGlobal(name)) {
-      return logo;
+      return global;
     }
     if (icon.isNotEmpty) {
       return icon;
