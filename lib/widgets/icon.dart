@@ -177,6 +177,13 @@ class GroupMonogram extends StatelessWidget {
   /// Whether [name] is the Core's own GLOBAL group.
   static bool isGlobal(String name) => name == GroupName.GLOBAL.name;
 
+  /// The name the group goes by on screen. GLOBAL's name is an identifier —
+  /// the config, the rules and the Core's API all key on it — so the group
+  /// itself keeps it and only the label changes, to the word the app already
+  /// uses for its global mode. Any other group shows its own name.
+  static String displayName(String name) =>
+      isGlobal(name) ? currentAppLocalizations.global : name;
+
   String get _mark {
     if (isGlobal(name)) {
       final code = exitCountryCode;
@@ -279,8 +286,14 @@ abstract final class GroupIconSource {
   /// The profile's own picture wins whenever it names one: a bundled mark is
   /// only the face a group wears when its config leaves it bare. That keeps a
   /// subscription's icons authoritative — the same fix [262523e0] first gave
-  /// GoogleFCM, now extended to every group.
+  /// GoogleFCM, now extended to every group. [GroupName.GLOBAL] is the one
+  /// exception: it is the Core's own group rather than a profile's, so it
+  /// wears the app's own mark whatever a config names for it — the globe
+  /// configs usually name says nothing about the app it belongs to.
   static String of({required String name, required String icon}) {
+    if (GroupMonogram.isGlobal(name)) {
+      return logo;
+    }
     if (icon.isNotEmpty) {
       return icon;
     }
@@ -291,9 +304,6 @@ abstract final class GroupIconSource {
     final service = _services[name];
     if (service != null) {
       return '$_dir$service';
-    }
-    if (GroupMonogram.isGlobal(name)) {
-      return '';
     }
     final guessed = _guess(name, _serviceKeywords);
     if (guessed != null) {
@@ -675,8 +685,8 @@ abstract final class GroupIconSource {
 }
 
 /// Stands in for a group whose picture is empty or unreadable: the app's own
-/// mark. [GroupName.GLOBAL] keeps [GroupMonogram]'s flag, which says where
-/// traffic leaves rather than what the group is.
+/// mark — which is also what [GroupName.GLOBAL] wears outright, so the badge
+/// and the picture never disagree about the Core's group.
 class GroupBadge extends StatelessWidget {
   const GroupBadge({super.key, required this.name, this.exitCountryCode});
 
@@ -703,9 +713,6 @@ class GroupBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (GroupMonogram.isGlobal(name)) {
-      return GroupMonogram(name, exitCountryCode: exitCountryCode);
-    }
     final size = IconTheme.of(context).size ?? 24;
     final flag = GroupIconSource.flagOf(name);
     if (flag.isNotEmpty) {
