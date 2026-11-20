@@ -29,7 +29,7 @@ on:
     branches: [ rust-core ]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-rust-${{ github.ref }}
@@ -160,10 +160,29 @@ jobs:
             echo "::error::unexpected signer cert (expected $EXPECTED_CERT)"; exit 1
           fi
 
-      - name: Push APK to Telegram (preview chat)
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          notes="Skyward ${VERSION} - Rust core edition (arm64)."
+          if [ -n "${CHANGELOG:-}" ]; then
+            notes=$(printf '%s\n\n%s' "$notes" "$CHANGELOG")
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/skyward-rust-core-arm64.apk --clobber
+            gh release edit "$tag" --title "Skyward ${VERSION} (Rust core)" --notes "$notes" --prerelease
+          else
+            gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "Skyward ${VERSION} (Rust core)" --notes "$notes" --prerelease
+          fi
+          echo "release published: $tag"
+          - name: Push APK to Telegram (subscription channel)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
