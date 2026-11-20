@@ -149,7 +149,7 @@ class _GroupTabsState extends State<GroupTabs> {
             items: [
               for (final (index, group) in widget.groups.indexed)
                 CommonPopupMenuItem(
-                  label: group.name,
+                  label: GroupMonogram.labelOf(context, group.name),
                   checked: index == widget.controller.index,
                   onPressed: () => _select(index),
                 ),
@@ -273,7 +273,9 @@ class _TabExtents {
     final adjustment = density.baseSizeAdjustment.dx;
     final minWidth = max(0.0, minimumSize.width + adjustment);
     final padding = 2 * (_tabPadding + max(0.0, adjustment));
-    final names = [for (final group in groups) group.name];
+    final names = [
+      for (final group in groups) GroupMonogram.labelOf(context, group.name),
+    ];
     final key = (
       _NamesKey(names),
       style,
@@ -401,7 +403,10 @@ class _GroupTabState extends State<_GroupTab> {
                   ? colorScheme.onPrimary
                   : colorScheme.onSurfaceVariant,
             ),
-        child: EmojiText(widget.name, maxLines: 1),
+        child: EmojiText(
+          GroupMonogram.labelOf(context, widget.name),
+          maxLines: 1,
+        ),
       ),
     );
   }

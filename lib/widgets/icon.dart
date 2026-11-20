@@ -177,6 +177,13 @@ class GroupMonogram extends StatelessWidget {
   /// Whether [name] is the Core's own GLOBAL group.
   static bool isGlobal(String name) => name == GroupName.GLOBAL.name;
 
+  /// The label [name] is shown by. The Core's own group wears the app's word
+  /// for it — the same word the mode switch uses — because GLOBAL is the name
+  /// the Core and every profile know it by, not a label a reader should meet.
+  /// Every other group is shown by its own name.
+  static String labelOf(BuildContext context, String name) =>
+      isGlobal(name) ? context.appLocalizations.global : name;
+
   String get _mark {
     if (isGlobal(name)) {
       final code = exitCountryCode;
@@ -279,8 +286,13 @@ abstract final class GroupIconSource {
   /// The profile's own picture wins whenever it names one: a bundled mark is
   /// only the face a group wears when its config leaves it bare. That keeps a
   /// subscription's icons authoritative — the same fix [262523e0] first gave
-  /// GoogleFCM, now extended to every group.
+  /// GoogleFCM, now extended to every group. The one exception is the Core's
+  /// own GLOBAL: that group is the Core's, not the profile's, so it wears the
+  /// app's mark whatever a profile draws on it.
   static String of({required String name, required String icon}) {
+    if (GroupMonogram.isGlobal(name)) {
+      return logo;
+    }
     if (icon.isNotEmpty) {
       return icon;
     }
@@ -291,9 +303,6 @@ abstract final class GroupIconSource {
     final service = _services[name];
     if (service != null) {
       return '$_dir$service';
-    }
-    if (GroupMonogram.isGlobal(name)) {
-      return '';
     }
     final guessed = _guess(name, _serviceKeywords);
     if (guessed != null) {

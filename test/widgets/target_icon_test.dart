@@ -307,9 +307,16 @@ void main() {
     });
 
     test('a config icon wins for a group the set does not know, and the '
-        'Core GLOBAL wears its globe when handed no icon', () {
+        'Core GLOBAL wears the app mark whatever it is handed', () {
       expect(GroupIconSource.of(name: 'mine', icon: own), own);
-      expect(GroupIconSource.of(name: 'GLOBAL', icon: ''), '');
+      expect(
+        GroupIconSource.of(name: 'GLOBAL', icon: ''),
+        GroupIconSource.logo,
+      );
+      expect(
+        GroupIconSource.of(name: 'GLOBAL', icon: own),
+        GroupIconSource.logo,
+      );
     });
 
     testWidgets('the badge shows the app mark, and the exit flag on GLOBAL', (
