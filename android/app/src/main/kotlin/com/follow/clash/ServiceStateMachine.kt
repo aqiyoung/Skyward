@@ -371,6 +371,7 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             mapOf(
                 "home-dir" to homeDirPath,
                 "version" to sdkInt,
+                "time-zone" to java.util.TimeZone.getDefault().id,
             ),
         )
 

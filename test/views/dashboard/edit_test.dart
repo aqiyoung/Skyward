@@ -36,6 +36,8 @@ void main() {
         .update(
           (state) => state.copyWith(
             dashboardWidgets: widgets,
+            // One card per pile: these tests are about editing, not about the
+            // piles the cards fall into by size on a fresh board.
             dashboardStacks: [
               for (final card in widgets) [card],
             ],
@@ -286,6 +288,8 @@ void main() {
     await gesture.up();
     await settle(tester);
 
+    // The dropped card joins the pile it was let go on, under the card that
+    // was already there, and the flat list reads the same way.
     expect(container.read(appSettingProvider).dashboardStacks, const [
       [DashboardWidget.currentOutbound],
       [DashboardWidget.proxyGroups, DashboardWidget.memoryInfo],

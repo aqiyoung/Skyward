@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+/// Sorts the cards into the places they show in. Lives among the models so the
+/// saved arrangement and the fallback share one definition; re-exported here
+/// because every reader of the board already goes through this file.
 export 'package:skyward/models/dashboard_stacks.dart' show dashboardStacksOf;
 
 const _minDesktopWidth = 640.0;

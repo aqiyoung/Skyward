@@ -4749,7 +4749,9 @@ as Map<String, String>,
 /// @nodoc
 mixin _$DashboardState {
 
- List<DashboardWidget> get dashboardWidgets; List<List<DashboardWidget>>? get dashboardStacks;
+ List<DashboardWidget> get dashboardWidgets;/// The piles the reader stacked by hand, top card first; null while the
+/// board still sorts itself by size.
+ List<List<DashboardWidget>>? get dashboardStacks;
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4957,7 +4959,11 @@ class _DashboardState implements DashboardState {
   return EqualUnmodifiableListView(_dashboardWidgets);
 }
 
+/// The piles the reader stacked by hand, top card first; null while the
+/// board still sorts itself by size.
  final  List<List<DashboardWidget>>? _dashboardStacks;
+/// The piles the reader stacked by hand, top card first; null while the
+/// board still sorts itself by size.
 @override List<List<DashboardWidget>>? get dashboardStacks {
   final value = _dashboardStacks;
   if (value == null) return null;

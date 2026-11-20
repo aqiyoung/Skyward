@@ -173,7 +173,8 @@ class ServiceStateMachineTest {
     fun `initParams spells the keys the Go wrapper expects`() {
         val json = ServiceStateMachine.initParams("/files", 34)
 
-        assertEquals("""{"home-dir":"/files","version":34}""", json)
+        val zone = java.util.TimeZone.getDefault().id
+        assertEquals("""{"home-dir":"/files","version":34,"time-zone":"$zone"}""", json)
     }
 
     @Test

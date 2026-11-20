@@ -65,7 +65,6 @@
   "textSection": "文字",
   "configuration": "配置",
   "data": "数据",
-
   "extend": "扩展",
   "runtimeConfig": "运行时配置",
   "allowLan": "允许局域网接入",
@@ -1090,5 +1089,10 @@
   "webrtcLeakAdvice": "默认「拦截」下看不到反射地址属于正常。要验证真实泄露，请先到「进阶配置 → 网络」把 WebRTC 临时改成「不处理」，检测后再切回。",
   "webrtcLeakExternal": "在浏览器中验证 WebRTC",
   "hapticFeedback": "震动反馈",
-  "hapticFeedbackDesc": "在应用内点击时给予轻微震动。"
+  "hapticFeedbackDesc": "在应用内点击时给予轻微震动。",
+  "usageStats": "使用统计",
+  "usageDetails": "使用详情",
+  "last7Days": "近 7 天",
+  "thisMonth": "本月",
+  "today": "今日"
 }

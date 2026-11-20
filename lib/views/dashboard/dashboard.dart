@@ -364,6 +364,11 @@ class _MobileDashboard extends ConsumerWidget {
         SliverLayoutBuilder(
           builder: (context, constraints) {
             final side = dashboardMobileSideOf(constraints.crossAxisExtent);
+            // The piles come from the saved arrangement when the reader has
+            // stacked any by hand, and from the cards' sizes before that. A
+            // pile is what the board draws in one place, so a card this
+            // platform cannot show drops out of its pile and a pile left empty
+            // drops out of the board.
             final stacks = [
               for (final pile in dashboard.stacks)
                 [

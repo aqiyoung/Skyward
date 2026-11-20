@@ -35,7 +35,9 @@ void main() {
     );
   });
 
-  test('cards of one size share a pile even when separated', () {
+  test('a size is gathered where it first appears', () {
+    // The two tall cards are parted by a compact one, and still end up in one
+    // pile: a place holds the cards of its size, wherever they were put.
     expect(
       dashboardStacksOf(const [
         DashboardWidget.proxyGroups,

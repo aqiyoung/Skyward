@@ -4597,6 +4597,1961 @@ class IpQualitiesCompanion extends UpdateCompanion<IpQualityRecord> {
   }
 }
 
+class $TrafficRecordsTable extends TrafficRecords
+    with TableInfo<$TrafficRecordsTable, TrafficRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrafficRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _connectionIdMeta = const VerificationMeta(
+    'connectionId',
+  );
+  @override
+  late final GeneratedColumn<String> connectionId = GeneratedColumn<String>(
+    'connection_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hostMeta = const VerificationMeta('host');
+  @override
+  late final GeneratedColumn<String> host = GeneratedColumn<String>(
+    'host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ruleMeta = const VerificationMeta('rule');
+  @override
+  late final GeneratedColumn<String> rule = GeneratedColumn<String>(
+    'rule',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rulePayloadMeta = const VerificationMeta(
+    'rulePayload',
+  );
+  @override
+  late final GeneratedColumn<String> rulePayload = GeneratedColumn<String>(
+    'rule_payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nodeMeta = const VerificationMeta('node');
+  @override
+  late final GeneratedColumn<String> node = GeneratedColumn<String>(
+    'node',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _networkMeta = const VerificationMeta(
+    'network',
+  );
+  @override
+  late final GeneratedColumn<String> network = GeneratedColumn<String>(
+    'network',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uploadMeta = const VerificationMeta('upload');
+  @override
+  late final GeneratedColumn<int> upload = GeneratedColumn<int>(
+    'upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _downloadMeta = const VerificationMeta(
+    'download',
+  );
+  @override
+  late final GeneratedColumn<int> download = GeneratedColumn<int>(
+    'download',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    connectionId,
+    startedAt,
+    endedAt,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    upload,
+    download,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'traffic_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrafficRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('connection_id')) {
+      context.handle(
+        _connectionIdMeta,
+        connectionId.isAcceptableOrUnknown(
+          data['connection_id']!,
+          _connectionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_connectionIdMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endedAtMeta);
+    }
+    if (data.containsKey('host')) {
+      context.handle(
+        _hostMeta,
+        host.isAcceptableOrUnknown(data['host']!, _hostMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hostMeta);
+    }
+    if (data.containsKey('rule')) {
+      context.handle(
+        _ruleMeta,
+        rule.isAcceptableOrUnknown(data['rule']!, _ruleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleMeta);
+    }
+    if (data.containsKey('rule_payload')) {
+      context.handle(
+        _rulePayloadMeta,
+        rulePayload.isAcceptableOrUnknown(
+          data['rule_payload']!,
+          _rulePayloadMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rulePayloadMeta);
+    }
+    if (data.containsKey('node')) {
+      context.handle(
+        _nodeMeta,
+        node.isAcceptableOrUnknown(data['node']!, _nodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nodeMeta);
+    }
+    if (data.containsKey('network')) {
+      context.handle(
+        _networkMeta,
+        network.isAcceptableOrUnknown(data['network']!, _networkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_networkMeta);
+    }
+    if (data.containsKey('upload')) {
+      context.handle(
+        _uploadMeta,
+        upload.isAcceptableOrUnknown(data['upload']!, _uploadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uploadMeta);
+    }
+    if (data.containsKey('download')) {
+      context.handle(
+        _downloadMeta,
+        download.isAcceptableOrUnknown(data['download']!, _downloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {connectionId};
+  @override
+  TrafficRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrafficRecord(
+      connectionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}connection_id'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      )!,
+      host: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}host'],
+      )!,
+      rule: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule'],
+      )!,
+      rulePayload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule_payload'],
+      )!,
+      node: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}node'],
+      )!,
+      network: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}network'],
+      )!,
+      upload: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}upload'],
+      )!,
+      download: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download'],
+      )!,
+    );
+  }
+
+  @override
+  $TrafficRecordsTable createAlias(String alias) {
+    return $TrafficRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class TrafficRecord extends DataClass implements Insertable<TrafficRecord> {
+  final String connectionId;
+  final DateTime startedAt;
+  final DateTime endedAt;
+  final String host;
+  final String rule;
+  final String rulePayload;
+
+  /// The leaf of the connection's chain -- the node it finally left through.
+  final String node;
+  final String network;
+  final int upload;
+  final int download;
+  const TrafficRecord({
+    required this.connectionId,
+    required this.startedAt,
+    required this.endedAt,
+    required this.host,
+    required this.rule,
+    required this.rulePayload,
+    required this.node,
+    required this.network,
+    required this.upload,
+    required this.download,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['connection_id'] = Variable<String>(connectionId);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    map['ended_at'] = Variable<DateTime>(endedAt);
+    map['host'] = Variable<String>(host);
+    map['rule'] = Variable<String>(rule);
+    map['rule_payload'] = Variable<String>(rulePayload);
+    map['node'] = Variable<String>(node);
+    map['network'] = Variable<String>(network);
+    map['upload'] = Variable<int>(upload);
+    map['download'] = Variable<int>(download);
+    return map;
+  }
+
+  TrafficRecordsCompanion toCompanion(bool nullToAbsent) {
+    return TrafficRecordsCompanion(
+      connectionId: Value(connectionId),
+      startedAt: Value(startedAt),
+      endedAt: Value(endedAt),
+      host: Value(host),
+      rule: Value(rule),
+      rulePayload: Value(rulePayload),
+      node: Value(node),
+      network: Value(network),
+      upload: Value(upload),
+      download: Value(download),
+    );
+  }
+
+  factory TrafficRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrafficRecord(
+      connectionId: serializer.fromJson<String>(json['connectionId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime>(json['endedAt']),
+      host: serializer.fromJson<String>(json['host']),
+      rule: serializer.fromJson<String>(json['rule']),
+      rulePayload: serializer.fromJson<String>(json['rulePayload']),
+      node: serializer.fromJson<String>(json['node']),
+      network: serializer.fromJson<String>(json['network']),
+      upload: serializer.fromJson<int>(json['upload']),
+      download: serializer.fromJson<int>(json['download']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'connectionId': serializer.toJson<String>(connectionId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'endedAt': serializer.toJson<DateTime>(endedAt),
+      'host': serializer.toJson<String>(host),
+      'rule': serializer.toJson<String>(rule),
+      'rulePayload': serializer.toJson<String>(rulePayload),
+      'node': serializer.toJson<String>(node),
+      'network': serializer.toJson<String>(network),
+      'upload': serializer.toJson<int>(upload),
+      'download': serializer.toJson<int>(download),
+    };
+  }
+
+  TrafficRecord copyWith({
+    String? connectionId,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    String? host,
+    String? rule,
+    String? rulePayload,
+    String? node,
+    String? network,
+    int? upload,
+    int? download,
+  }) => TrafficRecord(
+    connectionId: connectionId ?? this.connectionId,
+    startedAt: startedAt ?? this.startedAt,
+    endedAt: endedAt ?? this.endedAt,
+    host: host ?? this.host,
+    rule: rule ?? this.rule,
+    rulePayload: rulePayload ?? this.rulePayload,
+    node: node ?? this.node,
+    network: network ?? this.network,
+    upload: upload ?? this.upload,
+    download: download ?? this.download,
+  );
+  TrafficRecord copyWithCompanion(TrafficRecordsCompanion data) {
+    return TrafficRecord(
+      connectionId: data.connectionId.present
+          ? data.connectionId.value
+          : this.connectionId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      host: data.host.present ? data.host.value : this.host,
+      rule: data.rule.present ? data.rule.value : this.rule,
+      rulePayload: data.rulePayload.present
+          ? data.rulePayload.value
+          : this.rulePayload,
+      node: data.node.present ? data.node.value : this.node,
+      network: data.network.present ? data.network.value : this.network,
+      upload: data.upload.present ? data.upload.value : this.upload,
+      download: data.download.present ? data.download.value : this.download,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficRecord(')
+          ..write('connectionId: $connectionId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    connectionId,
+    startedAt,
+    endedAt,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    upload,
+    download,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrafficRecord &&
+          other.connectionId == this.connectionId &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.host == this.host &&
+          other.rule == this.rule &&
+          other.rulePayload == this.rulePayload &&
+          other.node == this.node &&
+          other.network == this.network &&
+          other.upload == this.upload &&
+          other.download == this.download);
+}
+
+class TrafficRecordsCompanion extends UpdateCompanion<TrafficRecord> {
+  final Value<String> connectionId;
+  final Value<DateTime> startedAt;
+  final Value<DateTime> endedAt;
+  final Value<String> host;
+  final Value<String> rule;
+  final Value<String> rulePayload;
+  final Value<String> node;
+  final Value<String> network;
+  final Value<int> upload;
+  final Value<int> download;
+  final Value<int> rowid;
+  const TrafficRecordsCompanion({
+    this.connectionId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.host = const Value.absent(),
+    this.rule = const Value.absent(),
+    this.rulePayload = const Value.absent(),
+    this.node = const Value.absent(),
+    this.network = const Value.absent(),
+    this.upload = const Value.absent(),
+    this.download = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrafficRecordsCompanion.insert({
+    required String connectionId,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required String host,
+    required String rule,
+    required String rulePayload,
+    required String node,
+    required String network,
+    required int upload,
+    required int download,
+    this.rowid = const Value.absent(),
+  }) : connectionId = Value(connectionId),
+       startedAt = Value(startedAt),
+       endedAt = Value(endedAt),
+       host = Value(host),
+       rule = Value(rule),
+       rulePayload = Value(rulePayload),
+       node = Value(node),
+       network = Value(network),
+       upload = Value(upload),
+       download = Value(download);
+  static Insertable<TrafficRecord> custom({
+    Expression<String>? connectionId,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
+    Expression<String>? host,
+    Expression<String>? rule,
+    Expression<String>? rulePayload,
+    Expression<String>? node,
+    Expression<String>? network,
+    Expression<int>? upload,
+    Expression<int>? download,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (connectionId != null) 'connection_id': connectionId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (host != null) 'host': host,
+      if (rule != null) 'rule': rule,
+      if (rulePayload != null) 'rule_payload': rulePayload,
+      if (node != null) 'node': node,
+      if (network != null) 'network': network,
+      if (upload != null) 'upload': upload,
+      if (download != null) 'download': download,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrafficRecordsCompanion copyWith({
+    Value<String>? connectionId,
+    Value<DateTime>? startedAt,
+    Value<DateTime>? endedAt,
+    Value<String>? host,
+    Value<String>? rule,
+    Value<String>? rulePayload,
+    Value<String>? node,
+    Value<String>? network,
+    Value<int>? upload,
+    Value<int>? download,
+    Value<int>? rowid,
+  }) {
+    return TrafficRecordsCompanion(
+      connectionId: connectionId ?? this.connectionId,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      host: host ?? this.host,
+      rule: rule ?? this.rule,
+      rulePayload: rulePayload ?? this.rulePayload,
+      node: node ?? this.node,
+      network: network ?? this.network,
+      upload: upload ?? this.upload,
+      download: download ?? this.download,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (connectionId.present) {
+      map['connection_id'] = Variable<String>(connectionId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (host.present) {
+      map['host'] = Variable<String>(host.value);
+    }
+    if (rule.present) {
+      map['rule'] = Variable<String>(rule.value);
+    }
+    if (rulePayload.present) {
+      map['rule_payload'] = Variable<String>(rulePayload.value);
+    }
+    if (node.present) {
+      map['node'] = Variable<String>(node.value);
+    }
+    if (network.present) {
+      map['network'] = Variable<String>(network.value);
+    }
+    if (upload.present) {
+      map['upload'] = Variable<int>(upload.value);
+    }
+    if (download.present) {
+      map['download'] = Variable<int>(download.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficRecordsCompanion(')
+          ..write('connectionId: $connectionId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TrafficHourlyTable extends TrafficHourly
+    with TableInfo<$TrafficHourlyTable, TrafficHour> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrafficHourlyTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<int> direction = GeneratedColumn<int>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proxiedMeta = const VerificationMeta(
+    'proxied',
+  );
+  @override
+  late final GeneratedColumn<int> proxied = GeneratedColumn<int>(
+    'proxied',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  @override
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [hour, direction, proxied, bytes];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'traffic_hourly';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrafficHour> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hourMeta);
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_directionMeta);
+    }
+    if (data.containsKey('proxied')) {
+      context.handle(
+        _proxiedMeta,
+        proxied.isAcceptableOrUnknown(data['proxied']!, _proxiedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proxiedMeta);
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bytesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {hour, direction, proxied};
+  @override
+  TrafficHour map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrafficHour(
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}direction'],
+      )!,
+      proxied: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}proxied'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+    );
+  }
+
+  @override
+  $TrafficHourlyTable createAlias(String alias) {
+    return $TrafficHourlyTable(attachedDatabase, alias);
+  }
+}
+
+class TrafficHour extends DataClass implements Insertable<TrafficHour> {
+  /// The hour start, as milliseconds since epoch (UTC).
+  final int hour;
+
+  /// 0 = download, 1 = upload.
+  final int direction;
+
+  /// 0 = proxied, 1 = direct.
+  final int proxied;
+  final int bytes;
+  const TrafficHour({
+    required this.hour,
+    required this.direction,
+    required this.proxied,
+    required this.bytes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['hour'] = Variable<int>(hour);
+    map['direction'] = Variable<int>(direction);
+    map['proxied'] = Variable<int>(proxied);
+    map['bytes'] = Variable<int>(bytes);
+    return map;
+  }
+
+  TrafficHourlyCompanion toCompanion(bool nullToAbsent) {
+    return TrafficHourlyCompanion(
+      hour: Value(hour),
+      direction: Value(direction),
+      proxied: Value(proxied),
+      bytes: Value(bytes),
+    );
+  }
+
+  factory TrafficHour.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrafficHour(
+      hour: serializer.fromJson<int>(json['hour']),
+      direction: serializer.fromJson<int>(json['direction']),
+      proxied: serializer.fromJson<int>(json['proxied']),
+      bytes: serializer.fromJson<int>(json['bytes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'hour': serializer.toJson<int>(hour),
+      'direction': serializer.toJson<int>(direction),
+      'proxied': serializer.toJson<int>(proxied),
+      'bytes': serializer.toJson<int>(bytes),
+    };
+  }
+
+  TrafficHour copyWith({int? hour, int? direction, int? proxied, int? bytes}) =>
+      TrafficHour(
+        hour: hour ?? this.hour,
+        direction: direction ?? this.direction,
+        proxied: proxied ?? this.proxied,
+        bytes: bytes ?? this.bytes,
+      );
+  TrafficHour copyWithCompanion(TrafficHourlyCompanion data) {
+    return TrafficHour(
+      hour: data.hour.present ? data.hour.value : this.hour,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      proxied: data.proxied.present ? data.proxied.value : this.proxied,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficHour(')
+          ..write('hour: $hour, ')
+          ..write('direction: $direction, ')
+          ..write('proxied: $proxied, ')
+          ..write('bytes: $bytes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(hour, direction, proxied, bytes);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrafficHour &&
+          other.hour == this.hour &&
+          other.direction == this.direction &&
+          other.proxied == this.proxied &&
+          other.bytes == this.bytes);
+}
+
+class TrafficHourlyCompanion extends UpdateCompanion<TrafficHour> {
+  final Value<int> hour;
+  final Value<int> direction;
+  final Value<int> proxied;
+  final Value<int> bytes;
+  final Value<int> rowid;
+  const TrafficHourlyCompanion({
+    this.hour = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.proxied = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrafficHourlyCompanion.insert({
+    required int hour,
+    required int direction,
+    required int proxied,
+    required int bytes,
+    this.rowid = const Value.absent(),
+  }) : hour = Value(hour),
+       direction = Value(direction),
+       proxied = Value(proxied),
+       bytes = Value(bytes);
+  static Insertable<TrafficHour> custom({
+    Expression<int>? hour,
+    Expression<int>? direction,
+    Expression<int>? proxied,
+    Expression<int>? bytes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (hour != null) 'hour': hour,
+      if (direction != null) 'direction': direction,
+      if (proxied != null) 'proxied': proxied,
+      if (bytes != null) 'bytes': bytes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrafficHourlyCompanion copyWith({
+    Value<int>? hour,
+    Value<int>? direction,
+    Value<int>? proxied,
+    Value<int>? bytes,
+    Value<int>? rowid,
+  }) {
+    return TrafficHourlyCompanion(
+      hour: hour ?? this.hour,
+      direction: direction ?? this.direction,
+      proxied: proxied ?? this.proxied,
+      bytes: bytes ?? this.bytes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<int>(direction.value);
+    }
+    if (proxied.present) {
+      map['proxied'] = Variable<int>(proxied.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrafficHourlyCompanion(')
+          ..write('hour: $hour, ')
+          ..write('direction: $direction, ')
+          ..write('proxied: $proxied, ')
+          ..write('bytes: $bytes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AppTrafficHourlyTable extends AppTrafficHourly
+    with TableInfo<$AppTrafficHourlyTable, AppTrafficHour> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppTrafficHourlyTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _processMeta = const VerificationMeta(
+    'process',
+  );
+  @override
+  late final GeneratedColumn<String> process = GeneratedColumn<String>(
+    'process',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<int> direction = GeneratedColumn<int>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bytesMeta = const VerificationMeta('bytes');
+  @override
+  late final GeneratedColumn<int> bytes = GeneratedColumn<int>(
+    'bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [hour, process, direction, bytes];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_traffic_hourly';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppTrafficHour> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hourMeta);
+    }
+    if (data.containsKey('process')) {
+      context.handle(
+        _processMeta,
+        process.isAcceptableOrUnknown(data['process']!, _processMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_processMeta);
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_directionMeta);
+    }
+    if (data.containsKey('bytes')) {
+      context.handle(
+        _bytesMeta,
+        bytes.isAcceptableOrUnknown(data['bytes']!, _bytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bytesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {hour, process, direction};
+  @override
+  AppTrafficHour map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppTrafficHour(
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      process: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}process'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}direction'],
+      )!,
+      bytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes'],
+      )!,
+    );
+  }
+
+  @override
+  $AppTrafficHourlyTable createAlias(String alias) {
+    return $AppTrafficHourlyTable(attachedDatabase, alias);
+  }
+}
+
+class AppTrafficHour extends DataClass implements Insertable<AppTrafficHour> {
+  /// Hour start, milliseconds since epoch (UTC).
+  final int hour;
+
+  /// The connection's process (package name), '' when unknown.
+  final String process;
+
+  /// 0 = download, 1 = upload.
+  final int direction;
+  final int bytes;
+  const AppTrafficHour({
+    required this.hour,
+    required this.process,
+    required this.direction,
+    required this.bytes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['hour'] = Variable<int>(hour);
+    map['process'] = Variable<String>(process);
+    map['direction'] = Variable<int>(direction);
+    map['bytes'] = Variable<int>(bytes);
+    return map;
+  }
+
+  AppTrafficHourlyCompanion toCompanion(bool nullToAbsent) {
+    return AppTrafficHourlyCompanion(
+      hour: Value(hour),
+      process: Value(process),
+      direction: Value(direction),
+      bytes: Value(bytes),
+    );
+  }
+
+  factory AppTrafficHour.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppTrafficHour(
+      hour: serializer.fromJson<int>(json['hour']),
+      process: serializer.fromJson<String>(json['process']),
+      direction: serializer.fromJson<int>(json['direction']),
+      bytes: serializer.fromJson<int>(json['bytes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'hour': serializer.toJson<int>(hour),
+      'process': serializer.toJson<String>(process),
+      'direction': serializer.toJson<int>(direction),
+      'bytes': serializer.toJson<int>(bytes),
+    };
+  }
+
+  AppTrafficHour copyWith({
+    int? hour,
+    String? process,
+    int? direction,
+    int? bytes,
+  }) => AppTrafficHour(
+    hour: hour ?? this.hour,
+    process: process ?? this.process,
+    direction: direction ?? this.direction,
+    bytes: bytes ?? this.bytes,
+  );
+  AppTrafficHour copyWithCompanion(AppTrafficHourlyCompanion data) {
+    return AppTrafficHour(
+      hour: data.hour.present ? data.hour.value : this.hour,
+      process: data.process.present ? data.process.value : this.process,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      bytes: data.bytes.present ? data.bytes.value : this.bytes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppTrafficHour(')
+          ..write('hour: $hour, ')
+          ..write('process: $process, ')
+          ..write('direction: $direction, ')
+          ..write('bytes: $bytes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(hour, process, direction, bytes);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppTrafficHour &&
+          other.hour == this.hour &&
+          other.process == this.process &&
+          other.direction == this.direction &&
+          other.bytes == this.bytes);
+}
+
+class AppTrafficHourlyCompanion extends UpdateCompanion<AppTrafficHour> {
+  final Value<int> hour;
+  final Value<String> process;
+  final Value<int> direction;
+  final Value<int> bytes;
+  final Value<int> rowid;
+  const AppTrafficHourlyCompanion({
+    this.hour = const Value.absent(),
+    this.process = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.bytes = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AppTrafficHourlyCompanion.insert({
+    required int hour,
+    required String process,
+    required int direction,
+    required int bytes,
+    this.rowid = const Value.absent(),
+  }) : hour = Value(hour),
+       process = Value(process),
+       direction = Value(direction),
+       bytes = Value(bytes);
+  static Insertable<AppTrafficHour> custom({
+    Expression<int>? hour,
+    Expression<String>? process,
+    Expression<int>? direction,
+    Expression<int>? bytes,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (hour != null) 'hour': hour,
+      if (process != null) 'process': process,
+      if (direction != null) 'direction': direction,
+      if (bytes != null) 'bytes': bytes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AppTrafficHourlyCompanion copyWith({
+    Value<int>? hour,
+    Value<String>? process,
+    Value<int>? direction,
+    Value<int>? bytes,
+    Value<int>? rowid,
+  }) {
+    return AppTrafficHourlyCompanion(
+      hour: hour ?? this.hour,
+      process: process ?? this.process,
+      direction: direction ?? this.direction,
+      bytes: bytes ?? this.bytes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (process.present) {
+      map['process'] = Variable<String>(process.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<int>(direction.value);
+    }
+    if (bytes.present) {
+      map['bytes'] = Variable<int>(bytes.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppTrafficHourlyCompanion(')
+          ..write('hour: $hour, ')
+          ..write('process: $process, ')
+          ..write('direction: $direction, ')
+          ..write('bytes: $bytes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $NativeTrafficTable extends NativeTraffic
+    with TableInfo<$NativeTrafficTable, NativeTrafficRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NativeTrafficTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _bucketIdMeta = const VerificationMeta(
+    'bucketId',
+  );
+  @override
+  late final GeneratedColumn<String> bucketId = GeneratedColumn<String>(
+    'bucket_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hourMeta = const VerificationMeta('hour');
+  @override
+  late final GeneratedColumn<int> hour = GeneratedColumn<int>(
+    'hour',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hostMeta = const VerificationMeta('host');
+  @override
+  late final GeneratedColumn<String> host = GeneratedColumn<String>(
+    'host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ruleMeta = const VerificationMeta('rule');
+  @override
+  late final GeneratedColumn<String> rule = GeneratedColumn<String>(
+    'rule',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rulePayloadMeta = const VerificationMeta(
+    'rulePayload',
+  );
+  @override
+  late final GeneratedColumn<String> rulePayload = GeneratedColumn<String>(
+    'rule_payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nodeMeta = const VerificationMeta('node');
+  @override
+  late final GeneratedColumn<String> node = GeneratedColumn<String>(
+    'node',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _networkMeta = const VerificationMeta(
+    'network',
+  );
+  @override
+  late final GeneratedColumn<String> network = GeneratedColumn<String>(
+    'network',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _processMeta = const VerificationMeta(
+    'process',
+  );
+  @override
+  late final GeneratedColumn<String> process = GeneratedColumn<String>(
+    'process',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uploadMeta = const VerificationMeta('upload');
+  @override
+  late final GeneratedColumn<int> upload = GeneratedColumn<int>(
+    'upload',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _downloadMeta = const VerificationMeta(
+    'download',
+  );
+  @override
+  late final GeneratedColumn<int> download = GeneratedColumn<int>(
+    'download',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _runtimeMsMeta = const VerificationMeta(
+    'runtimeMs',
+  );
+  @override
+  late final GeneratedColumn<int> runtimeMs = GeneratedColumn<int>(
+    'runtime_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _connectionsMeta = const VerificationMeta(
+    'connections',
+  );
+  @override
+  late final GeneratedColumn<int> connections = GeneratedColumn<int>(
+    'connections',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    bucketId,
+    hour,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    process,
+    upload,
+    download,
+    runtimeMs,
+    connections,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'native_traffic';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NativeTrafficRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('bucket_id')) {
+      context.handle(
+        _bucketIdMeta,
+        bucketId.isAcceptableOrUnknown(data['bucket_id']!, _bucketIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bucketIdMeta);
+    }
+    if (data.containsKey('hour')) {
+      context.handle(
+        _hourMeta,
+        hour.isAcceptableOrUnknown(data['hour']!, _hourMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hourMeta);
+    }
+    if (data.containsKey('host')) {
+      context.handle(
+        _hostMeta,
+        host.isAcceptableOrUnknown(data['host']!, _hostMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hostMeta);
+    }
+    if (data.containsKey('rule')) {
+      context.handle(
+        _ruleMeta,
+        rule.isAcceptableOrUnknown(data['rule']!, _ruleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ruleMeta);
+    }
+    if (data.containsKey('rule_payload')) {
+      context.handle(
+        _rulePayloadMeta,
+        rulePayload.isAcceptableOrUnknown(
+          data['rule_payload']!,
+          _rulePayloadMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rulePayloadMeta);
+    }
+    if (data.containsKey('node')) {
+      context.handle(
+        _nodeMeta,
+        node.isAcceptableOrUnknown(data['node']!, _nodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nodeMeta);
+    }
+    if (data.containsKey('network')) {
+      context.handle(
+        _networkMeta,
+        network.isAcceptableOrUnknown(data['network']!, _networkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_networkMeta);
+    }
+    if (data.containsKey('process')) {
+      context.handle(
+        _processMeta,
+        process.isAcceptableOrUnknown(data['process']!, _processMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_processMeta);
+    }
+    if (data.containsKey('upload')) {
+      context.handle(
+        _uploadMeta,
+        upload.isAcceptableOrUnknown(data['upload']!, _uploadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uploadMeta);
+    }
+    if (data.containsKey('download')) {
+      context.handle(
+        _downloadMeta,
+        download.isAcceptableOrUnknown(data['download']!, _downloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadMeta);
+    }
+    if (data.containsKey('runtime_ms')) {
+      context.handle(
+        _runtimeMsMeta,
+        runtimeMs.isAcceptableOrUnknown(data['runtime_ms']!, _runtimeMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_runtimeMsMeta);
+    }
+    if (data.containsKey('connections')) {
+      context.handle(
+        _connectionsMeta,
+        connections.isAcceptableOrUnknown(
+          data['connections']!,
+          _connectionsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_connectionsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {bucketId};
+  @override
+  NativeTrafficRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NativeTrafficRow(
+      bucketId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bucket_id'],
+      )!,
+      hour: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hour'],
+      )!,
+      host: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}host'],
+      )!,
+      rule: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule'],
+      )!,
+      rulePayload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rule_payload'],
+      )!,
+      node: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}node'],
+      )!,
+      network: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}network'],
+      )!,
+      process: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}process'],
+      )!,
+      upload: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}upload'],
+      )!,
+      download: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download'],
+      )!,
+      runtimeMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}runtime_ms'],
+      )!,
+      connections: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}connections'],
+      )!,
+    );
+  }
+
+  @override
+  $NativeTrafficTable createAlias(String alias) {
+    return $NativeTrafficTable(attachedDatabase, alias);
+  }
+}
+
+class NativeTrafficRow extends DataClass
+    implements Insertable<NativeTrafficRow> {
+  final String bucketId;
+  final int hour;
+  final String host;
+  final String rule;
+  final String rulePayload;
+  final String node;
+  final String network;
+  final String process;
+  final int upload;
+  final int download;
+  final int runtimeMs;
+  final int connections;
+  const NativeTrafficRow({
+    required this.bucketId,
+    required this.hour,
+    required this.host,
+    required this.rule,
+    required this.rulePayload,
+    required this.node,
+    required this.network,
+    required this.process,
+    required this.upload,
+    required this.download,
+    required this.runtimeMs,
+    required this.connections,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['bucket_id'] = Variable<String>(bucketId);
+    map['hour'] = Variable<int>(hour);
+    map['host'] = Variable<String>(host);
+    map['rule'] = Variable<String>(rule);
+    map['rule_payload'] = Variable<String>(rulePayload);
+    map['node'] = Variable<String>(node);
+    map['network'] = Variable<String>(network);
+    map['process'] = Variable<String>(process);
+    map['upload'] = Variable<int>(upload);
+    map['download'] = Variable<int>(download);
+    map['runtime_ms'] = Variable<int>(runtimeMs);
+    map['connections'] = Variable<int>(connections);
+    return map;
+  }
+
+  NativeTrafficCompanion toCompanion(bool nullToAbsent) {
+    return NativeTrafficCompanion(
+      bucketId: Value(bucketId),
+      hour: Value(hour),
+      host: Value(host),
+      rule: Value(rule),
+      rulePayload: Value(rulePayload),
+      node: Value(node),
+      network: Value(network),
+      process: Value(process),
+      upload: Value(upload),
+      download: Value(download),
+      runtimeMs: Value(runtimeMs),
+      connections: Value(connections),
+    );
+  }
+
+  factory NativeTrafficRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NativeTrafficRow(
+      bucketId: serializer.fromJson<String>(json['bucketId']),
+      hour: serializer.fromJson<int>(json['hour']),
+      host: serializer.fromJson<String>(json['host']),
+      rule: serializer.fromJson<String>(json['rule']),
+      rulePayload: serializer.fromJson<String>(json['rulePayload']),
+      node: serializer.fromJson<String>(json['node']),
+      network: serializer.fromJson<String>(json['network']),
+      process: serializer.fromJson<String>(json['process']),
+      upload: serializer.fromJson<int>(json['upload']),
+      download: serializer.fromJson<int>(json['download']),
+      runtimeMs: serializer.fromJson<int>(json['runtimeMs']),
+      connections: serializer.fromJson<int>(json['connections']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'bucketId': serializer.toJson<String>(bucketId),
+      'hour': serializer.toJson<int>(hour),
+      'host': serializer.toJson<String>(host),
+      'rule': serializer.toJson<String>(rule),
+      'rulePayload': serializer.toJson<String>(rulePayload),
+      'node': serializer.toJson<String>(node),
+      'network': serializer.toJson<String>(network),
+      'process': serializer.toJson<String>(process),
+      'upload': serializer.toJson<int>(upload),
+      'download': serializer.toJson<int>(download),
+      'runtimeMs': serializer.toJson<int>(runtimeMs),
+      'connections': serializer.toJson<int>(connections),
+    };
+  }
+
+  NativeTrafficRow copyWith({
+    String? bucketId,
+    int? hour,
+    String? host,
+    String? rule,
+    String? rulePayload,
+    String? node,
+    String? network,
+    String? process,
+    int? upload,
+    int? download,
+    int? runtimeMs,
+    int? connections,
+  }) => NativeTrafficRow(
+    bucketId: bucketId ?? this.bucketId,
+    hour: hour ?? this.hour,
+    host: host ?? this.host,
+    rule: rule ?? this.rule,
+    rulePayload: rulePayload ?? this.rulePayload,
+    node: node ?? this.node,
+    network: network ?? this.network,
+    process: process ?? this.process,
+    upload: upload ?? this.upload,
+    download: download ?? this.download,
+    runtimeMs: runtimeMs ?? this.runtimeMs,
+    connections: connections ?? this.connections,
+  );
+  NativeTrafficRow copyWithCompanion(NativeTrafficCompanion data) {
+    return NativeTrafficRow(
+      bucketId: data.bucketId.present ? data.bucketId.value : this.bucketId,
+      hour: data.hour.present ? data.hour.value : this.hour,
+      host: data.host.present ? data.host.value : this.host,
+      rule: data.rule.present ? data.rule.value : this.rule,
+      rulePayload: data.rulePayload.present
+          ? data.rulePayload.value
+          : this.rulePayload,
+      node: data.node.present ? data.node.value : this.node,
+      network: data.network.present ? data.network.value : this.network,
+      process: data.process.present ? data.process.value : this.process,
+      upload: data.upload.present ? data.upload.value : this.upload,
+      download: data.download.present ? data.download.value : this.download,
+      runtimeMs: data.runtimeMs.present ? data.runtimeMs.value : this.runtimeMs,
+      connections: data.connections.present
+          ? data.connections.value
+          : this.connections,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NativeTrafficRow(')
+          ..write('bucketId: $bucketId, ')
+          ..write('hour: $hour, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('process: $process, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('runtimeMs: $runtimeMs, ')
+          ..write('connections: $connections')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    bucketId,
+    hour,
+    host,
+    rule,
+    rulePayload,
+    node,
+    network,
+    process,
+    upload,
+    download,
+    runtimeMs,
+    connections,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NativeTrafficRow &&
+          other.bucketId == this.bucketId &&
+          other.hour == this.hour &&
+          other.host == this.host &&
+          other.rule == this.rule &&
+          other.rulePayload == this.rulePayload &&
+          other.node == this.node &&
+          other.network == this.network &&
+          other.process == this.process &&
+          other.upload == this.upload &&
+          other.download == this.download &&
+          other.runtimeMs == this.runtimeMs &&
+          other.connections == this.connections);
+}
+
+class NativeTrafficCompanion extends UpdateCompanion<NativeTrafficRow> {
+  final Value<String> bucketId;
+  final Value<int> hour;
+  final Value<String> host;
+  final Value<String> rule;
+  final Value<String> rulePayload;
+  final Value<String> node;
+  final Value<String> network;
+  final Value<String> process;
+  final Value<int> upload;
+  final Value<int> download;
+  final Value<int> runtimeMs;
+  final Value<int> connections;
+  final Value<int> rowid;
+  const NativeTrafficCompanion({
+    this.bucketId = const Value.absent(),
+    this.hour = const Value.absent(),
+    this.host = const Value.absent(),
+    this.rule = const Value.absent(),
+    this.rulePayload = const Value.absent(),
+    this.node = const Value.absent(),
+    this.network = const Value.absent(),
+    this.process = const Value.absent(),
+    this.upload = const Value.absent(),
+    this.download = const Value.absent(),
+    this.runtimeMs = const Value.absent(),
+    this.connections = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NativeTrafficCompanion.insert({
+    required String bucketId,
+    required int hour,
+    required String host,
+    required String rule,
+    required String rulePayload,
+    required String node,
+    required String network,
+    required String process,
+    required int upload,
+    required int download,
+    required int runtimeMs,
+    required int connections,
+    this.rowid = const Value.absent(),
+  }) : bucketId = Value(bucketId),
+       hour = Value(hour),
+       host = Value(host),
+       rule = Value(rule),
+       rulePayload = Value(rulePayload),
+       node = Value(node),
+       network = Value(network),
+       process = Value(process),
+       upload = Value(upload),
+       download = Value(download),
+       runtimeMs = Value(runtimeMs),
+       connections = Value(connections);
+  static Insertable<NativeTrafficRow> custom({
+    Expression<String>? bucketId,
+    Expression<int>? hour,
+    Expression<String>? host,
+    Expression<String>? rule,
+    Expression<String>? rulePayload,
+    Expression<String>? node,
+    Expression<String>? network,
+    Expression<String>? process,
+    Expression<int>? upload,
+    Expression<int>? download,
+    Expression<int>? runtimeMs,
+    Expression<int>? connections,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (bucketId != null) 'bucket_id': bucketId,
+      if (hour != null) 'hour': hour,
+      if (host != null) 'host': host,
+      if (rule != null) 'rule': rule,
+      if (rulePayload != null) 'rule_payload': rulePayload,
+      if (node != null) 'node': node,
+      if (network != null) 'network': network,
+      if (process != null) 'process': process,
+      if (upload != null) 'upload': upload,
+      if (download != null) 'download': download,
+      if (runtimeMs != null) 'runtime_ms': runtimeMs,
+      if (connections != null) 'connections': connections,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NativeTrafficCompanion copyWith({
+    Value<String>? bucketId,
+    Value<int>? hour,
+    Value<String>? host,
+    Value<String>? rule,
+    Value<String>? rulePayload,
+    Value<String>? node,
+    Value<String>? network,
+    Value<String>? process,
+    Value<int>? upload,
+    Value<int>? download,
+    Value<int>? runtimeMs,
+    Value<int>? connections,
+    Value<int>? rowid,
+  }) {
+    return NativeTrafficCompanion(
+      bucketId: bucketId ?? this.bucketId,
+      hour: hour ?? this.hour,
+      host: host ?? this.host,
+      rule: rule ?? this.rule,
+      rulePayload: rulePayload ?? this.rulePayload,
+      node: node ?? this.node,
+      network: network ?? this.network,
+      process: process ?? this.process,
+      upload: upload ?? this.upload,
+      download: download ?? this.download,
+      runtimeMs: runtimeMs ?? this.runtimeMs,
+      connections: connections ?? this.connections,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (bucketId.present) {
+      map['bucket_id'] = Variable<String>(bucketId.value);
+    }
+    if (hour.present) {
+      map['hour'] = Variable<int>(hour.value);
+    }
+    if (host.present) {
+      map['host'] = Variable<String>(host.value);
+    }
+    if (rule.present) {
+      map['rule'] = Variable<String>(rule.value);
+    }
+    if (rulePayload.present) {
+      map['rule_payload'] = Variable<String>(rulePayload.value);
+    }
+    if (node.present) {
+      map['node'] = Variable<String>(node.value);
+    }
+    if (network.present) {
+      map['network'] = Variable<String>(network.value);
+    }
+    if (process.present) {
+      map['process'] = Variable<String>(process.value);
+    }
+    if (upload.present) {
+      map['upload'] = Variable<int>(upload.value);
+    }
+    if (download.present) {
+      map['download'] = Variable<int>(download.value);
+    }
+    if (runtimeMs.present) {
+      map['runtime_ms'] = Variable<int>(runtimeMs.value);
+    }
+    if (connections.present) {
+      map['connections'] = Variable<int>(connections.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NativeTrafficCompanion(')
+          ..write('bucketId: $bucketId, ')
+          ..write('hour: $hour, ')
+          ..write('host: $host, ')
+          ..write('rule: $rule, ')
+          ..write('rulePayload: $rulePayload, ')
+          ..write('node: $node, ')
+          ..write('network: $network, ')
+          ..write('process: $process, ')
+          ..write('upload: $upload, ')
+          ..write('download: $download, ')
+          ..write('runtimeMs: $runtimeMs, ')
+          ..write('connections: $connections, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4611,6 +6566,12 @@ abstract class _$Database extends GeneratedDatabase {
   late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $IpQualitiesTable ipQualities = $IpQualitiesTable(this);
+  late final $TrafficRecordsTable trafficRecords = $TrafficRecordsTable(this);
+  late final $TrafficHourlyTable trafficHourly = $TrafficHourlyTable(this);
+  late final $AppTrafficHourlyTable appTrafficHourly = $AppTrafficHourlyTable(
+    this,
+  );
+  late final $NativeTrafficTable nativeTraffic = $NativeTrafficTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4643,6 +6604,18 @@ abstract class _$Database extends GeneratedDatabase {
     this as Database,
   );
   late final IpQualitiesDao ipQualitiesDao = IpQualitiesDao(this as Database);
+  late final TrafficRecordsDao trafficRecordsDao = TrafficRecordsDao(
+    this as Database,
+  );
+  late final TrafficHourlyDao trafficHourlyDao = TrafficHourlyDao(
+    this as Database,
+  );
+  late final AppTrafficHourlyDao appTrafficHourlyDao = AppTrafficHourlyDao(
+    this as Database,
+  );
+  late final NativeTrafficDao nativeTrafficDao = NativeTrafficDao(
+    this as Database,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4659,6 +6632,10 @@ abstract class _$Database extends GeneratedDatabase {
     customProxies,
     proxyDialers,
     ipQualities,
+    trafficRecords,
+    trafficHourly,
+    appTrafficHourly,
+    nativeTraffic,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
@@ -8434,6 +10411,1042 @@ typedef $$IpQualitiesTableProcessedTableManager =
       IpQualityRecord,
       PrefetchHooks Function()
     >;
+typedef $$TrafficRecordsTableCreateCompanionBuilder =
+    TrafficRecordsCompanion Function({
+      required String connectionId,
+      required DateTime startedAt,
+      required DateTime endedAt,
+      required String host,
+      required String rule,
+      required String rulePayload,
+      required String node,
+      required String network,
+      required int upload,
+      required int download,
+      Value<int> rowid,
+    });
+typedef $$TrafficRecordsTableUpdateCompanionBuilder =
+    TrafficRecordsCompanion Function({
+      Value<String> connectionId,
+      Value<DateTime> startedAt,
+      Value<DateTime> endedAt,
+      Value<String> host,
+      Value<String> rule,
+      Value<String> rulePayload,
+      Value<String> node,
+      Value<String> network,
+      Value<int> upload,
+      Value<int> download,
+      Value<int> rowid,
+    });
+
+class $$TrafficRecordsTableFilterComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrafficRecordsTableOrderingComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrafficRecordsTableAnnotationComposer
+    extends Composer<_$Database, $TrafficRecordsTable> {
+  $$TrafficRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get connectionId => $composableBuilder(
+    column: $table.connectionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get host =>
+      $composableBuilder(column: $table.host, builder: (column) => column);
+
+  GeneratedColumn<String> get rule =>
+      $composableBuilder(column: $table.rule, builder: (column) => column);
+
+  GeneratedColumn<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get node =>
+      $composableBuilder(column: $table.node, builder: (column) => column);
+
+  GeneratedColumn<String> get network =>
+      $composableBuilder(column: $table.network, builder: (column) => column);
+
+  GeneratedColumn<int> get upload =>
+      $composableBuilder(column: $table.upload, builder: (column) => column);
+
+  GeneratedColumn<int> get download =>
+      $composableBuilder(column: $table.download, builder: (column) => column);
+}
+
+class $$TrafficRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $TrafficRecordsTable,
+          TrafficRecord,
+          $$TrafficRecordsTableFilterComposer,
+          $$TrafficRecordsTableOrderingComposer,
+          $$TrafficRecordsTableAnnotationComposer,
+          $$TrafficRecordsTableCreateCompanionBuilder,
+          $$TrafficRecordsTableUpdateCompanionBuilder,
+          (
+            TrafficRecord,
+            BaseReferences<_$Database, $TrafficRecordsTable, TrafficRecord>,
+          ),
+          TrafficRecord,
+          PrefetchHooks Function()
+        > {
+  $$TrafficRecordsTableTableManager(_$Database db, $TrafficRecordsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrafficRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrafficRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrafficRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> connectionId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime> endedAt = const Value.absent(),
+                Value<String> host = const Value.absent(),
+                Value<String> rule = const Value.absent(),
+                Value<String> rulePayload = const Value.absent(),
+                Value<String> node = const Value.absent(),
+                Value<String> network = const Value.absent(),
+                Value<int> upload = const Value.absent(),
+                Value<int> download = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficRecordsCompanion(
+                connectionId: connectionId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                upload: upload,
+                download: download,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String connectionId,
+                required DateTime startedAt,
+                required DateTime endedAt,
+                required String host,
+                required String rule,
+                required String rulePayload,
+                required String node,
+                required String network,
+                required int upload,
+                required int download,
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficRecordsCompanion.insert(
+                connectionId: connectionId,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                upload: upload,
+                download: download,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrafficRecordsTable, TrafficRecord>(table),
+                  BaseReferences<
+                    _$Database,
+                    $TrafficRecordsTable,
+                    TrafficRecord
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrafficRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $TrafficRecordsTable,
+      TrafficRecord,
+      $$TrafficRecordsTableFilterComposer,
+      $$TrafficRecordsTableOrderingComposer,
+      $$TrafficRecordsTableAnnotationComposer,
+      $$TrafficRecordsTableCreateCompanionBuilder,
+      $$TrafficRecordsTableUpdateCompanionBuilder,
+      (
+        TrafficRecord,
+        BaseReferences<_$Database, $TrafficRecordsTable, TrafficRecord>,
+      ),
+      TrafficRecord,
+      PrefetchHooks Function()
+    >;
+typedef $$TrafficHourlyTableCreateCompanionBuilder =
+    TrafficHourlyCompanion Function({
+      required int hour,
+      required int direction,
+      required int proxied,
+      required int bytes,
+      Value<int> rowid,
+    });
+typedef $$TrafficHourlyTableUpdateCompanionBuilder =
+    TrafficHourlyCompanion Function({
+      Value<int> hour,
+      Value<int> direction,
+      Value<int> proxied,
+      Value<int> bytes,
+      Value<int> rowid,
+    });
+
+class $$TrafficHourlyTableFilterComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get proxied => $composableBuilder(
+    column: $table.proxied,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrafficHourlyTableOrderingComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get proxied => $composableBuilder(
+    column: $table.proxied,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrafficHourlyTableAnnotationComposer
+    extends Composer<_$Database, $TrafficHourlyTable> {
+  $$TrafficHourlyTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<int> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<int> get proxied =>
+      $composableBuilder(column: $table.proxied, builder: (column) => column);
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+}
+
+class $$TrafficHourlyTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $TrafficHourlyTable,
+          TrafficHour,
+          $$TrafficHourlyTableFilterComposer,
+          $$TrafficHourlyTableOrderingComposer,
+          $$TrafficHourlyTableAnnotationComposer,
+          $$TrafficHourlyTableCreateCompanionBuilder,
+          $$TrafficHourlyTableUpdateCompanionBuilder,
+          (
+            TrafficHour,
+            BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>,
+          ),
+          TrafficHour,
+          PrefetchHooks Function()
+        > {
+  $$TrafficHourlyTableTableManager(_$Database db, $TrafficHourlyTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrafficHourlyTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrafficHourlyTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrafficHourlyTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> hour = const Value.absent(),
+                Value<int> direction = const Value.absent(),
+                Value<int> proxied = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficHourlyCompanion(
+                hour: hour,
+                direction: direction,
+                proxied: proxied,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int hour,
+                required int direction,
+                required int proxied,
+                required int bytes,
+                Value<int> rowid = const Value.absent(),
+              }) => TrafficHourlyCompanion.insert(
+                hour: hour,
+                direction: direction,
+                proxied: proxied,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TrafficHourlyTable, TrafficHour>(table),
+                  BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrafficHourlyTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $TrafficHourlyTable,
+      TrafficHour,
+      $$TrafficHourlyTableFilterComposer,
+      $$TrafficHourlyTableOrderingComposer,
+      $$TrafficHourlyTableAnnotationComposer,
+      $$TrafficHourlyTableCreateCompanionBuilder,
+      $$TrafficHourlyTableUpdateCompanionBuilder,
+      (
+        TrafficHour,
+        BaseReferences<_$Database, $TrafficHourlyTable, TrafficHour>,
+      ),
+      TrafficHour,
+      PrefetchHooks Function()
+    >;
+typedef $$AppTrafficHourlyTableCreateCompanionBuilder =
+    AppTrafficHourlyCompanion Function({
+      required int hour,
+      required String process,
+      required int direction,
+      required int bytes,
+      Value<int> rowid,
+    });
+typedef $$AppTrafficHourlyTableUpdateCompanionBuilder =
+    AppTrafficHourlyCompanion Function({
+      Value<int> hour,
+      Value<String> process,
+      Value<int> direction,
+      Value<int> bytes,
+      Value<int> rowid,
+    });
+
+class $$AppTrafficHourlyTableFilterComposer
+    extends Composer<_$Database, $AppTrafficHourlyTable> {
+  $$AppTrafficHourlyTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get process => $composableBuilder(
+    column: $table.process,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppTrafficHourlyTableOrderingComposer
+    extends Composer<_$Database, $AppTrafficHourlyTable> {
+  $$AppTrafficHourlyTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get process => $composableBuilder(
+    column: $table.process,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytes => $composableBuilder(
+    column: $table.bytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppTrafficHourlyTableAnnotationComposer
+    extends Composer<_$Database, $AppTrafficHourlyTable> {
+  $$AppTrafficHourlyTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<String> get process =>
+      $composableBuilder(column: $table.process, builder: (column) => column);
+
+  GeneratedColumn<int> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<int> get bytes =>
+      $composableBuilder(column: $table.bytes, builder: (column) => column);
+}
+
+class $$AppTrafficHourlyTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $AppTrafficHourlyTable,
+          AppTrafficHour,
+          $$AppTrafficHourlyTableFilterComposer,
+          $$AppTrafficHourlyTableOrderingComposer,
+          $$AppTrafficHourlyTableAnnotationComposer,
+          $$AppTrafficHourlyTableCreateCompanionBuilder,
+          $$AppTrafficHourlyTableUpdateCompanionBuilder,
+          (
+            AppTrafficHour,
+            BaseReferences<_$Database, $AppTrafficHourlyTable, AppTrafficHour>,
+          ),
+          AppTrafficHour,
+          PrefetchHooks Function()
+        > {
+  $$AppTrafficHourlyTableTableManager(
+    _$Database db,
+    $AppTrafficHourlyTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppTrafficHourlyTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppTrafficHourlyTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppTrafficHourlyTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> hour = const Value.absent(),
+                Value<String> process = const Value.absent(),
+                Value<int> direction = const Value.absent(),
+                Value<int> bytes = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppTrafficHourlyCompanion(
+                hour: hour,
+                process: process,
+                direction: direction,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int hour,
+                required String process,
+                required int direction,
+                required int bytes,
+                Value<int> rowid = const Value.absent(),
+              }) => AppTrafficHourlyCompanion.insert(
+                hour: hour,
+                process: process,
+                direction: direction,
+                bytes: bytes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AppTrafficHourlyTable, AppTrafficHour>(table),
+                  BaseReferences<
+                    _$Database,
+                    $AppTrafficHourlyTable,
+                    AppTrafficHour
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppTrafficHourlyTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $AppTrafficHourlyTable,
+      AppTrafficHour,
+      $$AppTrafficHourlyTableFilterComposer,
+      $$AppTrafficHourlyTableOrderingComposer,
+      $$AppTrafficHourlyTableAnnotationComposer,
+      $$AppTrafficHourlyTableCreateCompanionBuilder,
+      $$AppTrafficHourlyTableUpdateCompanionBuilder,
+      (
+        AppTrafficHour,
+        BaseReferences<_$Database, $AppTrafficHourlyTable, AppTrafficHour>,
+      ),
+      AppTrafficHour,
+      PrefetchHooks Function()
+    >;
+typedef $$NativeTrafficTableCreateCompanionBuilder =
+    NativeTrafficCompanion Function({
+      required String bucketId,
+      required int hour,
+      required String host,
+      required String rule,
+      required String rulePayload,
+      required String node,
+      required String network,
+      required String process,
+      required int upload,
+      required int download,
+      required int runtimeMs,
+      required int connections,
+      Value<int> rowid,
+    });
+typedef $$NativeTrafficTableUpdateCompanionBuilder =
+    NativeTrafficCompanion Function({
+      Value<String> bucketId,
+      Value<int> hour,
+      Value<String> host,
+      Value<String> rule,
+      Value<String> rulePayload,
+      Value<String> node,
+      Value<String> network,
+      Value<String> process,
+      Value<int> upload,
+      Value<int> download,
+      Value<int> runtimeMs,
+      Value<int> connections,
+      Value<int> rowid,
+    });
+
+class $$NativeTrafficTableFilterComposer
+    extends Composer<_$Database, $NativeTrafficTable> {
+  $$NativeTrafficTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get bucketId => $composableBuilder(
+    column: $table.bucketId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get process => $composableBuilder(
+    column: $table.process,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get runtimeMs => $composableBuilder(
+    column: $table.runtimeMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get connections => $composableBuilder(
+    column: $table.connections,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NativeTrafficTableOrderingComposer
+    extends Composer<_$Database, $NativeTrafficTable> {
+  $$NativeTrafficTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get bucketId => $composableBuilder(
+    column: $table.bucketId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get hour => $composableBuilder(
+    column: $table.hour,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rule => $composableBuilder(
+    column: $table.rule,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get node => $composableBuilder(
+    column: $table.node,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get network => $composableBuilder(
+    column: $table.network,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get process => $composableBuilder(
+    column: $table.process,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get upload => $composableBuilder(
+    column: $table.upload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get download => $composableBuilder(
+    column: $table.download,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get runtimeMs => $composableBuilder(
+    column: $table.runtimeMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get connections => $composableBuilder(
+    column: $table.connections,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NativeTrafficTableAnnotationComposer
+    extends Composer<_$Database, $NativeTrafficTable> {
+  $$NativeTrafficTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get bucketId =>
+      $composableBuilder(column: $table.bucketId, builder: (column) => column);
+
+  GeneratedColumn<int> get hour =>
+      $composableBuilder(column: $table.hour, builder: (column) => column);
+
+  GeneratedColumn<String> get host =>
+      $composableBuilder(column: $table.host, builder: (column) => column);
+
+  GeneratedColumn<String> get rule =>
+      $composableBuilder(column: $table.rule, builder: (column) => column);
+
+  GeneratedColumn<String> get rulePayload => $composableBuilder(
+    column: $table.rulePayload,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get node =>
+      $composableBuilder(column: $table.node, builder: (column) => column);
+
+  GeneratedColumn<String> get network =>
+      $composableBuilder(column: $table.network, builder: (column) => column);
+
+  GeneratedColumn<String> get process =>
+      $composableBuilder(column: $table.process, builder: (column) => column);
+
+  GeneratedColumn<int> get upload =>
+      $composableBuilder(column: $table.upload, builder: (column) => column);
+
+  GeneratedColumn<int> get download =>
+      $composableBuilder(column: $table.download, builder: (column) => column);
+
+  GeneratedColumn<int> get runtimeMs =>
+      $composableBuilder(column: $table.runtimeMs, builder: (column) => column);
+
+  GeneratedColumn<int> get connections => $composableBuilder(
+    column: $table.connections,
+    builder: (column) => column,
+  );
+}
+
+class $$NativeTrafficTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $NativeTrafficTable,
+          NativeTrafficRow,
+          $$NativeTrafficTableFilterComposer,
+          $$NativeTrafficTableOrderingComposer,
+          $$NativeTrafficTableAnnotationComposer,
+          $$NativeTrafficTableCreateCompanionBuilder,
+          $$NativeTrafficTableUpdateCompanionBuilder,
+          (
+            NativeTrafficRow,
+            BaseReferences<_$Database, $NativeTrafficTable, NativeTrafficRow>,
+          ),
+          NativeTrafficRow,
+          PrefetchHooks Function()
+        > {
+  $$NativeTrafficTableTableManager(_$Database db, $NativeTrafficTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NativeTrafficTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NativeTrafficTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NativeTrafficTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> bucketId = const Value.absent(),
+                Value<int> hour = const Value.absent(),
+                Value<String> host = const Value.absent(),
+                Value<String> rule = const Value.absent(),
+                Value<String> rulePayload = const Value.absent(),
+                Value<String> node = const Value.absent(),
+                Value<String> network = const Value.absent(),
+                Value<String> process = const Value.absent(),
+                Value<int> upload = const Value.absent(),
+                Value<int> download = const Value.absent(),
+                Value<int> runtimeMs = const Value.absent(),
+                Value<int> connections = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NativeTrafficCompanion(
+                bucketId: bucketId,
+                hour: hour,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                process: process,
+                upload: upload,
+                download: download,
+                runtimeMs: runtimeMs,
+                connections: connections,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String bucketId,
+                required int hour,
+                required String host,
+                required String rule,
+                required String rulePayload,
+                required String node,
+                required String network,
+                required String process,
+                required int upload,
+                required int download,
+                required int runtimeMs,
+                required int connections,
+                Value<int> rowid = const Value.absent(),
+              }) => NativeTrafficCompanion.insert(
+                bucketId: bucketId,
+                hour: hour,
+                host: host,
+                rule: rule,
+                rulePayload: rulePayload,
+                node: node,
+                network: network,
+                process: process,
+                upload: upload,
+                download: download,
+                runtimeMs: runtimeMs,
+                connections: connections,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NativeTrafficTable, NativeTrafficRow>(table),
+                  BaseReferences<
+                    _$Database,
+                    $NativeTrafficTable,
+                    NativeTrafficRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NativeTrafficTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $NativeTrafficTable,
+      NativeTrafficRow,
+      $$NativeTrafficTableFilterComposer,
+      $$NativeTrafficTableOrderingComposer,
+      $$NativeTrafficTableAnnotationComposer,
+      $$NativeTrafficTableCreateCompanionBuilder,
+      $$NativeTrafficTableUpdateCompanionBuilder,
+      (
+        NativeTrafficRow,
+        BaseReferences<_$Database, $NativeTrafficTable, NativeTrafficRow>,
+      ),
+      NativeTrafficRow,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -8460,6 +11473,14 @@ class $DatabaseManager {
       $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db, _db.ipQualities);
+  $$TrafficRecordsTableTableManager get trafficRecords =>
+      $$TrafficRecordsTableTableManager(_db, _db.trafficRecords);
+  $$TrafficHourlyTableTableManager get trafficHourly =>
+      $$TrafficHourlyTableTableManager(_db, _db.trafficHourly);
+  $$AppTrafficHourlyTableTableManager get appTrafficHourly =>
+      $$AppTrafficHourlyTableTableManager(_db, _db.appTrafficHourly);
+  $$NativeTrafficTableTableManager get nativeTraffic =>
+      $$NativeTrafficTableTableManager(_db, _db.nativeTraffic);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {
@@ -8598,4 +11619,59 @@ class IpQualitiesDaoManager {
   IpQualitiesDaoManager(this._db);
   $$IpQualitiesTableTableManager get ipQualities =>
       $$IpQualitiesTableTableManager(_db.attachedDatabase, _db.ipQualities);
+}
+
+mixin _$TrafficRecordsDaoMixin on DatabaseAccessor<Database> {
+  $TrafficRecordsTable get trafficRecords => attachedDatabase.trafficRecords;
+  TrafficRecordsDaoManager get managers => TrafficRecordsDaoManager(this);
+}
+
+class TrafficRecordsDaoManager {
+  final _$TrafficRecordsDaoMixin _db;
+  TrafficRecordsDaoManager(this._db);
+  $$TrafficRecordsTableTableManager get trafficRecords =>
+      $$TrafficRecordsTableTableManager(
+        _db.attachedDatabase,
+        _db.trafficRecords,
+      );
+}
+
+mixin _$TrafficHourlyDaoMixin on DatabaseAccessor<Database> {
+  $TrafficHourlyTable get trafficHourly => attachedDatabase.trafficHourly;
+  TrafficHourlyDaoManager get managers => TrafficHourlyDaoManager(this);
+}
+
+class TrafficHourlyDaoManager {
+  final _$TrafficHourlyDaoMixin _db;
+  TrafficHourlyDaoManager(this._db);
+  $$TrafficHourlyTableTableManager get trafficHourly =>
+      $$TrafficHourlyTableTableManager(_db.attachedDatabase, _db.trafficHourly);
+}
+
+mixin _$AppTrafficHourlyDaoMixin on DatabaseAccessor<Database> {
+  $AppTrafficHourlyTable get appTrafficHourly =>
+      attachedDatabase.appTrafficHourly;
+  AppTrafficHourlyDaoManager get managers => AppTrafficHourlyDaoManager(this);
+}
+
+class AppTrafficHourlyDaoManager {
+  final _$AppTrafficHourlyDaoMixin _db;
+  AppTrafficHourlyDaoManager(this._db);
+  $$AppTrafficHourlyTableTableManager get appTrafficHourly =>
+      $$AppTrafficHourlyTableTableManager(
+        _db.attachedDatabase,
+        _db.appTrafficHourly,
+      );
+}
+
+mixin _$NativeTrafficDaoMixin on DatabaseAccessor<Database> {
+  $NativeTrafficTable get nativeTraffic => attachedDatabase.nativeTraffic;
+  NativeTrafficDaoManager get managers => NativeTrafficDaoManager(this);
+}
+
+class NativeTrafficDaoManager {
+  final _$NativeTrafficDaoMixin _db;
+  NativeTrafficDaoManager(this._db);
+  $$NativeTrafficTableTableManager get nativeTraffic =>
+      $$NativeTrafficTableTableManager(_db.attachedDatabase, _db.nativeTraffic);
 }

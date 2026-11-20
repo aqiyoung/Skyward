@@ -105,6 +105,8 @@ mixin CoreInterface {
 
   FutureOr<List<TrackerInfo>> getConnections();
 
+  Future<Map<String, Object?>?> getTrafficHistory(int since);
+
   FutureOr<int> getConnectionCount();
 
   FutureOr<bool> closeConnection(String id);
@@ -498,6 +500,15 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<int> getConnectionCount() async {
     return await _invokeMethod<int>(method: CoreMethod.getConnectionCount) ?? 0;
+  }
+
+  @override
+  Future<Map<String, Object?>?> getTrafficHistory(int since) async {
+    final result = await _invokeMethod<Object>(
+      method: CoreMethod.getTrafficHistory,
+      arguments: since,
+    );
+    return result is Map ? Map<String, Object?>.from(result) : null;
   }
 
   @override
