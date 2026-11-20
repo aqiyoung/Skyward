@@ -100,9 +100,9 @@ func Start(fd int, stack, address, dns, rawOptions string) *sing_tun.Listener {
 
 	appTunnel.identities.Clear()
 	listener, err := sing_tun.New(options, &attributingTunnel{
-		Tunnel:     tunnel.Tunnel,
-		identities: appTunnel.identities,
-		lookup:     appTunnel.lookup,
+		tunnelDelegate: tunnel.Tunnel,
+		identities:     appTunnel.identities,
+		lookup:         appTunnel.lookup,
 	})
 
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/metacubex/mihomo/common/lru"
 	"github.com/metacubex/mihomo/component/process"
 	C "github.com/metacubex/mihomo/constant"
+	P "github.com/metacubex/mihomo/constant/provider"
 )
 
 type socketIdentity struct {
@@ -19,11 +20,19 @@ type socketKey struct {
 	target  string
 }
 
-type attributingTunnel struct {
+type tunnelDelegate interface {
 	C.Tunnel
+	P.Tunnel
+}
+
+type attributingTunnel struct {
+	tunnelDelegate
 	identities *lru.LruCache[socketKey, socketIdentity]
 	lookup     process.PackageNameResolver
 }
+
+var _ C.Tunnel = (*attributingTunnel)(nil)
+var _ P.Tunnel = (*attributingTunnel)(nil)
 
 var appTunnel = attributingTunnel{
 	identities: lru.New(lru.WithSize[socketKey, socketIdentity](16384), lru.WithAge[socketKey, socketIdentity](60)),
@@ -59,12 +68,12 @@ func (t *attributingTunnel) observe(metadata *C.Metadata) {
 
 func (t *attributingTunnel) HandleTCPConn(conn net.Conn, metadata *C.Metadata) {
 	t.observe(metadata)
-	t.Tunnel.HandleTCPConn(conn, metadata)
+	t.tunnelDelegate.HandleTCPConn(conn, metadata)
 }
 
 func (t *attributingTunnel) HandleUDPPacket(packet C.UDPPacket, metadata *C.Metadata) {
 	t.observe(metadata)
-	t.Tunnel.HandleUDPPacket(packet, metadata)
+	t.tunnelDelegate.HandleUDPPacket(packet, metadata)
 }
 
 func FindPackageName(metadata *C.Metadata) (string, error) {

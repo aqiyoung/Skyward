@@ -3,14 +3,17 @@ package tun
 import (
 	"errors"
 	"net"
+	"reflect"
 	"testing"
 
 	"github.com/metacubex/mihomo/common/lru"
 	C "github.com/metacubex/mihomo/constant"
+	P "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/tunnel"
 )
 
 type recordingTunnel struct {
-	C.Tunnel
+	tunnelDelegate
 	onForward func(*C.Metadata)
 }
 
@@ -34,7 +37,7 @@ func TestAttributionPrecedesForwardingWithoutChangingRouting(t *testing.T) {
 				RawSrcAddr: &net.TCPAddr{IP: net.IPv4(10, 0, 0, 2), Port: 1234},
 				RawDstAddr: &net.TCPAddr{IP: net.IPv4(1, 1, 1, 1), Port: 443},
 			}
-			wrapper.Tunnel = recordingTunnel{onForward: func(forwarded *C.Metadata) {
+			wrapper.tunnelDelegate = recordingTunnel{onForward: func(forwarded *C.Metadata) {
 				if calls != 1 {
 					t.Fatal("owner lookup was delayed until after forwarding")
 				}
@@ -54,6 +57,20 @@ func TestAttributionPrecedesForwardingWithoutChangingRouting(t *testing.T) {
 				wrapper.HandleUDPPacket(nil, metadata)
 			}
 		})
+	}
+}
+
+func TestAttributingTunnelPreservesTunStartupInterfaces(t *testing.T) {
+	wrapper := &attributingTunnel{tunnelDelegate: tunnel.Tunnel}
+	var forwarding C.Tunnel = wrapper
+	providers, ok := forwarding.(P.Tunnel)
+	if !ok {
+		t.Fatal("sing_tun.New requires provider.Tunnel in addition to constant.Tunnel")
+	}
+	if !reflect.DeepEqual(providers.Providers(), tunnel.Tunnel.Providers()) ||
+		!reflect.DeepEqual(providers.RuleProviders(), tunnel.Tunnel.RuleProviders()) ||
+		providers.RuleUpdateCallback() != tunnel.Tunnel.RuleUpdateCallback() {
+		t.Fatal("TUN provider interfaces were not delegated to the original tunnel")
 	}
 }
 
