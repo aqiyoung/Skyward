@@ -1,16 +1,144 @@
 import 'package:drift/native.dart';
+import 'package:skyward/core/core.dart';
+import 'package:skyward/core/interface.dart';
 import 'package:skyward/database/database.dart' as db;
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'native snapshots are idempotent and selected dates use matching traffic and duration',
+    () async {
+      await AppLocalizations.load(const Locale('en'));
+      final previousDatabase = db.database;
+      final database = db.Database(NativeDatabase.memory());
+      db.database = database;
+      final core = _HistoryCore();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = DateTime(now.year, now.month, now.day - 1);
+      Map<String, Object?> row(
+        String id,
+        DateTime hour,
+        int bytes,
+        int runtime,
+      ) => {
+        'id': id,
+        'hour': hour.millisecondsSinceEpoch,
+        'host': 'example.com',
+        'rule': 'Match',
+        'rulePayload': '',
+        'node': 'DIRECT',
+        'network': 'tcp',
+        'process': 'com.facebook.katana',
+        'upload': 0,
+        'download': bytes,
+        'runtime': runtime,
+        'connections': runtime == 0 ? 1 : 0,
+      };
+      final rows = [
+        row('yesterday', yesterday, 100, 0),
+        row('today', today, 50, 0),
+        row('runtime/yesterday', yesterday, 0, 3600000),
+        row('runtime/today', today, 0, 60000),
+      ];
+      await database.trafficRecordsDao.upsert(
+        db.TrafficRecord(
+          connectionId: 'legacy-across-midnight',
+          startedAt: yesterday,
+          endedAt: today.add(const Duration(minutes: 1)),
+          host: 'old.example.com',
+          rule: 'Match',
+          rulePayload: '',
+          node: 'DIRECT',
+          network: 'tcp',
+          upload: 0,
+          download: 9999,
+        ),
+      );
+      for (final (hour, bytes) in [(yesterday, 20), (today, 10)]) {
+        await database.trafficHourlyDao.add(
+          hour: hour,
+          download: bytes,
+          upload: 0,
+          proxied: false,
+        );
+        await database.appTrafficHourlyDao.add(
+          hour: hour,
+          process: '',
+          download: bytes,
+          upload: 0,
+        );
+      }
+      when(
+        () => core.getTrafficHistory(any()),
+      ).thenAnswer((_) async => {'rows': rows, 'revision': 4});
+      final container = ProviderContainer(
+        overrides: [
+          nativeTrafficHistoryEnabledProvider.overrideWithValue(true),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      final sampler = container.read(trafficSamplerProvider.notifier);
+      addTearDown(() async {
+        container.dispose();
+        db.database = previousDatabase;
+        await database.close();
+      });
+      sampler.capture([
+        TrackerInfo(
+          id: 'must-not-double-count',
+          start: today,
+          metadata: const Metadata(),
+          chains: const [],
+          rule: 'Match',
+          rulePayload: '',
+          download: 999,
+        ),
+      ]);
+      await sampler.sample();
+      await sampler.sample();
+      verify(() => core.getTrafficHistory(0)).called(1);
+      verify(() => core.getTrafficHistory(4)).called(1);
+      final stats = trafficStatisticsProvider(
+        TrafficPeriod.day,
+        TrafficRankKind.domain,
+      );
+      container.listen(stats, (_, _) {});
+      final current = await container.read(stats.future);
+      expect(current.totalDownload, 60);
+      expect(current.ranking.fold(0, (sum, row) => sum + row.download), 60);
+      expect(
+        current.ranking.firstWhere((row) => row.key == 'example.com').download,
+        50,
+      );
+      expect(
+        current.ranking.firstWhere((row) => row.key == '旧版历史汇总').download,
+        10,
+      );
+      expect(current.runtimeMs, 60000);
+      expect(current.connectionCount, 2);
+      container.read(trafficRangeProvider.notifier).set(yesterday);
+      final previous = await container.read(stats.future);
+      expect(previous.totalDownload, 120);
+      expect(previous.ranking.fold(0, (sum, row) => sum + row.download), 120);
+      expect(previous.runtimeMs, 3600000);
+      final appUsage = await container.read(
+        appUsageProvider(AppUsagePeriod.last7Days).future,
+      );
+      expect(appUsage.totalDownload, 180);
+    },
+  );
 
   TrackerInfo request(int download) => TrackerInfo(
     id: 'short-request',
@@ -142,3 +270,5 @@ class _IdleSampler extends TrafficSampler {
   @override
   void build() {}
 }
+
+class _HistoryCore extends Mock implements CoreHandlerInterface {}

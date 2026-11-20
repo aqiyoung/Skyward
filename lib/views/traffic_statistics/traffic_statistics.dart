@@ -81,6 +81,13 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
             ),
             const SizedBox(height: 12),
             _DateStrip(period: _period, range: range),
+            const SizedBox(height: 8),
+            Text(
+              '历史保留90天；旧版排行显示为历史汇总，未记录的流量与时长无法补回。',
+              style: AppTextStyle.caption1
+                  .of(context)
+                  .copyWith(color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 12),
             stats.when(
               data: (data) => Column(
@@ -195,7 +202,6 @@ class _OverviewCard extends ConsumerWidget {
 
   final TrafficStatistics data;
 
-  // runTimeProvider is the already-elapsed milliseconds, not a timestamp.
   String _duration(int? elapsedMs) {
     if (elapsedMs == null || elapsedMs <= 0) return '—';
     final minutes = Duration(milliseconds: elapsedMs).inMinutes;
@@ -210,7 +216,6 @@ class _OverviewCard extends ConsumerWidget {
     final cs = context.colorScheme;
     final splitTotal = data.proxyBytes + data.directBytes;
     final proxyPct = splitTotal == 0 ? 0.0 : data.proxyBytes / splitTotal;
-    final runMs = ref.watch(runTimeProvider);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: panelDecoration(context, 20),
@@ -235,7 +240,7 @@ class _OverviewCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text('总流量', style: AppTextStyle.caption1.of(context)),
+          Text('本时段流量', style: AppTextStyle.caption1.of(context)),
           Text(
             (data.totalUpload + data.totalDownload).traffic.show,
             style: AppTextStyle.title1.of(context),
@@ -285,10 +290,10 @@ class _OverviewCard extends ConsumerWidget {
             children: [
               GlyphIcon(AppGlyphs.clock, size: 14, color: cs.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text('累计运行', style: AppTextStyle.caption1.of(context)),
+              Text('时段运行时长', style: AppTextStyle.caption1.of(context)),
               const SizedBox(width: 8),
               Text(
-                _duration(runMs),
+                _duration(data.runtimeMs),
                 style: AppTextStyle.body.of(context, emphasized: true),
               ),
             ],

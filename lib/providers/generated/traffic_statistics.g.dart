@@ -102,6 +102,49 @@ final class TrafficHistoryRetentionProvider
 String _$trafficHistoryRetentionHash() =>
     r'7da4a34132b90abcad9afb5078846436d9f187ef';
 
+@ProviderFor(nativeTrafficHistoryEnabled)
+final nativeTrafficHistoryEnabledProvider =
+    NativeTrafficHistoryEnabledProvider._();
+
+final class NativeTrafficHistoryEnabledProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  NativeTrafficHistoryEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nativeTrafficHistoryEnabledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$nativeTrafficHistoryEnabledHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return nativeTrafficHistoryEnabled(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$nativeTrafficHistoryEnabledHash() =>
+    r'82a6756f6e7b0eaececfc48c6e577aa68baefceb';
+
 @ProviderFor(TrafficSampler)
 final trafficSamplerProvider = TrafficSamplerProvider._();
 
@@ -134,7 +177,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'ea3cda3da2c643c7329092d57f3ef61c940db8a8';
+String _$trafficSamplerHash() => r'5e857c027941dfe7392781cc175d8d64d65e1409';
 
 abstract class _$TrafficSampler extends $Notifier<void> {
   void build();
@@ -274,7 +317,7 @@ final class TrafficStatisticsProvider
   }
 }
 
-String _$trafficStatisticsHash() => r'e517e02f40bc12633c5ed6cc9da548477755667e';
+String _$trafficStatisticsHash() => r'55a88728bff2e4b10719aa97e70b45f5b1066076';
 
 /// Loads history for the selected period and aggregates it off-isolate.
 
@@ -357,7 +400,7 @@ final class AppUsageProvider
   }
 }
 
-String _$appUsageHash() => r'2c657ff5209880ce8cbbd74c34903d1a01a91b15';
+String _$appUsageHash() => r'c71e4260360aa79a8189b6e964c49a1ce34790e5';
 
 /// Per-app traffic for one usage period, with installed-app labels resolved.
 

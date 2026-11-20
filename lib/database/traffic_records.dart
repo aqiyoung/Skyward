@@ -97,7 +97,7 @@ class TrafficRecordsDao extends DatabaseAccessor<Database>
   Future<List<TrafficRecord>> between(DateTime start, DateTime end) =>
       (select(trafficRecords)..where(
             (t) =>
-                t.startedAt.isSmallerOrEqualValue(end) &
+                t.startedAt.isSmallerThanValue(end) &
                 t.endedAt.isBiggerOrEqualValue(start),
           ))
           .get();

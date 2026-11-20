@@ -5,6 +5,7 @@ import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/traffic_statistics.g.dart';
@@ -18,21 +19,34 @@ Duration trafficSampleInterval(Ref ref) => const Duration(seconds: 5);
 Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
 
 @Riverpod(keepAlive: true)
+bool nativeTrafficHistoryEnabled(Ref ref) => system.isAndroid;
+
+@Riverpod(keepAlive: true)
 class TrafficSampler extends _$TrafficSampler {
   Timer? _timer;
   final _pending = <String, TrackerInfo>{};
   Future<void>? _sampling;
+  int _nativeRevision = 0;
 
   @override
   void build() {
-    ref.listen(coreStatusProvider, (_, _) => _sync());
-    ref.listen(appVisibleProvider, (_, _) => unawaited(sample()));
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected) _nativeRevision = 0;
+      _sync();
+    });
+    ref.listen(appVisibleProvider, (_, visible) {
+      _sync();
+      if (visible) unawaited(sample());
+    });
     ref.onDispose(_stop);
     _sync();
   }
 
   void _sync() {
-    final active = ref.read(coreStatusProvider) == CoreStatus.connected;
+    final active =
+        ref.read(coreStatusProvider) == CoreStatus.connected &&
+        (!ref.read(nativeTrafficHistoryEnabledProvider) ||
+            ref.read(appVisibleProvider));
     if (active) {
       _start();
     } else {
@@ -56,6 +70,7 @@ class TrafficSampler extends _$TrafficSampler {
   }
 
   void capture(Iterable<TrackerInfo> requests) {
+    if (ref.read(nativeTrafficHistoryEnabledProvider)) return;
     for (final request in requests) {
       final previous = _pending[request.id];
       _pending[request.id] = previous == null
@@ -83,6 +98,10 @@ class TrafficSampler extends _$TrafficSampler {
   }
 
   Future<void> _persist(List<TrackerInfo> requests, Duration retention) async {
+    if (ref.read(nativeTrafficHistoryEnabledProvider)) {
+      await _importNative(retention);
+      return;
+    }
     final now = DateTime.now();
     final hour = DateTime(now.year, now.month, now.day, now.hour);
     var changed = false;
@@ -130,6 +149,32 @@ class TrafficSampler extends _$TrafficSampler {
       ref.invalidate(appUsageProvider);
     }
   }
+
+  Future<void> _importNative(Duration retention) async {
+    try {
+      final answer = await ref
+          .read(coreHandlerProvider)
+          .getTrafficHistory(_nativeRevision);
+      if (answer == null) return;
+      final rows = (answer['rows'] as List)
+          .map((row) => Map<String, Object?>.from(row as Map))
+          .toList();
+      await database.nativeTrafficDao.importRows(
+        rows,
+        DateTime.now().subtract(retention),
+      );
+      _nativeRevision = (answer['revision'] as num).toInt();
+      if (rows.isNotEmpty && ref.mounted) {
+        ref.invalidate(trafficStatisticsProvider);
+        ref.invalidate(appUsageProvider);
+      }
+    } catch (error) {
+      commonPrint.log(
+        'Native traffic history sync failed: $error',
+        logLevel: LogLevel.error,
+      );
+    }
+  }
 }
 
 /// The range a statistics view currently shows: the start of the period.
@@ -172,9 +217,23 @@ Future<TrafficStatistics> trafficStatistics(
   };
   final records = await database.trafficRecordsDao.between(start, end);
   final hours = await database.trafficHourlyDao.between(start, end);
-  return aggregateTrafficTask(
+  final native = await database.nativeTrafficDao.between(start, end);
+  final result = await aggregateTrafficTask(
     [
-      for (final r in records)
+      if (hours.isNotEmpty)
+        (
+          host: '旧版历史汇总',
+          rule: '旧版历史汇总',
+          rulePayload: '',
+          node: '旧版历史汇总',
+          upload: hours
+              .where((h) => h.direction == 1)
+              .fold<int>(0, (sum, h) => sum + h.bytes),
+          download: hours
+              .where((h) => h.direction == 0)
+              .fold<int>(0, (sum, h) => sum + h.bytes),
+        ),
+      for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
         (
           host: r.host,
           rule: r.rule,
@@ -192,8 +251,28 @@ Future<TrafficStatistics> trafficStatistics(
           proxied: h.proxied,
           bytes: h.bytes,
         ),
+      for (final r in native)
+        for (final direction in [0, 1])
+          (
+            hour: DateTime.fromMillisecondsSinceEpoch(r.hour),
+            direction: direction,
+            proxied: r.node.isNotEmpty && r.node.toUpperCase() != 'DIRECT'
+                ? 0
+                : 1,
+            bytes: direction == 0 ? r.download : r.upload,
+          ),
     ],
     kind.index,
+    connectionCounts: [
+      if (hours.isNotEmpty) records.length,
+      for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
+        r.connections,
+    ],
+  );
+  return result.copyWith(
+    runtimeMs: native.fold(0, (sum, row) => sum + row.runtimeMs),
+    connectionCount:
+        records.length + native.fold(0, (sum, row) => sum + row.connections),
   );
 }
 
@@ -231,10 +310,20 @@ Future<AppUsage> appUsage(Ref ref, AppUsagePeriod period) async {
     range.end,
   );
   final labels = {for (final p in packages) p.packageName: p.label};
+  final native = await database.nativeTrafficDao.between(
+    range.start,
+    range.end,
+  );
   return aggregateAppUsageTask(
     [
       for (final b in buckets)
         (process: b.process, direction: b.direction, bytes: b.bytes),
+      for (final row in native.where(
+        (r) => r.upload > 0 || r.download > 0,
+      )) ...[
+        (process: row.process, direction: 0, bytes: row.download),
+        (process: row.process, direction: 1, bytes: row.upload),
+      ],
     ],
     labels,
     currentAppLocalizations.unknown,

@@ -20,12 +20,17 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
-		if hasEventListener() {
-			if runtime.GOOS == "android" {
-				sendMessage(RequestMessage, snapshotRequest(c.Info(), tun.FindPackageName))
-			} else {
-				sendMessage(RequestMessage, c)
+		if runtime.GOOS == "android" {
+			snapshot := snapshotRequest(c.Info(), tun.FindPackageName)
+			nativeHistory.watch(c, snapshot.Metadata)
+			if hasEventListener() {
+				sendMessage(RequestMessage, snapshot)
+				watchRequestTraffic(c)
 			}
+			return
+		}
+		if hasEventListener() {
+			sendMessage(RequestMessage, c)
 			watchRequestTraffic(c)
 		}
 	}
