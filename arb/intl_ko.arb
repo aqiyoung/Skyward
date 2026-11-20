@@ -65,7 +65,6 @@
   "textSection": "텍스트",
   "configuration": "Configuration",
   "data": "Data",
-
   "extend": "확장",
   "runtimeConfig": "런타임 구성",
   "allowLan": "LAN 접속 허용",
@@ -1016,6 +1015,7 @@
   "editDashboard": "대시보드 편집",
   "done": "완료",
   "dashboardAddableSection": "추가 가능",
+  "dashboardSplitStack": "스택 풀기",
   "customImportDroppedSubRules": "{count, plural, other{사용자 지정 프로필은 하위 규칙을 지원하지 않아 SUB-RULE 규칙 {label}개를 제외했습니다}}",
   "autoInclude": "자동 포함",
   "allReferencedProxies": "참조된 모든 프록시",
@@ -1089,5 +1089,10 @@
   "webrtcLeakAdvice": "「차단」에서는 반사 주소가 보이지 않는 것이 정상입니다. 실제 유출을 확인하려면 「고급 설정 → 네트워크」에서 WebRTC를 잠시 「처리하지 않음」으로 바꾼 뒤 확인하고 다시 되돌리세요.",
   "webrtcLeakExternal": "브라우저에서 WebRTC 확인",
   "hapticFeedback": "햅틱 피드백",
-  "hapticFeedbackDesc": "앱에서 탭할 때 가볍게 진동합니다."
+  "hapticFeedbackDesc": "앱에서 탭할 때 가볍게 진동합니다.",
+  "usageStats": "사용 통계",
+  "usageDetails": "사용 상세",
+  "last7Days": "최근 7일",
+  "thisMonth": "이번 달",
+  "today": "오늘"
 }

@@ -18,6 +18,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'widgets/icon.dart';
+
 import 'pages/pages.dart';
 
 Widget buildManagerStack({
@@ -220,6 +222,23 @@ class ApplicationState extends ConsumerState<Application>
     );
   }
 
+  /// Reclaim everything the UI isolate can give back without a restart. The
+  /// service already trims the Core on UI_HIDDEN, but OEMs also trim a running
+  /// app: without this the engine keeps every decoded bitmap and icon byte
+  /// until the low-memory killer takes the whole process.
+  void _releaseUiMemory() {
+    PaintingBinding.instance.imageCache.clear();
+    clearIconCaches();
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    // OEMs (notably vivo/OriginOS) trim foreground processes aggressively.
+    // Lifecycle callbacks only fire when the app leaves the screen, so this
+    // is the only signal that reaches us while the dashboard is still visible.
+    _releaseUiMemory();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
@@ -231,7 +250,7 @@ class ApplicationState extends ConsumerState<Application>
         // Nobody is looking at those icons once the app is away, and Android
         // picks this moment to decide whether the process is worth keeping.
         // Dropping the decoded bitmaps costs a re-decode on the way back.
-        PaintingBinding.instance.imageCache.clear();
+        _releaseUiMemory();
       case AppLifecycleState.inactive:
         // A notification shade or a call: the app is still on screen behind it.
         break;

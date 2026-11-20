@@ -307,6 +307,84 @@ void main() {
         expect(await upgrade(4), isTrue);
       });
 
+      test(
+        'upgrade 5 leaves every dock style and glass tier untouched',
+        () async {
+          Future<Config> upgraded(
+            int from, {
+            required String style,
+            required Object glass,
+          }) async {
+            final configMap = _createConfigMap();
+            (configMap['appSettingProps']!
+                    as Map<String, Object?>)['navigationBarStyle'] =
+                style;
+            (configMap['themeProps']! as Map<String, Object?>)['liquidGlass'] =
+                glass;
+            final store = _FakeMigrationStore(
+              configMap: configMap,
+              version: Migration.currentVersion,
+              upgradeVersion: from,
+            );
+            return Migration(store: store).run();
+          }
+
+          // Slot 5 is a no-op: the withdrawn "settle the flashing dock" guess
+          // pointed at floating + glass on, while the flash actually came from
+          // floating + glass off. The renderer fixes it for every combination,
+          // so an upgrade must never rewrite a choice the user made.
+          Future<void> expectUnchanged(
+            int from, {
+            required String style,
+            required Object glass,
+            required NavigationBarStyle expectedStyle,
+            required LiquidGlassMode expectedGlass,
+          }) async {
+            final config = await upgraded(from, style: style, glass: glass);
+            expect(config.appSettingProps.navigationBarStyle, expectedStyle);
+            expect(config.themeProps.liquidGlass, expectedGlass);
+          }
+
+          for (final from in [4, 5]) {
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: 'none',
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.none,
+            );
+            await expectUnchanged(
+              from,
+              style: 'floating',
+              glass: true,
+              expectedStyle: NavigationBarStyle.floating,
+              expectedGlass: LiquidGlassMode.standard,
+            );
+            await expectUnchanged(
+              from,
+              style: 'capsule',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.capsule,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+            await expectUnchanged(
+              from,
+              style: 'docked',
+              glass: 'ultra',
+              expectedStyle: NavigationBarStyle.docked,
+              expectedGlass: LiquidGlassMode.ultra,
+            );
+          }
+        },
+      );
+
       test('a new install only records it', () async {
         final store = _FakeMigrationStore(
           configMap: null,

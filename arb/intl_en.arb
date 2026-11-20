@@ -65,7 +65,6 @@
   "textSection": "Text",
   "configuration": "Configuration",
   "data": "Data",
-
   "extend": "Extend",
   "runtimeConfig": "Runtime config",
   "allowLan": "Allow LAN",
@@ -1016,6 +1015,7 @@
   "editDashboard": "Edit dashboard",
   "done": "Done",
   "dashboardAddableSection": "Available to add",
+  "dashboardSplitStack": "Split stack",
   "customImportDroppedSubRules": "{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}",
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
@@ -1089,5 +1089,10 @@
   "webrtcLeakAdvice": "With Block, seeing no reflected address is expected. To test a real leak, set WebRTC to Leave alone in Advanced > Network, check again, then switch back.",
   "webrtcLeakExternal": "Verify WebRTC in a browser",
   "hapticFeedback": "Haptic feedback",
-  "hapticFeedbackDesc": "A light vibration on taps across the app."
+  "hapticFeedbackDesc": "A light vibration on taps across the app.",
+  "usageStats": "Usage stats",
+  "usageDetails": "Usage details",
+  "last7Days": "Last 7 days",
+  "thisMonth": "This month",
+  "today": "Today"
 }

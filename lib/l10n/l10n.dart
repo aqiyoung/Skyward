@@ -8464,6 +8464,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Split stack`
+  String get dashboardSplitStack {
+    return Intl.message(
+      'Split stack',
+      name: 'dashboardSplitStack',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `{count, plural, =1{1 SUB-RULE rule was dropped, since custom profiles do not support sub-rules} other{{label} SUB-RULE rules were dropped, since custom profiles do not support sub-rules}}`
   String customImportDroppedSubRules(num count, Object label) {
     return Intl.plural(
@@ -9125,6 +9135,36 @@ class AppLocalizations {
       desc: '',
       args: [],
     );
+  }
+
+  /// `Usage stats`
+  String get usageStats {
+    return Intl.message('Usage stats', name: 'usageStats', desc: '', args: []);
+  }
+
+  /// `Usage details`
+  String get usageDetails {
+    return Intl.message(
+      'Usage details',
+      name: 'usageDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last 7 days`
+  String get last7Days {
+    return Intl.message('Last 7 days', name: 'last7Days', desc: '', args: []);
+  }
+
+  /// `This month`
+  String get thisMonth {
+    return Intl.message('This month', name: 'thisMonth', desc: '', args: []);
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message('Today', name: 'today', desc: '', args: []);
   }
 }
 

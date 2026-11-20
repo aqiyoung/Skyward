@@ -634,6 +634,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Disponibles à l’ajout",
     ),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage(
+      "Séparer la pile",
+    ),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("Base de données"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
@@ -1245,6 +1248,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("Libellé"),
     "language": MessageLookupByLibrary.simpleMessage("Langue"),
     "large": MessageLookupByLibrary.simpleMessage("Grande"),
+    "last7Days": MessageLookupByLibrary.simpleMessage("7 derniers jours"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("Dernière mise à jour"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Démarrage inachevé",
@@ -2165,11 +2169,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "theme": MessageLookupByLibrary.simpleMessage("Thème"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Couleur du thème"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Mode du thème"),
+    "thisMonth": MessageLookupByLibrary.simpleMessage("Ce mois-ci"),
     "tight": MessageLookupByLibrary.simpleMessage("Serrée"),
     "time": MessageLookupByLibrary.simpleMessage("Heure"),
     "timeout": MessageLookupByLibrary.simpleMessage("Expiré"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("Teinté"),
     "tip": MessageLookupByLibrary.simpleMessage("Astuce"),
+    "today": MessageLookupByLibrary.simpleMessage("Aujourd’hui"),
     "toggle": MessageLookupByLibrary.simpleMessage("Basculer"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Tolérance"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("Outils"),
@@ -2230,6 +2236,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlTip": m84,
+    "usageDetails": MessageLookupByLibrary.simpleMessage(
+      "Détails d’utilisation",
+    ),
+    "usageStats": MessageLookupByLibrary.simpleMessage(
+      "Statistiques d’utilisation",
+    ),
     "useHosts": MessageLookupByLibrary.simpleMessage("Utiliser hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Utiliser les hosts du système",

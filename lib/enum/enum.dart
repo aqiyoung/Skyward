@@ -546,12 +546,35 @@ enum DashboardWidget {
   routingBoard,
   profiles,
   proxyGroups,
-  memoryInfo;
+  memoryInfo,
+  trafficStats,
+  appUsage;
 
   final List<SupportPlatform> platforms;
 
   const DashboardWidget() : platforms = SupportPlatform.values;
+
+  /// How much room the card takes, which is what decides whether it can share
+  /// a place with another one: a pile shows one card after another in the same
+  /// spot, so the cards in it have to be the same size as the spot. The bands
+  /// follow the heights the cards measure at a phone's width.
+  DashboardCardSize get size => switch (this) {
+    // The start button lives here and has nowhere else to go, so this card
+    // never turns out of sight under the ones below it.
+    DashboardWidget.currentOutbound => DashboardCardSize.hero,
+    DashboardWidget.networkControl ||
+    DashboardWidget.routingBoard ||
+    DashboardWidget.proxyGroups ||
+    DashboardWidget.trafficStats || DashboardWidget.appUsage => DashboardCardSize.tall,
+    DashboardWidget.networkOverview ||
+    DashboardWidget.profiles ||
+    DashboardWidget.memoryInfo => DashboardCardSize.compact,
+  };
 }
+
+/// The room a dashboard card takes. Cards pile only with cards of the same
+/// size; a hero card never piles at all.
+enum DashboardCardSize { hero, tall, compact }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
 
@@ -961,3 +984,13 @@ enum LoadingTag {
 enum CoreStatus { connecting, connected, disconnected }
 
 enum UpdatingScope { core, local }
+
+/// The span a traffic-statistics view aggregates over.
+enum TrafficPeriod { day, week, month }
+
+/// The dimension traffic is ranked and grouped by.
+enum TrafficRankKind { domain, rule, node, config }
+
+/// The periods of the per-app usage sheet. 近7天 is a rolling window, unlike
+/// TrafficPeriod.week which is anchored to the selected date.
+enum AppUsagePeriod { today, last7Days, thisMonth, total }

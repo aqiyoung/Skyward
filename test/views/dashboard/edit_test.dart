@@ -33,7 +33,16 @@ void main() {
   void seed(List<DashboardWidget> widgets) {
     container
         .read(appSettingProvider.notifier)
-        .update((state) => state.copyWith(dashboardWidgets: widgets));
+        .update(
+          (state) => state.copyWith(
+            dashboardWidgets: widgets,
+            // One card per pile: these tests are about editing, not about the
+            // piles the cards fall into by size on a fresh board.
+            dashboardStacks: [
+              for (final card in widgets) [card],
+            ],
+          ),
+        );
   }
 
   // The cards sway for as long as they are edited, so nothing settles.
@@ -259,37 +268,73 @@ void main() {
     await teardown(tester);
   });
 
-  testWidgets('a card held and dragged saves the new order and keeps its '
-      'state', (tester) async {
+  testWidgets('a card held and dropped on another stacks the two together', (
+    tester,
+  ) async {
     seed(const [
       DashboardWidget.currentOutbound,
       DashboardWidget.proxyGroups,
       DashboardWidget.memoryInfo,
     ]);
     await pumpEditor(tester);
-    final memory = tester.state(find.byType(MemoryInfo));
-    final card = find.byType(MemoryInfo);
-    final rise =
-        top(tester, card) - top(tester, find.byType(ProxyGroupsCard)) - 10;
 
-    final gesture = await tester.startGesture(tester.getCenter(card));
-    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
-    for (var step = 0; step < 4; step++) {
-      await gesture.moveBy(Offset(0, -rise / 4));
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(find.byType(MemoryInfo), findsOneWidget);
-    expect(tester.state(find.byType(MemoryInfo)), same(memory));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(MemoryInfo)),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 60));
+    await tester.pump();
+    await gesture.moveTo(tester.getCenter(find.byType(ProxyGroupsCard)));
+    await tester.pump(const Duration(milliseconds: 120));
     await gesture.up();
     await settle(tester);
 
+    // The dropped card joins the pile it was let go on, under the card that
+    // was already there, and the flat list reads the same way.
+    expect(container.read(appSettingProvider).dashboardStacks, const [
+      [DashboardWidget.currentOutbound],
+      [DashboardWidget.proxyGroups, DashboardWidget.memoryInfo],
+    ]);
     expect(saved(), const [
       DashboardWidget.currentOutbound,
-      DashboardWidget.memoryInfo,
       DashboardWidget.proxyGroups,
+      DashboardWidget.memoryInfo,
     ]);
-    expect(tester.state(find.byType(MemoryInfo)), same(memory));
+    expect(tester.state(find.byType(ProxyGroupsCard)), isNotNull);
     expect(tester.takeException(), isNull);
+
+    await teardown(tester);
+  });
+
+  testWidgets('a pile of two can be split back into single cards', (
+    tester,
+  ) async {
+    seed(const [
+      DashboardWidget.currentOutbound,
+      DashboardWidget.proxyGroups,
+      DashboardWidget.memoryInfo,
+    ]);
+    await pumpEditor(tester);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(MemoryInfo)),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 60));
+    await tester.pump();
+    await gesture.moveTo(tester.getCenter(find.byType(ProxyGroupsCard)));
+    await tester.pump(const Duration(milliseconds: 120));
+    await gesture.up();
+    await settle(tester);
+
+    expect(find.byTooltip('Split stack'), findsOneWidget);
+    await tester.tap(find.byTooltip('Split stack'));
+    await settle(tester);
+
+    expect(container.read(appSettingProvider).dashboardStacks, const [
+      [DashboardWidget.currentOutbound],
+      [DashboardWidget.proxyGroups],
+      [DashboardWidget.memoryInfo],
+    ]);
+    expect(find.byTooltip('Split stack'), findsNothing);
 
     await teardown(tester);
   });

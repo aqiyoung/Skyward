@@ -75,10 +75,15 @@ NavigationState navigationState(Ref ref) {
 
 @riverpod
 DashboardState dashboardState(Ref ref) {
-  final dashboardWidgets = ref.watch(
-    appSettingProvider.select((state) => state.dashboardWidgets),
+  final setting = ref.watch(
+    appSettingProvider.select(
+      (state) => (state.dashboardWidgets, state.dashboardStacks),
+    ),
   );
-  return DashboardState(dashboardWidgets: dashboardWidgets);
+  return DashboardState(
+    dashboardWidgets: setting.$1,
+    dashboardStacks: setting.$2,
+  );
 }
 
 @riverpod

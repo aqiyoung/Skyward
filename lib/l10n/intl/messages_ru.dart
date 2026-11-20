@@ -610,6 +610,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardAddableSection": MessageLookupByLibrary.simpleMessage(
       "Можно добавить",
     ),
+    "dashboardSplitStack": MessageLookupByLibrary.simpleMessage(
+      "Разделить стопку",
+    ),
     "data": MessageLookupByLibrary.simpleMessage("Data"),
     "database": MessageLookupByLibrary.simpleMessage("База данных"),
     "databaseWriteFailedTip": MessageLookupByLibrary.simpleMessage(
@@ -1201,6 +1204,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "label": MessageLookupByLibrary.simpleMessage("Метка"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "large": MessageLookupByLibrary.simpleMessage("Крупный"),
+    "last7Days": MessageLookupByLibrary.simpleMessage("Последние 7 дней"),
     "lastUpdated": MessageLookupByLibrary.simpleMessage("Последнее обновление"),
     "launchInterrupted": MessageLookupByLibrary.simpleMessage(
       "Запуск не завершён",
@@ -2099,11 +2103,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),
     "themeMode": MessageLookupByLibrary.simpleMessage("Режим темы"),
+    "thisMonth": MessageLookupByLibrary.simpleMessage("Этот месяц"),
     "tight": MessageLookupByLibrary.simpleMessage("Плотный"),
     "time": MessageLookupByLibrary.simpleMessage("Время"),
     "timeout": MessageLookupByLibrary.simpleMessage("Тайм-аут"),
     "tintedStyle": MessageLookupByLibrary.simpleMessage("Тонированный"),
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
+    "today": MessageLookupByLibrary.simpleMessage("Сегодня"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tolerance": MessageLookupByLibrary.simpleMessage("Допуск"),
     "toolEntries": MessageLookupByLibrary.simpleMessage("Инструменты"),
@@ -2162,6 +2168,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("Скорость отдачи"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlTip": m84,
+    "usageDetails": MessageLookupByLibrary.simpleMessage("Подробности"),
+    "usageStats": MessageLookupByLibrary.simpleMessage(
+      "Статистика использования",
+    ),
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системный hosts",

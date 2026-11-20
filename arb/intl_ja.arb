@@ -65,7 +65,6 @@
   "textSection": "テキスト",
   "configuration": "Configuration",
   "data": "Data",
-
   "extend": "拡張",
   "runtimeConfig": "ランタイム設定",
   "allowLan": "LAN 接続を許可",
@@ -1016,6 +1015,7 @@
   "editDashboard": "ダッシュボードを編集",
   "done": "完了",
   "dashboardAddableSection": "追加できるカード",
+  "dashboardSplitStack": "スタックを分解",
   "customImportDroppedSubRules": "{count, plural, other{カスタム設定はサブルールに対応していないため、SUB-RULE ルール {label} 件を破棄しました}}",
   "autoInclude": "自動で含める",
   "allReferencedProxies": "参照されているすべてのプロキシ",
@@ -1089,5 +1089,10 @@
   "webrtcLeakAdvice": "「遮断」では反射アドレスが表示されないのが正常です。実際の漏れを調べるには、「詳細設定 → ネットワーク」で WebRTC を一時的に「そのまま」にし、確認後に戻してください。",
   "webrtcLeakExternal": "ブラウザーで WebRTC を確認",
   "hapticFeedback": "触覚フィードバック",
-  "hapticFeedbackDesc": "アプリ内のタップで軽く振動します。"
+  "hapticFeedbackDesc": "アプリ内のタップで軽く振動します。",
+  "usageStats": "使用状況",
+  "usageDetails": "使用の詳細",
+  "last7Days": "過去 7 日間",
+  "thisMonth": "今月",
+  "today": "今日"
 }

@@ -117,6 +117,8 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+  DashboardWidget.trafficStats,
+  DashboardWidget.appUsage,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
@@ -137,6 +139,8 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.networkControl,
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
+        DashboardWidget.trafficStats,
+        DashboardWidget.appUsage,
       ]
     : defaultDashboardWidgets;
 
@@ -294,6 +298,41 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   return {DashboardWidget.currentOutbound, ...kept}.toList();
 }
 
+/// The piles the reader stacked by hand, one list per pile, top card first.
+///
+/// [null] is the point of this function: a config written before stacking
+/// existed has no such key, and returns null so the piles keep falling out by
+/// size. Names this build no longer knows are dropped rather than failing the
+/// whole config, and a card that somehow appears in two piles is kept only in
+/// the first, because one card can only be in one place on the board.
+List<List<DashboardWidget>>? dashboardStacksFromJson(
+  List<dynamic>? dashboardStacks,
+) {
+  if (dashboardStacks == null) {
+    return null;
+  }
+  final byName = DashboardWidget.values.asNameMap();
+  final seen = <DashboardWidget>{};
+  final stacks = <List<DashboardWidget>>[];
+  for (final raw in dashboardStacks) {
+    if (raw is! List) {
+      continue;
+    }
+    final pile = <DashboardWidget>[];
+    for (final name in raw) {
+      final card = _legacyDashboardWidgets[name] ?? byName[name];
+      if (card == null || !seen.add(card)) {
+        continue;
+      }
+      pile.add(card);
+    }
+    if (pile.isNotEmpty) {
+      stacks.add(pile);
+    }
+  }
+  return stacks.isEmpty ? null : stacks;
+}
+
 Object? _readSidebarExpanded(Map<dynamic, dynamic> json, String key) {
   return json.containsKey(key) ? json[key] : json['showLabel'];
 }
@@ -354,6 +393,17 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(defaultDashboardWidgets)
     @JsonKey(fromJson: dashboardWidgetsFromJson)
     List<DashboardWidget> dashboardWidgets,
+
+    /// The piles the reader stacked by hand, each top card first. Null means
+    /// nobody has stacked them yet, and the cards fall into piles by size on
+    /// their own; once a pile is dragged together or apart, this holds the
+    /// arrangement and the automatic one stops applying.
+    ///
+    /// [dashboardWidgets] still lists every card in reading order, so a build
+    /// that predates stacking, a backup, and the plain editor all keep working
+    /// off the same set.
+    @JsonKey(fromJson: dashboardStacksFromJson)
+    List<List<DashboardWidget>>? dashboardStacks,
     @Default(false) bool onlyStatisticsProxy,
     @Default(true) bool showNotificationStopAction,
 
