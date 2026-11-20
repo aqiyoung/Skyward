@@ -232,6 +232,9 @@ abstract final class GroupIconSource {
   /// The app's own mark, which stands in for a group no picture suits.
   static const logo = 'assets/images/icon.png';
 
+  /// The globe the Core's own GLOBAL group wears.
+  static const global = 'assets/images/global.png';
+
   /// The routing groups the default config builds, by the name it gives them:
   /// each wears the picture that says what it does.
   static const _routing = {
@@ -288,11 +291,10 @@ abstract final class GroupIconSource {
   /// subscription's icons authoritative — the same fix [262523e0] first gave
   /// GoogleFCM, now extended to every group. [GroupName.GLOBAL] is the one
   /// exception: it is the Core's own group rather than a profile's, so it
-  /// wears the app's own mark whatever a config names for it — the globe
-  /// configs usually name says nothing about the app it belongs to.
+  /// wears its own bundled globe whatever a config names for it.
   static String of({required String name, required String icon}) {
     if (GroupMonogram.isGlobal(name)) {
-      return logo;
+      return global;
     }
     if (icon.isNotEmpty) {
       return icon;
@@ -685,8 +687,7 @@ abstract final class GroupIconSource {
 }
 
 /// Stands in for a group whose picture is empty or unreadable: the app's own
-/// mark — which is also what [GroupName.GLOBAL] wears outright, so the badge
-/// and the picture never disagree about the Core's group.
+/// mark.
 class GroupBadge extends StatelessWidget {
   const GroupBadge({super.key, required this.name, this.exitCountryCode});
 
