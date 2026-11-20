@@ -9,6 +9,11 @@ name: android-rust
 # used so every build has the SAME signature and installs over the previous
 # one; its signature differs from the Go release and applicationId is
 # `com.threely.skyward.rust`, so both can be installed side by side.
+#
+# Two distribution channels, chosen at dispatch time: `release` publishes a
+# GitHub Release and pushes the APK to the Telegram subscription channel;
+# `test` skips both and sends the APK only to the Bot private chat, with a
+# -test.<run> version that never touches the formal version sequence.
 
 on:
   workflow_dispatch:
@@ -18,9 +23,17 @@ on:
         required: false
         default: 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip'
       version:
-        description: 'Version shown in the app'
+        description: 'Version shown in the app (test channel: base version, -test.<run> is appended)'
         required: false
         default: '1.0.0.99-rust'
+      channel:
+        description: 'release = GitHub Release + subscription channel; test = Bot private chat only'
+        required: false
+        type: choice
+        options:
+          - release
+          - test
+        default: release
       changelog:
         description: 'Update log sent with the Telegram message'
         required: false
@@ -49,6 +62,22 @@ jobs:
           # pubspec.yaml bundles the Go submodule's CA cert as a Flutter asset;
           # that file must exist even though the core itself is now Rust.
           submodules: recursive
+
+      - name: Resolve version for this channel
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          RAW_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$CHANNEL" = "test" ]; then
+            base="${RAW_VERSION:-1.0.0.99-rust}"
+            base="${base%-rust}"
+            resolved="${base}-test.${{ github.run_number }}"
+          else
+            resolved="${RAW_VERSION:-1.0.0.99-rust}"
+          fi
+          echo "VERSION=$resolved" >> "$GITHUB_ENV"
+          echo "channel=$CHANNEL version=$resolved"
 
       - name: Download Rust core .so package
         env:
@@ -123,7 +152,7 @@ jobs:
       - name: Build arm64 APK (Rust core)
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-          APP_VERSION_NAME: ${{ inputs.version || '1.0.0.99-rust' }}
+          APP_VERSION_NAME: ${{ env.VERSION }}
           APP_CHANNEL_NAME: rust
           APP_BUILD_NUMBER: ${{ github.run_number }}
         run: |
@@ -159,9 +188,10 @@ jobs:
           fi
 
       - name: Publish GitHub Release
+        if: inputs.channel != 'test'
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ env.VERSION }}
           CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
@@ -178,9 +208,11 @@ jobs:
           fi
           echo "release published: $tag"
       - name: Push APK to Telegram (subscription channel)
+        if: inputs.channel != 'test'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ env.VERSION }}
           CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
@@ -189,7 +221,7 @@ jobs:
           fi
           # The update log rides along with the APK; Telegram captions are capped
           # at 1024 bytes, so keep it to the first lines that matter.
-          caption="Skyward ${{ inputs.version }} (Rust core test, arm64)"
+          caption="Skyward $VERSION (Rust core, arm64)"
           if [ -n "${CHANGELOG:-}" ]; then
             caption=$(printf '%s\n%s' "$caption" "$CHANGELOG")
           fi
@@ -203,6 +235,30 @@ jobs:
             -F "caption=${caption}" | grep -q '"ok":true' \
             || { echo "::error::TG upload failed"; exit 1; }
           echo "APK pushed to Telegram"
+
+      - name: Push APK to Telegram (Bot private chat, test builds)
+        if: inputs.channel == 'test'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+          VERSION: ${{ env.VERSION }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
+            echo "::error::TG secrets missing"; exit 1
+          fi
+          caption="Skyward $VERSION (Rust core TEST build, arm64) - not a release"
+          if [ -n "${CHANGELOG:-}" ]; then
+            caption=$(printf '%s\n%s' "$caption" "$CHANGELOG")
+          fi
+          caption=$(printf '%s' "$caption" | head -c 1000)
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "document=@dist/skyward-rust-core-arm64.apk" \
+            -F "caption=${caption}" | grep -q '"ok":true' \
+            || { echo "::error::TG upload failed"; exit 1; }
+          echo "test APK pushed to Bot private chat"
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
