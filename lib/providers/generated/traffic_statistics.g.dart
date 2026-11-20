@@ -102,18 +102,11 @@ final class TrafficHistoryRetentionProvider
 String _$trafficHistoryRetentionHash() =>
     r'7da4a34132b90abcad9afb5078846436d9f187ef';
 
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
-
 @ProviderFor(TrafficSampler)
 final trafficSamplerProvider = TrafficSamplerProvider._();
 
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
 final class TrafficSamplerProvider
     extends $NotifierProvider<TrafficSampler, void> {
-  /// Periodically persists the live connection list so the statistics page has
-  /// history. Runs only while the core is connected and the app is visible.
   TrafficSamplerProvider._()
     : super(
         from: null,
@@ -141,10 +134,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'dee23f8e8589ec7d54edb1370e61cc78568ecc4f';
-
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
+String _$trafficSamplerHash() => r'ea3cda3da2c643c7329092d57f3ef61c940db8a8';
 
 abstract class _$TrafficSampler extends $Notifier<void> {
   void build();
@@ -367,7 +357,7 @@ final class AppUsageProvider
   }
 }
 
-String _$appUsageHash() => r'5447bbeb17fcbb0839cb59356de2fadae9693096';
+String _$appUsageHash() => r'2c657ff5209880ce8cbbd74c34903d1a01a91b15';
 
 /// Per-app traffic for one usage period, with installed-app labels resolved.
 

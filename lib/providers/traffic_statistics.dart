@@ -17,36 +17,27 @@ Duration trafficSampleInterval(Ref ref) => const Duration(seconds: 5);
 @Riverpod(keepAlive: true)
 Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
 
-/// Keeps the first-seen time of every connection we have persisted so an
-/// upsert never moves a connection's start.
-final trafficFirstSeen = <String, DateTime>{};
-
-/// The last cumulative byte totals we sampled per connection, used to derive
-/// the per-hour deltas the trend chart is built from.
-final trafficLastBytes = <String, ({int up, int down})>{};
-
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
 @Riverpod(keepAlive: true)
 class TrafficSampler extends _$TrafficSampler {
   Timer? _timer;
+  final _pending = <String, TrackerInfo>{};
+  Future<void>? _sampling;
 
   @override
   void build() {
     ref.listen(coreStatusProvider, (_, _) => _sync());
-    ref.listen(appVisibleProvider, (_, _) => _sync());
+    ref.listen(appVisibleProvider, (_, _) => unawaited(sample()));
     ref.onDispose(_stop);
     _sync();
   }
 
   void _sync() {
-    final active =
-        ref.read(coreStatusProvider) == CoreStatus.connected &&
-        ref.read(appVisibleProvider);
+    final active = ref.read(coreStatusProvider) == CoreStatus.connected;
     if (active) {
       _start();
     } else {
       _stop();
+      if (_pending.isNotEmpty) unawaited(sample());
     }
   }
 
@@ -54,9 +45,9 @@ class TrafficSampler extends _$TrafficSampler {
     if (_timer != null) return;
     _timer = Timer.periodic(
       ref.read(trafficSampleIntervalProvider),
-      (_) => _sample(),
+      (_) => unawaited(sample()),
     );
-    _sample();
+    unawaited(sample());
   }
 
   void _stop() {
@@ -64,70 +55,79 @@ class TrafficSampler extends _$TrafficSampler {
     _timer = null;
   }
 
-  Future<void> _sample() async {
+  void capture(Iterable<TrackerInfo> requests) {
+    for (final request in requests) {
+      final previous = _pending[request.id];
+      _pending[request.id] = previous == null
+          ? request
+          : request.copyWith(
+              upload: request.upload > previous.upload
+                  ? request.upload
+                  : previous.upload,
+              download: request.download > previous.download
+                  ? request.download
+                  : previous.download,
+            );
+    }
+  }
+
+  Future<void> sample() {
+    if (_sampling != null) return _sampling!;
+    final retention = ref.read(trafficHistoryRetentionProvider);
+    capture(ref.read(requestsProvider).list);
+    final requests = _pending.values.toList();
+    _pending.clear();
+    return _sampling = _persist(requests, retention).whenComplete(() {
+      _sampling = null;
+    });
+  }
+
+  Future<void> _persist(List<TrackerInfo> requests, Duration retention) async {
     final now = DateTime.now();
     final hour = DateTime(now.year, now.month, now.day, now.hour);
-    final requests = ref.read(requestsProvider);
-    for (final r in requests.list) {
-      final started = trafficFirstSeen.putIfAbsent(r.id, () => now);
-      await _safeWrite(
-        database.trafficRecordsDao.upsert(
-          TrafficRecord(
-            connectionId: r.id,
-            startedAt: started,
-            endedAt: now,
-            host: r.metadata.host,
-            rule: r.rule,
-            rulePayload: r.rulePayload,
-            node: r.chains.isEmpty ? '' : r.chains.last,
-            network: r.metadata.network,
-            upload: r.upload,
-            download: r.download,
-          ),
-        ),
-      );
-
-      // Derive the delta since the previous sample and add it to this hour.
-      final last = trafficLastBytes[r.id];
-      if (last != null) {
-        final upDelta = r.upload - last.up;
-        final downDelta = r.download - last.down;
-        final node = r.chains.isEmpty ? '' : r.chains.last;
-        final proxied = node.isNotEmpty && node.toUpperCase() != 'DIRECT';
-        if (upDelta > 0 || downDelta > 0) {
-          await _safeWrite(
-            database.trafficHourlyDao.add(
-              hour: hour,
-              download: downDelta,
-              upload: upDelta,
-              proxied: proxied,
-            ),
-          );
-          await _safeWrite(
-            database.appTrafficHourlyDao.add(
-              hour: hour,
+    var changed = false;
+    for (final r in requests) {
+      try {
+        changed =
+            await database.trafficRecordsDao.recordSample(
+              record: TrafficRecord(
+                connectionId: r.id,
+                startedAt: r.start,
+                endedAt: now,
+                host: r.metadata.host,
+                rule: r.rule,
+                rulePayload: r.rulePayload,
+                node: r.chains.isEmpty ? '' : r.chains.last,
+                network: r.metadata.network,
+                upload: r.upload,
+                download: r.download,
+              ),
               process: r.metadata.process,
-              download: downDelta,
-              upload: upDelta,
-            ),
-          );
-        }
+              hour: hour,
+            ) ||
+            changed;
+      } catch (error) {
+        capture([r]);
+        commonPrint.log(
+          'Traffic history write failed: $error',
+          logLevel: LogLevel.error,
+        );
       }
-      trafficLastBytes[r.id] = (up: r.upload, down: r.download);
     }
-    final cutoff = now.subtract(ref.read(trafficHistoryRetentionProvider));
-    await _safeWrite(() async {
+    final cutoff = now.subtract(retention);
+    try {
       await database.trafficRecordsDao.pruneBefore(cutoff);
       await database.trafficHourlyDao.pruneBefore(cutoff);
       await database.appTrafficHourlyDao.pruneBefore(cutoff);
-    }());
-  }
-
-  Future<void> _safeWrite(Future<void> write) async {
-    try {
-      await write;
-    } catch (_) {
-      // History is best-effort; a failed sample must never break the UI.
+    } catch (error) {
+      commonPrint.log(
+        'Traffic history pruning failed: $error',
+        logLevel: LogLevel.error,
+      );
+    }
+    if (changed && ref.mounted) {
+      ref.invalidate(trafficStatisticsProvider);
+      ref.invalidate(appUsageProvider);
     }
   }
 }

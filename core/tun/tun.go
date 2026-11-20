@@ -98,7 +98,12 @@ func Start(fd int, stack, address, dns, rawOptions string) *sing_tun.Listener {
 		FileDescriptor:       dupFd,
 	}
 
-	listener, err := sing_tun.New(options, tunnel.Tunnel)
+	appTunnel.identities.Clear()
+	listener, err := sing_tun.New(options, &attributingTunnel{
+		Tunnel:     tunnel.Tunnel,
+		identities: appTunnel.identities,
+		lookup:     appTunnel.lookup,
+	})
 
 	if err != nil {
 		log.Errorln("TUN: %v", err)

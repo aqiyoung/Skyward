@@ -1,12 +1,12 @@
 package core
 
 import (
+	"core/tun"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
-	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/proxydialer"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/dns"
@@ -22,7 +22,7 @@ func init() {
 		notifyProbeRoute(c)
 		if hasEventListener() {
 			if runtime.GOOS == "android" {
-				sendMessage(RequestMessage, snapshotRequest(c.Info(), process.FindPackageName))
+				sendMessage(RequestMessage, snapshotRequest(c.Info(), tun.FindPackageName))
 			} else {
 				sendMessage(RequestMessage, c)
 			}

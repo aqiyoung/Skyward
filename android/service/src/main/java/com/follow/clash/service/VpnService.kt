@@ -22,6 +22,7 @@ import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import android.net.VpnService as SystemVpnService
 
 class VpnService : SystemVpnService(), ManagedService {
@@ -42,6 +43,13 @@ class VpnService : SystemVpnService(), ManagedService {
         getSystemService<ConnectivityManager>()
     }
     private val uidPackageNameMap = ConcurrentHashMap<Int, String>()
+    private val attributionWarnings = AtomicInteger()
+
+    private fun warnAttribution(message: String) {
+        if (attributionWarnings.getAndIncrement() < 3) {
+            GlobalState.log("App attribution: $message")
+        }
+    }
 
     private fun resolveUid(
         protocol: Int,
@@ -51,7 +59,14 @@ class VpnService : SystemVpnService(), ManagedService {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return -1
         }
-        return connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
+        return try {
+            val uid = connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
+            if (uid < 0) warnAttribution("no socket owner, protocol=$protocol")
+            uid
+        } catch (e: Exception) {
+            warnAttribution("owner lookup failed: ${e.javaClass.simpleName}")
+            -1
+        }
     }
 
     private fun resolvePackage(uid: Int): String {
@@ -62,6 +77,10 @@ class VpnService : SystemVpnService(), ManagedService {
             ?.firstOrNull()
             ?.takeIf { it.isNotEmpty() }
             .orEmpty()
+        if (packageName.isEmpty()) {
+            warnAttribution("no visible package for uid=$uid")
+            return ""
+        }
         return uidPackageNameMap.putIfAbsent(uid, packageName) ?: packageName
     }
 

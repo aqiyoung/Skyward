@@ -37,6 +37,40 @@ class TrafficRecordsDao extends DatabaseAccessor<Database>
     with _$TrafficRecordsDaoMixin {
   TrafficRecordsDao(super.attachedDatabase);
 
+  Future<bool> recordSample({
+    required TrafficRecord record,
+    required String process,
+    required DateTime hour,
+  }) => attachedDatabase.transaction(() async {
+    final previous =
+        await (select(trafficRecords)
+              ..where((t) => t.connectionId.equals(record.connectionId)))
+            .getSingleOrNull();
+    final upload = record.upload > (previous?.upload ?? 0)
+        ? record.upload
+        : previous?.upload ?? 0;
+    final download = record.download > (previous?.download ?? 0)
+        ? record.download
+        : previous?.download ?? 0;
+    final upDelta = upload - (previous?.upload ?? 0);
+    final downDelta = download - (previous?.download ?? 0);
+    if (previous != null && upDelta == 0 && downDelta == 0) return false;
+    await upsert(record.copyWith(upload: upload, download: download));
+    await attachedDatabase.trafficHourlyDao.add(
+      hour: hour,
+      download: downDelta,
+      upload: upDelta,
+      proxied: record.node.isNotEmpty && record.node.toUpperCase() != 'DIRECT',
+    );
+    await attachedDatabase.appTrafficHourlyDao.add(
+      hour: hour,
+      process: process,
+      download: downDelta,
+      upload: upDelta,
+    );
+    return true;
+  });
+
   /// Upserts the latest totals of a connection, keeping its first-seen time.
   Future<void> upsert(TrafficRecord record) async {
     final existing =
