@@ -10,13 +10,12 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The dashboard's card surface, distinct from the page in both themes.
 ShapeDecoration panelDecoration(BuildContext context, double radius) {
   final cs = context.colorScheme;
   final isLight = cs.brightness == Brightness.light;
   final card = isLight
       ? const Color(0xFFFFFFFF)
-      : SurfaceLevel.card.colorOf(cs);
+      : SurfaceLevel.block.colorOf(cs);
   return ShapeDecoration(
     color: card,
     shape: AppShape.all(radius),
@@ -422,6 +421,7 @@ class _TrendCard extends StatelessWidget {
               downloadColor: downloadColor,
               uploadColor: uploadColor,
               labelColor: context.colorScheme.onSurface,
+              gridColor: cs.onSurface.withValues(alpha: 0.24),
               height: 150,
             )
           else

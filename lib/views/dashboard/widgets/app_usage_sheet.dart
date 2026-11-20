@@ -208,7 +208,11 @@ class _AppRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          UsageBar(fraction: app.percent, gradient: gradient),
+          UsageBar(
+            fraction: app.percent,
+            gradient: gradient,
+            trackColor: cs.surfaceContainerHighest,
+          ),
         ],
       ),
     );
