@@ -224,14 +224,13 @@ Future<TrafficStatistics> trafficStatistics(
 @Riverpod(keepAlive: true)
 Future<AppUsage> appUsage(Ref ref, AppUsagePeriod period) async {
   ref.watch(trafficSamplerProvider);
+  final packages = ref.watch(packagesProvider);
   final range = appUsageRange(period);
   final buckets = await database.appTrafficHourlyDao.between(
     range.start,
     range.end,
   );
-  final labels = {
-    for (final p in ref.read(packagesProvider)) p.packageName: p.label,
-  };
+  final labels = {for (final p in packages) p.packageName: p.label};
   return aggregateAppUsageTask(
     [
       for (final b in buckets)

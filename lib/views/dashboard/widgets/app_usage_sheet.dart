@@ -179,7 +179,15 @@ class _AppRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              PackageIcon(packageName: app.packageName, size: 40),
+              if (app.packageName.isEmpty || app.packageName == 'mihomo')
+                const IconWell(
+                  AppGlyphs.connections,
+                  side: 40,
+                  glyphSize: 24,
+                  shape: AppShape.md,
+                )
+              else
+                PackageIcon(packageName: app.packageName, size: 40),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

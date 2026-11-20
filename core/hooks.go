@@ -1,10 +1,12 @@
 package core
 
 import (
+	"runtime"
 	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
+	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/proxydialer"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/dns"
@@ -19,7 +21,11 @@ func init() {
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
 		if hasEventListener() {
-			sendMessage(RequestMessage, c)
+			if runtime.GOOS == "android" {
+				sendMessage(RequestMessage, snapshotRequest(c.Info(), process.FindPackageName))
+			} else {
+				sendMessage(RequestMessage, c)
+			}
 			watchRequestTraffic(c)
 		}
 	}
