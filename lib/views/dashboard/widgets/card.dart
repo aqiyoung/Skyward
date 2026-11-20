@@ -165,14 +165,19 @@ class DashboardCardHeader extends StatelessWidget {
   }
 }
 
-/// Cut short past [_minScale]: an IPv6 address shrunk any further is unreadable.
+/// Cut short past [minScale]: text shrunk any further is unreadable. The
+/// outbound IP passes a lower floor for IPv6, which is far longer than IPv4.
 class DashboardFitText extends StatelessWidget {
-  const DashboardFitText(this.text, {super.key, required this.style});
-
-  static const _minScale = 0.75;
+  const DashboardFitText(
+    this.text, {
+    super.key,
+    required this.style,
+    this.minScale = 0.75,
+  });
 
   final String text;
   final TextStyle style;
+  final double minScale;
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +186,7 @@ class DashboardFitText extends StatelessWidget {
         final width = globalState.measure
             .computeTextSize(Text(text, style: style))
             .width;
-        if (width * _minScale <= constraints.maxWidth) {
+        if (width * minScale <= constraints.maxWidth) {
           return FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,

@@ -563,7 +563,20 @@ class _IpText extends ConsumerWidget {
     final hideIp = ref.watch(
       appSettingProvider.select((state) => state.hideIp),
     );
-    return DashboardFitText(hideIp ? ipMask : ip, style: style);
+    final text = hideIp ? ipMask : ip;
+    if (!text.contains(':')) {
+      return DashboardFitText(text, style: style);
+    }
+    // IPv6: start a notch smaller and let it shrink further, so the full
+    // address fits on the line instead of being cut short.
+    final base = style.fontSize;
+    return DashboardFitText(
+      text,
+      style: base == null
+          ? style
+          : style.copyWith(fontSize: base * 0.78),
+      minScale: 0.45,
+    );
   }
 }
 
