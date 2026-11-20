@@ -179,11 +179,11 @@ jobs:
             gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "Skyward ${VERSION} (Rust core)" --notes "$notes" --prerelease
           fi
           echo "release published: $tag"
-          - name: Push APK to Telegram (subscription channel)
+      - name: Push APK to Telegram (subscription channel)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      CHANGELOG: ${{ inputs.changelog }}
+          CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
