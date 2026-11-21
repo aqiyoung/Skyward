@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
+import 'package:skyward/ui/l10n.dart';
 
 /// One hour's bytes, in the UI's own plain type so the chart stays independent
 /// of the app's models (lib/ui may not reach lib/models).
