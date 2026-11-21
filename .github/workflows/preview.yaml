@@ -138,50 +138,49 @@ jobs:
             echo "::error::expected a three-component version in pubspec.yaml, got '$base'"
             exit 1
           fi
-          now=$(date -u +%s)
-          origin=$(date -u -d 2026-01-01 +%s)
-          day_prefix=$(( 20900000 + (now - origin) / 86400 ))
-          # The checkout is one commit deep and carries no tags, so the line's
-          # revision history has to be pulled before it can be read.
+          # The checkout is one commit deep and carries no tags, so both ledgers
+          # have to be pulled before they can be read.
           git fetch --unshallow --tags --quiet 2>/dev/null \
             || git fetch --tags --quiet \
             || true
-          # The version's fourth component is the beta line's revision, the same
-          # one ci.yaml hands a beta release. The build number below is a
-          # separate ledger: it only orders installs as versionCode, and putting
-          # it in the version name is what made a preview read as a stacked date.
           major="${base%%.*}"
-          patch="${base##*.}"
-          highest_revision=$(git tag --list "v${major}.*" \
-            | sed -n -e "s/^v${base//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
-                -e "s/^v${major}\.[0-9]\.${patch}\.\([0-9][0-9]*\)$/\1/p" \
+          base_patch="${base##*.}"
+          # The version's last two components are one counter, the same one
+          # ci.yaml hands a beta release: the fourth runs 1..99 and the third
+          # takes the carry. Counted from this line's tags, so the fourth is the
+          # release's index and the third is how many full cycles it has been.
+          highest_seq=$(git tag --list "v${major}.1.*" \
+            | awk -F'[v.]' -v bp="$base_patch" '
+                NF >= 5 && $4 ~ /^[0-9]+$/ {
+                  rev = $5
+                  sub(/-.*/, "", rev)
+                  if (rev ~ /^[0-9]+$/) print ($4 - bp) * 99 + rev
+                }' \
             | sort -n | tail -1)
-          revision=$(( 10#${highest_revision:-0} + 1 ))
+          seq=$(( ${highest_seq:-0} + 1 ))
+          patch=$(( base_patch + (seq - 1) / 99 ))
+          revision=$(( (seq - 1) % 99 + 1 ))
           version="${major}.1.${patch}.${revision}"
+          # The build number is the second ledger: one counter for every
+          # channel, one past the highest ever spent, so whichever version
+          # ships next outranks whatever is already on a phone. It stays out of
+          # the version name -- putting it there is what made a preview read as
+          # a stacked date.
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          # A preview publish creates no release, so the number it claimed
-          # survives only in the tag the next step writes. Read those back too,
-          # or this run counts to the same number the last one already took.
-          claimed=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+          preview_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-" \
             --jq '.[].ref' 2>/dev/null || true)
-          dev_claimed=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+          dev_tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-" \
             --jq '.[].ref' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n%s\n%s\n' "$titles" "$claimed" "$dev_claimed" \
-            | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
-          stamp=$(( 10#${highest_stamp:-0} + 1 ))
-          if [ "$stamp" -gt 99 ]; then
-            echo "::error::build numbers for today are exhausted"
-            exit 1
-          fi
-          build_number=$(( day_prefix * 100 + stamp ))
-          # The build number is the tag and the versionCode: it is the only
-          # number here that is unique and monotonic across both ways a preview
-          # starts (a push, which numbers its own runs, and ci.yaml calling in,
-          # which inherits the caller's numbering). Writing the tag down is what
-          # makes the second half true -- see the next step.
+          last_code=$(printf '%s\n%s\n%s\n' "$titles" "$preview_tags" "$dev_tags" \
+            | sed -nE -e 's/.*skyward:build-number:([0-9]+).*/\1/p' \
+                      -e 's,^refs/tags/(preview|dev)-([0-9]+)$,\2,p' \
+            | sort -n | tail -1)
+          build_number=$(( 10#${last_code:-2090000000} + 1 ))
+          # The build number is the tag and the versionCode; writing the tag
+          # down is what lets the next run read this one back.
           # The pubspec keeps the upstream three components; the four-part
           # version above is injected as versionName at build time.
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
@@ -193,7 +192,7 @@ jobs:
           # four-part version above is injected as versionName at build time),
           # so the naming step needs the base to recognise the artifact.
           echo "base_version=${base}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}, base versionCode ${build_number}"
+          echo "building ${version} from ${base}, build number ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
       # to write its number down too: a lightweight tag under it. Without that

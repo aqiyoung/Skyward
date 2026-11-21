@@ -137,44 +137,53 @@ jobs:
             echo "::error::expected a three-component version in pubspec.yaml, got '$base'"
             exit 1
           fi
-          now=$(date -u +%s)
-          origin=$(date -u -d 2026-01-01 +%s)
-          day_prefix=$(( 20900000 + (now - origin) / 86400 ))
-          # One global, monotonically rising counter for every channel. A dev
-          # built after a beta MUST carry a higher versionCode than that beta:
-          # Android reads nothing but the number and otherwise refuses the
-          # install as a downgrade (-25). Beta claims the 80s of the day's
-          # hundred codes, so reading only dev-* tags left every later dev of
-          # that day below it. Read the build numbers the releases recorded,
-          # the preview tags and dev's own tags, then take one past the highest
-          # number spent today -- whichever channel publishes last ranks highest.
+          # The checkout is one commit deep and carries no tags, so both ledgers
+          # have to be pulled before they can be read.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet \
+            || true
+          major="${base%%.*}"
+          base_patch="${base##*.}"
+          # The version's last two components are one counter: the fourth runs
+          # 1..99 and the third takes the carry, counted from this line's tags.
+          highest_seq=$(git tag --list "v${major}.0.*" \
+            | awk -F'[v.]' -v bp="$base_patch" '
+                NF >= 5 && $4 ~ /^[0-9]+$/ {
+                  rev = $5
+                  sub(/-.*/, "", rev)
+                  if (rev ~ /^[0-9]+$/) print ($4 - bp) * 99 + rev
+                }' \
+            | sort -n | tail -1)
+          seq=$(( ${highest_seq:-0} + 1 ))
+          patch=$(( base_patch + (seq - 1) / 99 ))
+          revision=$(( (seq - 1) % 99 + 1 ))
+          version="${major}.0.${patch}.${revision}"
+          # One global, monotonically rising counter for every channel, one past
+          # the highest ever spent. A dev built after a beta MUST carry a higher
+          # versionCode than that beta: Android reads nothing but the number and
+          # otherwise refuses the install as a downgrade (-25). It stays out of
+          # the version name; the version is its own four-part scheme.
           dev_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-" \
             --jq '.[].ref' 2>/dev/null || true)
           preview_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-" \
             --jq '.[].ref' 2>/dev/null || true)
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
-            | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
-          stamp=$(( 10#${highest_stamp:-0} + 1 ))
-          if [ "$stamp" -ge 80 ]; then
-            echo "::error::dev build numbers for today are exhausted"
-            exit 1
-          fi
-          build_number=$(( day_prefix * 100 + stamp ))
-          # Component 2 is the channel code; a dev build is DEV tier (0). The
-          # pubspec below keeps upstream's three components for versionCode.
-          major="${base%%.*}"
-          patch="${base##*.}"
-          version="${major}.0.${patch}.$(printf '%02d' "$stamp")"
+          last_code=$(printf '%s\n%s\n%s\n' "$titles" "$preview_tags" "$dev_tags" \
+            | sed -nE -e 's/.*skyward:build-number:([0-9]+).*/\1/p' \
+                      -e 's,^refs/tags/(preview|dev)-([0-9]+)$,\2,p' \
+            | sort -n | tail -1)
+          build_number=$(( 10#${last_code:-2090000000} + 1 ))
+          # The pubspec keeps upstream's three components; the four-part version
+          # above is injected as versionName at build time.
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}, versionCode ${build_number}"
+          echo "building ${version} from ${base}, build number ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
       # to write its number down too: a lightweight tag under it. Without that

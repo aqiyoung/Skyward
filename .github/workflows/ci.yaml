@@ -214,59 +214,45 @@ jobs:
           # against that version, compares like with like.
           #
           # The versionCode -- what Android uses to decide whether one build may
-          # install over another -- is a day number written as <20900294><01>:
-          # 2,090,000,000 plus a hundred per calendar day since 2026-01-01, plus
-          # the sequence that day. The floor sits above the 2,090,00x,xxx
-          # numbers the early test packages were published with, which is what
-          # made a release arriving on a phone that still ran one a downgrade;
-          # the ceiling is 2,100,000,000, past which Flutter refuses to build,
-          # and a hundred codes a day keeps the series inside it for another 270
-          # years. Every channel draws from the one counter, stable first: the
-          # same day gives stable ...01, then beta ...02, then a preview ...03.
+          # install over another -- is one global counter shared by every
+          # channel: whichever version ships next takes one past the highest
+          # number ever spent, so a dev built after a beta outranks it and a
+          # promotion never lands as a downgrade. The floor sits above the
+          # 2,090,00x,xxx numbers the early test packages were published with,
+          # which is what made a release arriving on a phone that still ran one
+          # a downgrade; the ceiling is 2,100,000,000, past which Flutter
+          # refuses to build.
           #
-          # The sequence is one past the highest spent *that day*: not the
-          # number of tags, because counting assumes the stamps are contiguous
-          # and any tag that ever went missing would hand the same number out
-          # twice; and not per version, because that restarts at 01 the moment
-          # a new version line is cut, and on a day that already had a
-          # release it would produce a lower versionCode than the one already on
-          # the phone, which Android refuses to install over.
-          #
-          # The tags carry only the version, so the build number is read back
-          # from the release titles and notes, which is where it is written;
-          # releases come back newest first, so the ones spent today are on the
-          # first page. A preview writes down the code it built against rather
-          # than the ABI-shifted one its arm64 APK carries, so one reading
-          # serves every channel. The revision is counted from the tags in the
-          # clone instead of the tags API, which pages at 100 names and a busy
-          # tag history can outgrow quickly.
-          now=$(date -u +%s)
-          origin=$(date -u -d 2026-01-01 +%s)
-          day_prefix=$(( 20900000 + (now - origin) / 86400 ))
+          # It is read back from three places, because no single one is
+          # complete: the release titles and notes carry it for releases
+          # (newest first, so the recent ones are on the first page), and the
+          # preview/dev tags carry it for the builds that never made a release.
+          # A pruned tag must not let a release fall behind a number already
+          # spent. The version's own last two components are a separate counter,
+          # counted from the tags in the clone rather than the tags API, which
+          # pages at 100 names and a busy tag history can outgrow quickly.
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          # Today's claimed numbers live in lightweight tags a dev/preview build
-          # writes before it publishes. A dev build goes to Telegram without a
-          # durable release, so the tags API -- not release titles, not the
-          # clone's own tags -- is the only place that still holds its number.
-          # Reading only release titles is how a stable once came out below the
-          # dev package already on the phone, which Android refuses to install.
+          # Claimed numbers live in lightweight tags a dev/preview build writes
+          # before it publishes. A dev build goes to Telegram without a durable
+          # release, so the tags API -- not release titles, not the clone's own
+          # tags -- is the only place that still holds its number. Reading only
+          # release titles is how a stable once came out below the dev package
+          # already on the phone, which Android refuses to install.
           preview_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-" \
             --jq '.[].ref' 2>/dev/null || true)
           dev_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-" \
             --jq '.[].ref' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
-            | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
-          # 10#: past the eighth build of a day the stamp carries a leading zero,
-          # and bash would read a bare 09 as an invalid octal number.
-          stamp=$(( 10#${highest_stamp:-0} + 1 ))
-          # The last number any published release carried, whatever day it was
-          # cut on. A pruned preview or dev tag must not let a release fall
-          # behind a number already handed out.
-          last_code=$(printf '%s\n' "$titles" \
-            | sed -n 's/.*skyward:build-number:\([0-9][0-9]*\).*/\1/p' | sort -n | tail -1)
+          # One global counter for every channel: whichever version ships next
+          # takes one past the highest number ever spent, so a dev built after
+          # a beta outranks it and a promotion never lands as a downgrade.
+          last_code=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
+            | sed -nE -e 's/.*skyward:build-number:([0-9]+).*/\1/p' \
+                      -e 's,^refs/tags/(preview|dev)-([0-9]+)$,\2,p' \
+            | sort -n | tail -1)
+          code=$(( 10#${last_code:-2090000000} + 1 ))
           taken=""
           for ch in $channels; do
             # The preview channel publishes under a `preview-*` tag, so it takes
@@ -283,46 +269,37 @@ jobs:
             # missing never hands the same number out twice.
             major_version="${base_version%%.*}"
             patch_version="${base_version##*.}"
-            highest_revision=$(git tag --list "v${major_version}.*" \
-              | sed -n -e "s/^v${base_version//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
-                -e "s/^v${major_version}\.[0-9]\.${patch_version}\.\([0-9][0-9]*\)$/\1/p" \
+            # The version's last two components are one counter: the fourth
+            # runs 1..99 and the third takes the carry. Counted from this line's
+            # tags so a line that has wrapped keeps counting forward.
+            highest_seq=$(git tag --list "v${major_version}.${channel_code}.*" \
+              | awk -F'[v.]' -v bp="$patch_version" '
+                  NF >= 5 && $4 ~ /^[0-9]+$/ {
+                    rev = $5
+                    sub(/-.*/, "", rev)
+                    if (rev ~ /^[0-9]+$/) print ($4 - bp) * 99 + rev
+                  }' \
               | sort -n | tail -1)
-            if [[ -n "$highest_revision" ]]; then
-              revision=$(( 10#${highest_revision} + 1 ))
-            else
-              revision=0
-            fi
+            seq=$(( ${highest_seq:-0} + 1 ))
+            patch_version=$(( patch_version + (seq - 1) / 99 ))
+            revision=$(( (seq - 1) % 99 + 1 ))
             channel_code=2
             [ "$ch" = beta ] && channel_code=1
             version="$major_version.$channel_code.$patch_version.$revision"
             while [[ " $taken " == *" $version "* ]]; do
-              revision=$(( revision + 1 ))
+              seq=$(( seq + 1 ))
+              patch_version=$(( patch_version + (seq - 1) / 99 ))
+              revision=$(( (seq - 1) % 99 + 1 ))
               version="$major_version.$channel_code.$patch_version.$revision"
             done
             taken="$taken $version"
-            if [ "$ch" = beta ] && [ "$stamp" -lt 80 ]; then
-              stamp=80
-            elif [ "$ch" = stable ] && [ "$stamp" -lt 90 ]; then
-              stamp=90
-            fi
-            if [ "$stamp" -gt 99 ]; then
-              echo "::error::build numbers for today are exhausted"
-              exit 1
-            fi
-            code=$(( day_prefix * 100 + stamp ))
-            # A pruned tag must not let this release fall behind a number
-            # already handed out; the newest release notes carry the other
-            # half of the ledger.
-            if [ -n "${last_code:-}" ] && [ "$code" -le "$last_code" ]; then
-              code=$(( last_code + 1 ))
-            fi
             # The channel rides in the version's second component, never as a
             # suffix: the higher code wins the update check on its own, so a
             # promoted beta is offered to beta users without a revision bump.
             echo "version_$ch=$version" >> "$GITHUB_OUTPUT"
             echo "build_number_$ch=${code}" >> "$GITHUB_OUTPUT"
             echo "$ch ($br): next version $version, build number ${code}"
-            stamp=$(( code - day_prefix * 100 + 1 ))
+            code=$(( code + 1 ))
           done
 
       - name: Plan
