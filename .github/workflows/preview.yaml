@@ -141,6 +141,23 @@ jobs:
           now=$(date -u +%s)
           origin=$(date -u -d 2026-01-01 +%s)
           day_prefix=$(( 20900000 + (now - origin) / 86400 ))
+          # The checkout is one commit deep and carries no tags, so the line's
+          # revision history has to be pulled before it can be read.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet \
+            || true
+          # The version's fourth component is the beta line's revision, the same
+          # one ci.yaml hands a beta release. The build number below is a
+          # separate ledger: it only orders installs as versionCode, and putting
+          # it in the version name is what made a preview read as a stacked date.
+          major="${base%%.*}"
+          patch="${base##*.}"
+          highest_revision=$(git tag --list "v${major}.*" \
+            | sed -n -e "s/^v${base//./\\.}\.\([0-9][0-9]*\)\(-[a-z]*\)\?$/\1/p" \
+                -e "s/^v${major}\.[0-9]\.${patch}\.\([0-9][0-9]*\)$/\1/p" \
+            | sort -n | tail -1)
+          revision=$(( 10#${highest_revision:-0} + 1 ))
+          version="${major}.1.${patch}.${revision}"
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
           # A preview publish creates no release, so the number it claimed
@@ -160,16 +177,13 @@ jobs:
             exit 1
           fi
           build_number=$(( day_prefix * 100 + stamp ))
-          # The build number doubles as the visible version and the tag: it is
-          # the only number here that is unique and monotonic across both ways a
-          # preview starts (a push, which numbers its own runs, and ci.yaml
-          # calling in, which inherits the caller's numbering). Writing the tag
-          # down is what makes the second half true -- see the next step.
-          # Component 2 is the channel code; a preview is beta tier (1). The
-          # pubspec below keeps the upstream three components for versionCode.
-          major="${base%%.*}"
-          patch="${base##*.}"
-          version="${major}.1.${patch}.${build_number}"
+          # The build number is the tag and the versionCode: it is the only
+          # number here that is unique and monotonic across both ways a preview
+          # starts (a push, which numbers its own runs, and ci.yaml calling in,
+          # which inherits the caller's numbering). Writing the tag down is what
+          # makes the second half true -- see the next step.
+          # The pubspec keeps the upstream three components; the four-part
+          # version above is injected as versionName at build time.
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
