@@ -29,6 +29,8 @@ abstract class UiLocalizations {
 
   String get noSearchResults;
 
+  String get noData;
+
   String get reset;
 
   String get search;

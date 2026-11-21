@@ -9166,6 +9166,206 @@ class AppLocalizations {
   String get today {
     return Intl.message('Today', name: 'today', desc: '', args: []);
   }
+
+  /// `Refresh`
+  String get refresh {
+    return Intl.message('Refresh', name: 'refresh', desc: '', args: []);
+  }
+
+  /// `Day`
+  String get day {
+    return Intl.message('Day', name: 'day', desc: '', args: []);
+  }
+
+  /// `Week`
+  String get week {
+    return Intl.message('Week', name: 'week', desc: '', args: []);
+  }
+
+  /// `Month`
+  String get month {
+    return Intl.message('Month', name: 'month', desc: '', args: []);
+  }
+
+  /// `Previous`
+  String get previousPeriod {
+    return Intl.message('Previous', name: 'previousPeriod', desc: '', args: []);
+  }
+
+  /// `Next`
+  String get nextPeriod {
+    return Intl.message('Next', name: 'nextPeriod', desc: '', args: []);
+  }
+
+  /// `Traffic overview`
+  String get trafficOverview {
+    return Intl.message(
+      'Traffic overview',
+      name: 'trafficOverview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running time`
+  String get totalUptime {
+    return Intl.message(
+      'Running time',
+      name: 'totalUptime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Traffic trend`
+  String get trafficTrend {
+    return Intl.message(
+      'Traffic trend',
+      name: 'trafficTrend',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rule hits`
+  String get ruleHits {
+    return Intl.message('Rule hits', name: 'ruleHits', desc: '', args: []);
+  }
+
+  /// `Traffic ranking`
+  String get trafficRanking {
+    return Intl.message(
+      'Traffic ranking',
+      name: 'trafficRanking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `hits`
+  String get hitsUnit {
+    return Intl.message('hits', name: 'hitsUnit', desc: '', args: []);
+  }
+
+  /// `{month}/{day} onward`
+  String weeklyRange(Object month, Object day) {
+    return Intl.message(
+      '$month/$day onward',
+      name: 'weeklyRange',
+      desc: '',
+      args: [month, day],
+    );
+  }
+
+  /// `{count} connections`
+  String connectionCount(Object count) {
+    return Intl.message(
+      '$count connections',
+      name: 'connectionCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Proxy {value} · {percent}`
+  String proxyShare(Object value, Object percent) {
+    return Intl.message(
+      'Proxy $value · $percent',
+      name: 'proxyShare',
+      desc: '',
+      args: [value, percent],
+    );
+  }
+
+  /// `Direct {value} · {percent}`
+  String directShare(Object value, Object percent) {
+    return Intl.message(
+      'Direct $value · $percent',
+      name: 'directShare',
+      desc: '',
+      args: [value, percent],
+    );
+  }
+
+  /// `{count} min`
+  String durationMinutes(Object count) {
+    return Intl.message(
+      '$count min',
+      name: 'durationMinutes',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{hours} h {minutes} min`
+  String durationHours(Object hours, Object minutes) {
+    return Intl.message(
+      '$hours h $minutes min',
+      name: 'durationHours',
+      desc: '',
+      args: [hours, minutes],
+    );
+  }
+
+  /// `{days} d {hours} h`
+  String durationDays(Object days, Object hours) {
+    return Intl.message(
+      '$days d $hours h',
+      name: 'durationDays',
+      desc: '',
+      args: [days, hours],
+    );
+  }
+
+  /// `Peak {hour}:00 · {value}`
+  String trafficPeakLine(Object hour, Object value) {
+    return Intl.message(
+      'Peak $hour:00 · $value',
+      name: 'trafficPeakLine',
+      desc: '',
+      args: [hour, value],
+    );
+  }
+
+  /// `{percent} of hit traffic · {count}`
+  String ruleHitShare(Object percent, Object count) {
+    return Intl.message(
+      '$percent of hit traffic · $count',
+      name: 'ruleHitShare',
+      desc: '',
+      args: [percent, count],
+    );
+  }
+
+  /// `{count} rules hit`
+  String ruleHitCount(Object count) {
+    return Intl.message(
+      '$count rules hit',
+      name: 'ruleHitCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} · ↑ {upload} ↓ {download}`
+  String ruleHitDetail(Object count, Object upload, Object download) {
+    return Intl.message(
+      '$count · ↑ $upload ↓ $download',
+      name: 'ruleHitDetail',
+      desc: '',
+      args: [count, upload, download],
+    );
+  }
+
+  /// `{percent} · ↑ {upload} ↓ {download}`
+  String rankDetail(Object percent, Object upload, Object download) {
+    return Intl.message(
+      '$percent · ↑ $upload ↓ $download',
+      name: 'rankDetail',
+      desc: '',
+      args: [percent, upload, download],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

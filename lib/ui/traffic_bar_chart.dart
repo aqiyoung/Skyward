@@ -28,7 +28,7 @@ class TrafficBarChart extends StatelessWidget {
     if (points.isEmpty) {
       return SizedBox(
         height: height,
-        child: const Center(child: Text('暂无数据')),
+        child: Center(child: Text(UiLocalizations.of(context).noData)),
       );
     }
     return CustomPaint(
