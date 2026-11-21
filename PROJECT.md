@@ -1,6 +1,6 @@
 # Skyward
 
-Skyward 是一个多平台代理客户端，基于 Clash.Meta（mihomo）内核，作为独立项目维护：版本号、签名与发版流程完全由本项目自己掌控。发布以 **Skyward** 名义：包名、桌面图标下的名字和安装包文件名都是自己的。构建由 GitHub Actions 全平台完成、自签名，发布到本仓库的 Releases。测试版和正式版会推送到 TG 频道 [@sanyeinfo](https://t.me/sanyeinfo)，dev 包只推给作者本人。
+Skyward 是一个多平台代理客户端，基于 Clash.Meta（mihomo）内核，作为独立项目维护：版本号、签名与发版流程完全由本项目自己掌控。发布以 **Skyward** 名义：包名、桌面图标下的名字和安装包文件名都是自己的。构建由 GitHub Actions 全平台完成、自签名，发布到本仓库的 Releases。测试版和正式版会推送到 TG 频道 [@skyward_channel](https://t.me/skyward_channel)，dev 包只推给作者本人。
 
 界面与交互参考了 [chen08209/FlClash](https://github.com/chen08209/FlClash)，内核使用 [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo)（Clash.Meta）。本仓库只发布**客户端本体**：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。装好之后用什么配置，由使用者自己填。
 
@@ -31,8 +31,8 @@ Android 正式版一般下 `-arm64-v8a.apk`（绝大多数手机）或 `-armeabi
 
 | 渠道 | 分支 | 内容 | Release | 去哪 |
 | --- | --- | --- | --- | --- |
-| 正式版 | [`main`](../../tree/main) | 已经跑过测试版的代码，晋升进来的 | 标为 Latest，全平台 | 频道 [@sanyeinfo](https://t.me/sanyeinfo) |
-| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动，每次 push 自动出 | prerelease，只构建 Android arm64 单包，不抢占 Latest | 频道 [@sanyeinfo](https://t.me/sanyeinfo)，静默不响铃 |
+| 正式版 | [`main`](../../tree/main) | 已经跑过测试版的代码，晋升进来的 | 标为 Latest，全平台 | 频道 [@skyward_channel](https://t.me/skyward_channel) |
+| 测试版 | [`beta`](../../tree/beta) | beta 分支的代码 + 我们自己的改动，每次 push 自动出 | prerelease，只构建 Android arm64 单包，不抢占 Latest | 频道 [@skyward_channel](https://t.me/skyward_channel)，静默不响铃 |
 | dev 版 | [`dev`](../../tree/dev) | 还在改的代码，每次 push 自动出 | prerelease，tag 是 `dev-*`，只有 Android arm64 | 只推给作者本人 |
 
 三个渠道**同包名**（`com.threely.skyward`）、**同签名**，可以互相覆盖安装，`versionCode` 保证单调递增。

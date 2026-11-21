@@ -13,7 +13,7 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 [![Release](https://img.shields.io/github/v/release/aqiyoung/Skyward?style=flat-square&label=release)](https://github.com/aqiyoung/Skyward/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/aqiyoung/Skyward/total?style=flat-square&logo=github)](https://github.com/aqiyoung/Skyward/releases)
 [![License](https://img.shields.io/github/license/aqiyoung/Skyward?style=flat-square)](LICENSE)
-[![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/sanyeinfo)
+[![Telegram](https://img.shields.io/badge/Telegram-channel-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://t.me/skyward_channel)
 
 [Releases](https://github.com/aqiyoung/Skyward/releases/latest) · [Download](#download) · [Changelog](CHANGELOG.md) · [Build from source](#build-from-source)
 
@@ -128,7 +128,7 @@ Run `dart setup.dart --help` for the remaining options, such as `--targets` to b
 ## Support
 
 Starring the repository is the easiest way to support the project. Questions and announcements go to the
-[Telegram channel](https://t.me/sanyeinfo); bugs and feature requests go to
+[Telegram channel](https://t.me/skyward_channel); bugs and feature requests go to
 [GitHub Issues](https://github.com/aqiyoung/Skyward/issues).
 
 <a href="https://star-history.com/#aqiyoung/Skyward&Date">
