@@ -65,8 +65,8 @@ int _channelRank(String? channel) {
 
 extension PackageInfoExtension on PackageInfo {
   /// The version users see and updates are compared against. The packages only
-  /// carry upstream's three components, so the injected [buildVersion] supplies
-  /// the revision our release adds on top.
+  /// carry three components, so the injected [buildVersion] supplies the
+  /// revision our release adds.
   String get displayVersion => buildVersion.isNotEmpty ? buildVersion : version;
 
   /// The version as the screens print it: the number, then the channel in the
@@ -129,13 +129,12 @@ int compareVersions(String version1, String version2) {
   if (preview1 != preview2) {
     return preview1 ? -1 : 1;
   }
-  // This fork's releases carry a fourth component -- the revision we iterate
-  // on top of upstream's version -- and their tags are exactly that version.
-  // Upstream builds have no fourth component, and neither do this fork's
-  // desktop builds (only Android's versionName can hold one), so a missing one
-  // is not "zero": the two conventions are comparable only once both sides
-  // carry one. Reading it as zero instead would make every desktop build see
-  // its own release as newer than itself, forever.
+  // Skyward's releases carry a fourth component -- our own revision -- and
+  // their tags are exactly that version. Desktop builds carry no fourth
+  // component (only Android's versionName can hold one), so a missing one is
+  // not "zero": the two conventions are comparable only once both sides carry
+  // one. Reading it as zero instead would make every desktop build see its own
+  // release as newer than itself, forever.
   final int? revision1 = v1.length > 3 ? int.tryParse(v1[3]) : null;
   final int? revision2 = v2.length > 3 ? int.tryParse(v2[3]) : null;
   if (revision1 != null && revision2 != null && revision1 != revision2) {
@@ -158,7 +157,7 @@ int compareVersions(String version1, String version2) {
   return build1.compareTo(build2);
 }
 
-/// Every revision this fork will ever cut is a small count -- one per release.
+/// Every revision Skyward will ever cut is a small count -- one per release.
 /// A build number shares the slot only in older builds, and those start in
 /// the billions (a day's prefix times a hundred), so nothing on the release
 /// line can reach this.
@@ -336,7 +335,7 @@ Map<String, dynamic>? newestOfferableRelease(
 /// the prefix -- anything else in the tag is part of the version it carries.
 /// A preview tag names no version at all, only its build number, so its
 /// version is rebuilt from the release name when one is given (the name
-/// carries the full version), falling back to the current upstream base.
+/// carries the full version), falling back to the current base.
 String releaseVersionOf(String tag, [String? name]) {
   if (tag.startsWith('v')) return tag.substring(1);
   final preview = RegExp(r'^preview-(\d+)$').firstMatch(tag);

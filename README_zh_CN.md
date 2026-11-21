@@ -1,4 +1,4 @@
-> **说明** — Skyward 最初基于 [chen08209](https://github.com/chen08209) 的 FlClash 修改而来，现作为独立项目维护。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名改动以及它与 FlClash 的关系见 [FORK.md](FORK.md)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
+> **说明** — Skyward 是一个独立的多平台代理客户端，拥有自己的版本方案、签名与发布渠道。构建产物在[本仓库的发布页](../../releases/latest)；版本方案、签名与三个渠道见 [PROJECT.md](PROJECT.md)。本仓库只发布客户端本体：不含任何代理服务器、订阅链接、账号或流量，也没有任何收费项目。
 
 <div align="center">
 
@@ -35,7 +35,7 @@
 - **平台细节**：Android 上有快捷设置磁贴、分应用代理和 Android TV 支持；桌面端有托盘菜单和全局快捷键。
 - **开源无广告**，以 GPL-3.0 协议发布。
 
-> 上述新增功能先走 [预览 / 测试通道](FORK.md)，晋升后进入默认的 `main` 分支；三个渠道的区别见 [FORK.md](FORK.md)。
+> 上述新增功能先走 [预览 / 测试通道](PROJECT.md)，晋升后进入默认的 `main` 分支；三个渠道的区别见 [PROJECT.md](PROJECT.md)。
 
 ## 下载
 
@@ -55,7 +55,7 @@
 </p>
 
 这些包由本仓库编译，用的是本仓库自己的签名证书。FlClash 官方发布的包（官网、F-Droid 仓库、Homebrew tap）是另一套签名，
-两边混装需要先卸载一次 —— 详见 [FORK.md](https://github.com/aqiyoung/Skyward/blob/main/FORK.md)。
+两边混装需要先卸载一次 —— 详见 [PROJECT.md](https://github.com/aqiyoung/Skyward/blob/main/PROJECT.md)。
 
 **Linux 托盘图标**
 

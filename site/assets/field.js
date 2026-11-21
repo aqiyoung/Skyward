@@ -1,4 +1,4 @@
-globalThis.FlClashField = (() => {
+globalThis.SkywardField = (() => {
   'use strict';
 
   const COS = Math.cos(Math.PI / 6);

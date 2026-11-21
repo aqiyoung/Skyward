@@ -459,7 +459,7 @@ class _RestateDialogState extends State<_RestateDialog> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     // Typing the statement out takes hundreds of presses on a remote, so the
-    // dialog asks for a check instead (the fork's take, see FORK.md).
+    // dialog asks for a check instead (see PROJECT.md).
     return _buildDialog(
       title: appLocalizations.disclaimerAcknowledgeTitle,
       tip: appLocalizations.disclaimerAcknowledgeTip,

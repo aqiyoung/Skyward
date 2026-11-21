@@ -65,10 +65,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.`
+  /// `Skyward's interface and interaction are inspired by FlClash by chen08209 and built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.`
   String get acknowledgmentsDesc {
     return Intl.message(
-      'Skyward began as a fork of FlClash by chen08209 and is built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.',
+      'Skyward\'s interface and interaction are inspired by FlClash by chen08209 and built on the mihomo (Clash.Meta) core by MetaCubeX. Both are released under GPL-3.0.',
       name: 'acknowledgmentsDesc',
       desc: '',
       args: [],

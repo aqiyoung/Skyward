@@ -31,12 +31,12 @@ void main() {
   group('GlobalState.coreUaVersion', () {
     tearDown(() => globalState.coreVersion = '');
 
-    test('drops the tag prefix and this fork round', () {
+    test("drops the tag prefix and Skyward's revision", () {
       globalState.coreVersion = 'v1.19.33-skyward.2';
       expect(globalState.coreUaVersion, '1.19.33');
     });
 
-    test('keeps a plain upstream version as it is', () {
+    test('keeps a plain core version as it is', () {
       globalState.coreVersion = 'v1.19.32';
       expect(globalState.coreUaVersion, '1.19.32');
     });

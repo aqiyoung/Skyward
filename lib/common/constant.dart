@@ -35,7 +35,7 @@ const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
 // The four-component version, injected by the build. pubspec.yaml cannot carry
 // it (pub refuses a four-part version) and the desktop packages only report
-// upstream's three, so this is the only place the revision survives off Android.
+// three, so this is the only place the revision survives off Android.
 // The channel is its second component (0 = dev, 1 = beta, 2 = release), so one
 // string says both which line this is and who built it.
 const buildVersion = String.fromEnvironment('APP_VERSION');

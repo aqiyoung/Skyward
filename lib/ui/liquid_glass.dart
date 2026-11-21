@@ -144,9 +144,9 @@ class LiquidGlassStyle {
           );
   }
 
-  /// This fork's read of iOS 27's tab bar: the tint keeps none of the
+  /// Skyward's read of iOS 27's tab bar: the tint keeps none of the
   /// thickening that made the bar a grey slab, and the rim parts its colors
-  /// faintly and darkens along the sides as iOS's does (`FORK.md`).
+  /// faintly and darkens along the sides as iOS's does (`PROJECT.md`).
   factory LiquidGlassStyle.pill(ColorScheme colorScheme) {
     final dark = colorScheme.brightness == Brightness.dark;
     return dark

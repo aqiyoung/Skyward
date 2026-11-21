@@ -260,7 +260,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "account": MessageLookupByLibrary.simpleMessage("Cuenta"),
     "acknowledgments": MessageLookupByLibrary.simpleMessage("Agradecimientos"),
     "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward comenzó como una bifurcación de FlClash de chen08209 y se basa en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
+      "La interfaz y las interacciones de Skyward se inspiran en FlClash de chen08209 y está basado en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
     ),
     "action": MessageLookupByLibrary.simpleMessage("Acción"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(

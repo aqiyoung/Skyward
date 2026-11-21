@@ -229,7 +229,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "account": MessageLookupByLibrary.simpleMessage("アカウント"),
     "acknowledgments": MessageLookupByLibrary.simpleMessage("謝辞"),
     "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward は chen08209 氏の FlClash から派生し、MetaCubeX の mihomo (Clash.Meta) カーネルを基に構築されています。両者は GPL-3.0 の下で公開されています。",
+      "Skyward の界面と操作感は chen08209 氏の FlClash を参考にし、MetaCubeX の mihomo (Clash.Meta) カーネルを基に構築されています。両者は GPL-3.0 の下で公開されています。",
     ),
     "action": MessageLookupByLibrary.simpleMessage("アクション"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("すべての遅延をテスト"),

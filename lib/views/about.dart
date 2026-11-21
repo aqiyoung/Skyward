@@ -196,8 +196,8 @@ class _AboutViewState extends ConsumerState<AboutView> {
         generateSection(
           title: appLocalizations.acknowledgments,
           items: [
-            // FlClash is the upstream this build forked from and mihomo is the
-            // core it runs on — both belong in the same credit, so the footer
+            // FlClash inspired this build's interface and mihomo is the core
+            // it runs on — both belong in the same credit, so the footer
             // below can name them together rather than split the story across
             // two sections. The icon designers close the section: one credit
             // block for everything Skyward stands on and the people behind it.

@@ -1,8 +1,8 @@
 name: pages
 
-# Kept disabled at the repository level until site/ carries Skyward's own
-# branding: the gates below already point at this repository, so re-enabling
-# is the only step left once the site does too.
+# site/ carries Skyward's own branding, so the page is ready to publish. It
+# stays disabled at the repository level until deployment is wanted; the gates
+# below already point at this repository.
 
 on:
   push:

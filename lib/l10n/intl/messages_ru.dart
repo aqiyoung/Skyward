@@ -253,7 +253,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "account": MessageLookupByLibrary.simpleMessage("Аккаунт"),
     "acknowledgments": MessageLookupByLibrary.simpleMessage("Благодарности"),
     "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward начинался как форк FlClash от chen08209 и построен на ядре mihomo (Clash.Meta) от MetaCubeX. Оба проекта распространяются под лицензией GPL-3.0.",
+      "Интерфейс и взаимодействие Skyward вдохновлены FlClash от chen08209 и построены на ядре mihomo (Clash.Meta) от MetaCubeX. Оба проекта распространяются по лицензии GPL-3.0.",
     ),
     "action": MessageLookupByLibrary.simpleMessage("Действие"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage(

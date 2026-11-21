@@ -1,6 +1,6 @@
 {
   "acknowledgments": "Agradecimientos",
-  "acknowledgmentsDesc": "Skyward comenzó como una bifurcación de FlClash de chen08209 y se basa en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
+  "acknowledgmentsDesc": "La interfaz y las interacciones de Skyward se inspiran en FlClash de chen08209 y está basado en el núcleo mihomo (Clash.Meta) de MetaCubeX. Ambos se publican bajo GPL-3.0.",
   "mine": "Mío",
   "pagesLabel": "Páginas",
   "toolEntries": "Herramientas",

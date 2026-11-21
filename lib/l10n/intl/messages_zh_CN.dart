@@ -226,7 +226,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "account": MessageLookupByLibrary.simpleMessage("账号"),
     "acknowledgments": MessageLookupByLibrary.simpleMessage("鸣谢"),
     "acknowledgmentsDesc": MessageLookupByLibrary.simpleMessage(
-      "Skyward 最初派生自 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
+      "Skyward 的界面与交互参考了 chen08209 的 FlClash，并基于 MetaCubeX 的 mihomo (Clash.Meta) 内核构建。两者均以 GPL-3.0 协议开源。",
     ),
     "action": MessageLookupByLibrary.simpleMessage("操作"),
     "actionDelayTest": MessageLookupByLibrary.simpleMessage("测试全部延迟"),

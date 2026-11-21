@@ -1,4 +1,4 @@
-> **Note** — Skyward began as a fork of [FlClash](https://github.com/chen08209/FlClash) by chen08209 and is now maintained independently. Builds are published in [this repository's releases](../../releases/latest); see [FORK.md](FORK.md) for the version scheme, the signing change and how Skyward relates to FlClash. This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
+> **Note** — Skyward is an independent multi-platform proxy client with its own version scheme, signing and release channels. Builds are published in [this repository's releases](../../releases/latest); see [PROJECT.md](PROJECT.md) for the version scheme, the signing setup and the three channels. This repository ships the client only: no proxy servers, subscriptions or accounts are bundled, and no paid service is offered.
 
 <div align="center">
 
@@ -40,8 +40,8 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
   global hotkeys on the desktop.
 - **Open source and ad-free**, licensed under GPL-3.0.
 
-> New additions above first land in the [beta channel](FORK.md) and reach the default `main`
-> branch at the next promotion. See [FORK.md](FORK.md) for the three channels.
+> New additions above first land in the [beta channel](PROJECT.md) and reach the default `main`
+> branch at the next promotion. See [PROJECT.md](PROJECT.md) for the three channels.
 
 ## Download
 
@@ -60,7 +60,7 @@ Get the latest build from [this repository's Releases](https://github.com/aqiyou
 
 These builds are compiled from this repository and signed with its own certificate. Builds published by FlClash
 itself (its website, F-Droid repository or Homebrew tap) carry a different signature, so switching between the
-two means uninstalling once — see [FORK.md](https://github.com/aqiyoung/Skyward/blob/main/FORK.md).
+two means uninstalling once — see [PROJECT.md](https://github.com/aqiyoung/Skyward/blob/main/PROJECT.md).
 
 **Linux tray icon**
 

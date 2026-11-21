@@ -253,7 +253,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(AboutView), findsOneWidget);
-    // This fork does not run upstream's Telegram channel, so the entry is gone.
+    // Skyward does not run FlClash's Telegram channel, so the entry is gone.
     expect(find.text('Telegram'), findsNothing);
     final hero = find.byWidgetPredicate(
       (widget) => widget.runtimeType.toString() == '_AboutHero',

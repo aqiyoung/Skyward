@@ -321,7 +321,7 @@ abstract final class GroupIconSource {
       name.endsWith('-自动选择') ? 'auto.png' : null;
 
   /// The same pictures for the names a subscription actually writes: the lists
-  /// above are the fork's own default config, a provider writes its own. A
+  /// above are Skyward's own default config, a provider writes its own. A
   /// service wins over a region, a region over the group's kind.
   static const _serviceKeywords = <String, List<String>>{
     'youtube.png': ['youtube', '油管', 'yt', '哔哩哔哩', 'bilibili'],

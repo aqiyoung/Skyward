@@ -1,7 +1,7 @@
-globalThis.FlClashSite = (() => {
+globalThis.SkywardSite = (() => {
   'use strict';
 
-  const REPO = 'https://github.com/chen08209/FlClash';
+  const REPO = 'https://github.com/aqiyoung/Skyward';
   const FIRST_PAGE = 6;
   const MAX_STAGGER = 16;
   const TYPE_BY_TITLE = {
@@ -17,9 +17,9 @@ globalThis.FlClashSite = (() => {
 
   const STRINGS = {
     en: {
-      pageTitle: 'FlClash – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux',
+      pageTitle: 'Skyward – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux',
       pageDescription:
-        'FlClash is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.',
+        'Skyward is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.',
       skip: 'Skip to downloads',
       navDownload: 'Download',
       navChangelog: 'Changelog',
@@ -34,8 +34,8 @@ globalThis.FlClashSite = (() => {
       heroRelease: (v) => `${v} is out · See what’s new`,
       ctaDownload: (p) => `Download for ${p}`,
       ctaChoose: 'Choose a download',
-      ctaIos: 'FlClash does not run on iOS. Pick a build for another device below.',
-      previewAlt: 'FlClash dashboard on a MacBook and a phone',
+      ctaIos: 'Skyward does not run on iOS. Pick a build for another device below.',
+      previewAlt: 'Skyward dashboard on a MacBook and a phone',
       fact1Title: 'mihomo core',
       fact1: 'Rule routing, proxy groups and TUN mode.',
       fact2Title: 'Subscriptions',
@@ -71,13 +71,8 @@ globalThis.FlClashSite = (() => {
       noteDeb: '.deb package for Debian, Ubuntu and their derivatives',
       noteRpm: '.rpm package for Fedora, openSUSE and their derivatives',
       noteAppImage: 'Runs on most distributions without installing',
-      tipFdroidTitle: 'F-Droid',
-      tipFdroid: 'Add the FlClash repository to your F-Droid client to get updates there.',
-      tipFdroidLink: 'Open the F-Droid repository',
       tipIntentTitle: 'Automation',
       tipIntent: 'Other apps can start, stop or toggle the proxy with these intent actions.',
-      tipBrewTitle: 'Homebrew',
-      tipBrew: 'Install from the terminal, and upgrade with brew later.',
       tipTrayTitle: 'Tray icon',
       tipTray:
         'The .deb package installs its own dependencies. With the AppImage or the .rpm, install the AyatanaAppIndicator library so the tray icon can show.',
@@ -106,9 +101,9 @@ globalThis.FlClashSite = (() => {
       stars: (n) => `${n} stars on GitHub`,
     },
     zh: {
-      pageTitle: 'FlClash – 基于 Clash Meta（mihomo）的多平台代理客户端，支持 Android、Windows、macOS、Linux',
+      pageTitle: 'Skyward – 基于 Clash Meta（mihomo）的多平台代理客户端，支持 Android、Windows、macOS、Linux',
       pageDescription:
-        'FlClash 是免费开源的 Clash Meta（mihomo）代理客户端，支持 Android、Windows、macOS 与 Linux，提供规则分流、TUN 模式与订阅导入，没有广告。',
+        'Skyward 是免费开源的 Clash Meta（mihomo）代理客户端，支持 Android、Windows、macOS 与 Linux，提供规则分流、TUN 模式与订阅导入，没有广告。',
       skip: '跳到下载',
       navDownload: '下载',
       navChangelog: '更新日志',
@@ -123,8 +118,8 @@ globalThis.FlClashSite = (() => {
       heroRelease: (v) => `${v} 已发布 · 查看更新`,
       ctaDownload: (p) => `下载 ${p} 版`,
       ctaChoose: '选择下载版本',
-      ctaIos: 'FlClash 不支持 iOS，可以在下方选择其他设备的版本。',
-      previewAlt: 'FlClash 仪表盘在 MacBook 与手机上的界面',
+      ctaIos: 'Skyward 不支持 iOS，可以在下方选择其他设备的版本。',
+      previewAlt: 'Skyward 仪表盘在 MacBook 与手机上的界面',
       fact1Title: 'mihomo 内核',
       fact1: '规则分流、代理组与 TUN 模式。',
       fact2Title: '订阅导入',
@@ -160,13 +155,8 @@ globalThis.FlClashSite = (() => {
       noteDeb: '.deb 安装包，也适用于其衍生版',
       noteRpm: '.rpm 安装包，也适用于其衍生版',
       noteAppImage: '适用于多数发行版，无需安装',
-      tipFdroidTitle: 'F-Droid',
-      tipFdroid: '在 F-Droid 客户端中添加 FlClash 仓库，即可在那里接收更新。',
-      tipFdroidLink: '打开 F-Droid 仓库',
       tipIntentTitle: '自动化',
       tipIntent: '其他应用可以通过以下 Intent Action 启动、停止或切换代理。',
-      tipBrewTitle: 'Homebrew',
-      tipBrew: '在终端中安装，之后用 brew 升级。',
       tipTrayTitle: '托盘图标',
       tipTray: '.deb 安装包会自动安装所需依赖。使用 AppImage 或 .rpm 时，需要先安装 AyatanaAppIndicator 库，托盘图标才能显示。',
       clTitle: '更新日志',

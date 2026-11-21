@@ -38,8 +38,8 @@ class GooSurface extends StatelessWidget {
   static bool of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<_GooScope>() != null;
 
-  // Retained from the fork's earlier goo: button.dart still reads
-  // GooSurface.buttonStyle, so keep it alongside upstream's buttonBackground.
+  // Retained from the earlier goo: button.dart still reads
+  // GooSurface.buttonStyle, so keep it alongside the default button background.
   static const buttonStyle = ButtonStyle(
     backgroundColor: WidgetStatePropertyAll(Colors.transparent),
     backgroundBuilder: _paneBehind,

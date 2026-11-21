@@ -57,8 +57,8 @@ class GlobalState {
   /// never start one.
   String coreVersion = '';
 
-  /// The tag carries a `v` and this fork's own revision suffix; a provider
-  /// reading the User-Agent expects the bare upstream version it knows.
+  /// The tag carries a `v` and Skyward's own revision suffix; a provider
+  /// reading the User-Agent expects the bare core version it knows.
   String get coreUaVersion =>
       coreVersion.replaceFirst(RegExp(r'^v'), '').split('-').first;
 
