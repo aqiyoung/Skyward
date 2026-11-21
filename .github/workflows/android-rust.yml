@@ -18,6 +18,10 @@ name: android-rust
 on:
   workflow_dispatch:
     inputs:
+      core_run_id:
+        description: 'Use the Android core artifact from this successful skyward-core Actions run (test channel only)'
+        required: false
+        default: ''
       so_url:
         description: 'URL of skyward-core-android-arm64.zip (default: rolling Release)'
         required: false
@@ -81,10 +85,24 @@ jobs:
 
       - name: Download Rust core .so package
         env:
+          GH_TOKEN: ${{ github.token }}
+          CORE_RUN_ID: ${{ inputs.core_run_id }}
+          CHANNEL: ${{ inputs.channel }}
           SO_URL: ${{ inputs.so_url || 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip' }}
         run: |
           set -euo pipefail
-          curl -fsSL "$SO_URL" -o /tmp/core.zip
+          if [ -n "$CORE_RUN_ID" ]; then
+            [ "$CHANNEL" = test ] || { echo 'core_run_id is for test builds only'; exit 1; }
+            [[ "$CORE_RUN_ID" =~ ^[0-9]+$ ]] || exit 1
+            conclusion=$(gh run view "$CORE_RUN_ID" --repo aqiyoung/skyward-core --json conclusion --jq .conclusion)
+            [ "$conclusion" = success ] || { echo 'Core build has not succeeded'; exit 1; }
+            gh run view "$CORE_RUN_ID" --repo aqiyoung/skyward-core --json headSha --jq .headSha
+            gh run download "$CORE_RUN_ID" --repo aqiyoung/skyward-core \
+              --name skyward-core-android-arm64 --dir /tmp/core-artifact
+            cp /tmp/core-artifact/skyward-core-android-arm64.zip /tmp/core.zip
+          else
+            curl -fsSL "$SO_URL" -o /tmp/core.zip
+          fi
           mkdir -p /tmp/core-pkg
           (cd /tmp/core-pkg && unzip -o /tmp/core.zip)
           ls -la /tmp/core-pkg
