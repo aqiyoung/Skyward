@@ -154,7 +154,7 @@ class TrafficSampler extends _$TrafficSampler {
         (item['startedAt'] as num?)?.toInt() ?? endedMs,
       );
       await _safeWrite(
-        () => database.trafficRecordsDao.upsert(
+        database.trafficRecordsDao.upsert(
           TrafficRecord(
             connectionId: id,
             startedAt: started,
@@ -175,7 +175,7 @@ class TrafficSampler extends _$TrafficSampler {
       if (upDelta > 0 || downDelta > 0) {
         final proxied = node.isNotEmpty && node.toUpperCase() != 'DIRECT';
         await _safeWrite(
-          () => database.trafficHourlyDao.add(
+          database.trafficHourlyDao.add(
             hour: hour,
             download: downDelta,
             upload: upDelta,
@@ -183,7 +183,7 @@ class TrafficSampler extends _$TrafficSampler {
           ),
         );
         await _safeWrite(
-          () => database.appTrafficHourlyDao.add(
+          database.appTrafficHourlyDao.add(
             hour: hour,
             process: '',
             download: downDelta,
