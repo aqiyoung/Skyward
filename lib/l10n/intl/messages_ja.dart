@@ -229,7 +229,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m95(label) => "${label}はURLである必要があります";
 
-  static String m96(month, day) => "${month}/${day} 以降";
+  static String m96(month, day) => "${month}/${day} の週";
 
   static String m97(count) => "${count} 年前";
 

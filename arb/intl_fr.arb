@@ -1107,7 +1107,7 @@
   "ruleHits": "Correspondances de règles",
   "trafficRanking": "Classement du trafic",
   "hitsUnit": "correspondances",
-  "weeklyRange": "{month}/{day} et plus",
+  "weeklyRange": "Semaine du {month}/{day}",
   "connectionCount": "{count} connexions",
   "proxyShare": "Proxy {value} · {percent}",
   "directShare": "Direct {value} · {percent}",

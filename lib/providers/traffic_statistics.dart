@@ -132,23 +132,44 @@ class TrafficSampler extends _$TrafficSampler {
   }
 }
 
+/// The first instant of the period that contains [date]: the day itself, the
+/// Monday of its calendar week, or the first of its month.
+///
+/// The week is a calendar week, not a rolling seven days from the selected
+/// day — the two drift apart the moment the reader looks at any day but
+/// Monday.
+DateTime startOfTrafficPeriod(TrafficPeriod period, DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  return switch (period) {
+    TrafficPeriod.day => day,
+    TrafficPeriod.week => day.subtract(
+      Duration(days: day.weekday - DateTime.monday),
+    ),
+    TrafficPeriod.month => DateTime(date.year, date.month, 1),
+  };
+}
+
 /// The range a statistics view currently shows: the start of the period.
 @Riverpod(keepAlive: true)
 class TrafficRange extends _$TrafficRange {
   @override
-  DateTime build() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime build() => startOfTrafficPeriod(TrafficPeriod.day, DateTime.now());
 
   void set(DateTime value) => state = value;
 
+  /// Re-anchor on a period change so the reader sees that period's own first
+  /// day rather than the previous period's boundary.
+  void setPeriod(TrafficPeriod period) {
+    state = startOfTrafficPeriod(period, state);
+  }
+
   void shift(TrafficPeriod period, int amount) {
-    state = switch (period) {
+    final next = switch (period) {
       TrafficPeriod.day => state.add(Duration(days: amount)),
       TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
       TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
     };
+    state = startOfTrafficPeriod(period, next);
   }
 }
 
@@ -161,7 +182,7 @@ Future<TrafficStatistics> trafficStatistics(
 ) async {
   // Keep the sampler alive for as long as statistics are being read.
   ref.watch(trafficSamplerProvider);
-  final start0 = ref.watch(trafficRangeProvider);
+  final start0 = startOfTrafficPeriod(period, ref.watch(trafficRangeProvider));
   final (start, end) = switch (period) {
     TrafficPeriod.day => (start0, start0.add(const Duration(days: 1))),
     TrafficPeriod.week => (start0, start0.add(const Duration(days: 7))),

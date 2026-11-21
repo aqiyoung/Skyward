@@ -1107,7 +1107,7 @@
   "ruleHits": "Срабатывания правил",
   "trafficRanking": "Рейтинг трафика",
   "hitsUnit": "срабатываний",
-  "weeklyRange": "с {month}/{day}",
+  "weeklyRange": "Неделя с {month}/{day}",
   "connectionCount": "{count} подключений",
   "proxyShare": "Прокси {value} · {percent}",
   "directShare": "Напрямую {value} · {percent}",

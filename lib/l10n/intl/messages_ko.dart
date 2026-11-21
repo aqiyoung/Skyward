@@ -230,7 +230,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m95(label) => "${label}은(는) URL이어야 합니다";
 
-  static String m96(month, day) => "${month}/${day}부터";
+  static String m96(month, day) => "${month}/${day} 주간";
 
   static String m97(count) => "${Intl.plural(count, other: '${count}년 전')}";
 

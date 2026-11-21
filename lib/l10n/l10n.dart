@@ -9247,10 +9247,10 @@ class AppLocalizations {
     return Intl.message('hits', name: 'hitsUnit', desc: '', args: []);
   }
 
-  /// `{month}/{day} onward`
+  /// `Week of {month}/{day}`
   String weeklyRange(Object month, Object day) {
     return Intl.message(
-      '$month/$day onward',
+      'Week of $month/$day',
       name: 'weeklyRange',
       desc: '',
       args: [month, day],
