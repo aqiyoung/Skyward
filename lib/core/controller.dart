@@ -217,6 +217,10 @@ class CoreController {
     return _interface.getConnections();
   }
 
+  Future<List<Map<String, Object?>>> takeClosedConnections() async {
+    return _interface.takeClosedConnections();
+  }
+
   Future<int> getConnectionCount() async {
     return _interface.getConnectionCount();
   }

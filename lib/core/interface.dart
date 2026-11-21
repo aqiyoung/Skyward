@@ -105,6 +105,10 @@ mixin CoreInterface {
 
   FutureOr<List<TrackerInfo>> getConnections();
 
+  /// Connections that finished since the last call, with their final totals,
+  /// so history keeps traffic the periodic sampler never observed.
+  FutureOr<List<Map<String, Object?>>> takeClosedConnections();
+
   FutureOr<int> getConnectionCount();
 
   FutureOr<bool> closeConnection(String id);
@@ -493,6 +497,17 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<List<TrackerInfo>> getConnections() async {
     final data = await _invokeMethod<Object>(method: CoreMethod.getConnections);
     return data is List<TrackerInfo> ? data : trackerInfosOf(data);
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> takeClosedConnections() async {
+    final data = await _invokeMethod<Object>(
+      method: CoreMethod.takeClosedConnections,
+    );
+    return [
+      for (final item in data is List ? data : const [])
+        if (item is Map) Map<String, Object?>.from(item),
+    ];
   }
 
   @override

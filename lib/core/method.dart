@@ -34,6 +34,7 @@ enum CoreMethod {
   outboundIp,
   serviceCheck,
   getConnections,
+  takeClosedConnections,
   getConnectionCount,
   closeConnections,
   resetConnections,

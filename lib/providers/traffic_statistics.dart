@@ -5,6 +5,7 @@ import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/traffic_statistics.g.dart';
@@ -115,12 +116,84 @@ class TrafficSampler extends _$TrafficSampler {
       }
       trafficLastBytes[r.id] = (up: r.upload, down: r.download);
     }
+    await _recordClosed();
     final cutoff = now.subtract(ref.read(trafficHistoryRetentionProvider));
     await _safeWrite(() async {
       await database.trafficRecordsDao.pruneBefore(cutoff);
       await database.trafficHourlyDao.pruneBefore(cutoff);
       await database.appTrafficHourlyDao.pruneBefore(cutoff);
     }());
+  }
+
+  /// Persist connections that finished since the last sample. The core keeps
+  /// their final accounting, so traffic from backgrounded or missed sampling
+  /// still lands in history (and in the hourly buckets) instead of vanishing.
+  Future<void> _recordClosed() async {
+    final List<Map<String, Object?>> items;
+    try {
+      items = await ref.read(coreHandlerProvider).takeClosedConnections();
+    } catch (_) {
+      return; // best-effort, like the rest of history
+    }
+    for (final item in items) {
+      final id = item['id'] as String?;
+      if (id == null) continue;
+      final endedMs = (item['endedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch;
+      final ended = DateTime.fromMillisecondsSinceEpoch(endedMs);
+      final hour = DateTime(ended.year, ended.month, ended.day, ended.hour);
+      final upload = (item['upload'] as num?)?.toInt() ?? 0;
+      final download = (item['download'] as num?)?.toInt() ?? 0;
+      final rawChains = item['chains'];
+      final chains = [
+        for (final c in rawChains is List ? rawChains : const <Object?>[])
+          c.toString(),
+      ];
+      final node = chains.isEmpty ? '' : chains.last;
+      final started = DateTime.fromMillisecondsSinceEpoch(
+        (item['startedAt'] as num?)?.toInt() ?? endedMs,
+      );
+      await _safeWrite(
+        () => database.trafficRecordsDao.upsert(
+          TrafficRecord(
+            connectionId: id,
+            startedAt: started,
+            endedAt: ended,
+            host: (item['host'] as String?) ?? '',
+            rule: (item['rule'] as String?) ?? '',
+            rulePayload: (item['rulePayload'] as String?) ?? '',
+            node: node,
+            network: (item['network'] as String?) ?? '',
+            upload: upload,
+            download: download,
+          ),
+        ),
+      );
+      final last = trafficLastBytes[id];
+      final upDelta = upload - (last?.up ?? 0);
+      final downDelta = download - (last?.down ?? 0);
+      if (upDelta > 0 || downDelta > 0) {
+        final proxied = node.isNotEmpty && node.toUpperCase() != 'DIRECT';
+        await _safeWrite(
+          () => database.trafficHourlyDao.add(
+            hour: hour,
+            download: downDelta,
+            upload: upDelta,
+            proxied: proxied,
+          ),
+        );
+        await _safeWrite(
+          () => database.appTrafficHourlyDao.add(
+            hour: hour,
+            process: '',
+            download: downDelta,
+            upload: upDelta,
+          ),
+        );
+      }
+      trafficLastBytes[id] = (up: upload, down: download);
+      trafficFirstSeen.putIfAbsent(id, () => started);
+    }
   }
 
   Future<void> _safeWrite(Future<void> write) async {
