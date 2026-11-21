@@ -13,7 +13,12 @@ name: android-rust
 # Two distribution channels, chosen at dispatch time: `release` publishes a
 # GitHub Release and pushes the APK to the Telegram subscription channel;
 # `test` skips both and sends the APK only to the Bot private chat, with a
-# -test.<run> version that never touches the formal version sequence.
+# -test.<run> suffix that never touches the formal version sequence.
+#
+# The fourth component continues the highest one already published for the
+# requested line (releases, tags, and this channel's own rust-test-* tags),
+# so numbers keep climbing across every channel instead of restarting per
+# workflow; at 100 it carries into the third component (1.0.1.99 -> 1.0.2.0).
 
 on:
   workflow_dispatch:
@@ -71,17 +76,66 @@ jobs:
         env:
           CHANNEL: ${{ inputs.channel }}
           RAW_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ "$CHANNEL" = "test" ]; then
-            base="${RAW_VERSION:-1.0.0.99-rust}"
-            base="${base%-rust}"
-            resolved="${base}-test.${{ github.run_number }}"
-          else
+          if [ "$CHANNEL" != "test" ]; then
             resolved="${RAW_VERSION:-1.0.0.99-rust}"
+            echo "VERSION=$resolved" >> "$GITHUB_ENV"
+            echo "channel=$CHANNEL version=$resolved"
+            exit 0
           fi
+
+          base="${RAW_VERSION:-1.0.0.99-rust}"
+          base="${base%-rust}"
+          line="$(printf '%s' "$base" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || true)"
+          [ -n "$line" ] || { echo "::error::version must start with X.Y.Z"; exit 1; }
+          start_rev="$(printf '%s' "$base" | sed -n 's/^'"${line//./\\.}"'\.\([0-9][0-9]*\)$/\1/p')"
+          start_rev="${start_rev:-0}"
+
+          # Everything already carrying a number: releases, release tags, and
+          # this channel's own records. Reading all of them is what makes the
+          # count continue across channels instead of restarting here.
+          versions="$(
+            {
+              gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+                --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true
+              gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/v" \
+                --jq '.[].ref' 2>/dev/null || true
+              gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/rust-test-" \
+                --jq '.[].ref' 2>/dev/null || true
+            } | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-beta)?(-test\.[0-9]+)?' || true
+          )"
+          highest="$(printf '%s\n' "$versions" \
+            | sed -n 's/^'"${line//./\\.}"'\.\([0-9][0-9]*\).*/\1/p' \
+            | sort -n | tail -1)"
+
+          if [ -n "$highest" ]; then
+            rev=$(( highest + 1 ))
+          else
+            rev="$start_rev"
+          fi
+          # Past 99 the fourth component carries into the third.
+          if [ "$rev" -ge 100 ]; then
+            patch="${line##*.}"
+            rest="${line%.*}"
+            minor="${rest##*.}"
+            major="${rest%.*}"
+            line="${major}.${minor}.$(( patch + 1 ))"
+            rev=0
+          fi
+
+          resolved="${line}.${rev}-test.${{ github.run_number }}"
           echo "VERSION=$resolved" >> "$GITHUB_ENV"
           echo "channel=$CHANNEL version=$resolved"
+
+          # Record this build so the next dispatch continues after it. Best
+          # effort: a failed recording repeats a number rather than breaking
+          # the build.
+          git -c user.name="github-actions" -c user.email="actions@github.com" \
+            tag "rust-test-${resolved}" || true
+          git push origin "rust-test-${resolved}" \
+            || echo "::warning::could not record ${resolved} for the next build"
 
       - name: Download Rust core .so package
         env:
