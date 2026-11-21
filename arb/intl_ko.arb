@@ -1107,7 +1107,7 @@
   "ruleHits": "규칙 히트",
   "trafficRanking": "트래픽 순위",
   "hitsUnit": "히트",
-  "weeklyRange": "{month}/{day}부터",
+  "weeklyRange": "{month}/{day} 주간",
   "connectionCount": "{count}개 연결",
   "proxyShare": "프록시 {value} · {percent}",
   "directShare": "직접 {value} · {percent}",

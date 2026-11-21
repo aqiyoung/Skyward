@@ -64,7 +64,10 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                 (TrafficPeriod.month, context.appLocalizations.month),
               ],
               value: _period,
-              onChanged: (v) => setState(() => _period = v),
+              onChanged: (v) {
+                ref.read(trafficRangeProvider.notifier).setPeriod(v);
+                setState(() => _period = v);
+              },
             ),
             const SizedBox(height: 12),
             _DateStrip(period: _period, range: range),
@@ -150,12 +153,15 @@ class _DateStrip extends ConsumerWidget {
   final TrafficPeriod period;
   final DateTime range;
 
-  String _label(AppLocalizations l) => switch (period) {
-    TrafficPeriod.day =>
-      '${range.year}-${range.month.toString().padLeft(2, '0')}-${range.day.toString().padLeft(2, '0')}',
-    TrafficPeriod.week => l.weeklyRange(range.month, range.day),
-    TrafficPeriod.month => '${range.year}/${range.month}',
-  };
+  String _label(AppLocalizations l) {
+    final start = startOfTrafficPeriod(period, range);
+    return switch (period) {
+      TrafficPeriod.day =>
+        '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
+      TrafficPeriod.week => l.weeklyRange(start.month, start.day),
+      TrafficPeriod.month => '${start.year}/${start.month}',
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

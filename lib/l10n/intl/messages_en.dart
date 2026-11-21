@@ -254,7 +254,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m95(label) => "${label} must be a URL";
 
-  static String m96(month, day) => "${month}/${day} onward";
+  static String m96(month, day) => "Week of ${month}/${day}";
 
   static String m97(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";

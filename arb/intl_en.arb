@@ -1107,7 +1107,7 @@
   "ruleHits": "Rule hits",
   "trafficRanking": "Traffic ranking",
   "hitsUnit": "hits",
-  "weeklyRange": "{month}/{day} onward",
+  "weeklyRange": "Week of {month}/{day}",
   "connectionCount": "{count} connections",
   "proxyShare": "Proxy {value} · {percent}",
   "directShare": "Direct {value} · {percent}",

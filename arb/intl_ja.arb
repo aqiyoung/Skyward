@@ -1107,7 +1107,7 @@
   "ruleHits": "ルールヒット",
   "trafficRanking": "トラフィックランキング",
   "hitsUnit": "ヒット",
-  "weeklyRange": "{month}/{day} 以降",
+  "weeklyRange": "{month}/{day} の週",
   "connectionCount": "{count} 件の接続",
   "proxyShare": "プロキシ {value} · {percent}",
   "directShare": "直結 {value} · {percent}",

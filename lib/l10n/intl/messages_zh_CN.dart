@@ -226,7 +226,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m95(label) => "${label}必须为URL";
 
-  static String m96(month, day) => "${month}/${day} 起";
+  static String m96(month, day) => "${month}/${day} 当周";
 
   static String m97(count) => "${count} 年前";
 

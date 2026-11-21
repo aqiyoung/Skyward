@@ -1107,7 +1107,7 @@
   "ruleHits": "Aciertos de reglas",
   "trafficRanking": "Clasificación de tráfico",
   "hitsUnit": "aciertos",
-  "weeklyRange": "{month}/{day} en adelante",
+  "weeklyRange": "Semana del {month}/{day}",
   "connectionCount": "{count} conexiones",
   "proxyShare": "Proxy {value} · {percent}",
   "directShare": "Directo {value} · {percent}",

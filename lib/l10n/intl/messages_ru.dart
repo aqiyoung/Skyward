@@ -252,7 +252,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m95(label) => "Значение «${label}» должно быть URL";
 
-  static String m96(month, day) => "с ${month}/${day}";
+  static String m96(month, day) => "Неделя с ${month}/${day}";
 
   static String m97(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";

@@ -1107,7 +1107,7 @@
   "ruleHits": "规则命中",
   "trafficRanking": "流量排行",
   "hitsUnit": "次命中",
-  "weeklyRange": "{month}/{day} 起",
+  "weeklyRange": "{month}/{day} 当周",
   "connectionCount": "{count} 条连接",
   "proxyShare": "代理 {value} · {percent}",
   "directShare": "直连 {value} · {percent}",
