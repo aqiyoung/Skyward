@@ -67,10 +67,16 @@ class _AppUsageSheetState extends ConsumerState<AppUsageSheet> {
           ),
           const SizedBox(height: 16),
           usage.when(
-            data: (data) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _TotalCard(data: data),
+            data: (data) => Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _TotalCard(data: data),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -107,7 +113,8 @@ class _AppUsageSheetState extends ConsumerState<AppUsageSheet> {
                         ],
                       ),
                     ),
-              ],
+                ],
+              ),
             ),
             loading: () => const Padding(
               padding: EdgeInsets.all(48),
