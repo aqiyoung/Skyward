@@ -187,6 +187,12 @@ class VpnService : SystemVpnService(), ManagedService {
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {
         val ipv4Address = IPV4_ADDRESS.toCIDR()
         addAddress(ipv4Address.address, ipv4Address.prefixLength)
+        // The kernel answers DNS with synthetic addresses and routes them back
+        // through rules, so their ranges must always enter the tunnel; a
+        // profile that narrows the route list would otherwise black-hole
+        // every fake-ip connection.
+        runCatching { addRoute(FAKE_IP_RANGE_V4, 15) }
+        if (options.ipv6) runCatching { addRoute(FAKE_IP_RANGE_V6, 64) }
         addRoutes(
             routes = options::getIpv4RouteAddress,
             fallbackAddress = NET_ANY,
@@ -312,5 +318,9 @@ class VpnService : SystemVpnService(), ManagedService {
         private const val NET_ANY = "0.0.0.0"
         private const val NET_ANY6 = "::"
         private const val LOCAL_HOST = "127.0.0.1"
+
+        // Where the kernel's fake-ip pools live; mirrored from src/fake_ip.rs.
+        private const val FAKE_IP_RANGE_V4 = "198.18.0.0"
+        private const val FAKE_IP_RANGE_V6 = "fd00::"
     }
 }
