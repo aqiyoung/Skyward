@@ -715,6 +715,11 @@ class GroupBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = IconTheme.of(context).size ?? 24;
+    // A known exit country is more specific than the app mark, so it leads.
+    final code = exitCountryCode;
+    if (code != null && code.isNotEmpty) {
+      return GroupMonogram(name, exitCountryCode: code);
+    }
     final flag = GroupIconSource.flagOf(name);
     if (flag.isNotEmpty) {
       return SizedBox.square(

@@ -568,13 +568,26 @@ class _IpText extends ConsumerWidget {
       return DashboardFitText(text, style: style);
     }
     // IPv6: start a notch smaller and let it shrink further, so the full
-    // address fits on the line instead of being cut short.
+    // address fits on the line instead of being cut short. The size is off
+    // the type scale, so it goes through AppTextStyle.custom.
     final base = style.fontSize;
+    if (base == null) {
+      return DashboardFitText(text, style: style, minScale: 0.45);
+    }
+    final size = base * 0.78;
     return DashboardFitText(
       text,
-      style: base == null
-          ? style
-          : style.copyWith(fontSize: base * 0.78),
+      style: AppTextStyle.custom(
+        context,
+        size: size,
+        leading: style.height != null ? style.height! * size : size * 1.2,
+        weight: style.fontWeight ?? FontWeight.w400,
+      ).copyWith(
+        color: style.color,
+        fontFamily: style.fontFamily,
+        fontStyle: style.fontStyle,
+        letterSpacing: style.letterSpacing,
+      ),
       minScale: 0.45,
     );
   }
