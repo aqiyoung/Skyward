@@ -13,7 +13,6 @@ fi
 rm -rf "$out"
 mkdir -p "$out"
 cp -R "$root/site/." "$out/"
-cp "$root/snapshots/preview.png" "$root/snapshots/preview-dark.png" "$out/"
 cp "$root/assets/images/icon.png" "$out/icon.png"
 cp "$root/assets_source/images/icon/glyph.svg" "$out/favicon.svg"
 

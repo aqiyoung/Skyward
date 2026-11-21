@@ -43,7 +43,6 @@ function structuredData(t, page) {
     inLanguage: page.locale,
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Android, Windows, macOS, Linux',
-    image: `${siteUrl}preview.png`,
     downloadUrl: `${REPO}/releases/latest`,
     ...(latest ? { softwareVersion: latest.version, dateModified: latest.date || undefined } : {}),
     license: 'https://www.gnu.org/licenses/gpl-3.0.html',
@@ -64,7 +63,6 @@ function render(page) {
   html = replaceOnce(html, /<title>[^<]*<\/title>/, `<title>${text('pageTitle')}</title>`);
   html = replaceOnce(html, /(<meta name="description" content=")[^"]*/, `$1${text('pageDescription')}`);
   html = replaceOnce(html, /(<meta property="og:description" content=")[^"]*/, `$1${text('heroLede')}`);
-  html = replaceOnce(html, /(<meta property="og:image" content=")[^"]*/, `$1${siteUrl}preview.png`);
   const alternates = PAGES.map(
     (p) => `  <link rel="alternate" hreflang="${p.locale}" href="${siteUrl}${p.path}">`,
   ).join('\n');
