@@ -175,6 +175,10 @@ jobs:
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
+          # The APK's file name carries the three pubspec components (the
+          # four-part version above is injected as versionName at build time),
+          # so the naming step needs the base to recognise the artifact.
+          echo "base_version=${base}" >> "$GITHUB_OUTPUT"
           echo "building ${version} from ${base}, base versionCode ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
@@ -437,9 +441,12 @@ jobs:
       - name: Name the artifact after our version
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
         run: |
           set -euo pipefail
-          base="${VERSION%.*}"
+          # The artifact is named after the three pubspec components; the
+          # four-part ${VERSION} is the versionName injected at build time.
+          base="${BASE_VERSION}"
           shopt -s nullglob
           for file in dist/*; do
             name="$(basename "$file")"
