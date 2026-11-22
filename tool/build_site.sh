@@ -24,13 +24,12 @@ copy_if_present() {
     echo "note: $1 is absent; continuing without it" >&2
   fi
 }
-# site/logo.png and site/apple-touch-icon.png are rendered from site/mark.svg
-# (the S ribbon in the site's hue) by tool/render_mark.mjs, and committed so
-# building needs no image tooling. Regenerate them when the mark or hue changes.
+# site/mark.png, site/favicon.png, site/apple-touch-icon.png and site/og.png are
+# rendered from the logo artwork by tool/prepare_logo.mjs + tool/build_icons.mjs,
+# and committed so building needs no image tooling. Regenerate when the logo or
+# the brand hue changes.
 copy_if_present "$root/snapshots/preview.png" "$out/preview.png"
 copy_if_present "$root/snapshots/preview-dark.png" "$out/preview-dark.png"
-copy_if_present "$root/assets/images/icon.png" "$out/icon.png"
-copy_if_present "$root/assets_source/images/icon/glyph.svg" "$out/favicon.svg"
 
 # Release metadata feeds the download list, so it has to exist wherever the site
 # is built. `gh` is used when present; Vercel's build image has only curl, which
@@ -75,7 +74,7 @@ fi
 # The changelog is built from this repository's own releases, so the timeline
 # carries our version numbers and our notes rather than the pre-fork history in
 # the checked-in CHANGELOG.md. If the API cannot be read, that file stands in.
-if releases="$(curl -fsS --max-time 20 "${auth[@]}" "$api/releases?per_page=100" 2>/dev/null)"; then
+if releases="$(curl -fsS --max-time 25 "${auth[@]}" "$api/releases?per_page=40" 2>/dev/null)"; then
   printf '%s' "$releases" | SITE_REPOSITORY="$repo" node "$root/tool/site_changelog.mjs" >"$out/CHANGELOG.md"
 else
   echo "warning: releases unreachable; using the checked-in CHANGELOG.md" >&2

@@ -9,25 +9,35 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Skyward">
   <meta property="og:description" content="A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.">
-  <meta property="og:image" content="logo.png">
+  <meta property="og:image" content="og.png">
   <meta name="twitter:card" content="summary_large_image">
   <script>
     // Set before first paint: the stylesheet only shows the loader and the
     // pre-reveal states under html.js, so the page never flashes unstyled.
-    document.documentElement.classList.add('js');
+    var root = document.documentElement;
+    root.classList.add('js');
+    // Same for the theme: the tokens differ per data-theme, so deciding late
+    // would flash the wrong palette.
+    try {
+      var theme = localStorage.getItem('skyward-theme');
+      if (!theme) theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      root.dataset.theme = theme;
+    } catch (e) {
+      root.dataset.theme = 'dark';
+    }
     // Hard fallback: if the app script never runs, the cover would sit over the
     // whole page. Open it the same way the runtime does, then let go.
     setTimeout(function () {
       var cover = document.getElementById('loader');
       if (!cover) return;
-      document.documentElement.classList.add('is-ready');
+      root.classList.add('is-ready');
       setTimeout(function () {
-        document.documentElement.classList.add('is-loaded');
+        root.classList.add('is-loaded');
         cover.remove();
       }, 1200);
     }, 3200);
   </script>
-  <link rel="icon" href="mark.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -57,7 +67,7 @@
   <header class="nav">
     <nav class="nav-bar" aria-label="Main">
       <a class="logo" href="#top" aria-label="Skyward">
-        <img class="logo-mark" src="mark.svg" width="30" height="30" alt="">
+        <img class="logo-mark" src="mark.png" width="34" height="26" alt="">
         <span>Skyward</span>
       </a>
       <ul class="nav-links" data-group data-sticky>
@@ -66,6 +76,17 @@
         <li><a class="nav-a" data-mg href="#notes" data-i18n="navNotes">What's new</a></li>
         <li><a class="nav-a" data-mg href="#build" data-i18n="navBuild">Build it yourself</a></li>
       </ul>
+      <div class="dd" id="theme-dd">
+        <button class="nav-a" data-mg type="button" id="theme-btn" aria-expanded="false" aria-controls="theme-panel" aria-haspopup="true">
+          <span class="mg-c"><span class="theme-dot" aria-hidden="true"></span><span id="theme-label" data-i18n="themeDark">深色</span></span>
+          <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <ul class="dd-panel" id="theme-panel" data-group data-items="button" data-cpull="0.04">
+          <li><button type="button" role="menuitem" data-theme="dark"><b data-i18n="themeDark">深色</b><span class="s" data-i18n="themeDarkDesc">默认的深色界面</span></button></li>
+          <li><button type="button" role="menuitem" data-theme="light"><b data-i18n="themeLight">浅色</b><span class="s" data-i18n="themeLightDesc">暖白底，白天更舒服</span></button></li>
+          <li><button type="button" role="menuitem" data-theme="paper"><b data-i18n="themePaper">米白</b><span class="s" data-i18n="themePaperDesc">偏黄的纸感底色</span></button></li>
+        </ul>
+      </div>
       <div class="lang" aria-label="Language" data-group>
         <a id="lang-toggle" data-mg href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
       </div>
@@ -86,7 +107,7 @@
             <span class="tag" data-i18n="tagPlatforms">Four platforms</span>
             <span class="tag" data-i18n="tagSums">SHA-256 in every release</span>
           </div>
-          <div class="ph-tags">
+          <div class="ph-cta">
             <a class="btn btn-primary" href="#download"><span data-i18n="ctaDownload">Choose a download</span></a>
             <a class="btn btn-ghost" href="#build" data-i18n="heroBuild">Build it yourself</a>
           </div>
@@ -381,7 +402,7 @@ dart run setup.dart android    # APK
       </div>
       <div class="foot-grid">
         <div class="foot-about">
-          <a class="logo" href="#top"><img class="logo-mark" src="mark.svg" width="30" height="30" alt=""><span>Skyward</span></a>
+          <a class="logo" href="#top"><img class="logo-mark" src="mark.png" width="30" height="23" alt=""><span>Skyward</span></a>
           <p data-i18n="footAbout">An open-source client for Clash Meta (mihomo). It does not sell access or provide subscriptions.</p>
           <div class="foot-social">
             <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward">GitHub</a>

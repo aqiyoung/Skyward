@@ -151,7 +151,11 @@ function renderRelease(feed) {
   if (best) {
     pick.querySelector('.os').textContent = OS_SHORT[best.os];
     $('pick-name').textContent = `${OS_NAMES[best.os]} · ${best.kind}${best.arch ? ` · ${best.arch}` : ''}`;
-    $('pick-meta').textContent = `${best.name} · ${formatSize(best.size)}`;
+    $('pick-meta').replaceChildren(
+      el('span', { text: best.name }),
+      document.createTextNode(' · '),
+      el('span', { class: 'nowrap', text: formatSize(best.size) }),
+    );
     $('pick-link').href = best.url;
   }
 
@@ -491,8 +495,10 @@ function detectDevice() {
 }
 
 function buildFeed(meta) {
+  // release.json carries the API objects; the file itself is at
+  // browser_download_url (the api.github.com url answers with JSON).
   const assets = (meta?.assets || [])
-    .map((asset) => ({ ...asset, ...(classify(asset.name) || {}) }))
+    .map((asset) => ({ ...asset, url: asset.browser_download_url || asset.url, ...(classify(asset.name) || {}) }))
     .filter((asset) => asset.os);
   const groups = {};
   for (const asset of assets) (groups[asset.os] ||= []).push(asset);
@@ -666,6 +672,64 @@ function startMagnets() {
   }
 }
 
+/* Theme dropdown: dark, light, paper. The choice is stored, and a first visit
+   follows the OS preference (decided in the head script). */
+function startThemes() {
+  const dd = $('theme-dd');
+  const btn = $('theme-btn');
+  const panel = $('theme-panel');
+  if (!dd || !btn || !panel) return;
+  const label = $('theme-label');
+  const items = [...panel.querySelectorAll('[data-theme]')];
+  const names = { dark: 'themeDark', light: 'themeLight', paper: 'themePaper' };
+
+  const setOpen = (open) => {
+    dd.classList.toggle('is-open', open);
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  const apply = (name) => {
+    const next = names[name] ? name : 'dark';
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem('skyward-theme', next);
+    } catch {}
+    for (const item of items) {
+      const on = item.dataset.theme === next;
+      item.classList.toggle('is-active', on);
+      item.setAttribute('aria-checked', String(on));
+    }
+    if (label) label.textContent = t(names[next]);
+  };
+
+  let hovered = false;
+  btn.addEventListener('click', () => {
+    // A mouse has already opened it by hovering; only touch and keyboard click.
+    if (hovered) return;
+    setOpen(!dd.classList.contains('is-open'));
+  });
+  dd.addEventListener('pointerenter', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    hovered = true;
+    setOpen(true);
+  });
+  dd.addEventListener('pointerleave', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    hovered = false;
+    setOpen(false);
+  });
+  dd.addEventListener('focusout', (e) => { if (!dd.contains(e.relatedTarget)) setOpen(false); });
+  document.addEventListener('click', (e) => { if (!dd.contains(e.target)) setOpen(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') { setOpen(false); btn.focus(); } });
+  panel.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-theme]');
+    if (!item) return;
+    apply(item.dataset.theme);
+    setOpen(false);
+  });
+
+  apply(document.documentElement.dataset.theme || 'dark');
+}
+
 /* The nav hides going down and returns going up. */
 function startNav() {
   const nav = document.querySelector('.nav');
@@ -802,6 +866,7 @@ function start() {
     startReveals();
     startMagnets();
     startNav();
+    startThemes();
     startSteps();
     startWordmark();
     startRing();

@@ -45,7 +45,7 @@ function render(page) {
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${text('pageTitle')}</title>`);
   html = html.replace(/(<meta name="description" content=")[^"]*/, `$1${text('pageDescription')}`);
   html = html.replace(/(<meta property="og:description" content=")[^"]*/, `$1${text('heroLede')}`);
-  html = html.replace(/(<meta property="og:image" content=")[^"]*/, `$1${siteUrl}logo.png`);
+  html = html.replace(/(<meta property="og:image" content=")[^"]*/, `$1${siteUrl}og.png`);
 
   const head = [
     `  <link rel="canonical" href="${siteUrl}${page.path}">`,
