@@ -862,10 +862,7 @@
 
   function wireGlyph() {
     const glyph = $('.brand .glyph');
-    const last = $('.sig', glyph);
-    glyph.addEventListener('animationend', (event) => {
-      if (event.target === last) glyph.classList.remove('enter', 'wave');
-    });
+    glyph.addEventListener('animationend', () => glyph.classList.remove('enter', 'wave'));
     $('.brand').addEventListener('mouseenter', () => {
       if (!glyph.classList.contains('enter')) glyph.classList.add('wave');
     });
