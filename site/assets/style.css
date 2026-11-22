@@ -303,16 +303,20 @@ button {
   overflow: visible;
 }
 
-.sig-3 {
-  stroke: var(--g1);
+/* The mark is one ribbon, drawn with the brand gradient from the page's
+   shared defs; the old upstream glyph was three separate strokes. */
+.mark-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
-.sig-2 {
-  stroke: var(--g2);
-}
-
-.sig-1 {
-  fill: var(--g3);
+.glyph .sig {
+  fill: none;
+  stroke: url(#skyward-mark);
+  stroke-width: 78;
+  stroke-linecap: round;
 }
 
 .nav-links,
@@ -1609,8 +1613,6 @@ mark {
   flex: none;
   width: 28px;
   height: 28px;
-  /* The artwork starts 4px inside its box; pull it onto the content edge. */
-  margin-left: -4px;
 }
 
 .foot-name,
@@ -1703,18 +1705,6 @@ mark {
   .glyph.wave .sig,
   .foot-brand:hover .sig {
     animation: signal-wave 0.7s var(--ease-out);
-  }
-
-  .glyph:is(.enter, .wave) .sig-2,
-  .foot.shown .sig-2,
-  .foot-brand:hover .sig-2 {
-    animation-delay: 0.09s;
-  }
-
-  .glyph:is(.enter, .wave) .sig-3,
-  .foot.shown .sig-3,
-  .foot-brand:hover .sig-3 {
-    animation-delay: 0.18s;
   }
 
   .pending:is(.rail, .facts) > *,

@@ -43,17 +43,22 @@
   </script>
 </head>
 <body>
+  <!-- The Skyward mark's ribbon gradient, shared by the nav and footer glyphs. -->
+  <svg class="mark-defs" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="skyward-mark" x1="0.15" y1="0.95" x2="0.85" y2="0.05">
+        <stop offset="0%" stop-color="#4338CA" />
+        <stop offset="100%" stop-color="#22D3EE" />
+      </linearGradient>
+    </defs>
+  </svg>
   <a class="skip" href="#download" data-i18n="skip">Skip to downloads</a>
 
   <header class="nav" id="nav">
     <div class="wrap nav-inner">
       <a class="brand" href="#top" aria-label="Skyward">
-        <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
-          <g stroke-width="46.32" stroke-linecap="round">
-            <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
-            <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
-          </g>
-          <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
+        <svg class="glyph" viewBox="0 0 480 480" aria-hidden="true">
+          <path class="sig" d="M330,150 C316,106 244,96 198,126 C150,156 168,214 232,238 C296,262 330,302 300,344 C270,386 194,384 158,340"/>
         </svg>
         <span>Skyward</span>
       </a>
@@ -223,12 +228,8 @@ dart run setup.dart android    # APK
 
   <footer class="foot wrap">
     <div class="foot-brand">
-      <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
-        <g stroke-width="46.32" stroke-linecap="round">
-          <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
-          <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
-        </g>
-        <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
+      <svg class="glyph" viewBox="0 0 480 480" aria-hidden="true">
+        <path class="sig" d="M330,150 C316,106 244,96 198,126 C150,156 168,214 232,238 C296,262 330,302 300,344 C270,386 194,384 158,340"/>
       </svg>
       <div>
         <p class="foot-name">Skyward</p>
