@@ -269,6 +269,10 @@ jobs:
             # missing never hands the same number out twice.
             major_version="${base_version%%.*}"
             patch_version="${base_version##*.}"
+            # The channel rides in the version's second component: 2 for stable,
+            # 1 for beta. Set before the tag scan below, which reads it.
+            channel_code=2
+            [ "$ch" = beta ] && channel_code=1
             # The version's last two components are one counter: the fourth
             # runs 1..99 and the third takes the carry. Counted from this line's
             # tags so a line that has wrapped keeps counting forward.
@@ -283,8 +287,6 @@ jobs:
             seq=$(( ${highest_seq:-0} + 1 ))
             patch_version=$(( patch_version + (seq - 1) / 99 ))
             revision=$(( (seq - 1) % 99 + 1 ))
-            channel_code=2
-            [ "$ch" = beta ] && channel_code=1
             version="$major_version.$channel_code.$patch_version.$revision"
             while [[ " $taken " == *" $version "* ]]; do
               seq=$(( seq + 1 ))
