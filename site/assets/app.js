@@ -416,7 +416,7 @@
             'tipIntentTitle',
             'tipIntent',
             commandBlock(
-              ['com.follow.clash.action.START', 'com.follow.clash.action.STOP', 'com.follow.clash.action.TOGGLE'].join(
+              ['com.threely.skyward.action.START', 'com.threely.skyward.action.STOP', 'com.threely.skyward.action.TOGGLE'].join(
                 '\n',
               ),
             ),
