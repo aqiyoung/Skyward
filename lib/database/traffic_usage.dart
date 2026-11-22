@@ -30,17 +30,11 @@ class UsageDay {
   int get hashCode => Object.hash(day, bytes, mark);
 }
 
-int usageDayOf(DateTime time) => DateTime.utc(
-      time.year,
-      time.month,
-      time.day,
-    ).millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+int usageDayOf(DateTime time) =>
+    DateTime.utc(time.year, time.month, time.day).millisecondsSinceEpoch ~/
+    Duration.millisecondsPerDay;
 
-DateTime usageDateOf(int day) => DateTime(
-      1970,
-      1,
-      1 + day,
-    );
+DateTime usageDateOf(int day) => DateTime(1970, 1, 1 + day);
 
 /// Convert Skyward's hourly [trend] into [UsageDay]s: one entry per UTC day,
 /// bytes = upload + download summed over the day's hours.

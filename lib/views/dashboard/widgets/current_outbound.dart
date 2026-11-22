@@ -18,6 +18,7 @@ import 'package:material_new_shapes/material_new_shapes.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
+import 'halo_loop.dart';
 import 'traffic.dart';
 
 const _builtinOutbounds = {'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'};
@@ -577,17 +578,18 @@ class _IpText extends ConsumerWidget {
     final size = base * 0.78;
     return DashboardFitText(
       text,
-      style: AppTextStyle.custom(
-        context,
-        size: size,
-        leading: style.height != null ? style.height! * size : size * 1.2,
-        weight: style.fontWeight ?? FontWeight.w400,
-      ).copyWith(
-        color: style.color,
-        fontFamily: style.fontFamily,
-        fontStyle: style.fontStyle,
-        letterSpacing: style.letterSpacing,
-      ),
+      style:
+          AppTextStyle.custom(
+            context,
+            size: size,
+            leading: style.height != null ? style.height! * size : size * 1.2,
+            weight: style.fontWeight ?? FontWeight.w400,
+          ).copyWith(
+            color: style.color,
+            fontFamily: style.fontFamily,
+            fontStyle: style.fontStyle,
+            letterSpacing: style.letterSpacing,
+          ),
       minScale: 0.45,
     );
   }
@@ -1056,28 +1058,35 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                 },
                 child: child,
               ),
-              child: SizedBox.square(
-                dimension: size,
-                child: Center(
-                  child: widget.suspended
-                      ? GlyphIcon(
-                          AppGlyphs.wifiOff,
-                          size: size * 0.34,
-                          color: ink,
-                          fill: 1,
-                        )
-                      : TweenAnimationBuilder<double>(
-                          tween: Tween(end: widget.running ? 1 : 0),
-                          duration: _morphDuration,
-                          curve: Curves.easeOutBack,
-                          builder: (_, progress, _) => GlyphIcon(
-                            AppGlyphs.playPause(progress),
-                            size: size * 0.34,
-                            color: ink,
-                            fill: 1,
-                          ),
-                        ),
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox.square(
+                    dimension: size,
+                    child: Center(
+                      child: widget.suspended
+                          ? GlyphIcon(
+                              AppGlyphs.wifiOff,
+                              size: size * 0.34,
+                              color: ink,
+                              fill: 1,
+                            )
+                          : TweenAnimationBuilder<double>(
+                              tween: Tween(end: widget.running ? 1 : 0),
+                              duration: _morphDuration,
+                              curve: Curves.easeOutBack,
+                              builder: (_, progress, _) => GlyphIcon(
+                                AppGlyphs.playPause(progress),
+                                size: size * 0.34,
+                                color: ink,
+                                fill: 1,
+                              ),
+                            ),
+                    ),
+                  ),
+                  if (widget.running && enabled)
+                    RunningHalo(size: size, color: context.colorScheme.primary),
+                ],
               ),
             ),
           ),
