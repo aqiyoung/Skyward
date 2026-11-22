@@ -495,6 +495,31 @@ function detectDevice() {
   return { os: 'windows', arch: 'x64' };
 }
 
+/* The Rust-core build ships from its own `-rust` release. Render its card only
+   when build_site.sh managed to fetch that release; otherwise leave it hidden. */
+function renderRust(meta) {
+  const card = $('rust-card');
+  if (!card) return;
+  if (!meta || !meta.tag || !meta.assets?.length) {
+    card.hidden = true;
+    return;
+  }
+  $('rust-version').textContent = `${meta.tag} · ${(meta.publishedAt || '').slice(0, 10)}`;
+  const all = $('rust-all');
+  if (all && meta.url) all.href = meta.url;
+  const list = $('rust-assets');
+  list.replaceChildren(
+    ...meta.assets.map((a) =>
+      el('a', { class: 'asset', href: a.url, rel: 'noopener' },
+        el('span', { class: 'n', text: a.name }),
+        el('span', { class: 's', text: formatSize(a.size) }),
+      ),
+    ),
+  );
+  card.hidden = false;
+  if (typeof revealDynamic === 'function') revealDynamic();
+}
+
 function buildFeed(meta) {
   // release.json carries the API objects; the file itself is at
   // browser_download_url (the api.github.com url answers with JSON).
@@ -540,9 +565,10 @@ function bestAsset(groups, device) {
 }
 
 async function load() {
-  const [meta, markdown] = await Promise.allSettled([
+  const [meta, markdown, rustMeta] = await Promise.allSettled([
     fetch(new URL('release.json', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
     fetch(new URL('CHANGELOG.md', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.text() : Promise.reject(r.status))),
+    fetch(new URL('rust-release.json', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
   ]);
 
   const feed = buildFeed(meta.status === 'fulfilled' ? meta.value : null);
@@ -551,6 +577,7 @@ async function load() {
     state.arch = feed.current.best?.arch || feed.detected.arch || 'x64';
   }
   renderRelease(feed);
+  renderRust(rustMeta.status === 'fulfilled' ? rustMeta.value : null);
 
   if (markdown.status === 'fulfilled') {
     const versions = parseChangelog(markdown.value);
