@@ -386,6 +386,16 @@ class _MobileDashboard extends ConsumerWidget {
                 onDone: onDone,
               );
             }
+            // The start button's card is the one thing on a phone that fills
+            // the first screen; the other cards keep their natural height and
+            // scroll beneath it. Reserve the last gap and the edit hint's row.
+            final heroHeight =
+                MediaQuery.sizeOf(context).height - top - bottom - gap - 40;
+            Widget stackCard(List<DashboardWidget> stack) => CardStack(
+              key: ValueKey(stack.first),
+              cards: stack,
+              cardKeyOf: cardKeyOf,
+            );
             return SliverPadding(
               padding: EdgeInsets.fromLTRB(side, top, side, bottom),
               // A lazy list estimates the cards it has not laid out from the
@@ -395,11 +405,12 @@ class _MobileDashboard extends ConsumerWidget {
                   spacing: gap,
                   children: [
                     for (final stack in stacks)
-                      CardStack(
-                        key: ValueKey(stack.first),
-                        cards: stack,
-                        cardKeyOf: cardKeyOf,
-                      ),
+                      stack.contains(DashboardWidget.currentOutbound)
+                          ? SizedBox(
+                              height: heroHeight > 280 ? heroHeight : null,
+                              child: stackCard(stack),
+                            )
+                          : stackCard(stack),
                     // Rearranging the cards is a quiet action at the foot of
                     // the board, not a pencil floating in the empty top strip.
                     // A gear marks it as a settings-style edit of the board.
