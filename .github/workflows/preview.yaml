@@ -180,7 +180,7 @@ jobs:
           # A preview's own number, taken from the build counter: the scheme
           # above counts `v<major>.1.*` tags, and previews never create those,
           # so every preview used to read exactly the same on a phone.
-          version="${major}.1.${patch}.${build_number % 1000}"
+          version="${major}.1.${patch}.$(( build_number % 1000 ))"
           # The build number is the tag and the versionCode; writing the tag
           # down is what lets the next run read this one back.
           # The pubspec keeps the upstream three components; the four-part
