@@ -1,7 +1,7 @@
-/// Traffic usage forecast for the dashboard traffic card — a port of
-/// ReClash's features/traffic_forecast/forecast.dart onto Skyward's
-/// `TrafficStatistics.trend` (per-hour usage), so the card can warn when the
-/// plan will run out.
+// Traffic usage forecast for the dashboard traffic card — a port of
+// ReClash's features/traffic_forecast/forecast.dart onto Skyward's
+// `TrafficStatistics.trend` (per-hour usage), so the card can warn when the
+// plan will run out.
 
 import 'dart:math' as math;
 

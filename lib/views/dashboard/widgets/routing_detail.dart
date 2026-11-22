@@ -1,9 +1,45 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'routing_map.dart';
+
+/// The path as a chain of step badges, one per outbound hop.
+class _ChainBadges extends StatelessWidget {
+  const _ChainBadges({required this.chain});
+
+  final String? chain;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTextStyle.subheadline
+        .of(context)
+        .copyWith(color: context.colorScheme.onSurfaceVariant);
+    final parts = (chain ?? '')
+        .split(' → ')
+        .map((name) => name.trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: WrapAlignment.end,
+      children: [
+        for (final name in parts)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: ShapeDecoration(
+              color: DashboardColors.of(context).tone,
+              shape: AppShape.all(16),
+            ),
+            child: Text(name, style: style),
+          ),
+      ],
+    );
+  }
+}
 
 /// The route the board draws, said in full.
 ///
@@ -139,11 +175,15 @@ class RoutingDetailSheet extends StatelessWidget {
           ),
           generateSection(
             title: appLocalizations.routeVia,
-            items: _rows([
-              (appLocalizations.outboundExit, detail.exit),
-              (appLocalizations.proxyChains, detail.chain),
-              (appLocalizations.country, detail.relays),
-            ]),
+            items: [
+              ..._rows([(appLocalizations.outboundExit, detail.exit)]),
+              DetailRow(
+                title: appLocalizations.proxyChains,
+                value: _ChainBadges(chain: detail.chain),
+                copyText: detail.chain,
+              ),
+              ..._rows([(appLocalizations.country, detail.relays)]),
+            ],
           ),
           generateSection(
             title: appLocalizations.routeTo,
