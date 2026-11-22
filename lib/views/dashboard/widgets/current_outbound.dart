@@ -191,46 +191,32 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard>
               );
             },
           )
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              // On a phone this is the one card that fills the first screen:
-              // the status and rates lead at the top, the address and start
-              // button settle at the foot, and the waveform fills the room
-              // between them. An unbounded height (a card measured on its
-              // own) keeps the compact spacing instead of an impossible flex.
-              final fill = constraints.hasBoundedHeight;
-              return Column(
-                mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                spacing: 12,
                 children: [
-                  Row(
-                    spacing: 12,
-                    children: [
-                      Expanded(child: header),
-                      const _HeaderRates(),
-                    ],
-                  ),
-                  if (fill) const Spacer() else SizedBox(height: metrics.ipTop),
-                  Row(
-                    spacing: metrics.gap,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            exitRow,
-                            const SizedBox(height: 16),
-                            cells,
-                          ],
-                        ),
-                      ),
-                      startToggle,
-                    ],
-                  ),
+                  Expanded(child: header),
+                  const _HeaderRates(),
                 ],
-              );
-            },
+              ),
+              SizedBox(height: metrics.ipTop),
+              Row(
+                spacing: metrics.gap,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [exitRow, const SizedBox(height: 16), cells],
+                    ),
+                  ),
+                  startToggle,
+                ],
+              ),
+            ],
           );
     // Clash-style status card: no decorative shape behind the button. The
     // card is flat white, the address and the rates lead, and the
