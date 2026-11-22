@@ -834,7 +834,7 @@ as int,
 /// @nodoc
 mixin _$TrafficStatistics {
 
- int get totalUpload; int get totalDownload; int get connectionCount; int get proxyBytes; int get directBytes; List<RuleHit> get ruleHits; List<TrafficRankItem> get ranking; List<TrafficHourPoint> get trend;
+ int get totalUpload; int get totalDownload; int get connectionCount; int get proxyBytes; int get directBytes; List<RuleHit> get ruleHits; List<TrafficRankItem> get ranking; List<TrafficHourPoint> get trend; int get runtimeMs;
 /// Create a copy of TrafficStatistics
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -846,20 +846,20 @@ $TrafficStatisticsCopyWith<TrafficStatistics> get copyWith => _$TrafficStatistic
 @override
 bool operator ==(Object other) {
   final _this = this as TrafficStatistics;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrafficStatistics&&(identical(other.totalUpload, _this.totalUpload) || other.totalUpload == _this.totalUpload)&&(identical(other.totalDownload, _this.totalDownload) || other.totalDownload == _this.totalDownload)&&(identical(other.connectionCount, _this.connectionCount) || other.connectionCount == _this.connectionCount)&&(identical(other.proxyBytes, _this.proxyBytes) || other.proxyBytes == _this.proxyBytes)&&(identical(other.directBytes, _this.directBytes) || other.directBytes == _this.directBytes)&&const DeepCollectionEquality().equals(other.ruleHits, _this.ruleHits)&&const DeepCollectionEquality().equals(other.ranking, _this.ranking)&&const DeepCollectionEquality().equals(other.trend, _this.trend));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrafficStatistics&&(identical(other.totalUpload, _this.totalUpload) || other.totalUpload == _this.totalUpload)&&(identical(other.totalDownload, _this.totalDownload) || other.totalDownload == _this.totalDownload)&&(identical(other.connectionCount, _this.connectionCount) || other.connectionCount == _this.connectionCount)&&(identical(other.proxyBytes, _this.proxyBytes) || other.proxyBytes == _this.proxyBytes)&&(identical(other.directBytes, _this.directBytes) || other.directBytes == _this.directBytes)&&const DeepCollectionEquality().equals(other.ruleHits, _this.ruleHits)&&const DeepCollectionEquality().equals(other.ranking, _this.ranking)&&const DeepCollectionEquality().equals(other.trend, _this.trend)&&(identical(other.runtimeMs, _this.runtimeMs) || other.runtimeMs == _this.runtimeMs));
 }
 
 
 @override
 int get hashCode {
   final _this = this as TrafficStatistics;
-  return Object.hash(runtimeType,_this.totalUpload,_this.totalDownload,_this.connectionCount,_this.proxyBytes,_this.directBytes,const DeepCollectionEquality().hash(_this.ruleHits),const DeepCollectionEquality().hash(_this.ranking),const DeepCollectionEquality().hash(_this.trend));
+  return Object.hash(runtimeType,_this.totalUpload,_this.totalDownload,_this.connectionCount,_this.proxyBytes,_this.directBytes,const DeepCollectionEquality().hash(_this.ruleHits),const DeepCollectionEquality().hash(_this.ranking),const DeepCollectionEquality().hash(_this.trend),_this.runtimeMs);
 }
 
 @override
 String toString() {
   final _this = this as TrafficStatistics;
-  return 'TrafficStatistics(totalUpload: ${_this.totalUpload}, totalDownload: ${_this.totalDownload}, connectionCount: ${_this.connectionCount}, proxyBytes: ${_this.proxyBytes}, directBytes: ${_this.directBytes}, ruleHits: ${_this.ruleHits}, ranking: ${_this.ranking}, trend: ${_this.trend})';
+  return 'TrafficStatistics(totalUpload: ${_this.totalUpload}, totalDownload: ${_this.totalDownload}, connectionCount: ${_this.connectionCount}, proxyBytes: ${_this.proxyBytes}, directBytes: ${_this.directBytes}, ruleHits: ${_this.ruleHits}, ranking: ${_this.ranking}, trend: ${_this.trend}, runtimeMs: ${_this.runtimeMs})';
 }
 
 
@@ -870,7 +870,7 @@ abstract mixin class $TrafficStatisticsCopyWith<$Res>  {
   factory $TrafficStatisticsCopyWith(TrafficStatistics value, $Res Function(TrafficStatistics) _then) = _$TrafficStatisticsCopyWithImpl;
 @useResult
 $Res call({
- int totalUpload, int totalDownload, int connectionCount, int proxyBytes, int directBytes, List<RuleHit> ruleHits, List<TrafficRankItem> ranking, List<TrafficHourPoint> trend
+ int totalUpload, int totalDownload, int connectionCount, int proxyBytes, int directBytes, List<RuleHit> ruleHits, List<TrafficRankItem> ranking, List<TrafficHourPoint> trend, int runtimeMs
 });
 
 
@@ -887,7 +887,7 @@ class _$TrafficStatisticsCopyWithImpl<$Res>
 
 /// Create a copy of TrafficStatistics
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? connectionCount = null,Object? proxyBytes = null,Object? directBytes = null,Object? ruleHits = null,Object? ranking = null,Object? trend = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? connectionCount = null,Object? proxyBytes = null,Object? directBytes = null,Object? ruleHits = null,Object? ranking = null,Object? trend = null,Object? runtimeMs = null,}) {
   return _then(TrafficStatistics(
 totalUpload: null == totalUpload ? _self.totalUpload : totalUpload // ignore: cast_nullable_to_non_nullable
 as int,totalDownload: null == totalDownload ? _self.totalDownload : totalDownload // ignore: cast_nullable_to_non_nullable
@@ -897,7 +897,8 @@ as int,directBytes: null == directBytes ? _self.directBytes : directBytes // ign
 as int,ruleHits: null == ruleHits ? _self.ruleHits : ruleHits // ignore: cast_nullable_to_non_nullable
 as List<RuleHit>,ranking: null == ranking ? _self.ranking : ranking // ignore: cast_nullable_to_non_nullable
 as List<TrafficRankItem>,trend: null == trend ? _self.trend : trend // ignore: cast_nullable_to_non_nullable
-as List<TrafficHourPoint>,
+as List<TrafficHourPoint>,runtimeMs: null == runtimeMs ? _self.runtimeMs : runtimeMs // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -982,10 +983,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend,  int runtimeMs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrafficStatistics() when $default != null:
-return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend);case _:
+return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend,_that.runtimeMs);case _:
   return orElse();
 
 }
@@ -1003,10 +1004,10 @@ return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend,  int runtimeMs)  $default,) {final _that = this;
 switch (_that) {
 case _TrafficStatistics():
-return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend);case _:
+return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend,_that.runtimeMs);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1023,10 +1024,10 @@ return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int totalUpload,  int totalDownload,  int connectionCount,  int proxyBytes,  int directBytes,  List<RuleHit> ruleHits,  List<TrafficRankItem> ranking,  List<TrafficHourPoint> trend,  int runtimeMs)?  $default,) {final _that = this;
 switch (_that) {
 case _TrafficStatistics() when $default != null:
-return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend);case _:
+return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_that.proxyBytes,_that.directBytes,_that.ruleHits,_that.ranking,_that.trend,_that.runtimeMs);case _:
   return null;
 
 }
@@ -1038,7 +1039,7 @@ return $default(_that.totalUpload,_that.totalDownload,_that.connectionCount,_tha
 
 
 class _TrafficStatistics implements TrafficStatistics {
-  const _TrafficStatistics({required this.totalUpload, required this.totalDownload, required this.connectionCount, required this.proxyBytes, required this.directBytes, required  List<RuleHit> ruleHits, required  List<TrafficRankItem> ranking, required  List<TrafficHourPoint> trend}): _ruleHits = ruleHits,_ranking = ranking,_trend = trend;
+  const _TrafficStatistics({required this.totalUpload, required this.totalDownload, required this.connectionCount, required this.proxyBytes, required this.directBytes, required  List<RuleHit> ruleHits, required  List<TrafficRankItem> ranking, required  List<TrafficHourPoint> trend, this.runtimeMs = 0}): _ruleHits = ruleHits,_ranking = ranking,_trend = trend;
   
 
 @override final  int totalUpload;
@@ -1067,6 +1068,7 @@ class _TrafficStatistics implements TrafficStatistics {
   return EqualUnmodifiableListView(_trend);
 }
 
+@override@JsonKey() final  int runtimeMs;
 
 /// Create a copy of TrafficStatistics
 /// with the given fields replaced by the non-null parameter values.
@@ -1078,18 +1080,18 @@ _$TrafficStatisticsCopyWith<_TrafficStatistics> get copyWith => __$TrafficStatis
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrafficStatistics&&(identical(other.totalUpload, totalUpload) || other.totalUpload == totalUpload)&&(identical(other.totalDownload, totalDownload) || other.totalDownload == totalDownload)&&(identical(other.connectionCount, connectionCount) || other.connectionCount == connectionCount)&&(identical(other.proxyBytes, proxyBytes) || other.proxyBytes == proxyBytes)&&(identical(other.directBytes, directBytes) || other.directBytes == directBytes)&&const DeepCollectionEquality().equals(other.ruleHits, _ruleHits)&&const DeepCollectionEquality().equals(other.ranking, _ranking)&&const DeepCollectionEquality().equals(other.trend, _trend));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrafficStatistics&&(identical(other.totalUpload, totalUpload) || other.totalUpload == totalUpload)&&(identical(other.totalDownload, totalDownload) || other.totalDownload == totalDownload)&&(identical(other.connectionCount, connectionCount) || other.connectionCount == connectionCount)&&(identical(other.proxyBytes, proxyBytes) || other.proxyBytes == proxyBytes)&&(identical(other.directBytes, directBytes) || other.directBytes == directBytes)&&const DeepCollectionEquality().equals(other.ruleHits, _ruleHits)&&const DeepCollectionEquality().equals(other.ranking, _ranking)&&const DeepCollectionEquality().equals(other.trend, _trend)&&(identical(other.runtimeMs, runtimeMs) || other.runtimeMs == runtimeMs));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,totalUpload,totalDownload,connectionCount,proxyBytes,directBytes,const DeepCollectionEquality().hash(_ruleHits),const DeepCollectionEquality().hash(_ranking),const DeepCollectionEquality().hash(_trend));
+    return Object.hash(runtimeType,totalUpload,totalDownload,connectionCount,proxyBytes,directBytes,const DeepCollectionEquality().hash(_ruleHits),const DeepCollectionEquality().hash(_ranking),const DeepCollectionEquality().hash(_trend),runtimeMs);
 }
 
 @override
 String toString() {
-    return 'TrafficStatistics(totalUpload: $totalUpload, totalDownload: $totalDownload, connectionCount: $connectionCount, proxyBytes: $proxyBytes, directBytes: $directBytes, ruleHits: $ruleHits, ranking: $ranking, trend: $trend)';
+    return 'TrafficStatistics(totalUpload: $totalUpload, totalDownload: $totalDownload, connectionCount: $connectionCount, proxyBytes: $proxyBytes, directBytes: $directBytes, ruleHits: $ruleHits, ranking: $ranking, trend: $trend, runtimeMs: $runtimeMs)';
 }
 
 
@@ -1100,7 +1102,7 @@ abstract mixin class _$TrafficStatisticsCopyWith<$Res> implements $TrafficStatis
   factory _$TrafficStatisticsCopyWith(_TrafficStatistics value, $Res Function(_TrafficStatistics) _then) = __$TrafficStatisticsCopyWithImpl;
 @override @useResult
 $Res call({
- int totalUpload, int totalDownload, int connectionCount, int proxyBytes, int directBytes, List<RuleHit> ruleHits, List<TrafficRankItem> ranking, List<TrafficHourPoint> trend
+ int totalUpload, int totalDownload, int connectionCount, int proxyBytes, int directBytes, List<RuleHit> ruleHits, List<TrafficRankItem> ranking, List<TrafficHourPoint> trend, int runtimeMs
 });
 
 
@@ -1117,7 +1119,7 @@ class __$TrafficStatisticsCopyWithImpl<$Res>
 
 /// Create a copy of TrafficStatistics
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? connectionCount = null,Object? proxyBytes = null,Object? directBytes = null,Object? ruleHits = null,Object? ranking = null,Object? trend = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalUpload = null,Object? totalDownload = null,Object? connectionCount = null,Object? proxyBytes = null,Object? directBytes = null,Object? ruleHits = null,Object? ranking = null,Object? trend = null,Object? runtimeMs = null,}) {
   return _then(_TrafficStatistics(
 totalUpload: null == totalUpload ? _self.totalUpload : totalUpload // ignore: cast_nullable_to_non_nullable
 as int,totalDownload: null == totalDownload ? _self.totalDownload : totalDownload // ignore: cast_nullable_to_non_nullable
@@ -1127,7 +1129,8 @@ as int,directBytes: null == directBytes ? _self.directBytes : directBytes // ign
 as int,ruleHits: null == ruleHits ? _self._ruleHits : ruleHits // ignore: cast_nullable_to_non_nullable
 as List<RuleHit>,ranking: null == ranking ? _self._ranking : ranking // ignore: cast_nullable_to_non_nullable
 as List<TrafficRankItem>,trend: null == trend ? _self._trend : trend // ignore: cast_nullable_to_non_nullable
-as List<TrafficHourPoint>,
+as List<TrafficHourPoint>,runtimeMs: null == runtimeMs ? _self.runtimeMs : runtimeMs // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

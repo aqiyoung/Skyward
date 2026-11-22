@@ -26,18 +26,25 @@ typedef TrafficHourSample = ({
 Future<TrafficStatistics> aggregateTrafficTask(
   List<TrafficSample> samples,
   List<TrafficHourSample> hours,
-  int kind,
-) => compute<_AggregateArgs, TrafficStatistics>(
+  int kind, {
+  List<int>? connectionCounts,
+}) => compute<_AggregateArgs, TrafficStatistics>(
   _aggregate,
-  _AggregateArgs(samples, hours, kind),
+  _AggregateArgs(samples, hours, kind, connectionCounts),
 );
 
 class _AggregateArgs {
-  const _AggregateArgs(this.samples, this.hours, this.kind);
+  const _AggregateArgs(
+    this.samples,
+    this.hours,
+    this.kind,
+    this.connectionCounts,
+  );
 
   final List<TrafficSample> samples;
   final List<TrafficHourSample> hours;
   final int kind;
+  final List<int>? connectionCounts;
 }
 
 TrafficStatistics _aggregate(_AggregateArgs args) {
@@ -56,18 +63,20 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
     TrafficRankKind.config => s.rule,
   };
 
-  for (final s in args.samples) {
+  for (var index = 0; index < args.samples.length; index++) {
+    final s = args.samples[index];
+    final connections = args.connectionCounts?[index] ?? 1;
     final key = keyOf(s);
     ranks[key] = (
       up: (ranks[key]?.up ?? 0) + s.upload,
       down: (ranks[key]?.down ?? 0) + s.download,
-      hits: (ranks[key]?.hits ?? 0) + 1,
+      hits: (ranks[key]?.hits ?? 0) + connections,
     );
     final ruleKey = s.rule.isNotEmpty ? s.rule : 'MATCH';
     ruleHits[ruleKey] = (
       up: (ruleHits[ruleKey]?.up ?? 0) + s.upload,
       down: (ruleHits[ruleKey]?.down ?? 0) + s.download,
-      hits: (ruleHits[ruleKey]?.hits ?? 0) + 1,
+      hits: (ruleHits[ruleKey]?.hits ?? 0) + connections,
     );
   }
 
@@ -149,7 +158,9 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
   return TrafficStatistics(
     totalUpload: totalUp,
     totalDownload: totalDown,
-    connectionCount: args.samples.length,
+    connectionCount:
+        args.connectionCounts?.fold<int>(0, (sum, count) => sum + count) ??
+        args.samples.length,
     proxyBytes: proxyBytes,
     directBytes: directBytes,
     ruleHits: hits,
@@ -159,11 +170,7 @@ TrafficStatistics _aggregate(_AggregateArgs args) {
 }
 
 /// One per-app hourly bucket, plain for the isolate.
-typedef AppHourSample = ({
-  String process,
-  int direction,
-  int bytes,
-});
+typedef AppHourSample = ({String process, int direction, int bytes});
 
 /// Aggregates per-app hourly deltas into sorted app traffic. [labels] maps a
 /// package name to its installed-app label; unknown packages fall back to the
@@ -201,20 +208,23 @@ AppUsage _aggregateAppUsage(_AppUsageArgs args) {
         : (up: entry.up, down: entry.down + b.bytes);
   }
   final total = totalUp + totalDown;
-  final apps = byApp.entries
-      .map(
-        (e) => AppTraffic(
-          packageName: e.key,
-          label: e.key.isEmpty
-              ? args.unknownLabel
-              : args.labels[e.key] ?? e.key,
-          upload: e.value.up,
-          download: e.value.down,
-          percent: total == 0 ? 0 : (e.value.up + e.value.down) / total,
-        ),
-      )
-      .toList()
-    ..sort((a, b) => (b.upload + b.download).compareTo(a.upload + a.download));
+  final apps =
+      byApp.entries
+          .map(
+            (e) => AppTraffic(
+              packageName: e.key,
+              label: e.key.isEmpty
+                  ? args.unknownLabel
+                  : args.labels[e.key] ?? e.key,
+              upload: e.value.up,
+              download: e.value.down,
+              percent: total == 0 ? 0 : (e.value.up + e.value.down) / total,
+            ),
+          )
+          .toList()
+        ..sort(
+          (a, b) => (b.upload + b.download).compareTo(a.upload + a.download),
+        );
   return AppUsage(
     totalUpload: totalUp,
     totalDownload: totalDown,

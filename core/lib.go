@@ -13,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/process"
@@ -188,6 +189,7 @@ func stopTunLocked() {
 		return
 	}
 	tunHandler.close()
+	nativeHistory.stop(time.Now())
 	tunHandler = nil
 }
 
@@ -203,6 +205,7 @@ func handleStartTun(callbacks TunCallbacks, fd int, stack, address, dns, options
 		callbacks: callbacks,
 	}
 	if tunHandler.start(fd, stack, address, dns, options) {
+		nativeHistory.start(time.Now())
 		return true
 	}
 	// start() already cleared the handler, so nothing protects sockets from

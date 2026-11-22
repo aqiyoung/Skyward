@@ -5,6 +5,7 @@ import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
+import 'package:skyward/providers/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/traffic_statistics.g.dart';
@@ -17,24 +18,26 @@ Duration trafficSampleInterval(Ref ref) => const Duration(seconds: 5);
 @Riverpod(keepAlive: true)
 Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
 
-/// Keeps the first-seen time of every connection we have persisted so an
-/// upsert never moves a connection's start.
-final trafficFirstSeen = <String, DateTime>{};
+@Riverpod(keepAlive: true)
+bool nativeTrafficHistoryEnabled(Ref ref) => system.isAndroid;
 
-/// The last cumulative byte totals we sampled per connection, used to derive
-/// the per-hour deltas the trend chart is built from.
-final trafficLastBytes = <String, ({int up, int down})>{};
-
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
 @Riverpod(keepAlive: true)
 class TrafficSampler extends _$TrafficSampler {
   Timer? _timer;
+  final _pending = <String, TrackerInfo>{};
+  Future<void>? _sampling;
+  int _nativeRevision = 0;
 
   @override
   void build() {
-    ref.listen(coreStatusProvider, (_, _) => _sync());
-    ref.listen(appVisibleProvider, (_, _) => _sync());
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected) _nativeRevision = 0;
+      _sync();
+    });
+    ref.listen(appVisibleProvider, (_, visible) {
+      _sync();
+      if (visible) unawaited(sample());
+    });
     ref.onDispose(_stop);
     _sync();
   }
@@ -42,11 +45,13 @@ class TrafficSampler extends _$TrafficSampler {
   void _sync() {
     final active =
         ref.read(coreStatusProvider) == CoreStatus.connected &&
-        ref.read(appVisibleProvider);
+        (!ref.read(nativeTrafficHistoryEnabledProvider) ||
+            ref.read(appVisibleProvider));
     if (active) {
       _start();
     } else {
       _stop();
+      if (_pending.isNotEmpty) unawaited(sample());
     }
   }
 
@@ -54,9 +59,9 @@ class TrafficSampler extends _$TrafficSampler {
     if (_timer != null) return;
     _timer = Timer.periodic(
       ref.read(trafficSampleIntervalProvider),
-      (_) => _sample(),
+      (_) => unawaited(sample()),
     );
-    _sample();
+    unawaited(sample());
   }
 
   void _stop() {
@@ -64,70 +69,110 @@ class TrafficSampler extends _$TrafficSampler {
     _timer = null;
   }
 
-  Future<void> _sample() async {
+  void capture(Iterable<TrackerInfo> requests) {
+    if (ref.read(nativeTrafficHistoryEnabledProvider)) return;
+    for (final request in requests) {
+      final previous = _pending[request.id];
+      _pending[request.id] = previous == null
+          ? request
+          : request.copyWith(
+              upload: request.upload > previous.upload
+                  ? request.upload
+                  : previous.upload,
+              download: request.download > previous.download
+                  ? request.download
+                  : previous.download,
+            );
+    }
+  }
+
+  Future<void> sample() {
+    if (_sampling != null) return _sampling!;
+    final retention = ref.read(trafficHistoryRetentionProvider);
+    capture(ref.read(requestsProvider).list);
+    final requests = _pending.values.toList();
+    _pending.clear();
+    return _sampling = _persist(requests, retention).whenComplete(() {
+      _sampling = null;
+    });
+  }
+
+  Future<void> _persist(List<TrackerInfo> requests, Duration retention) async {
+    if (ref.read(nativeTrafficHistoryEnabledProvider)) {
+      await _importNative(retention);
+      return;
+    }
     final now = DateTime.now();
     final hour = DateTime(now.year, now.month, now.day, now.hour);
-    final requests = ref.read(requestsProvider);
-    for (final r in requests.list) {
-      final started = trafficFirstSeen.putIfAbsent(r.id, () => now);
-      await _safeWrite(
-        database.trafficRecordsDao.upsert(
-          TrafficRecord(
-            connectionId: r.id,
-            startedAt: started,
-            endedAt: now,
-            host: r.metadata.host,
-            rule: r.rule,
-            rulePayload: r.rulePayload,
-            node: r.chains.isEmpty ? '' : r.chains.last,
-            network: r.metadata.network,
-            upload: r.upload,
-            download: r.download,
-          ),
-        ),
-      );
-
-      // Derive the delta since the previous sample and add it to this hour.
-      final last = trafficLastBytes[r.id];
-      if (last != null) {
-        final upDelta = r.upload - last.up;
-        final downDelta = r.download - last.down;
-        final node = r.chains.isEmpty ? '' : r.chains.last;
-        final proxied = node.isNotEmpty && node.toUpperCase() != 'DIRECT';
-        if (upDelta > 0 || downDelta > 0) {
-          await _safeWrite(
-            database.trafficHourlyDao.add(
-              hour: hour,
-              download: downDelta,
-              upload: upDelta,
-              proxied: proxied,
-            ),
-          );
-          await _safeWrite(
-            database.appTrafficHourlyDao.add(
-              hour: hour,
+    var changed = false;
+    for (final r in requests) {
+      try {
+        changed =
+            await database.trafficRecordsDao.recordSample(
+              record: TrafficRecord(
+                connectionId: r.id,
+                startedAt: r.start,
+                endedAt: now,
+                host: r.metadata.host,
+                rule: r.rule,
+                rulePayload: r.rulePayload,
+                node: r.chains.isEmpty ? '' : r.chains.last,
+                network: r.metadata.network,
+                upload: r.upload,
+                download: r.download,
+              ),
               process: r.metadata.process,
-              download: downDelta,
-              upload: upDelta,
-            ),
-          );
-        }
+              hour: hour,
+            ) ||
+            changed;
+      } catch (error) {
+        capture([r]);
+        commonPrint.log(
+          'Traffic history write failed: $error',
+          logLevel: LogLevel.error,
+        );
       }
-      trafficLastBytes[r.id] = (up: r.upload, down: r.download);
     }
-    final cutoff = now.subtract(ref.read(trafficHistoryRetentionProvider));
-    await _safeWrite(() async {
+    final cutoff = now.subtract(retention);
+    try {
       await database.trafficRecordsDao.pruneBefore(cutoff);
       await database.trafficHourlyDao.pruneBefore(cutoff);
       await database.appTrafficHourlyDao.pruneBefore(cutoff);
-    }());
+    } catch (error) {
+      commonPrint.log(
+        'Traffic history pruning failed: $error',
+        logLevel: LogLevel.error,
+      );
+    }
+    if (changed && ref.mounted) {
+      ref.invalidate(trafficStatisticsProvider);
+      ref.invalidate(appUsageProvider);
+    }
   }
 
-  Future<void> _safeWrite(Future<void> write) async {
+  Future<void> _importNative(Duration retention) async {
     try {
-      await write;
-    } catch (_) {
-      // History is best-effort; a failed sample must never break the UI.
+      final answer = await ref
+          .read(coreHandlerProvider)
+          .getTrafficHistory(_nativeRevision);
+      if (answer == null) return;
+      final rows = (answer['rows'] as List)
+          .map((row) => Map<String, Object?>.from(row as Map))
+          .toList();
+      await database.nativeTrafficDao.importRows(
+        rows,
+        DateTime.now().subtract(retention),
+      );
+      _nativeRevision = (answer['revision'] as num).toInt();
+      if (rows.isNotEmpty && ref.mounted) {
+        ref.invalidate(trafficStatisticsProvider);
+        ref.invalidate(appUsageProvider);
+      }
+    } catch (error) {
+      commonPrint.log(
+        'Native traffic history sync failed: $error',
+        logLevel: LogLevel.error,
+      );
     }
   }
 }
@@ -193,9 +238,19 @@ Future<TrafficStatistics> trafficStatistics(
   };
   final records = await database.trafficRecordsDao.between(start, end);
   final hours = await database.trafficHourlyDao.between(start, end);
-  return aggregateTrafficTask(
+  final native = await database.nativeTrafficDao.between(start, end);
+  final result = await aggregateTrafficTask(
     [
       for (final r in records)
+        (
+          host: r.host,
+          rule: r.rule,
+          rulePayload: r.rulePayload,
+          node: r.node,
+          upload: r.upload,
+          download: r.download,
+        ),
+      for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
         (
           host: r.host,
           rule: r.rule,
@@ -213,8 +268,28 @@ Future<TrafficStatistics> trafficStatistics(
           proxied: h.proxied,
           bytes: h.bytes,
         ),
+      for (final r in native)
+        for (final direction in [0, 1])
+          (
+            hour: DateTime.fromMillisecondsSinceEpoch(r.hour),
+            direction: direction,
+            proxied: r.node.isNotEmpty && r.node.toUpperCase() != 'DIRECT'
+                ? 0
+                : 1,
+            bytes: direction == 0 ? r.download : r.upload,
+          ),
     ],
     kind.index,
+    connectionCounts: [
+      for (final _ in records) 1,
+      for (final r in native.where((r) => !r.bucketId.startsWith('runtime/')))
+        r.connections,
+    ],
+  );
+  return result.copyWith(
+    runtimeMs: native.fold(0, (sum, row) => sum + row.runtimeMs),
+    connectionCount:
+        records.length + native.fold(0, (sum, row) => sum + row.connections),
   );
 }
 
@@ -245,18 +320,27 @@ Future<TrafficStatistics> trafficStatistics(
 @Riverpod(keepAlive: true)
 Future<AppUsage> appUsage(Ref ref, AppUsagePeriod period) async {
   ref.watch(trafficSamplerProvider);
+  final packages = ref.watch(packagesProvider);
   final range = appUsageRange(period);
   final buckets = await database.appTrafficHourlyDao.between(
     range.start,
     range.end,
   );
-  final labels = {
-    for (final p in ref.read(packagesProvider)) p.packageName: p.label,
-  };
+  final labels = {for (final p in packages) p.packageName: p.label};
+  final native = await database.nativeTrafficDao.between(
+    range.start,
+    range.end,
+  );
   return aggregateAppUsageTask(
     [
       for (final b in buckets)
         (process: b.process, direction: b.direction, bytes: b.bytes),
+      for (final row in native.where(
+        (r) => r.upload > 0 || r.download > 0,
+      )) ...[
+        (process: row.process, direction: 0, bytes: row.download),
+        (process: row.process, direction: 1, bytes: row.upload),
+      ],
     ],
     labels,
     currentAppLocalizations.unknown,
