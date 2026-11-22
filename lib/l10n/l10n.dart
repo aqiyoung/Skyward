@@ -9816,6 +9816,41 @@ class AppLocalizations {
   String get chainServers {
     return Intl.message('Servers', name: 'chainServers', desc: '', args: []);
   }
+
+  /// `Quota used up`
+  String get trafficDepleted {
+    return Intl.message(
+      'Quota used up',
+      name: 'trafficDepleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not enough data to forecast`
+  String get trafficGathering {
+    return Intl.message(
+      'Not enough data to forecast',
+      name: 'trafficGathering',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{v}/day`
+  String trafficPerDay(Object v) {
+    return Intl.message('$v/day', name: 'trafficPerDay', desc: '', args: [v]);
+  }
+
+  /// `, runs out in ~{n} days`
+  String trafficRunOut(Object n) {
+    return Intl.message(
+      ', runs out in ~$n days',
+      name: 'trafficRunOut',
+      desc: '',
+      args: [n],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1181,5 +1181,9 @@
   "chainDiscard": "체인을 버리시겠습니까?",
   "chainNearYou": "내 주변",
   "chainOtherCountries": "기타 국가",
-  "chainServers": "서버"
+  "chainServers": "서버",
+  "trafficDepleted": "할당량 소진",
+  "trafficGathering": "예측할 데이터 부족",
+  "trafficPerDay": "약 {v}/일",
+  "trafficRunOut": "， 약 {n}일 후 소진"
 }

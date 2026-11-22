@@ -1181,5 +1181,9 @@
   "chainDiscard": "チェーンを破棄しますか？",
   "chainNearYou": "あなたの近く",
   "chainOtherCountries": "その他の国",
-  "chainServers": "サーバー"
+  "chainServers": "サーバー",
+  "trafficDepleted": "使い切済み",
+  "trafficGathering": "予測するデータが不足",
+  "trafficPerDay": "約 {v}/日",
+  "trafficRunOut": "、約 {n} 日で使い切"
 }

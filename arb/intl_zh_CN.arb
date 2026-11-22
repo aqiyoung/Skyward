@@ -1181,5 +1181,9 @@
   "chainDiscard": "不保存链路？",
   "chainNearYou": "你附近的",
   "chainOtherCountries": "其他国家",
-  "chainServers": "服务器"
+  "chainServers": "服务器",
+  "trafficDepleted": "已耗尽",
+  "trafficGathering": "数据不足以预测",
+  "trafficPerDay": "约 {v}/日",
+  "trafficRunOut": "，约 {n} 天后用尽"
 }

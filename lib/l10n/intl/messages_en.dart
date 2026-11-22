@@ -232,36 +232,40 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m85(value) => "Peak ${value}";
 
-  static String m86(value) => "Total ${value}";
+  static String m86(v) => "${v}/day";
 
-  static String m87(transport) => "${transport} Headers";
+  static String m87(n) => ", runs out in ~${n} days";
 
-  static String m88(n) => "${n} connections";
+  static String m88(value) => "Total ${value}";
 
-  static String m89(d, h) => "${d} d ${h} h";
+  static String m89(transport) => "${transport} Headers";
 
-  static String m90(n) => "${n} hits";
+  static String m90(n) => "${n} connections";
 
-  static String m91(h, m) => "${h} h ${m} min";
+  static String m91(d, h) => "${d} d ${h} h";
 
-  static String m92(n) => "${n} min";
+  static String m92(n) => "${n} hits";
 
-  static String m93(h) => "Peak ${h}:00";
+  static String m93(h, m) => "${h} h ${m} min";
 
-  static String m94(p) => "${p} of total";
+  static String m94(n) => "${n} min";
 
-  static String m95(n) => "${n} rules hit";
+  static String m95(h) => "Peak ${h}:00";
 
-  static String m96(p, n) => "${p} of hits · ${n} times";
+  static String m96(p) => "${p} of total";
 
-  static String m97(m, d) => "${m}/${d} onward";
+  static String m97(n) => "${n} rules hit";
 
-  static String m98(label) => "${label} must be a URL";
+  static String m98(p, n) => "${p} of hits · ${n} times";
 
-  static String m99(count) =>
+  static String m99(m, d) => "${m}/${d} onward";
+
+  static String m100(label) => "${label} must be a URL";
+
+  static String m101(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m100(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m102(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2145,40 +2149,46 @@ class MessageLookup extends MessageLookupByLibrary {
     "totalUpload": MessageLookupByLibrary.simpleMessage("Uploaded"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("TProxy port"),
     "traffic": MessageLookupByLibrary.simpleMessage("Traffic"),
+    "trafficDepleted": MessageLookupByLibrary.simpleMessage("Quota used up"),
+    "trafficGathering": MessageLookupByLibrary.simpleMessage(
+      "Not enough data to forecast",
+    ),
     "trafficPeak": m85,
-    "trafficTotal": m86,
+    "trafficPerDay": m86,
+    "trafficRunOut": m87,
+    "trafficTotal": m88,
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
     "transport": MessageLookupByLibrary.simpleMessage("Transport"),
-    "transportHeaders": m87,
+    "transportHeaders": m89,
     "tsConfig": MessageLookupByLibrary.simpleMessage("Config"),
-    "tsConnections": m88,
+    "tsConnections": m90,
     "tsDay": MessageLookupByLibrary.simpleMessage("Day"),
-    "tsDaysHours": m89,
+    "tsDaysHours": m91,
     "tsDirect": MessageLookupByLibrary.simpleMessage("Direct"),
     "tsDomain": MessageLookupByLibrary.simpleMessage("Domain"),
     "tsHitUnit": MessageLookupByLibrary.simpleMessage("hits"),
-    "tsHits": m90,
-    "tsHoursMinutes": m91,
-    "tsMinutes": m92,
+    "tsHits": m92,
+    "tsHoursMinutes": m93,
+    "tsMinutes": m94,
     "tsMonth": MessageLookupByLibrary.simpleMessage("Month"),
     "tsNext": MessageLookupByLibrary.simpleMessage("Next"),
     "tsNoData": MessageLookupByLibrary.simpleMessage("No data"),
     "tsNode": MessageLookupByLibrary.simpleMessage("Node"),
     "tsOverview": MessageLookupByLibrary.simpleMessage("Traffic overview"),
-    "tsPeak": m93,
-    "tsPercent": m94,
+    "tsPeak": m95,
+    "tsPercent": m96,
     "tsPrev": MessageLookupByLibrary.simpleMessage("Previous"),
     "tsProxy": MessageLookupByLibrary.simpleMessage("Proxy"),
     "tsRefresh": MessageLookupByLibrary.simpleMessage("Refresh"),
     "tsRuleHits": MessageLookupByLibrary.simpleMessage("Rule hits"),
-    "tsRulesWithHits": m95,
-    "tsShareOfHits": m96,
+    "tsRulesWithHits": m97,
+    "tsShareOfHits": m98,
     "tsTotal": MessageLookupByLibrary.simpleMessage("Total"),
     "tsTrafficRank": MessageLookupByLibrary.simpleMessage("Traffic ranking"),
     "tsTrend": MessageLookupByLibrary.simpleMessage("Traffic trend"),
     "tsUptime": MessageLookupByLibrary.simpleMessage("Uptime"),
     "tsWeek": MessageLookupByLibrary.simpleMessage("Week"),
-    "tsWeekFrom": m97,
+    "tsWeekFrom": m99,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN could not be authorized, so it was turned off.",
@@ -2218,7 +2228,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("Upload bandwidth"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m98,
+    "urlTip": m100,
     "usageDetails": MessageLookupByLibrary.simpleMessage("Usage details"),
     "usageStats": MessageLookupByLibrary.simpleMessage("Usage stats"),
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
@@ -2293,8 +2303,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m99,
-    "yearsAgoShort": m100,
+    "yearsAgo": m101,
+    "yearsAgoShort": m102,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

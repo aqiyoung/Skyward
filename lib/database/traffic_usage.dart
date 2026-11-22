@@ -109,6 +109,14 @@ TrafficForecast forecastTraffic({
   DateTime? expiry,
 }) {
   final perDay = usagePace(days, usageDayOf(now));
+  // total == 0 means the subscription did not report a quota, not that the
+  // quota is used up. Treating it as exhausted shows "已耗尽" for every user
+  // whose provider omits the traffic total.
+  if (total <= 0) {
+    return perDay == null
+        ? const TrafficForecast(TrafficForecastKind.gathering)
+        : TrafficForecast(TrafficForecastKind.plenty, perDay: perDay);
+  }
   final left = total - used;
   if (left <= 0) {
     return TrafficForecast(TrafficForecastKind.depleted, perDay: perDay);

@@ -1181,5 +1181,9 @@
   "chainDiscard": "Discard chain?",
   "chainNearYou": "Near you",
   "chainOtherCountries": "Other countries",
-  "chainServers": "Servers"
+  "chainServers": "Servers",
+  "trafficDepleted": "Quota used up",
+  "trafficGathering": "Not enough data to forecast",
+  "trafficPerDay": "{v}/day",
+  "trafficRunOut": ", runs out in ~{n} days"
 }

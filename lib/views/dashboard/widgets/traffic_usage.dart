@@ -61,20 +61,26 @@ class TrafficUsageCard extends ConsumerWidget {
             figure,
             style: DashboardText.figure(context, AppTextStyle.title1),
           ),
-          Text('今日', style: DashboardText.label(context)),
+          Text(context.appLocalizations.today,
+              style: DashboardText.label(context)),
           if (forecast.kind == TrafficForecastKind.depleted)
-            Text('已耗尽', style: DashboardText.label(context)),
+            Text(context.appLocalizations.trafficDepleted,
+                style: DashboardText.label(context)),
           if (forecast.kind == TrafficForecastKind.gathering)
             Text(
-              '数据不足以预测',
+              context.appLocalizations.trafficGathering,
               style: DashboardText.label(context).copyWith(
                 color: cs.onSurfaceVariant,
               ),
             ),
           if (forecast.perDay != null)
             Text(
-              '约 ${forecast.perDay!.traffic.show}/日'
-              '${forecast.daysEarly > 0 ? '，约 ${forecast.daysEarly} 天后用尽' : ''}',
+              context.appLocalizations.trafficPerDay(
+                      forecast.perDay!.traffic.show) +
+                  (forecast.daysEarly > 0
+                      ? context.appLocalizations.trafficRunOut(
+                          forecast.daysEarly)
+                      : ''),
               style: DashboardText.label(context).copyWith(
                 color: cs.onSurfaceVariant,
               ),

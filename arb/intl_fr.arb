@@ -1181,5 +1181,9 @@
   "chainDiscard": "Abandonner la chaîne ?",
   "chainNearYou": "Près de vous",
   "chainOtherCountries": "Autres pays",
-  "chainServers": "Serveurs"
+  "chainServers": "Serveurs",
+  "trafficDepleted": "Quota épuisée",
+  "trafficGathering": "Pas assez de données",
+  "trafficPerDay": "{v}/jour",
+  "trafficRunOut": "， épuisé dans ~{n} j"
 }

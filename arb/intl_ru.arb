@@ -1181,5 +1181,9 @@
   "chainDiscard": "Отменить цепочку?",
   "chainNearYou": "Рядом с вами",
   "chainOtherCountries": "Другие страны",
-  "chainServers": "Серверы"
+  "chainServers": "Серверы",
+  "trafficDepleted": "Квота исчерпана",
+  "trafficGathering": "Недостаточно данных",
+  "trafficPerDay": "{v}/день",
+  "trafficRunOut": "， через ~{n} дней"
 }
