@@ -71,15 +71,54 @@ else
   tag=""
 fi
 
+# The Rust-core build ships as a separate `-rust` tagged release. Pull the
+# newest one into its own file so the download page can offer it side by side
+# with the stable Go-core build. Reuse the releases list below: both this and
+# the changelog need it, so fetch once into a file (the response is ~2 MB and
+# streaming it through a pipe can truncate) and read it from disk.
+rust_list="$out/.releases.json"
+if command -v gh >/dev/null 2>&1; then
+  gh api "repos/$repo/releases?per_page=100" >"$rust_list" 2>/dev/null || curl -fsS --max-time 60 "${auth[@]}" "$api/releases?per_page=100" -o "$rust_list" 2>/dev/null
+else
+  curl -fsS --max-time 60 "${auth[@]}" "$api/releases?per_page=100" -o "$rust_list" 2>/dev/null
+fi
+if [[ -s "$rust_list" ]]; then
+  rust_release="$(node -e '
+    try {
+      const list = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+      const rust = (Array.isArray(list) ? list : []).find((r) => /-rust$/.test(r.tag_name));
+      if (!rust) { console.log(""); process.exit(0); }
+      console.log(JSON.stringify({
+        tag: rust.tag_name,
+        name: rust.name,
+        publishedAt: rust.published_at,
+        url: rust.html_url,
+        prerelease: Boolean(rust.prerelease),
+        assets: (rust.assets || []).map((a) => ({
+          name: a.name, size: a.size, url: a.browser_download_url || a.url,
+        })),
+      }));
+    } catch { console.log(""); }
+  ' "$rust_list")"
+  if [[ -n "$rust_release" ]]; then
+    printf '%s\n' "$rust_release" >"$out/rust-release.json"
+  else
+    echo "note: no -rust release found; page omits the Rust-core card" >&2
+  fi
+else
+  echo "warning: releases unreachable; page omits the Rust-core card" >&2
+fi
+
 # The changelog is built from this repository's own releases, so the timeline
 # carries our version numbers and our notes rather than the pre-fork history in
 # the checked-in CHANGELOG.md. If the API cannot be read, that file stands in.
-if releases="$(curl -fsS --max-time 25 "${auth[@]}" "$api/releases?per_page=40" 2>/dev/null)"; then
-  printf '%s' "$releases" | SITE_REPOSITORY="$repo" node "$root/tool/site_changelog.mjs" >"$out/CHANGELOG.md"
+if [[ -s "$rust_list" ]]; then
+  SITE_REPOSITORY="$repo" node "$root/tool/site_changelog.mjs" <"$rust_list" >"$out/CHANGELOG.md"
 else
   echo "warning: releases unreachable; using the checked-in CHANGELOG.md" >&2
   cp "$root/CHANGELOG.md" "$out/CHANGELOG.md"
 fi
+rm -f "$rust_list"
 
 # Every data-i18n key and every t() call must resolve in both languages; a typo
 # otherwise renders as the bare key on the page.

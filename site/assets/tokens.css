@@ -171,3 +171,21 @@ button.nav-a { background: none; border: 0; cursor: pointer; font: inherit; }
   #theme-dd.is-open .dd-panel { translate: 0 0; scale: 1; }
 }
 
+
+/* Rust-core build card: a quiet companion to the main stable download list. */
+.rust-card { margin-top: 22px; padding: 18px 20px; border-radius: var(--r-m);
+  border: 1px solid var(--line); background: var(--bg-2); }
+.rust-card-head { display: flex; align-items: center; gap: 12px; }
+.rust-dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
+  background: var(--brand); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 18%, transparent); }
+.rust-card-head > div { min-width: 0; margin-right: auto; }
+.rust-title { font: 700 1.02rem var(--display); letter-spacing: -0.01em; }
+.rust-version { font: 500 0.82rem var(--text); color: var(--fg-3); margin-top: 2px; }
+.rust-desc { font: 500 0.88rem/1.5 var(--text); color: var(--fg-2); margin: 12px 0 16px; }
+.rust-assets { display: grid; gap: 8px; }
+.rust-assets .asset { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border-radius: var(--r-s); background: var(--bg-3);
+  color: var(--fg); text-decoration: none; border: 1px solid var(--line); }
+.rust-assets .asset:hover { border-color: var(--brand-line); }
+.rust-assets .asset .n { font: 600 0.9rem var(--text); }
+.rust-assets .asset .s { font: 500 0.8rem var(--text); color: var(--fg-3); white-space: nowrap; }
