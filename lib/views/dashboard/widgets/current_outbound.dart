@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/common/service_probe.dart';
 import 'package:skyward/enum/enum.dart';
@@ -893,6 +895,7 @@ class _Placeholder extends StatelessWidget {
 
 const _morphDuration = Duration(milliseconds: 450);
 const _stateDuration = Duration(milliseconds: 150);
+const _haloDuration = Duration(milliseconds: 900);
 
 /// A circle in both states. It grew into the cookie-9 of a running tunnel
 /// once, the way the M3 Expressive loader morphs between shapes, but at the
@@ -937,6 +940,10 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     duration: _morphDuration,
     value: widget.running ? 1 : 0,
   );
+  late final AnimationController _halo = AnimationController(
+    vsync: this,
+    duration: _haloDuration,
+  );
   late final Animation<double> _progress = CurvedAnimation(
     parent: _controller,
     curve: Curves.easeOutBack,
@@ -961,12 +968,18 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.running != widget.running) {
       widget.running ? _controller.forward() : _controller.reverse();
+      if (widget.running) {
+        _halo.repeat();
+      } else {
+        _halo.stop();
+      }
     }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _halo.dispose();
     super.dispose();
   }
 
@@ -1056,28 +1069,45 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                 },
                 child: child,
               ),
-              child: SizedBox.square(
-                dimension: size,
-                child: Center(
-                  child: widget.suspended
-                      ? GlyphIcon(
-                          AppGlyphs.wifiOff,
-                          size: size * 0.34,
-                          color: ink,
-                          fill: 1,
-                        )
-                      : TweenAnimationBuilder<double>(
-                          tween: Tween(end: widget.running ? 1 : 0),
-                          duration: _morphDuration,
-                          curve: Curves.easeOutBack,
-                          builder: (_, progress, _) => GlyphIcon(
-                            AppGlyphs.playPause(progress),
-                            size: size * 0.34,
-                            color: ink,
-                            fill: 1,
-                          ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox.square(
+                    dimension: size,
+                    child: Center(
+                      child: widget.suspended
+                          ? GlyphIcon(
+                              AppGlyphs.wifiOff,
+                              size: size * 0.34,
+                              color: ink,
+                              fill: 1,
+                            )
+                          : TweenAnimationBuilder<double>(
+                              tween: Tween(end: widget.running ? 1 : 0),
+                              duration: _morphDuration,
+                              curve: Curves.easeOutBack,
+                              builder: (_, progress, _) => GlyphIcon(
+                                AppGlyphs.playPause(progress),
+                                size: size * 0.34,
+                                color: ink,
+                                fill: 1,
+                              ),
+                            ),
+                    ),
+                  ),
+                  if (widget.running && enabled)
+                    AnimatedBuilder(
+                      animation: _halo,
+                      builder: (_, __) => CustomPaint(
+                        painter: _HaloPainter(
+                          value: _halo.value,
+                          size: size,
+                          color: isLight ? colors.ok : colorScheme.primary,
                         ),
-                ),
+                        child: SizedBox.expand(),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -1085,6 +1115,42 @@ class _StartToggleState extends ConsumerState<_StartToggle>
       ),
     );
   }
+}
+
+class _HaloPainter extends CustomPainter {
+  const _HaloPainter({required this.value, required this.size, required this.color});
+
+  final double value;
+  final double size;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size _) {
+    final center = Offset(size / 2, size / 2);
+    final stroke = BorderSide(
+      color: color.withValues(alpha: 0.45),
+      width: 2.4,
+    );
+    final startAngle = value * math.pi * 2;
+    final sweep = 0.75 + math.sin(value * math.pi * 2) * 0.25;
+    final radius = size / 2 + 6;
+    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = stroke.width..color = stroke.color;
+    canvas
+      ..save()
+      ..translate(center.dx, center.dy)
+      ..rotate(startAngle)
+      ..drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: radius),
+        0,
+        sweep * math.pi,
+        false,
+        paint,
+      )
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _HaloPainter old) => old.value != value;
 }
 
 /// Fills the morph, or with no [color] leaves its inside to glass and casts
