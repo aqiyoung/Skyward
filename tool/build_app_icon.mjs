@@ -21,9 +21,9 @@ const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', arg
 const page = await browser.newPage();
 await page.setContent('<!doctype html><html><body></body></html>');
 
-async function render({ size, flame = true, background = true, mono = false, glow = true }) {
+async function render({ size, flame = true, background = true, mono = false, glow = true, rounded = 0 }) {
   const dataUrl = await page.evaluate(
-    async ({ mark, size, flame, background, mono, glow, tile, monoColor }) => {
+    async ({ mark, size, flame, background, mono, glow, tile, monoColor, rounded }) => {
       const img = new Image();
       await new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -34,6 +34,15 @@ async function render({ size, flame = true, background = true, mono = false, glo
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
+      const ratio = img.naturalWidth / img.naturalHeight;
+      ctx.save();
+      if (rounded) {
+        // Bake the corner radius in, so the plate reads as an app icon even
+        // before whatever surface masks it.
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, rounded);
+        ctx.clip();
+      }
       if (background) {
         const g = ctx.createLinearGradient(0, 0, size, size);
         g.addColorStop(0, tile[0]);
@@ -63,9 +72,10 @@ async function render({ size, flame = true, background = true, mono = false, glo
           ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
         }
       }
+      ctx.restore();
       return canvas.toDataURL('image/png').split(',')[1];
     },
-    { mark, size, flame, background, mono, glow, tile: TILE, monoColor: MONO },
+    { mark, size, flame, background, mono, glow, tile: TILE, monoColor: MONO, rounded },
   );
   return Buffer.from(dataUrl, 'base64');
 }
@@ -141,7 +151,10 @@ const bg432 = await render({ size: 432, flame: false });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_background.png`, bg432);
 const fg432 = await render({ size: 432, background: false });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png`, fg432);
-write(`${root}/android/app/src/main/res/drawable-nodpi/splash_icon.png`, fg432);
+// The system splash: the full plate, corners rounded. Android 12+ masks it to a
+// circle anyway; the radius is what the artwork carries everywhere else.
+const splash432 = await render({ size: 432, rounded: 432 * 0.22 });
+write(`${root}/android/app/src/main/res/drawable-nodpi/splash_icon.png`, splash432);
 const mono432 = await render({ size: 432, background: false, mono: true });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png`, mono432);
 
