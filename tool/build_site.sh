@@ -71,14 +71,13 @@ else
   tag=""
 fi
 
-# The changelog comes from the released tag so the notes never run ahead of the
-# downloads; the working tree copy is only a fallback for local previews.
-if [[ -n "$tag" ]] && ! git -C "$root" rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-  git -C "$root" fetch -q --depth=1 origin "refs/tags/$tag:refs/tags/$tag" 2>/dev/null || true
-fi
-if [[ -n "$tag" ]] && git -C "$root" show "$tag:CHANGELOG.md" >"$out/CHANGELOG.md" 2>/dev/null; then
-  :
+# The changelog is built from this repository's own releases, so the timeline
+# carries our version numbers and our notes rather than the pre-fork history in
+# the checked-in CHANGELOG.md. If the API cannot be read, that file stands in.
+if releases="$(curl -fsS --max-time 20 "${auth[@]}" "$api/releases?per_page=100" 2>/dev/null)"; then
+  printf '%s' "$releases" | SITE_REPOSITORY="$repo" node "$root/tool/site_changelog.mjs" >"$out/CHANGELOG.md"
 else
+  echo "warning: releases unreachable; using the checked-in CHANGELOG.md" >&2
   cp "$root/CHANGELOG.md" "$out/CHANGELOG.md"
 fi
 
