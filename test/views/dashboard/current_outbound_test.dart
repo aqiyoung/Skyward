@@ -79,16 +79,21 @@ OutboundIpResult _address({int coreEpoch = 1}) => OutboundIpResult(
 );
 
 Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
-    Scaffold(
-      body: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(
-          width: density.isDesktop ? 600 : 380,
-          height: density.isDesktop ? 208 : null,
-          child: DashboardDensityScope(
-            density: density,
-            scale: 1,
-            child: const CurrentOutboundCard(),
+    MediaQuery(
+      // The running button's halo is a sustained loop; keep it out of the
+      // tests so pumpAndSettle can settle.
+      data: const MediaQueryData(disableAnimations: true),
+      child: Scaffold(
+        body: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: density.isDesktop ? 600 : 380,
+            height: density.isDesktop ? 208 : null,
+            child: DashboardDensityScope(
+              density: density,
+              scale: 1,
+              child: const CurrentOutboundCard(),
+            ),
           ),
         ),
       ),
