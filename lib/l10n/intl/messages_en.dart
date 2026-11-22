@@ -437,6 +437,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Deselect all"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("Can\'t save"),
     "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
+    "chainAtLeastTwo": MessageLookupByLibrary.simpleMessage(
+      "A chain needs an entry and an exit node",
+    ),
+    "chainCreate": MessageLookupByLibrary.simpleMessage("Create chain"),
+    "chainDelete": MessageLookupByLibrary.simpleMessage("Delete chain"),
+    "chainEdit": MessageLookupByLibrary.simpleMessage("Edit chain"),
+    "chainEmpty": MessageLookupByLibrary.simpleMessage("No chains yet"),
+    "chainEntry": MessageLookupByLibrary.simpleMessage("Entry"),
+    "chainEntryHint": MessageLookupByLibrary.simpleMessage(
+      "The proxy that opens the connection",
+    ),
+    "chainExisting": MessageLookupByLibrary.simpleMessage("Your chains"),
+    "chainExit": MessageLookupByLibrary.simpleMessage("Exit"),
+    "chainExitHint": MessageLookupByLibrary.simpleMessage(
+      "The proxy that reaches the website",
+    ),
+    "chainGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "Connect to one server, then reach the internet through another — the website only sees the second one.",
+    ),
+    "chainGuideTitle": MessageLookupByLibrary.simpleMessage("Build a chain"),
+    "chainManager": MessageLookupByLibrary.simpleMessage("Chains"),
+    "chainNew": MessageLookupByLibrary.simpleMessage("New chain"),
+    "chainNoProxies": MessageLookupByLibrary.simpleMessage(
+      "Add at least two proxy nodes first",
+    ),
+    "chainRemoved": MessageLookupByLibrary.simpleMessage("Chain removed"),
+    "chainSaved": MessageLookupByLibrary.simpleMessage("Chain saved"),
+    "chainSelectEntry": MessageLookupByLibrary.simpleMessage(
+      "Select the entry node",
+    ),
+    "chainSelectExit": MessageLookupByLibrary.simpleMessage(
+      "Select the exit node",
+    ),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to switch proxy; the previous selection has been restored",
     ),

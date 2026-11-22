@@ -1,6 +1,7 @@
 export 'about.dart';
 export 'access.dart';
 export 'backup_and_restore.dart';
+export 'chains.dart';
 export 'connection/connections.dart';
 export 'connection/requests.dart';
 export 'dashboard/dashboard.dart';

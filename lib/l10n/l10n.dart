@@ -9261,6 +9261,166 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Chains`
+  String get chainManager {
+    return Intl.message('Chains', name: 'chainManager', desc: '', args: []);
+  }
+
+  /// `Build a chain`
+  String get chainGuideTitle {
+    return Intl.message(
+      'Build a chain',
+      name: 'chainGuideTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect to one server, then reach the internet through another — the website only sees the second one.`
+  String get chainGuideDesc {
+    return Intl.message(
+      'Connect to one server, then reach the internet through another — the website only sees the second one.',
+      name: 'chainGuideDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create chain`
+  String get chainCreate {
+    return Intl.message(
+      'Create chain',
+      name: 'chainCreate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Entry`
+  String get chainEntry {
+    return Intl.message('Entry', name: 'chainEntry', desc: '', args: []);
+  }
+
+  /// `Exit`
+  String get chainExit {
+    return Intl.message('Exit', name: 'chainExit', desc: '', args: []);
+  }
+
+  /// `No chains yet`
+  String get chainEmpty {
+    return Intl.message(
+      'No chains yet',
+      name: 'chainEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your chains`
+  String get chainExisting {
+    return Intl.message(
+      'Your chains',
+      name: 'chainExisting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New chain`
+  String get chainNew {
+    return Intl.message('New chain', name: 'chainNew', desc: '', args: []);
+  }
+
+  /// `Delete chain`
+  String get chainDelete {
+    return Intl.message(
+      'Delete chain',
+      name: 'chainDelete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit chain`
+  String get chainEdit {
+    return Intl.message('Edit chain', name: 'chainEdit', desc: '', args: []);
+  }
+
+  /// `The proxy that opens the connection`
+  String get chainEntryHint {
+    return Intl.message(
+      'The proxy that opens the connection',
+      name: 'chainEntryHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The proxy that reaches the website`
+  String get chainExitHint {
+    return Intl.message(
+      'The proxy that reaches the website',
+      name: 'chainExitHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select the exit node`
+  String get chainSelectExit {
+    return Intl.message(
+      'Select the exit node',
+      name: 'chainSelectExit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select the entry node`
+  String get chainSelectEntry {
+    return Intl.message(
+      'Select the entry node',
+      name: 'chainSelectEntry',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chain saved`
+  String get chainSaved {
+    return Intl.message('Chain saved', name: 'chainSaved', desc: '', args: []);
+  }
+
+  /// `Chain removed`
+  String get chainRemoved {
+    return Intl.message(
+      'Chain removed',
+      name: 'chainRemoved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add at least two proxy nodes first`
+  String get chainNoProxies {
+    return Intl.message(
+      'Add at least two proxy nodes first',
+      name: 'chainNoProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A chain needs an entry and an exit node`
+  String get chainAtLeastTwo {
+    return Intl.message(
+      'A chain needs an entry and an exit node',
+      name: 'chainAtLeastTwo',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -453,6 +453,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Снять выделение"),
     "cannotSave": MessageLookupByLibrary.simpleMessage("Не удалось сохранить"),
     "capsule": MessageLookupByLibrary.simpleMessage("Капсула"),
+    "chainAtLeastTwo": MessageLookupByLibrary.simpleMessage(
+      "Для цепочки нужны входной и выходной узлы",
+    ),
+    "chainCreate": MessageLookupByLibrary.simpleMessage("Создать цепочку"),
+    "chainDelete": MessageLookupByLibrary.simpleMessage("Удалить цепочку"),
+    "chainEdit": MessageLookupByLibrary.simpleMessage("Изменить цепочку"),
+    "chainEmpty": MessageLookupByLibrary.simpleMessage("Цепочек пока нет"),
+    "chainEntry": MessageLookupByLibrary.simpleMessage("Вход"),
+    "chainEntryHint": MessageLookupByLibrary.simpleMessage(
+      "Сервер, устанавливающий соединение",
+    ),
+    "chainExisting": MessageLookupByLibrary.simpleMessage("Ваши цепочки"),
+    "chainExit": MessageLookupByLibrary.simpleMessage("Выход"),
+    "chainExitHint": MessageLookupByLibrary.simpleMessage(
+      "Сервер, обращающийся к сайту",
+    ),
+    "chainGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "Подключитесь к одному серверу, а выходите в интернет через другой — сайт видит только второй.",
+    ),
+    "chainGuideTitle": MessageLookupByLibrary.simpleMessage("Создать цепочку"),
+    "chainManager": MessageLookupByLibrary.simpleMessage("Цепочки"),
+    "chainNew": MessageLookupByLibrary.simpleMessage("Новая цепочка"),
+    "chainNoProxies": MessageLookupByLibrary.simpleMessage(
+      "Сначала добавьте хотя бы два прокси-узла",
+    ),
+    "chainRemoved": MessageLookupByLibrary.simpleMessage("Цепочка удалена"),
+    "chainSaved": MessageLookupByLibrary.simpleMessage("Цепочка сохранена"),
+    "chainSelectEntry": MessageLookupByLibrary.simpleMessage(
+      "Выберите входной узел",
+    ),
+    "chainSelectExit": MessageLookupByLibrary.simpleMessage(
+      "Выберите выходной узел",
+    ),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Не удалось переключить прокси; восстановлен предыдущий выбор",
     ),

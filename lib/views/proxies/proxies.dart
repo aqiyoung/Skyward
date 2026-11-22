@@ -3,6 +3,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/chains.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -168,6 +169,15 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
             _proxiesTabKey.currentState?.scrollToGroupSelected();
           },
           tooltip: context.appLocalizations.scrollToSelected,
+        ),
+      // Chain manager: compose an entry -> exit chain through dialer-proxy.
+      if (!picker)
+        IconButtonData(
+          glyph: AppGlyphs.link,
+          onPressed: () {
+            BaseNavigator.push(context, const ChainsView());
+          },
+          tooltip: context.appLocalizations.chainManager,
         ),
     ];
     // On a phone the heading and its buttons move into the page and the bar

@@ -471,6 +471,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "Enregistrement impossible",
     ),
     "capsule": MessageLookupByLibrary.simpleMessage("Capsule"),
+    "chainAtLeastTwo": MessageLookupByLibrary.simpleMessage(
+      "Une chaîne nécessite une entrée et une sortie",
+    ),
+    "chainCreate": MessageLookupByLibrary.simpleMessage("Créer une chaîne"),
+    "chainDelete": MessageLookupByLibrary.simpleMessage("Supprimer la chaîne"),
+    "chainEdit": MessageLookupByLibrary.simpleMessage("Modifier la chaîne"),
+    "chainEmpty": MessageLookupByLibrary.simpleMessage("Aucune chaîne"),
+    "chainEntry": MessageLookupByLibrary.simpleMessage("Entrée"),
+    "chainEntryHint": MessageLookupByLibrary.simpleMessage(
+      "Le serveur qui ouvre la connexion",
+    ),
+    "chainExisting": MessageLookupByLibrary.simpleMessage("Vos chaînes"),
+    "chainExit": MessageLookupByLibrary.simpleMessage("Sortie"),
+    "chainExitHint": MessageLookupByLibrary.simpleMessage(
+      "Le serveur qui rejoint le site",
+    ),
+    "chainGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "Connectez-vous à un serveur, puis accédez à Internet via un autre — le site ne voit que le second.",
+    ),
+    "chainGuideTitle": MessageLookupByLibrary.simpleMessage("Créer une chaîne"),
+    "chainManager": MessageLookupByLibrary.simpleMessage("Chaînes"),
+    "chainNew": MessageLookupByLibrary.simpleMessage("Nouvelle chaîne"),
+    "chainNoProxies": MessageLookupByLibrary.simpleMessage(
+      "Ajoutez d’abord au moins deux nœuds proxy",
+    ),
+    "chainRemoved": MessageLookupByLibrary.simpleMessage("Chaîne supprimée"),
+    "chainSaved": MessageLookupByLibrary.simpleMessage("Chaîne enregistrée"),
+    "chainSelectEntry": MessageLookupByLibrary.simpleMessage(
+      "Choisir le nœud d’entrée",
+    ),
+    "chainSelectExit": MessageLookupByLibrary.simpleMessage(
+      "Choisir le nœud de sortie",
+    ),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Échec du changement de proxy ; la sélection précédente a été rétablie",
     ),

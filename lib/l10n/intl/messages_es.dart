@@ -472,6 +472,39 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "cannotSave": MessageLookupByLibrary.simpleMessage("No se puede guardar"),
     "capsule": MessageLookupByLibrary.simpleMessage("Cápsula"),
+    "chainAtLeastTwo": MessageLookupByLibrary.simpleMessage(
+      "Una cadena necesita una entrada y una salida",
+    ),
+    "chainCreate": MessageLookupByLibrary.simpleMessage("Crear cadena"),
+    "chainDelete": MessageLookupByLibrary.simpleMessage("Eliminar cadena"),
+    "chainEdit": MessageLookupByLibrary.simpleMessage("Editar cadena"),
+    "chainEmpty": MessageLookupByLibrary.simpleMessage("Aún no hay cadenas"),
+    "chainEntry": MessageLookupByLibrary.simpleMessage("Entrada"),
+    "chainEntryHint": MessageLookupByLibrary.simpleMessage(
+      "El servidor que abre la conexión",
+    ),
+    "chainExisting": MessageLookupByLibrary.simpleMessage("Tus cadenas"),
+    "chainExit": MessageLookupByLibrary.simpleMessage("Salida"),
+    "chainExitHint": MessageLookupByLibrary.simpleMessage(
+      "El servidor que llega al sitio",
+    ),
+    "chainGuideDesc": MessageLookupByLibrary.simpleMessage(
+      "Conéctate a un servidor y accede a Internet por otro — el sitio solo ve el segundo.",
+    ),
+    "chainGuideTitle": MessageLookupByLibrary.simpleMessage("Crear cadena"),
+    "chainManager": MessageLookupByLibrary.simpleMessage("Cadenas"),
+    "chainNew": MessageLookupByLibrary.simpleMessage("Nueva cadena"),
+    "chainNoProxies": MessageLookupByLibrary.simpleMessage(
+      "Añade al menos dos nodos proxy primero",
+    ),
+    "chainRemoved": MessageLookupByLibrary.simpleMessage("Cadena eliminada"),
+    "chainSaved": MessageLookupByLibrary.simpleMessage("Cadena guardada"),
+    "chainSelectEntry": MessageLookupByLibrary.simpleMessage(
+      "Selecciona el nodo de entrada",
+    ),
+    "chainSelectExit": MessageLookupByLibrary.simpleMessage(
+      "Selecciona el nodo de salida",
+    ),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "No se pudo cambiar de proxy; se ha restaurado la selección anterior",
     ),
