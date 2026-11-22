@@ -420,6 +420,19 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         .map((item) => item.definition)
         .toList();
   }
+  // Proxy chains are materialized by the core into cloned virtual nodes and
+  // a selectable group. Strip the local db id before handing them over.
+  if (data.chains.isNotEmpty) {
+    rawConfig['chains'] = data.chains
+        .map((c) => {
+              'name': c.name,
+              'hops': c.hops,
+              if (c.targetGroup != null) 'target-group': c.targetGroup,
+              'offered': c.offered,
+              'heal': c.heal,
+            })
+        .toList();
+  }
   // The guards sit in front of the profile's own rules, which are otherwise
   // untouched. A profile that carried no rules at all used to leave the core
   // with an empty list and "connect everything directly"; the guards in front

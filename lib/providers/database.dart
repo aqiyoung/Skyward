@@ -457,6 +457,36 @@ class ClashProviders extends _$ClashProviders
 }
 
 @Riverpod(keepAlive: true)
+class Chains extends _$Chains with AsyncNotifierMixin, OptimisticMixin {
+  @override
+  Stream<List<ChainSpec>> build() {
+    final query = database.chainsDao.query();
+    return settled(query.watch(), query.get);
+  }
+
+  @override
+  List<ChainSpec> get value => state.value ?? [];
+
+  Future<void> put(ChainSpec chain) async {
+    final next = List<ChainSpec>.from(value);
+    final index = next.indexWhere((item) => item.id == chain.id);
+    if (index != -1) {
+      next[index] = chain;
+    } else {
+      next.add(chain);
+    }
+    optimistic(next, () => database.chainsDao.put(chain, order: next.indexOf(chain)));
+  }
+
+  void del(int id) {
+    optimistic(
+      value.where((item) => item.id != id).toList(),
+      () => database.chainsDao.remove(id),
+    );
+  }
+}
+
+@Riverpod(keepAlive: true)
 class IconSets extends _$IconSets with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<IconSet>> build() {

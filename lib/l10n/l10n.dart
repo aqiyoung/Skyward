@@ -9606,6 +9606,216 @@ class AppLocalizations {
   String get tsHitUnit {
     return Intl.message('hits', name: 'tsHitUnit', desc: '', args: []);
   }
+
+  /// `Entry`
+  String get chainEntryRole {
+    return Intl.message('Entry', name: 'chainEntryRole', desc: '', args: []);
+  }
+
+  /// `Relay`
+  String get chainMiddleRole {
+    return Intl.message('Relay', name: 'chainMiddleRole', desc: '', args: []);
+  }
+
+  /// `Exit`
+  String get chainExitRole {
+    return Intl.message('Exit', name: 'chainExitRole', desc: '', args: []);
+  }
+
+  /// `You`
+  String get chainYou {
+    return Intl.message('You', name: 'chainYou', desc: '', args: []);
+  }
+
+  /// `Phone`
+  String get chainPhone {
+    return Intl.message('Phone', name: 'chainPhone', desc: '', args: []);
+  }
+
+  /// `Internet`
+  String get chainInternet {
+    return Intl.message('Internet', name: 'chainInternet', desc: '', args: []);
+  }
+
+  /// `Select`
+  String get chainPick {
+    return Intl.message('Select', name: 'chainPick', desc: '', args: []);
+  }
+
+  /// `Then`
+  String get chainThen {
+    return Intl.message('Then', name: 'chainThen', desc: '', args: []);
+  }
+
+  /// `The entry is the server your device connects to.`
+  String get chainEntryHint2 {
+    return Intl.message(
+      'The entry is the server your device connects to.',
+      name: 'chainEntryHint2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The relay forwards the connection between entry and exit.`
+  String get chainMiddleHint {
+    return Intl.message(
+      'The relay forwards the connection between entry and exit.',
+      name: 'chainMiddleHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The exit reaches the website; the site only sees this server.`
+  String get chainExitHint2 {
+    return Intl.message(
+      'The exit reaches the website; the site only sees this server.',
+      name: 'chainExitHint2',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `City, country or name`
+  String get chainSearchHint {
+    return Intl.message(
+      'City, country or name',
+      name: 'chainSearchHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Groups — auto-select servers`
+  String get chainGroupsSection {
+    return Intl.message(
+      'Groups — auto-select servers',
+      name: 'chainGroupsSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add relay server`
+  String get chainAddMiddle {
+    return Intl.message(
+      'Add relay server',
+      name: 'chainAddMiddle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove relay server`
+  String get chainRemoveMiddle {
+    return Intl.message(
+      'Remove relay server',
+      name: 'chainRemoveMiddle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name`
+  String get chainName {
+    return Intl.message('Name', name: 'chainName', desc: '', args: []);
+  }
+
+  /// `Show in servers`
+  String get chainShowInServers {
+    return Intl.message(
+      'Show in servers',
+      name: 'chainShowInServers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The chain appears next to regular servers in selection; your current choice will not change.`
+  String get chainShowDesc {
+    return Intl.message(
+      'The chain appears next to regular servers in selection; your current choice will not change.',
+      name: 'chainShowDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manual among {n}`
+  String chainGroupManual(Object n) {
+    return Intl.message(
+      'Manual among $n',
+      name: 'chainGroupManual',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `Fastest among {n}`
+  String chainGroupFastest(Object n) {
+    return Intl.message(
+      'Fastest among $n',
+      name: 'chainGroupFastest',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `First available among {n}`
+  String chainGroupFallback(Object n) {
+    return Intl.message(
+      'First available among $n',
+      name: 'chainGroupFallback',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `Round-robin among {n}`
+  String chainGroupBalance(Object n) {
+    return Intl.message(
+      'Round-robin among $n',
+      name: 'chainGroupBalance',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `Save`
+  String get chainSave {
+    return Intl.message('Save', name: 'chainSave', desc: '', args: []);
+  }
+
+  /// `Discard chain?`
+  String get chainDiscard {
+    return Intl.message(
+      'Discard chain?',
+      name: 'chainDiscard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Near you`
+  String get chainNearYou {
+    return Intl.message('Near you', name: 'chainNearYou', desc: '', args: []);
+  }
+
+  /// `Other countries`
+  String get chainOtherCountries {
+    return Intl.message(
+      'Other countries',
+      name: 'chainOtherCountries',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Servers`
+  String get chainServers {
+    return Intl.message('Servers', name: 'chainServers', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

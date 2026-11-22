@@ -185,6 +185,7 @@ Future<MigrationData> readBackupArchive({
       database.clashProvidersDao.query().get(),
       database.customProxiesDao.query().get(),
       database.proxyDialers.readable((row) => row.toProxyDialer()).get(),
+      database.chainsDao.query().get(),
     ]);
     return MigrationData(
       configMap: configMap,
@@ -196,6 +197,7 @@ Future<MigrationData> readBackupArchive({
       clashProviders: results[5].cast<ClashProvider>(),
       customProxies: results[6].cast<CustomProxy>(),
       proxyDialers: results[7].cast<ProxyDialer>(),
+      chains: results[8].cast<ChainSpec>(),
     );
   } finally {
     await database.close();

@@ -544,6 +544,7 @@ class SetupAction extends _$SetupAction {
       MakeRealProfileState(
         rules: rules,
         proxyGroups: proxyGroups,
+        chains: ref.read(chainsProvider).value ?? const [],
         injectedProxyProviders: injected.proxies,
         injectedRuleProviders: injected.rules,
         profilesPath: directory,

@@ -5958,7 +5958,7 @@ $ProxiesDataCopyWith<$Res> get proxiesData {
 mixin _$MakeRealProfileState {
 
  String get profilesPath; int get profileId; Map<String, dynamic> get rawConfig; PatchClashConfig get realPatchConfig; ProfileOverrides get overrides; bool get bypassPrivateRoute;/// Set for a subscription, whose own DNS values an emptied entry replaces.
- bool get keepEmptyDnsOverrides; bool get appendSystemDns; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; String get defaultUA; List<String> get authentication; Map<String, dynamic> get injectedProxyProviders; Map<String, dynamic> get injectedRuleProviders; String? get matchTarget; bool get safeMode;/// Placed ahead of the profile's rules, because discovery must not reach
+ bool get keepEmptyDnsOverrides; bool get appendSystemDns; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; List<ChainSpec> get chains; String get defaultUA; List<String> get authentication; Map<String, dynamic> get injectedProxyProviders; Map<String, dynamic> get injectedRuleProviders; String? get matchTarget; bool get safeMode;/// Placed ahead of the profile's rules, because discovery must not reach
 /// a peer before a rule has decided what to do with it.
  WebrtcGuard get webrtcGuard;
 /// Create a copy of MakeRealProfileState
@@ -5972,20 +5972,20 @@ $MakeRealProfileStateCopyWith<MakeRealProfileState> get copyWith => _$MakeRealPr
 @override
 bool operator ==(Object other) {
   final _this = this as MakeRealProfileState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, _this.profilesPath) || other.profilesPath == _this.profilesPath)&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _this.rawConfig)&&(identical(other.realPatchConfig, _this.realPatchConfig) || other.realPatchConfig == _this.realPatchConfig)&&(identical(other.overrides, _this.overrides) || other.overrides == _this.overrides)&&(identical(other.bypassPrivateRoute, _this.bypassPrivateRoute) || other.bypassPrivateRoute == _this.bypassPrivateRoute)&&(identical(other.keepEmptyDnsOverrides, _this.keepEmptyDnsOverrides) || other.keepEmptyDnsOverrides == _this.keepEmptyDnsOverrides)&&(identical(other.appendSystemDns, _this.appendSystemDns) || other.appendSystemDns == _this.appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules)&&(identical(other.defaultUA, _this.defaultUA) || other.defaultUA == _this.defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _this.injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _this.injectedRuleProviders)&&(identical(other.matchTarget, _this.matchTarget) || other.matchTarget == _this.matchTarget)&&(identical(other.safeMode, _this.safeMode) || other.safeMode == _this.safeMode)&&(identical(other.webrtcGuard, _this.webrtcGuard) || other.webrtcGuard == _this.webrtcGuard));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, _this.profilesPath) || other.profilesPath == _this.profilesPath)&&(identical(other.profileId, _this.profileId) || other.profileId == _this.profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _this.rawConfig)&&(identical(other.realPatchConfig, _this.realPatchConfig) || other.realPatchConfig == _this.realPatchConfig)&&(identical(other.overrides, _this.overrides) || other.overrides == _this.overrides)&&(identical(other.bypassPrivateRoute, _this.bypassPrivateRoute) || other.bypassPrivateRoute == _this.bypassPrivateRoute)&&(identical(other.keepEmptyDnsOverrides, _this.keepEmptyDnsOverrides) || other.keepEmptyDnsOverrides == _this.keepEmptyDnsOverrides)&&(identical(other.appendSystemDns, _this.appendSystemDns) || other.appendSystemDns == _this.appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.addedRules, _this.addedRules)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.defaultUA, _this.defaultUA) || other.defaultUA == _this.defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _this.authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _this.injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _this.injectedRuleProviders)&&(identical(other.matchTarget, _this.matchTarget) || other.matchTarget == _this.matchTarget)&&(identical(other.safeMode, _this.safeMode) || other.safeMode == _this.safeMode)&&(identical(other.webrtcGuard, _this.webrtcGuard) || other.webrtcGuard == _this.webrtcGuard));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MakeRealProfileState;
-  return Object.hash(runtimeType,_this.profilesPath,_this.profileId,const DeepCollectionEquality().hash(_this.rawConfig),_this.realPatchConfig,_this.overrides,_this.bypassPrivateRoute,_this.keepEmptyDnsOverrides,_this.appendSystemDns,const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.addedRules),_this.defaultUA,const DeepCollectionEquality().hash(_this.authentication),const DeepCollectionEquality().hash(_this.injectedProxyProviders),const DeepCollectionEquality().hash(_this.injectedRuleProviders),_this.matchTarget,_this.safeMode,_this.webrtcGuard);
+  return Object.hashAll([runtimeType,_this.profilesPath,_this.profileId,const DeepCollectionEquality().hash(_this.rawConfig),_this.realPatchConfig,_this.overrides,_this.bypassPrivateRoute,_this.keepEmptyDnsOverrides,_this.appendSystemDns,const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.addedRules),const DeepCollectionEquality().hash(_this.chains),_this.defaultUA,const DeepCollectionEquality().hash(_this.authentication),const DeepCollectionEquality().hash(_this.injectedProxyProviders),const DeepCollectionEquality().hash(_this.injectedRuleProviders),_this.matchTarget,_this.safeMode,_this.webrtcGuard]);
 }
 
 @override
 String toString() {
   final _this = this as MakeRealProfileState;
-  return 'MakeRealProfileState(profilesPath: ${_this.profilesPath}, profileId: ${_this.profileId}, rawConfig: ${_this.rawConfig}, realPatchConfig: ${_this.realPatchConfig}, overrides: ${_this.overrides}, bypassPrivateRoute: ${_this.bypassPrivateRoute}, keepEmptyDnsOverrides: ${_this.keepEmptyDnsOverrides}, appendSystemDns: ${_this.appendSystemDns}, proxyGroups: ${_this.proxyGroups}, rules: ${_this.rules}, addedRules: ${_this.addedRules}, defaultUA: ${_this.defaultUA}, authentication: ${_this.authentication}, injectedProxyProviders: ${_this.injectedProxyProviders}, injectedRuleProviders: ${_this.injectedRuleProviders}, matchTarget: ${_this.matchTarget}, safeMode: ${_this.safeMode}, webrtcGuard: ${_this.webrtcGuard})';
+  return 'MakeRealProfileState(profilesPath: ${_this.profilesPath}, profileId: ${_this.profileId}, rawConfig: ${_this.rawConfig}, realPatchConfig: ${_this.realPatchConfig}, overrides: ${_this.overrides}, bypassPrivateRoute: ${_this.bypassPrivateRoute}, keepEmptyDnsOverrides: ${_this.keepEmptyDnsOverrides}, appendSystemDns: ${_this.appendSystemDns}, proxyGroups: ${_this.proxyGroups}, rules: ${_this.rules}, addedRules: ${_this.addedRules}, chains: ${_this.chains}, defaultUA: ${_this.defaultUA}, authentication: ${_this.authentication}, injectedProxyProviders: ${_this.injectedProxyProviders}, injectedRuleProviders: ${_this.injectedRuleProviders}, matchTarget: ${_this.matchTarget}, safeMode: ${_this.safeMode}, webrtcGuard: ${_this.webrtcGuard})';
 }
 
 
@@ -5996,7 +5996,7 @@ abstract mixin class $MakeRealProfileStateCopyWith<$Res>  {
   factory $MakeRealProfileStateCopyWith(MakeRealProfileState value, $Res Function(MakeRealProfileState) _then) = _$MakeRealProfileStateCopyWithImpl;
 @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool keepEmptyDnsOverrides, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, String? matchTarget, bool safeMode, WebrtcGuard webrtcGuard
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool keepEmptyDnsOverrides, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, List<ChainSpec> chains, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, String? matchTarget, bool safeMode, WebrtcGuard webrtcGuard
 });
 
 
@@ -6013,7 +6013,7 @@ class _$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? keepEmptyDnsOverrides = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? matchTarget = freezed,Object? safeMode = null,Object? webrtcGuard = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? keepEmptyDnsOverrides = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? chains = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? matchTarget = freezed,Object? safeMode = null,Object? webrtcGuard = null,}) {
   return _then(MakeRealProfileState(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -6026,7 +6026,8 @@ as bool,appendSystemDns: null == appendSystemDns ? _self.appendSystemDns : appen
 as bool,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
+as List<Rule>,chains: null == chains ? _self.chains : chains // ignore: cast_nullable_to_non_nullable
+as List<ChainSpec>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
 as String,authentication: null == authentication ? _self.authentication : authentication // ignore: cast_nullable_to_non_nullable
 as List<String>,injectedProxyProviders: null == injectedProxyProviders ? _self.injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,injectedRuleProviders: null == injectedRuleProviders ? _self.injectedRuleProviders : injectedRuleProviders // ignore: cast_nullable_to_non_nullable
@@ -6136,10 +6137,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  List<ChainSpec> chains,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.chains,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
   return orElse();
 
 }
@@ -6157,10 +6158,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  List<ChainSpec> chains,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState():
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.chains,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6177,10 +6178,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  ProfileOverrides overrides,  bool bypassPrivateRoute,  bool keepEmptyDnsOverrides,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  List<ChainSpec> chains,  String defaultUA,  List<String> authentication,  Map<String, dynamic> injectedProxyProviders,  Map<String, dynamic> injectedRuleProviders,  String? matchTarget,  bool safeMode,  WebrtcGuard webrtcGuard)?  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrides,_that.bypassPrivateRoute,_that.keepEmptyDnsOverrides,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.chains,_that.defaultUA,_that.authentication,_that.injectedProxyProviders,_that.injectedRuleProviders,_that.matchTarget,_that.safeMode,_that.webrtcGuard);case _:
   return null;
 
 }
@@ -6192,7 +6193,7 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 
 
 class _MakeRealProfileState implements MakeRealProfileState {
-  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required  Map<String, dynamic> rawConfig, required this.realPatchConfig, this.overrides = const ProfileOverrides(), this.bypassPrivateRoute = false, this.keepEmptyDnsOverrides = false, required this.appendSystemDns, required  List<ProxyGroup> proxyGroups, required  List<Rule> rules, required  List<Rule> addedRules, required this.defaultUA,  List<String> authentication = const [],  Map<String, dynamic> injectedProxyProviders = const {},  Map<String, dynamic> injectedRuleProviders = const {}, this.matchTarget, this.safeMode = false, this.webrtcGuard = WebrtcGuard.block}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules,_authentication = authentication,_injectedProxyProviders = injectedProxyProviders,_injectedRuleProviders = injectedRuleProviders;
+  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required  Map<String, dynamic> rawConfig, required this.realPatchConfig, this.overrides = const ProfileOverrides(), this.bypassPrivateRoute = false, this.keepEmptyDnsOverrides = false, required this.appendSystemDns, required  List<ProxyGroup> proxyGroups, required  List<Rule> rules, required  List<Rule> addedRules,  List<ChainSpec> chains = const [], required this.defaultUA,  List<String> authentication = const [],  Map<String, dynamic> injectedProxyProviders = const {},  Map<String, dynamic> injectedRuleProviders = const {}, this.matchTarget, this.safeMode = false, this.webrtcGuard = WebrtcGuard.block}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules,_chains = chains,_authentication = authentication,_injectedProxyProviders = injectedProxyProviders,_injectedRuleProviders = injectedRuleProviders;
   
 
 @override final  String profilesPath;
@@ -6229,6 +6230,13 @@ class _MakeRealProfileState implements MakeRealProfileState {
   if (_addedRules is EqualUnmodifiableListView) return _addedRules;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_addedRules);
+}
+
+ final  List<ChainSpec> _chains;
+@override@JsonKey() List<ChainSpec> get chains {
+  if (_chains is EqualUnmodifiableListView) return _chains;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_chains);
 }
 
 @override final  String defaultUA;
@@ -6269,18 +6277,18 @@ _$MakeRealProfileStateCopyWith<_MakeRealProfileState> get copyWith => __$MakeRea
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrides, overrides) || other.overrides == overrides)&&(identical(other.bypassPrivateRoute, bypassPrivateRoute) || other.bypassPrivateRoute == bypassPrivateRoute)&&(identical(other.keepEmptyDnsOverrides, keepEmptyDnsOverrides) || other.keepEmptyDnsOverrides == keepEmptyDnsOverrides)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.addedRules, _addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _injectedRuleProviders)&&(identical(other.matchTarget, matchTarget) || other.matchTarget == matchTarget)&&(identical(other.safeMode, safeMode) || other.safeMode == safeMode)&&(identical(other.webrtcGuard, webrtcGuard) || other.webrtcGuard == webrtcGuard));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrides, overrides) || other.overrides == overrides)&&(identical(other.bypassPrivateRoute, bypassPrivateRoute) || other.bypassPrivateRoute == bypassPrivateRoute)&&(identical(other.keepEmptyDnsOverrides, keepEmptyDnsOverrides) || other.keepEmptyDnsOverrides == keepEmptyDnsOverrides)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.addedRules, _addedRules)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other.authentication, _authentication)&&const DeepCollectionEquality().equals(other.injectedProxyProviders, _injectedProxyProviders)&&const DeepCollectionEquality().equals(other.injectedRuleProviders, _injectedRuleProviders)&&(identical(other.matchTarget, matchTarget) || other.matchTarget == matchTarget)&&(identical(other.safeMode, safeMode) || other.safeMode == safeMode)&&(identical(other.webrtcGuard, webrtcGuard) || other.webrtcGuard == webrtcGuard));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrides,bypassPrivateRoute,keepEmptyDnsOverrides,appendSystemDns,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),defaultUA,const DeepCollectionEquality().hash(_authentication),const DeepCollectionEquality().hash(_injectedProxyProviders),const DeepCollectionEquality().hash(_injectedRuleProviders),matchTarget,safeMode,webrtcGuard);
+    return Object.hashAll([runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrides,bypassPrivateRoute,keepEmptyDnsOverrides,appendSystemDns,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),const DeepCollectionEquality().hash(_chains),defaultUA,const DeepCollectionEquality().hash(_authentication),const DeepCollectionEquality().hash(_injectedProxyProviders),const DeepCollectionEquality().hash(_injectedRuleProviders),matchTarget,safeMode,webrtcGuard]);
 }
 
 @override
 String toString() {
-    return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrides: $overrides, bypassPrivateRoute: $bypassPrivateRoute, keepEmptyDnsOverrides: $keepEmptyDnsOverrides, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA, authentication: $authentication, injectedProxyProviders: $injectedProxyProviders, injectedRuleProviders: $injectedRuleProviders, matchTarget: $matchTarget, safeMode: $safeMode, webrtcGuard: $webrtcGuard)';
+    return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrides: $overrides, bypassPrivateRoute: $bypassPrivateRoute, keepEmptyDnsOverrides: $keepEmptyDnsOverrides, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, chains: $chains, defaultUA: $defaultUA, authentication: $authentication, injectedProxyProviders: $injectedProxyProviders, injectedRuleProviders: $injectedRuleProviders, matchTarget: $matchTarget, safeMode: $safeMode, webrtcGuard: $webrtcGuard)';
 }
 
 
@@ -6291,7 +6299,7 @@ abstract mixin class _$MakeRealProfileStateCopyWith<$Res> implements $MakeRealPr
   factory _$MakeRealProfileStateCopyWith(_MakeRealProfileState value, $Res Function(_MakeRealProfileState) _then) = __$MakeRealProfileStateCopyWithImpl;
 @override @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool keepEmptyDnsOverrides, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, String? matchTarget, bool safeMode, WebrtcGuard webrtcGuard
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, ProfileOverrides overrides, bool bypassPrivateRoute, bool keepEmptyDnsOverrides, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, List<ChainSpec> chains, String defaultUA, List<String> authentication, Map<String, dynamic> injectedProxyProviders, Map<String, dynamic> injectedRuleProviders, String? matchTarget, bool safeMode, WebrtcGuard webrtcGuard
 });
 
 
@@ -6308,7 +6316,7 @@ class __$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? keepEmptyDnsOverrides = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? matchTarget = freezed,Object? safeMode = null,Object? webrtcGuard = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrides = null,Object? bypassPrivateRoute = null,Object? keepEmptyDnsOverrides = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? chains = null,Object? defaultUA = null,Object? authentication = null,Object? injectedProxyProviders = null,Object? injectedRuleProviders = null,Object? matchTarget = freezed,Object? safeMode = null,Object? webrtcGuard = null,}) {
   return _then(_MakeRealProfileState(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -6321,7 +6329,8 @@ as bool,appendSystemDns: null == appendSystemDns ? _self.appendSystemDns : appen
 as bool,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // ignore: cast_nullable_to_non_nullable
 as List<ProxyGroup>,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
-as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
+as List<Rule>,chains: null == chains ? _self._chains : chains // ignore: cast_nullable_to_non_nullable
+as List<ChainSpec>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
 as String,authentication: null == authentication ? _self._authentication : authentication // ignore: cast_nullable_to_non_nullable
 as List<String>,injectedProxyProviders: null == injectedProxyProviders ? _self._injectedProxyProviders : injectedProxyProviders // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,injectedRuleProviders: null == injectedRuleProviders ? _self._injectedRuleProviders : injectedRuleProviders // ignore: cast_nullable_to_non_nullable
@@ -6356,7 +6365,7 @@ $ProfileOverridesCopyWith<$Res> get overrides {
 /// @nodoc
 mixin _$MigrationData {
 
- Map<String, Object?>? get configMap; List<Rule> get rules; List<Script> get scripts; List<Profile> get profiles; List<DisabledRule> get disabledRules; List<ProxyGroup> get proxyGroups; List<ClashProvider> get clashProviders; List<CustomProxy> get customProxies; List<ProxyDialer> get proxyDialers;
+ Map<String, Object?>? get configMap; List<Rule> get rules; List<Script> get scripts; List<Profile> get profiles; List<DisabledRule> get disabledRules; List<ProxyGroup> get proxyGroups; List<ClashProvider> get clashProviders; List<CustomProxy> get customProxies; List<ProxyDialer> get proxyDialers; List<ChainSpec> get chains;
 /// Create a copy of MigrationData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -6368,20 +6377,20 @@ $MigrationDataCopyWith<MigrationData> get copyWith => _$MigrationDataCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as MigrationData;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MigrationData&&const DeepCollectionEquality().equals(other.configMap, _this.configMap)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.scripts, _this.scripts)&&const DeepCollectionEquality().equals(other.profiles, _this.profiles)&&const DeepCollectionEquality().equals(other.disabledRules, _this.disabledRules)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.clashProviders, _this.clashProviders)&&const DeepCollectionEquality().equals(other.customProxies, _this.customProxies)&&const DeepCollectionEquality().equals(other.proxyDialers, _this.proxyDialers));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MigrationData&&const DeepCollectionEquality().equals(other.configMap, _this.configMap)&&const DeepCollectionEquality().equals(other.rules, _this.rules)&&const DeepCollectionEquality().equals(other.scripts, _this.scripts)&&const DeepCollectionEquality().equals(other.profiles, _this.profiles)&&const DeepCollectionEquality().equals(other.disabledRules, _this.disabledRules)&&const DeepCollectionEquality().equals(other.proxyGroups, _this.proxyGroups)&&const DeepCollectionEquality().equals(other.clashProviders, _this.clashProviders)&&const DeepCollectionEquality().equals(other.customProxies, _this.customProxies)&&const DeepCollectionEquality().equals(other.proxyDialers, _this.proxyDialers)&&const DeepCollectionEquality().equals(other.chains, _this.chains));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MigrationData;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.configMap),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.scripts),const DeepCollectionEquality().hash(_this.profiles),const DeepCollectionEquality().hash(_this.disabledRules),const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.clashProviders),const DeepCollectionEquality().hash(_this.customProxies),const DeepCollectionEquality().hash(_this.proxyDialers));
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.configMap),const DeepCollectionEquality().hash(_this.rules),const DeepCollectionEquality().hash(_this.scripts),const DeepCollectionEquality().hash(_this.profiles),const DeepCollectionEquality().hash(_this.disabledRules),const DeepCollectionEquality().hash(_this.proxyGroups),const DeepCollectionEquality().hash(_this.clashProviders),const DeepCollectionEquality().hash(_this.customProxies),const DeepCollectionEquality().hash(_this.proxyDialers),const DeepCollectionEquality().hash(_this.chains));
 }
 
 @override
 String toString() {
   final _this = this as MigrationData;
-  return 'MigrationData(configMap: ${_this.configMap}, rules: ${_this.rules}, scripts: ${_this.scripts}, profiles: ${_this.profiles}, disabledRules: ${_this.disabledRules}, proxyGroups: ${_this.proxyGroups}, clashProviders: ${_this.clashProviders}, customProxies: ${_this.customProxies}, proxyDialers: ${_this.proxyDialers})';
+  return 'MigrationData(configMap: ${_this.configMap}, rules: ${_this.rules}, scripts: ${_this.scripts}, profiles: ${_this.profiles}, disabledRules: ${_this.disabledRules}, proxyGroups: ${_this.proxyGroups}, clashProviders: ${_this.clashProviders}, customProxies: ${_this.customProxies}, proxyDialers: ${_this.proxyDialers}, chains: ${_this.chains})';
 }
 
 
@@ -6392,7 +6401,7 @@ abstract mixin class $MigrationDataCopyWith<$Res>  {
   factory $MigrationDataCopyWith(MigrationData value, $Res Function(MigrationData) _then) = _$MigrationDataCopyWithImpl;
 @useResult
 $Res call({
- Map<String, Object?>? configMap, List<Rule> rules, List<Script> scripts, List<Profile> profiles, List<DisabledRule> disabledRules, List<ProxyGroup> proxyGroups, List<ClashProvider> clashProviders, List<CustomProxy> customProxies, List<ProxyDialer> proxyDialers
+ Map<String, Object?>? configMap, List<Rule> rules, List<Script> scripts, List<Profile> profiles, List<DisabledRule> disabledRules, List<ProxyGroup> proxyGroups, List<ClashProvider> clashProviders, List<CustomProxy> customProxies, List<ProxyDialer> proxyDialers, List<ChainSpec> chains
 });
 
 
@@ -6409,7 +6418,7 @@ class _$MigrationDataCopyWithImpl<$Res>
 
 /// Create a copy of MigrationData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? configMap = freezed,Object? rules = null,Object? scripts = null,Object? profiles = null,Object? disabledRules = null,Object? proxyGroups = null,Object? clashProviders = null,Object? customProxies = null,Object? proxyDialers = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? configMap = freezed,Object? rules = null,Object? scripts = null,Object? profiles = null,Object? disabledRules = null,Object? proxyGroups = null,Object? clashProviders = null,Object? customProxies = null,Object? proxyDialers = null,Object? chains = null,}) {
   return _then(MigrationData(
 configMap: freezed == configMap ? _self.configMap : configMap // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>?,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
@@ -6420,7 +6429,8 @@ as List<DisabledRule>,proxyGroups: null == proxyGroups ? _self.proxyGroups : pro
 as List<ProxyGroup>,clashProviders: null == clashProviders ? _self.clashProviders : clashProviders // ignore: cast_nullable_to_non_nullable
 as List<ClashProvider>,customProxies: null == customProxies ? _self.customProxies : customProxies // ignore: cast_nullable_to_non_nullable
 as List<CustomProxy>,proxyDialers: null == proxyDialers ? _self.proxyDialers : proxyDialers // ignore: cast_nullable_to_non_nullable
-as List<ProxyDialer>,
+as List<ProxyDialer>,chains: null == chains ? _self.chains : chains // ignore: cast_nullable_to_non_nullable
+as List<ChainSpec>,
   ));
 }
 
@@ -6505,10 +6515,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers,  List<ChainSpec> chains)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MigrationData() when $default != null:
-return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers);case _:
+return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers,_that.chains);case _:
   return orElse();
 
 }
@@ -6526,10 +6536,10 @@ return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.d
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers,  List<ChainSpec> chains)  $default,) {final _that = this;
 switch (_that) {
 case _MigrationData():
-return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers);case _:
+return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers,_that.chains);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -6546,10 +6556,10 @@ return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.d
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, Object?>? configMap,  List<Rule> rules,  List<Script> scripts,  List<Profile> profiles,  List<DisabledRule> disabledRules,  List<ProxyGroup> proxyGroups,  List<ClashProvider> clashProviders,  List<CustomProxy> customProxies,  List<ProxyDialer> proxyDialers,  List<ChainSpec> chains)?  $default,) {final _that = this;
 switch (_that) {
 case _MigrationData() when $default != null:
-return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers);case _:
+return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.disabledRules,_that.proxyGroups,_that.clashProviders,_that.customProxies,_that.proxyDialers,_that.chains);case _:
   return null;
 
 }
@@ -6561,7 +6571,7 @@ return $default(_that.configMap,_that.rules,_that.scripts,_that.profiles,_that.d
 
 
 class _MigrationData implements MigrationData {
-  const _MigrationData({ Map<String, Object?>? configMap,  List<Rule> rules = const [],  List<Script> scripts = const [],  List<Profile> profiles = const [],  List<DisabledRule> disabledRules = const [],  List<ProxyGroup> proxyGroups = const [],  List<ClashProvider> clashProviders = const [],  List<CustomProxy> customProxies = const [],  List<ProxyDialer> proxyDialers = const []}): _configMap = configMap,_rules = rules,_scripts = scripts,_profiles = profiles,_disabledRules = disabledRules,_proxyGroups = proxyGroups,_clashProviders = clashProviders,_customProxies = customProxies,_proxyDialers = proxyDialers;
+  const _MigrationData({ Map<String, Object?>? configMap,  List<Rule> rules = const [],  List<Script> scripts = const [],  List<Profile> profiles = const [],  List<DisabledRule> disabledRules = const [],  List<ProxyGroup> proxyGroups = const [],  List<ClashProvider> clashProviders = const [],  List<CustomProxy> customProxies = const [],  List<ProxyDialer> proxyDialers = const [],  List<ChainSpec> chains = const []}): _configMap = configMap,_rules = rules,_scripts = scripts,_profiles = profiles,_disabledRules = disabledRules,_proxyGroups = proxyGroups,_clashProviders = clashProviders,_customProxies = customProxies,_proxyDialers = proxyDialers,_chains = chains;
   
 
  final  Map<String, Object?>? _configMap;
@@ -6629,6 +6639,13 @@ class _MigrationData implements MigrationData {
   return EqualUnmodifiableListView(_proxyDialers);
 }
 
+ final  List<ChainSpec> _chains;
+@override@JsonKey() List<ChainSpec> get chains {
+  if (_chains is EqualUnmodifiableListView) return _chains;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_chains);
+}
+
 
 /// Create a copy of MigrationData
 /// with the given fields replaced by the non-null parameter values.
@@ -6640,18 +6657,18 @@ _$MigrationDataCopyWith<_MigrationData> get copyWith => __$MigrationDataCopyWith
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MigrationData&&const DeepCollectionEquality().equals(other.configMap, _configMap)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.scripts, _scripts)&&const DeepCollectionEquality().equals(other.profiles, _profiles)&&const DeepCollectionEquality().equals(other.disabledRules, _disabledRules)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.clashProviders, _clashProviders)&&const DeepCollectionEquality().equals(other.customProxies, _customProxies)&&const DeepCollectionEquality().equals(other.proxyDialers, _proxyDialers));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MigrationData&&const DeepCollectionEquality().equals(other.configMap, _configMap)&&const DeepCollectionEquality().equals(other.rules, _rules)&&const DeepCollectionEquality().equals(other.scripts, _scripts)&&const DeepCollectionEquality().equals(other.profiles, _profiles)&&const DeepCollectionEquality().equals(other.disabledRules, _disabledRules)&&const DeepCollectionEquality().equals(other.proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other.clashProviders, _clashProviders)&&const DeepCollectionEquality().equals(other.customProxies, _customProxies)&&const DeepCollectionEquality().equals(other.proxyDialers, _proxyDialers)&&const DeepCollectionEquality().equals(other.chains, _chains));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_configMap),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_scripts),const DeepCollectionEquality().hash(_profiles),const DeepCollectionEquality().hash(_disabledRules),const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_clashProviders),const DeepCollectionEquality().hash(_customProxies),const DeepCollectionEquality().hash(_proxyDialers));
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_configMap),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_scripts),const DeepCollectionEquality().hash(_profiles),const DeepCollectionEquality().hash(_disabledRules),const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_clashProviders),const DeepCollectionEquality().hash(_customProxies),const DeepCollectionEquality().hash(_proxyDialers),const DeepCollectionEquality().hash(_chains));
 }
 
 @override
 String toString() {
-    return 'MigrationData(configMap: $configMap, rules: $rules, scripts: $scripts, profiles: $profiles, disabledRules: $disabledRules, proxyGroups: $proxyGroups, clashProviders: $clashProviders, customProxies: $customProxies, proxyDialers: $proxyDialers)';
+    return 'MigrationData(configMap: $configMap, rules: $rules, scripts: $scripts, profiles: $profiles, disabledRules: $disabledRules, proxyGroups: $proxyGroups, clashProviders: $clashProviders, customProxies: $customProxies, proxyDialers: $proxyDialers, chains: $chains)';
 }
 
 
@@ -6662,7 +6679,7 @@ abstract mixin class _$MigrationDataCopyWith<$Res> implements $MigrationDataCopy
   factory _$MigrationDataCopyWith(_MigrationData value, $Res Function(_MigrationData) _then) = __$MigrationDataCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, Object?>? configMap, List<Rule> rules, List<Script> scripts, List<Profile> profiles, List<DisabledRule> disabledRules, List<ProxyGroup> proxyGroups, List<ClashProvider> clashProviders, List<CustomProxy> customProxies, List<ProxyDialer> proxyDialers
+ Map<String, Object?>? configMap, List<Rule> rules, List<Script> scripts, List<Profile> profiles, List<DisabledRule> disabledRules, List<ProxyGroup> proxyGroups, List<ClashProvider> clashProviders, List<CustomProxy> customProxies, List<ProxyDialer> proxyDialers, List<ChainSpec> chains
 });
 
 
@@ -6679,7 +6696,7 @@ class __$MigrationDataCopyWithImpl<$Res>
 
 /// Create a copy of MigrationData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? configMap = freezed,Object? rules = null,Object? scripts = null,Object? profiles = null,Object? disabledRules = null,Object? proxyGroups = null,Object? clashProviders = null,Object? customProxies = null,Object? proxyDialers = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? configMap = freezed,Object? rules = null,Object? scripts = null,Object? profiles = null,Object? disabledRules = null,Object? proxyGroups = null,Object? clashProviders = null,Object? customProxies = null,Object? proxyDialers = null,Object? chains = null,}) {
   return _then(_MigrationData(
 configMap: freezed == configMap ? _self._configMap : configMap // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>?,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
@@ -6690,7 +6707,8 @@ as List<DisabledRule>,proxyGroups: null == proxyGroups ? _self._proxyGroups : pr
 as List<ProxyGroup>,clashProviders: null == clashProviders ? _self._clashProviders : clashProviders // ignore: cast_nullable_to_non_nullable
 as List<ClashProvider>,customProxies: null == customProxies ? _self._customProxies : customProxies // ignore: cast_nullable_to_non_nullable
 as List<CustomProxy>,proxyDialers: null == proxyDialers ? _self._proxyDialers : proxyDialers // ignore: cast_nullable_to_non_nullable
-as List<ProxyDialer>,
+as List<ProxyDialer>,chains: null == chains ? _self._chains : chains // ignore: cast_nullable_to_non_nullable
+as List<ChainSpec>,
   ));
 }
 

@@ -1002,6 +1002,450 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
   }
 }
 
+class $ChainsTable extends Chains with TableInfo<$ChainsTable, RawChain> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChainsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<List<String>, String> hops =
+      GeneratedColumn<String>(
+        'hops',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<List<String>>($ChainsTable.$converterhops);
+  static const VerificationMeta _targetGroupMeta = const VerificationMeta(
+    'targetGroup',
+  );
+  @override
+  late final GeneratedColumn<String> targetGroup = GeneratedColumn<String>(
+    'target_group',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _offeredMeta = const VerificationMeta(
+    'offered',
+  );
+  @override
+  late final GeneratedColumn<bool> offered = GeneratedColumn<bool>(
+    'offered',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("offered" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _healMeta = const VerificationMeta('heal');
+  @override
+  late final GeneratedColumn<bool> heal = GeneratedColumn<bool>(
+    'heal',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("heal" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<int> order = GeneratedColumn<int>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    hops,
+    targetGroup,
+    offered,
+    heal,
+    order,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'chains';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawChain> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('target_group')) {
+      context.handle(
+        _targetGroupMeta,
+        targetGroup.isAcceptableOrUnknown(
+          data['target_group']!,
+          _targetGroupMeta,
+        ),
+      );
+    }
+    if (data.containsKey('offered')) {
+      context.handle(
+        _offeredMeta,
+        offered.isAcceptableOrUnknown(data['offered']!, _offeredMeta),
+      );
+    }
+    if (data.containsKey('heal')) {
+      context.handle(
+        _healMeta,
+        heal.isAcceptableOrUnknown(data['heal']!, _healMeta),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawChain map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawChain(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      hops: $ChainsTable.$converterhops.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hops'],
+        )!,
+      ),
+      targetGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_group'],
+      ),
+      offered: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}offered'],
+      )!,
+      heal: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}heal'],
+      )!,
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
+      ),
+    );
+  }
+
+  @override
+  $ChainsTable createAlias(String alias) {
+    return $ChainsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<List<String>, String> $converterhops =
+      const StringListConverter();
+}
+
+class RawChain extends DataClass implements Insertable<RawChain> {
+  final int id;
+  final String name;
+  final List<String> hops;
+  final String? targetGroup;
+  final bool offered;
+  final bool heal;
+  final int? order;
+  const RawChain({
+    required this.id,
+    required this.name,
+    required this.hops,
+    this.targetGroup,
+    required this.offered,
+    required this.heal,
+    this.order,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    {
+      map['hops'] = Variable<String>($ChainsTable.$converterhops.toSql(hops));
+    }
+    if (!nullToAbsent || targetGroup != null) {
+      map['target_group'] = Variable<String>(targetGroup);
+    }
+    map['offered'] = Variable<bool>(offered);
+    map['heal'] = Variable<bool>(heal);
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<int>(order);
+    }
+    return map;
+  }
+
+  ChainsCompanion toCompanion(bool nullToAbsent) {
+    return ChainsCompanion(
+      id: Value(id),
+      name: Value(name),
+      hops: Value(hops),
+      targetGroup: targetGroup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetGroup),
+      offered: Value(offered),
+      heal: Value(heal),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+    );
+  }
+
+  factory RawChain.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawChain(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      hops: serializer.fromJson<List<String>>(json['hops']),
+      targetGroup: serializer.fromJson<String?>(json['targetGroup']),
+      offered: serializer.fromJson<bool>(json['offered']),
+      heal: serializer.fromJson<bool>(json['heal']),
+      order: serializer.fromJson<int?>(json['order']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'hops': serializer.toJson<List<String>>(hops),
+      'targetGroup': serializer.toJson<String?>(targetGroup),
+      'offered': serializer.toJson<bool>(offered),
+      'heal': serializer.toJson<bool>(heal),
+      'order': serializer.toJson<int?>(order),
+    };
+  }
+
+  RawChain copyWith({
+    int? id,
+    String? name,
+    List<String>? hops,
+    Value<String?> targetGroup = const Value.absent(),
+    bool? offered,
+    bool? heal,
+    Value<int?> order = const Value.absent(),
+  }) => RawChain(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    hops: hops ?? this.hops,
+    targetGroup: targetGroup.present ? targetGroup.value : this.targetGroup,
+    offered: offered ?? this.offered,
+    heal: heal ?? this.heal,
+    order: order.present ? order.value : this.order,
+  );
+  RawChain copyWithCompanion(ChainsCompanion data) {
+    return RawChain(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      hops: data.hops.present ? data.hops.value : this.hops,
+      targetGroup: data.targetGroup.present
+          ? data.targetGroup.value
+          : this.targetGroup,
+      offered: data.offered.present ? data.offered.value : this.offered,
+      heal: data.heal.present ? data.heal.value : this.heal,
+      order: data.order.present ? data.order.value : this.order,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawChain(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('hops: $hops, ')
+          ..write('targetGroup: $targetGroup, ')
+          ..write('offered: $offered, ')
+          ..write('heal: $heal, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, hops, targetGroup, offered, heal, order);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawChain &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.hops == this.hops &&
+          other.targetGroup == this.targetGroup &&
+          other.offered == this.offered &&
+          other.heal == this.heal &&
+          other.order == this.order);
+}
+
+class ChainsCompanion extends UpdateCompanion<RawChain> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<List<String>> hops;
+  final Value<String?> targetGroup;
+  final Value<bool> offered;
+  final Value<bool> heal;
+  final Value<int?> order;
+  const ChainsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.hops = const Value.absent(),
+    this.targetGroup = const Value.absent(),
+    this.offered = const Value.absent(),
+    this.heal = const Value.absent(),
+    this.order = const Value.absent(),
+  });
+  ChainsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required List<String> hops,
+    this.targetGroup = const Value.absent(),
+    this.offered = const Value.absent(),
+    this.heal = const Value.absent(),
+    this.order = const Value.absent(),
+  }) : name = Value(name),
+       hops = Value(hops);
+  static Insertable<RawChain> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? hops,
+    Expression<String>? targetGroup,
+    Expression<bool>? offered,
+    Expression<bool>? heal,
+    Expression<int>? order,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (hops != null) 'hops': hops,
+      if (targetGroup != null) 'target_group': targetGroup,
+      if (offered != null) 'offered': offered,
+      if (heal != null) 'heal': heal,
+      if (order != null) 'order': order,
+    });
+  }
+
+  ChainsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<List<String>>? hops,
+    Value<String?>? targetGroup,
+    Value<bool>? offered,
+    Value<bool>? heal,
+    Value<int?>? order,
+  }) {
+    return ChainsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      hops: hops ?? this.hops,
+      targetGroup: targetGroup ?? this.targetGroup,
+      offered: offered ?? this.offered,
+      heal: heal ?? this.heal,
+      order: order ?? this.order,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (hops.present) {
+      map['hops'] = Variable<String>(
+        $ChainsTable.$converterhops.toSql(hops.value),
+      );
+    }
+    if (targetGroup.present) {
+      map['target_group'] = Variable<String>(targetGroup.value);
+    }
+    if (offered.present) {
+      map['offered'] = Variable<bool>(offered.value);
+    }
+    if (heal.present) {
+      map['heal'] = Variable<bool>(heal.value);
+    }
+    if (order.present) {
+      map['order'] = Variable<int>(order.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChainsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('hops: $hops, ')
+          ..write('targetGroup: $targetGroup, ')
+          ..write('offered: $offered, ')
+          ..write('heal: $heal, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ScriptsTable extends Scripts with TableInfo<$ScriptsTable, RawScript> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -5846,6 +6290,7 @@ abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
   late final $ProfilesTable profiles = $ProfilesTable(this);
+  late final $ChainsTable chains = $ChainsTable(this);
   late final $ScriptsTable scripts = $ScriptsTable(this);
   late final $RulesTable rules = $RulesTable(this);
   late final $DisabledRulesTable disabledRules = $DisabledRulesTable(this);
@@ -5878,6 +6323,7 @@ abstract class _$Database extends GeneratedDatabase {
     'CREATE INDEX last_accessed_url ON icon_records (last_accessed, url)',
   );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
+  late final ChainsDao chainsDao = ChainsDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
   late final RulesDao rulesDao = RulesDao(this as Database);
   late final ProxyGroupsDao proxyGroupsDao = ProxyGroupsDao(this as Database);
@@ -5908,6 +6354,7 @@ abstract class _$Database extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     profiles,
+    chains,
     scripts,
     rules,
     disabledRules,
@@ -6819,6 +7266,242 @@ typedef $$ProfilesTableProcessedTableManager =
         bool proxyGroupsRefs,
         bool proxyDialersRefs,
       })
+    >;
+typedef $$ChainsTableCreateCompanionBuilder =
+    ChainsCompanion Function({
+      Value<int> id,
+      required String name,
+      required List<String> hops,
+      Value<String?> targetGroup,
+      Value<bool> offered,
+      Value<bool> heal,
+      Value<int?> order,
+    });
+typedef $$ChainsTableUpdateCompanionBuilder =
+    ChainsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<List<String>> hops,
+      Value<String?> targetGroup,
+      Value<bool> offered,
+      Value<bool> heal,
+      Value<int?> order,
+    });
+
+class $$ChainsTableFilterComposer extends Composer<_$Database, $ChainsTable> {
+  $$ChainsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<List<String>, List<String>, String> get hops =>
+      $composableBuilder(
+        column: $table.hops,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get targetGroup => $composableBuilder(
+    column: $table.targetGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get offered => $composableBuilder(
+    column: $table.offered,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get heal => $composableBuilder(
+    column: $table.heal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ChainsTableOrderingComposer extends Composer<_$Database, $ChainsTable> {
+  $$ChainsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hops => $composableBuilder(
+    column: $table.hops,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetGroup => $composableBuilder(
+    column: $table.targetGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get offered => $composableBuilder(
+    column: $table.offered,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get heal => $composableBuilder(
+    column: $table.heal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChainsTableAnnotationComposer
+    extends Composer<_$Database, $ChainsTable> {
+  $$ChainsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<String>, String> get hops =>
+      $composableBuilder(column: $table.hops, builder: (column) => column);
+
+  GeneratedColumn<String> get targetGroup => $composableBuilder(
+    column: $table.targetGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get offered =>
+      $composableBuilder(column: $table.offered, builder: (column) => column);
+
+  GeneratedColumn<bool> get heal =>
+      $composableBuilder(column: $table.heal, builder: (column) => column);
+
+  GeneratedColumn<int> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+}
+
+class $$ChainsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $ChainsTable,
+          RawChain,
+          $$ChainsTableFilterComposer,
+          $$ChainsTableOrderingComposer,
+          $$ChainsTableAnnotationComposer,
+          $$ChainsTableCreateCompanionBuilder,
+          $$ChainsTableUpdateCompanionBuilder,
+          (RawChain, BaseReferences<_$Database, $ChainsTable, RawChain>),
+          RawChain,
+          PrefetchHooks Function()
+        > {
+  $$ChainsTableTableManager(_$Database db, $ChainsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChainsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChainsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChainsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<List<String>> hops = const Value.absent(),
+                Value<String?> targetGroup = const Value.absent(),
+                Value<bool> offered = const Value.absent(),
+                Value<bool> heal = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => ChainsCompanion(
+                id: id,
+                name: name,
+                hops: hops,
+                targetGroup: targetGroup,
+                offered: offered,
+                heal: heal,
+                order: order,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required List<String> hops,
+                Value<String?> targetGroup = const Value.absent(),
+                Value<bool> offered = const Value.absent(),
+                Value<bool> heal = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => ChainsCompanion.insert(
+                id: id,
+                name: name,
+                hops: hops,
+                targetGroup: targetGroup,
+                offered: offered,
+                heal: heal,
+                order: order,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChainsTable, RawChain>(table),
+                  BaseReferences<_$Database, $ChainsTable, RawChain>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ChainsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $ChainsTable,
+      RawChain,
+      $$ChainsTableFilterComposer,
+      $$ChainsTableOrderingComposer,
+      $$ChainsTableAnnotationComposer,
+      $$ChainsTableCreateCompanionBuilder,
+      $$ChainsTableUpdateCompanionBuilder,
+      (RawChain, BaseReferences<_$Database, $ChainsTable, RawChain>),
+      RawChain,
+      PrefetchHooks Function()
     >;
 typedef $$ScriptsTableCreateCompanionBuilder =
     ScriptsCompanion Function({
@@ -10392,6 +11075,8 @@ class $DatabaseManager {
   $DatabaseManager(this._db);
   $$ProfilesTableTableManager get profiles =>
       $$ProfilesTableTableManager(_db, _db.profiles);
+  $$ChainsTableTableManager get chains =>
+      $$ChainsTableTableManager(_db, _db.chains);
   $$ScriptsTableTableManager get scripts =>
       $$ScriptsTableTableManager(_db, _db.scripts);
   $$RulesTableTableManager get rules =>
@@ -10430,6 +11115,18 @@ class ProfilesDaoManager {
   ProfilesDaoManager(this._db);
   $$ProfilesTableTableManager get profiles =>
       $$ProfilesTableTableManager(_db.attachedDatabase, _db.profiles);
+}
+
+mixin _$ChainsDaoMixin on DatabaseAccessor<Database> {
+  $ChainsTable get chains => attachedDatabase.chains;
+  ChainsDaoManager get managers => ChainsDaoManager(this);
+}
+
+class ChainsDaoManager {
+  final _$ChainsDaoMixin _db;
+  ChainsDaoManager(this._db);
+  $$ChainsTableTableManager get chains =>
+      $$ChainsTableTableManager(_db.attachedDatabase, _db.chains);
 }
 
 mixin _$ScriptsDaoMixin on DatabaseAccessor<Database> {

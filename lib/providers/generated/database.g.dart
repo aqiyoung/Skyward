@@ -228,6 +228,50 @@ abstract class _$ClashProviders extends $StreamNotifier<List<ClashProvider>> {
   }
 }
 
+@ProviderFor(Chains)
+final chainsProvider = ChainsProvider._();
+
+final class ChainsProvider
+    extends $StreamNotifierProvider<Chains, List<ChainSpec>> {
+  ChainsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'chainsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chainsHash();
+
+  @$internal
+  @override
+  Chains create() => Chains();
+}
+
+String _$chainsHash() => r'e9fe71da4b744e4ca5527877610161db5a1e04b8';
+
+abstract class _$Chains extends $StreamNotifier<List<ChainSpec>> {
+  Stream<List<ChainSpec>> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<ChainSpec>>, List<ChainSpec>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<ChainSpec>>, List<ChainSpec>>,
+              AsyncValue<List<ChainSpec>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(IconSets)
 final iconSetsProvider = IconSetsProvider._();
 

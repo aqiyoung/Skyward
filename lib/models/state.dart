@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'app.dart';
+import 'chain.dart';
 import 'clash_config.dart';
 import 'common.dart';
 import 'core.dart';
@@ -245,6 +246,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,
     required List<Rule> addedRules,
+    @Default([]) List<ChainSpec> chains,
     required String defaultUA,
     @Default([]) List<String> authentication,
     @Default({}) Map<String, dynamic> injectedProxyProviders,
@@ -270,6 +272,7 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<ClashProvider> clashProviders,
     @Default([]) List<CustomProxy> customProxies,
     @Default([]) List<ProxyDialer> proxyDialers,
+    @Default([]) List<ChainSpec> chains,
   }) = _MigrationData;
 }
 

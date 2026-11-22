@@ -284,7 +284,7 @@ final class TrafficStatisticsProvider
   }
 }
 
-String _$trafficStatisticsHash() => r'e517e02f40bc12633c5ed6cc9da548477755667e';
+String _$trafficStatisticsHash() => r'c31220d9ae53c99c83d65455dccd13a727b86890';
 
 /// Loads history for the selected period and aggregates it off-isolate.
 
@@ -367,7 +367,7 @@ final class AppUsageProvider
   }
 }
 
-String _$appUsageHash() => r'5447bbeb17fcbb0839cb59356de2fadae9693096';
+String _$appUsageHash() => r'2c657ff5209880ce8cbbd74c34903d1a01a91b15';
 
 /// Per-app traffic for one usage period, with installed-app labels resolved.
 
