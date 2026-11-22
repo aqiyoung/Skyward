@@ -213,7 +213,7 @@ class _OverviewCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(20),
       ),
       child: Column(
@@ -398,7 +398,7 @@ class _TrendCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(20),
       ),
       child: Column(
@@ -505,7 +505,7 @@ class _RuleHits extends StatelessWidget {
     final top = hits.first;
     return Container(
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(20),
       ),
       child: Column(
@@ -685,7 +685,7 @@ class _Ranking extends StatelessWidget {
     );
     return Container(
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(20),
       ),
       child: Column(

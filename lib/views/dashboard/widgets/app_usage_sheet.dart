@@ -135,7 +135,7 @@ class _TotalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(20),
       ),
       child: Column(
@@ -177,7 +177,7 @@ class _AppRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
+        color: SurfaceLevel.card.colorOf(cs),
         shape: AppShape.all(16),
       ),
       child: Column(
