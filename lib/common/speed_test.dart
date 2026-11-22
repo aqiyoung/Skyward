@@ -6,55 +6,67 @@ import 'dart:typed_data';
 enum SpeedPhase { download, upload, latency }
 
 /// One finished measurement. Speeds are in megabits per second, delay in
-/// milliseconds. [service] names the endpoint set the numbers came from.
+/// milliseconds. A stage the chosen provider does not offer reads as null.
 class SpeedResult {
   const SpeedResult({
     required this.service,
-    required this.downloadMbps,
-    required this.uploadMbps,
-    required this.latencyMs,
-    required this.downloadBytes,
-    required this.uploadBytes,
+    this.downloadMbps,
+    this.uploadMbps,
+    this.latencyMs,
+    this.downloadBytes = 0,
+    this.uploadBytes = 0,
   });
 
   final String service;
-  final double downloadMbps;
-  final double uploadMbps;
-  final int latencyMs;
+  final double? downloadMbps;
+  final double? uploadMbps;
+  final int? latencyMs;
   final int downloadBytes;
   final int uploadBytes;
 }
 
-/// A set of endpoints from one provider. Any provider that speaks the common
-/// "download N bytes / accept an upload / answer a ping" shape can be plugged
-/// in; Cloudflare is just the default.
+/// A set of endpoints from one provider. Only [download] is required; a
+/// provider that cannot measure upload or latency simply leaves those null,
+/// and the page shows a dash there. New providers are added to
+/// [speedTestEndpoints] and need no other change.
 class SpeedTestEndpoint {
   const SpeedTestEndpoint({
     required this.name,
     required this.download,
-    required this.upload,
-    required this.ping,
+    this.upload,
+    this.ping,
     this.downloadBytes = 10 * 1024 * 1024,
     this.uploadBytes = 2 * 1024 * 1024,
   });
 
   final String name;
   final Uri Function(int bytes) download;
-  final Uri upload;
-  final Uri ping;
+  final Uri? upload;
+  final Uri? ping;
   final int downloadBytes;
   final int uploadBytes;
 }
 
 final speedTestCloudflare = SpeedTestEndpoint(
   name: 'Cloudflare',
-  download: _cloudflareDownload,
+  download: (bytes) =>
+      Uri.https('speed.cloudflare.com', '/__down', {'bytes': '$bytes'}),
   upload: Uri.https('speed.cloudflare.com', '/__up'),
   ping: Uri.https('speed.cloudflare.com', '/__down', {'bytes': '0'}),
 );
 
-Uri _cloudflareDownload(int bytes) =>
-    Uri.https('speed.cloudflare.com', '/__down', {'bytes': '$bytes'});
+final speedTestOvh = SpeedTestEndpoint(
+  name: 'OVH',
+  download: (bytes) =>
+      Uri.https('proof.ovh.net', '/files/${bytes ~/ (1024 * 1024)}Mb.dat'),
+  downloadBytes: 10 * 1024 * 1024,
+);
+
+/// The providers offered in the page picker, in display order.
+final speedTestEndpoints = <SpeedTestEndpoint>[
+  speedTestCloudflare,
+  speedTestOvh,
+];
 
 /// Downloads and uploads measured byte streams through the app's proxy and
 /// reports the throughput. The proxy finder is injected so this stays pure
@@ -64,9 +76,9 @@ class SpeedTestService {
     required String Function(Uri url) findProxy,
     HttpClient Function()? clientFactory,
     SpeedTestEndpoint? endpoint,
-  })  : _findProxy = findProxy,
-        _clientFactory = clientFactory ?? HttpClient.new,
-        endpoint = endpoint ?? speedTestCloudflare;
+  }) : _findProxy = findProxy,
+       _clientFactory = clientFactory ?? HttpClient.new,
+       endpoint = endpoint ?? speedTestCloudflare;
 
   final String Function(Uri url) _findProxy;
   final HttpClient Function() _clientFactory;
@@ -86,15 +98,17 @@ class SpeedTestService {
   }) async {
     try {
       final downloadMbps = await _download(onProgress);
-      final uploadMbps = await _upload(onProgress);
-      final latencyMs = await _latency();
+      final uploadMbps = endpoint.upload != null
+          ? await _upload(onProgress)
+          : null;
+      final latencyMs = endpoint.ping != null ? await _latency() : null;
       return SpeedResult(
         service: endpoint.name,
         downloadMbps: downloadMbps,
         uploadMbps: uploadMbps,
         latencyMs: latencyMs,
         downloadBytes: endpoint.downloadBytes,
-        uploadBytes: endpoint.uploadBytes,
+        uploadBytes: endpoint.upload != null ? endpoint.uploadBytes : 0,
       );
     } finally {
       clientClose();
@@ -121,7 +135,9 @@ class SpeedTestService {
     void Function(SpeedPhase, double)? onProgress,
   ) async {
     final client = _trackedClient();
-    final request = await client.getUrl(endpoint.download(endpoint.downloadBytes));
+    final request = await client.getUrl(
+      endpoint.download(endpoint.downloadBytes),
+    );
     final response = await request.close();
     if (response.statusCode != HttpStatus.ok) {
       await response.drain();
@@ -147,11 +163,9 @@ class SpeedTestService {
     return received * 8 / sw.elapsedMicroseconds * 1e6;
   }
 
-  Future<double> _upload(
-    void Function(SpeedPhase, double)? onProgress,
-  ) async {
+  Future<double> _upload(void Function(SpeedPhase, double)? onProgress) async {
     final client = _trackedClient();
-    final request = await client.postUrl(endpoint.upload);
+    final request = await client.postUrl(endpoint.upload!);
     request.contentLength = endpoint.uploadBytes;
     const chunkSize = 64 * 1024;
     final chunk = Uint8List(chunkSize);
@@ -183,7 +197,7 @@ class SpeedTestService {
     for (var i = 0; i < samples; i++) {
       final client = _trackedClient();
       final sw = Stopwatch()..start();
-      final request = await client.getUrl(endpoint.ping);
+      final request = await client.getUrl(endpoint.ping!);
       final response = await request.close();
       await response.drain();
       sw.stop();

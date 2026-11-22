@@ -64,8 +64,20 @@ final speedProgressProvider = NotifierProvider<_SpeedProgress, double>(
   _SpeedProgress.new,
 );
 
+class _SelectedProvider extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void select(int index) => state = index;
+}
+
+final speedProviderProvider = NotifierProvider<_SelectedProvider, int>(
+  _SelectedProvider.new,
+);
+
 class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   SpeedTestService? _service;
+  int? _serviceIndex;
 
   @override
   void dispose() {
@@ -74,10 +86,17 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   }
 
   SpeedTestService _serviceOf() {
-    return _service ??= SpeedTestService(
-      findProxy: (uri) =>
-          SkywardHttpOverrides.findProxyForReader(ref.read, uri),
-    );
+    final index = ref.read(speedProviderProvider);
+    if (_service == null || _serviceIndex != index) {
+      _service?.clientClose();
+      _serviceIndex = index;
+      _service = SpeedTestService(
+        findProxy: (uri) =>
+            SkywardHttpOverrides.findProxyForReader(ref.read, uri),
+        endpoint: speedTestEndpoints[index],
+      );
+    }
+    return _service!;
   }
 
   Future<void> _start() async {
@@ -120,11 +139,15 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
     final body = ListView(
       padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + context.bottomInset),
       children: [
+        _ProviderPicker(selected: ref.watch(speedProviderProvider)),
+        const SizedBox(height: 8),
         _Gauge(
           progress: progress,
           phase: phase,
           result: run.result,
           state: run.state,
+          providerName:
+              speedTestEndpoints[ref.read(speedProviderProvider)].name,
         ),
         const SizedBox(height: 20),
         _StartButton(state: run.state, onStart: _start, onStop: _stop),
@@ -169,12 +192,14 @@ class _Gauge extends StatelessWidget {
     required this.phase,
     required this.result,
     required this.state,
+    required this.providerName,
   });
 
   final double progress;
   final SpeedPhase? phase;
   final SpeedResult? result;
   final _RunState state;
+  final String providerName;
 
   @override
   Widget build(BuildContext context) {
@@ -242,7 +267,7 @@ class _Gauge extends StatelessWidget {
           ),
         ),
         Text(
-          result?.service ?? 'Cloudflare',
+          result?.service ?? providerName,
           style: AppTextStyle.footnote
               .of(context)
               .copyWith(color: scheme.onSurfaceVariant),
@@ -412,13 +437,14 @@ class _Metrics extends StatelessWidget {
         .of(context)
         .copyWith(color: scheme.onSurfaceVariant);
     const dash = '—';
-    final download = state == _RunState.done && result != null
-        ? result!.downloadMbps.toStringAsFixed(1)
+    final done = state == _RunState.done && result != null;
+    final download = done && result!.downloadMbps != null
+        ? result!.downloadMbps!.toStringAsFixed(1)
         : dash;
-    final upload = state == _RunState.done && result != null
-        ? result!.uploadMbps.toStringAsFixed(1)
+    final upload = done && result!.uploadMbps != null
+        ? result!.uploadMbps!.toStringAsFixed(1)
         : dash;
-    final latency = state == _RunState.done && result != null
+    final latency = done && result!.latencyMs != null
         ? '${result!.latencyMs}'
         : dash;
 
@@ -486,6 +512,58 @@ class _Metrics extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(unit, style: labelStyle),
+      ],
+    );
+  }
+}
+
+/// A row of tappable service names. The chosen provider's endpoints decide
+/// which stages run, so switching also clears any previous result.
+class _ProviderPicker extends ConsumerWidget {
+  const _ProviderPicker({required this.selected});
+
+  final int selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = context.colorScheme;
+    return Row(
+      spacing: 8,
+      children: [
+        for (var i = 0; i < speedTestEndpoints.length; i++)
+          Semantics(
+            button: true,
+            selected: i == selected,
+            child: GestureDetector(
+              onTap: () {
+                if (i == selected) return;
+                ref.read(speedProviderProvider.notifier).select(i);
+                ref.read(speedRunProvider.notifier).idle();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: ShapeDecoration(
+                  color: i == selected
+                      ? scheme.primaryContainer
+                      : scheme.surfaceContainerLow,
+                  shape: AppShape.all(18),
+                ),
+                child: Text(
+                  speedTestEndpoints[i].name,
+                  style: AppTextStyle.footnote
+                      .of(context)
+                      .copyWith(
+                        color: i == selected
+                            ? scheme.onPrimaryContainer
+                            : scheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
