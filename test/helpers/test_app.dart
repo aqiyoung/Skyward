@@ -58,9 +58,10 @@ class TestApp extends StatelessWidget {
       },
       home: homeBuilder(child),
     );
-    return overrides.isNotEmpty || wrapInProviderScope
+    final scoped = overrides.isNotEmpty || wrapInProviderScope
         ? ProviderScope(overrides: overrides, child: app)
         : app;
+    return MediaQuery(data: const MediaQueryData(disableAnimations: true), child: scoped);
   }
 }
 

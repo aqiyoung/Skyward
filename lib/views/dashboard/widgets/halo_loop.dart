@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:skyward/ui/ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A pulsing halo around a circular control, drawn from its own loop.
 class RunningHalo extends StatefulWidget {
@@ -23,9 +24,13 @@ class _RunningHaloState extends State<RunningHalo>
   );
 
   @override
-  void initState() {
-    super.initState();
-    _loop.repeat();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (context.disableAnimations) {
+      _loop.stop();
+    } else if (!_loop.isAnimating) {
+      _loop.repeat();
+    }
   }
 
   @override
@@ -39,13 +44,12 @@ class _RunningHaloState extends State<RunningHalo>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _loop,
-      builder: (_, __) => CustomPaint(
+      builder: (_, _) => CustomPaint(
         painter: _HaloPainter(
           value: _loop.value,
           size: widget.size,
           color: widget.color,
         ),
-        child: SizedBox.expand(),
       ),
     );
   }
