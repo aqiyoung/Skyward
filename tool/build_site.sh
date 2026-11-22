@@ -81,6 +81,10 @@ else
   cp "$root/CHANGELOG.md" "$out/CHANGELOG.md"
 fi
 
+# Every data-i18n key and every t() call must resolve in both languages; a typo
+# otherwise renders as the bare key on the page.
+node "$root/tool/check_i18n.cjs"
+
 # Canonical URLs in the rendered pages follow wherever the site is built: an
 # explicit SITE_URL wins, then Vercel's own build-time host, then GitHub Pages.
 if [[ -z "${SITE_URL:-}" && -n "${VERCEL_URL:-}" ]]; then

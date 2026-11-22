@@ -5,7 +5,8 @@
 
 const { REPO, STRINGS, parseChangelog, translate } = globalThis.SkywardSite;
 
-const SITE = new URL('.', document.baseURI).href;
+// Data files live at the site root; the zh page is one directory down.
+const SITE = new URL(document.documentElement.dataset.base || '.', document.baseURI).href;
 const PLATFORMS = ['windows', 'macos', 'linux', 'android'];
 const OS_NAMES = { windows: 'Windows', macos: 'macOS', linux: 'Linux', android: 'Android' };
 const OS_SHORT = { windows: 'W', macos: 'M', linux: 'L', android: 'A' };
@@ -45,25 +46,25 @@ function buildsFor(platform, arch) {
   switch (platform) {
     case 'android':
       return [
-        { id: 'android-arm64-v8a.apk', kind: 'APK', title: 'arm64-v8a', note: 'noteAndroidArm64', rec: true },
-        { id: 'android-armeabi-v7a.apk', kind: 'APK', title: 'armeabi-v7a', note: 'noteAndroidArm32' },
-        { id: 'android-x86_64.apk', kind: 'APK', title: 'x86_64', note: 'noteAndroidX64' },
+        { id: 'android-arm64-v8a.apk', kind: 'APK', label: 'arm64-v8a', note: 'noteAndroidArm64', rec: true },
+        { id: 'android-armeabi-v7a.apk', kind: 'APK', label: 'armeabi-v7a', note: 'noteAndroidArm32' },
+        { id: 'android-x86_64.apk', kind: 'APK', label: 'x86_64', note: 'noteAndroidX64' },
       ];
     case 'windows':
       return [
-        { id: `windows-${goArch(arch)}-setup.exe`, kind: 'Installer', titleKey: 'winSetup', note: 'noteWinSetup', rec: true },
-        { id: `windows-${goArch(arch)}.zip`, kind: 'Portable ZIP', titleKey: 'winPortable', note: 'noteWinPortable' },
+        { id: `windows-${goArch(arch)}-setup.exe`, kind: 'Installer', label: t('winSetup'), note: 'noteWinSetup', rec: true },
+        { id: `windows-${goArch(arch)}.zip`, kind: 'Portable ZIP', label: t('winPortable'), note: 'noteWinPortable' },
       ];
     case 'macos':
       return [
-        { id: 'macos-arm64.dmg', kind: 'DMG', title: 'Apple Silicon', note: 'noteMacArm', rec: arch === 'arm64' },
-        { id: 'macos-amd64.dmg', kind: 'DMG', title: 'Intel', note: 'noteMacIntel', rec: arch !== 'arm64' },
+        { id: 'macos-arm64.dmg', kind: 'DMG', label: 'Apple Silicon', note: 'noteMacArm', rec: arch === 'arm64' },
+        { id: 'macos-amd64.dmg', kind: 'DMG', label: 'Intel', note: 'noteMacIntel', rec: arch !== 'arm64' },
       ];
     case 'linux':
       return [
-        { id: `linux-${goArch(arch)}.deb`, kind: 'DEB', title: 'Debian / Ubuntu', arch: '.deb', note: 'noteDeb', rec: true },
-        { id: `linux-${goArch(arch)}.rpm`, kind: 'RPM', title: 'Fedora / openSUSE', arch: '.rpm', note: 'noteRpm' },
-        { id: `linux-${goArch(arch)}.AppImage`, kind: 'AppImage', title: 'AppImage', note: 'noteAppImage' },
+        { id: `linux-${goArch(arch)}.deb`, kind: 'DEB', label: 'DEB', note: 'noteDeb', rec: true },
+        { id: `linux-${goArch(arch)}.rpm`, kind: 'RPM', label: 'RPM', note: 'noteRpm' },
+        { id: `linux-${goArch(arch)}.AppImage`, kind: 'AppImage', label: 'AppImage', note: 'noteAppImage' },
       ];
     default:
       return [];
@@ -161,6 +162,7 @@ function renderRelease(feed) {
         type: 'button',
         text: OS_NAMES[os],
         'data-os': os,
+        'data-mg': '',
         'aria-pressed': String(state.platform === os),
         onclick: () => {
           state.platform = os;
@@ -169,8 +171,38 @@ function renderRelease(feed) {
       }),
     ),
   );
+  // Their stylesheet gives the pressed label a dark colour and expects a light
+  // plate behind it, drawn by the motion runtime. Without one the selected
+  // platform is dark-on-dark, so the plate is drawn here.
+  placeTabIndicator(true);
 
   renderAssets(feed);
+}
+
+function placeTabIndicator(instant = false) {
+  const seg = $('platform-seg');
+  if (!seg) return;
+  let indicator = seg.querySelector('.mg-ind');
+  if (!indicator) {
+    indicator = el('span', { class: 'mg-ind', 'aria-hidden': 'true' });
+    seg.prepend(indicator);
+  }
+  const active = seg.querySelector("[aria-pressed='true']") || seg.querySelector('[data-mg]');
+  if (!active) {
+    indicator.style.opacity = '0';
+    return;
+  }
+  const box = seg.getBoundingClientRect();
+  const rect = active.getBoundingClientRect();
+  indicator.style.width = `${rect.width}px`;
+  indicator.style.height = `${rect.height}px`;
+  indicator.style.transform = `translate3d(${rect.left - box.left}px, ${rect.top - box.top}px, 0)`;
+  indicator.style.opacity = '1';
+  for (const button of seg.querySelectorAll('[data-mg]')) {
+    button.classList.toggle('is-mg', button === active);
+  }
+  if (instant) indicator.classList.add('no-anim');
+  requestAnimationFrame(() => indicator && indicator.classList.remove('no-anim'));
 }
 
 function renderAssets(feed) {
@@ -222,6 +254,40 @@ function extrasFor(platform) {
   return [];
 }
 
+function notesFor(version, level) {
+  const blocks = [];
+  for (const group of version.groups) {
+    if (group.title) blocks.push(el(`h${level}`, { class: 'md-h', text: group.title }));
+    const entries = group.entries.map((entry) => {
+      const li = el('li');
+      if (entry.scope) li.append(el('strong', { text: `${entry.scope} ` }));
+      li.append(document.createTextNode(entry.text));
+      if (entry.id) li.append(el('a', { class: 'tlink', href: `${REPO}/commit/${entry.id}`, text: ` ${entry.id.slice(0, 7)}` }));
+      return li;
+    });
+    if (entries.length) blocks.push(el('ul', { class: 'md-list' }, ...entries));
+  }
+  return blocks;
+}
+
+function toggleRelease(event) {
+  const button = event.currentTarget;
+  const item = button.closest('.cl-item');
+  const panel = item && item.querySelector('.cl-panel');
+  if (!panel) return;
+  const opening = !item.hasAttribute('data-open');
+  const from = panel.getBoundingClientRect().height;
+  item.toggleAttribute('data-open', opening);
+  button.setAttribute('aria-expanded', String(opening));
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !panel.animate) return;
+  const to = opening ? panel.scrollHeight : 0;
+  if (Math.abs(to - from) < 1) return;
+  panel.animate([{ height: `${from}px` }, { height: `${to}px` }], {
+    duration: 420,
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  });
+}
+
 function renderChangelog(versions) {
   const host = $('changelog');
   if (!versions.length) {
@@ -230,35 +296,55 @@ function renderChangelog(versions) {
     return;
   }
   const [first, ...rest] = versions;
-  const groups = (version) =>
-    version.groups
-      .map((group) => el('ul', { class: 'md-list' }, ...group.entries.map((entry) => el('li', { text: entry.text }))))
-      .filter((list) => list.childNodes.length);
+  const dateOf = (version) => (version.date ? formatDate(version.date, state.lang) : '');
+  const isPre = (version) => /beta|alpha|rc/i.test(version.tag);
   host.replaceChildren(
     el(
       'section',
-      { class: 'cl-card' },
+      { class: 'cl-card cl-in' },
       el(
-        'div',
+        'header',
         { class: 'cl-head' },
-        el('span', { class: 'cl-ver', text: first.tag }),
-        el('span', { class: 'badge', text: t('clLatest') }),
-        el('span', { class: 'cl-date', text: first.date || '' }),
+        el('h3', { class: 'cl-ver', text: first.tag }),
+        el('span', { class: 'cl-badge', text: t('clLatest') }),
+        el('time', { class: 'cl-date', text: dateOf(first) }),
         el('a', { class: 'btn btn-ghost btn-s cl-gh', href: `${REPO}/releases/tag/${first.tag}`, text: t('clOnGithub') }),
       ),
-      el('div', { class: 'cl-body md' }, groups(first)),
+      el('div', { class: 'md' }, ...notesFor(first, 4)),
     ),
-    ...rest.map((version) =>
-      el(
-        'details',
-        { class: 'cl-item' },
+    el('h3', { class: 'cl-sub', text: t('clEarlier') }),
+    el(
+      'ul',
+      { class: 'cl-list' },
+      ...rest.map((version, index) =>
         el(
-          'summary',
-          {},
-          el('span', { class: 'cl-v', text: version.tag }),
-          el('span', { class: 'cl-date', text: version.date || '' }),
+          'li',
+          { class: 'cl-item cl-in', style: `--i:${index}` },
+          el(
+            'h4',
+            { class: 'cl-row' },
+            el(
+              'button',
+              {
+                class: 'cl-btn',
+                type: 'button',
+                id: `cl-b-${index}`,
+                'aria-expanded': 'false',
+                'aria-controls': `cl-p-${index}`,
+                onclick: toggleRelease,
+              },
+              el('span', { class: 'cl-v', text: version.tag }),
+              isPre(version) ? el('span', { class: 'cl-badge is-pre', text: t('clPre') }) : null,
+              el('time', { class: 'cl-date', text: dateOf(version) }),
+              el('span', { class: 'pm', 'aria-hidden': 'true' }),
+            ),
+          ),
+          el(
+            'div',
+            { class: 'cl-panel', id: `cl-p-${index}`, role: 'region', 'aria-labelledby': `cl-b-${index}` },
+            el('div', { class: 'cl-body md' }, ...notesFor(version, 5)),
+          ),
         ),
-        el('div', { class: 'cl-body md' }, groups(version)),
       ),
     ),
   );
@@ -281,7 +367,7 @@ function renderCards() {
         { class: 'pcard', style: `--i:${index}` },
         el('h3', { text: OS_NAMES[card.os] }),
         el('span', { class: 'fmt', text: builds.map((build) => build.kind).join(' · ') }),
-        el('div', { class: 'arch' }, ...builds.map((build) => el('span', { text: build.arch || build.title }))),
+        el('div', { class: 'arch' }, ...builds.map((build) => el('span', { text: build.label }))),
         el('p', { text: t(card.body) }),
       );
     }),
@@ -380,8 +466,16 @@ function wire() {
     if (file) verify(file);
   });
 
-  $('copy-unix').addEventListener('click', (event) => copyText($('t-unix').textContent, event.currentTarget));
-  $('copy-win').addEventListener('click', (event) => copyText($('t-win').textContent, event.currentTarget));
+  // The platform plate follows the pointer, then settles back on the selection.
+  const seg = $('platform-seg');
+  if (seg) {
+    seg.addEventListener('mouseover', (event) => {
+      if (event.target.closest('[data-mg]')) placeTabIndicator();
+    });
+    seg.addEventListener('mouseleave', () => placeTabIndicator(true));
+  }
+
+  $('copy-unix').addEventListener('click', (event) => copyText($('t-unix').textContent, event.currentTarget));  $('copy-win').addEventListener('click', (event) => copyText($('t-win').textContent, event.currentTarget));
   $('build-copy').addEventListener('click', (event) => copyText($('t-build').textContent, event.currentTarget));
 }
 
@@ -435,7 +529,8 @@ function buildFeed(meta) {
           tag: meta.tag,
           name: meta.tag,
           url: `${REPO}/releases/tag/${meta.tag}`,
-          published: meta.publishedAt || '',
+          // formatDate() appends T00:00:00Z, so hand it a bare calendar date.
+          published: (meta.publishedAt || '').slice(0, 10),
           prerelease: Boolean(meta.prerelease),
           assets,
           groups,
@@ -485,12 +580,66 @@ async function load() {
   renderCards();
   renderPrereq();
   $('year').textContent = String(new Date().getUTCFullYear());
+  // reveal() ran before any of these existed, so the observer never saw them
+  // and they stayed at opacity 0. Mark and reveal them once they exist.
+  markReveals();
+  reveal();
 }
 
 /* ---- ReClash's motion, ported to the pieces a static page needs ---------
    Their runtime is ~1400 lines of scroll-linked physics. What the eye actually
    reads is two things: a prerendered cover that opens, and elements that rise
    into place as they enter. Both are reproduced here with an observer. */
+
+/* Their hero ring is a 48-point blob redrawn each frame. Port the shape and
+   its idle wobble; the pointer pull is left out. */
+function blobPath(cx, cy, radii, rot = -Math.PI / 2) {
+  const n = radii.length;
+  const px = [];
+  const py = [];
+  for (let i = 0; i < n; i++) {
+    const angle = rot + (i / n) * Math.PI * 2;
+    px.push(cx + Math.cos(angle) * radii[i]);
+    py.push(cy + Math.sin(angle) * radii[i]);
+  }
+  const f = (value) => value.toFixed(1);
+  let d = `M${f(px[0])} ${f(py[0])}`;
+  for (let i = 0; i < n; i++) {
+    const i0 = (i - 1 + n) % n;
+    const i2 = (i + 1) % n;
+    const i3 = (i + 2) % n;
+    d += `C${f(px[i] + (px[i2] - px[i0]) / 6)} ${f(py[i] + (py[i2] - py[i0]) / 6)} ${f(px[i2] - (px[i3] - px[i]) / 6)} ${f(py[i2] - (py[i3] - py[i]) / 6)} ${f(px[i2])} ${f(py[i2])}`;
+  }
+  return `${d}Z`;
+}
+
+function startRing() {
+  const svg = document.querySelector('.ph-ring');
+  const path = svg && svg.querySelector('.rg');
+  if (!path) return;
+  const N = 48;
+  const C = 200;
+  const R = 128;
+  const radii = new Array(N);
+  const draw = (t) => {
+    for (let i = 0; i < N; i++) {
+      const angle = -Math.PI / 2 + (i / N) * Math.PI * 2;
+      radii[i] = R + 7 * Math.sin(3 * angle + t * 0.6) + 4 * Math.sin(5 * angle - t * 0.45);
+    }
+    path.setAttribute('d', blobPath(C, C, radii));
+  };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    draw(0);
+    return;
+  }
+  let visible = true;
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0 }).observe(svg);
+  const tick = (now) => {
+    if (visible) draw(now / 1000);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 
 function splitWords(host) {
   if (host.dataset.split) return;
@@ -559,8 +708,6 @@ function markReveals() {
     '.drop',
     '.field',
     '.term',
-    '.cl-card',
-    '.cl-item',
     '.foot-about',
     '.ph-tags',
     '.ph-eyebrow',
@@ -591,6 +738,7 @@ function start() {
   applyStaticText();
   markReveals();
   reveal();
+  startRing();
   wire();
   load();
   // The loader is prerendered, so it covers the first paint either way.

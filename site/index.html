@@ -15,16 +15,25 @@
     // Set before first paint: the stylesheet only shows the loader and the
     // pre-reveal states under html.js, so the page never flashes unstyled.
     document.documentElement.classList.add('js');
+    // Hard fallback: if the app script never runs, the cover would sit over the
+    // whole page. Let go of it on its own.
+    setTimeout(function () {
+      var cover = document.getElementById('loader');
+      if (!cover) return;
+      document.documentElement.classList.add('is-loaded');
+      setTimeout(function () { cover.remove(); }, 120);
+    }, 2600);
   </script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preload" href="assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/tokens.css">
   <link rel="stylesheet" href="assets/reclash/site.css">
   <link rel="stylesheet" href="assets/reclash/shell.css">
   <link rel="stylesheet" href="assets/reclash/brand.css">
   <link rel="stylesheet" href="assets/reclash/download.css">
+  <!-- Last, so our hue wins: ReClash's own :root sets theirs. -->
+  <link rel="stylesheet" href="assets/tokens.css">
 </head>
 <body>
   <div class="loader" id="loader" aria-hidden="true">
@@ -98,7 +107,7 @@
             </div>
             <div class="row">
               <a class="btn btn-ghost btn-s" id="rel-all" href="https://github.com/aqiyoung/Skyward/releases" data-i18n="dlAll">All releases</a>
-              <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward" data-i18n="dlGithub">GitHub</a>
+              <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward" data-i18n="dlGitHub">GitHub</a>
             </div>
           </div>
           <div class="pick" id="pick" hidden>
@@ -114,7 +123,7 @@
             </a>
           </div>
           <p class="rel-empty muted" id="rel-empty" hidden></p>
-          <div class="plat-tabs" id="platform-seg" role="group" aria-label="Platform"></div>
+          <div class="plat-tabs" id="platform-seg" role="group" aria-label="Platform" data-group></div>
           <ul class="assets" id="files" aria-live="polite"></ul>
           <div class="extras" id="extras"></div>
           <p class="rel-meta" data-i18n="dlNote">The platform is detected from your browser and may be wrong. The full file list is always on the releases page.</p>

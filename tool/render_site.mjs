@@ -41,7 +41,7 @@ function render(page) {
   const other = PAGES.find((item) => item !== page);
 
   let html = template;
-  html = html.replace(/<html lang="[^"]*">/, `<html lang="${page.locale}" data-page-lang="${page.lang}">`);
+  html = html.replace(/<html lang="[^"]*">/, `<html lang="${page.locale}" data-page-lang="${page.lang}" data-base="${up}">`);
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${text('pageTitle')}</title>`);
   html = html.replace(/(<meta name="description" content=")[^"]*/, `$1${text('pageDescription')}`);
   html = html.replace(/(<meta property="og:description" content=")[^"]*/, `$1${text('heroLede')}`);
