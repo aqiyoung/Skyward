@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
+import 'package:skyward/views/config/network.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -511,9 +512,17 @@ class _RouteTile extends StatelessWidget {
         color: scheme.onSurfaceVariant,
       ),
       onTap: () {
-        // Link the test route to the network configuration, where the
-        // routing mode and the system route are chosen.
-        Navigator.of(context).maybePop();
+        // The speed test runs through the system route; open the network
+        // settings that choose the routing mode and the mixed port.
+        Navigator.of(context).push(
+          PagedSheetRoute(
+            builder: (_) => BaseScaffold(
+              rowSeparators: false,
+              title: appLocalizations.network,
+              body: const NetworkListView(),
+            ),
+          ),
+        );
       },
     );
   }
