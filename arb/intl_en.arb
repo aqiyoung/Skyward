@@ -1094,5 +1094,17 @@
   "usageDetails": "Usage details",
   "last7Days": "Last 7 days",
   "thisMonth": "This month",
-  "today": "Today"
+  "today": "Today",
+  "speedTest": "Connection test",
+  "speedTestReady": "Ready",
+  "speedTestTesting": "Testing",
+  "speedTestStart": "Start test",
+  "speedTestStop": "Stop",
+  "speedTestResult": "Result",
+  "speedTestFailed": "Test failed",
+  "speedTestRoute": "Test route",
+  "speedTestSystemRoute": "System route",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "ms",
+  "speedTestProvider": "Provider"
 }

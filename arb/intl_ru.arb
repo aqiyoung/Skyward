@@ -1094,5 +1094,17 @@
   "usageDetails": "Подробности",
   "last7Days": "Последние 7 дней",
   "thisMonth": "Этот месяц",
-  "today": "Сегодня"
+  "today": "Сегодня",
+  "speedTest": "Тест соединения",
+  "speedTestReady": "Готово",
+  "speedTestTesting": "Тестирование",
+  "speedTestStart": "Начать тест",
+  "speedTestStop": "Стоп",
+  "speedTestResult": "Результат",
+  "speedTestFailed": "Тест не удался",
+  "speedTestRoute": "Тестовый маршрут",
+  "speedTestSystemRoute": "Системный маршрут",
+  "speedTestMbps": "Мбит/с",
+  "speedTestMs": "мс",
+  "speedTestProvider": "Провайдер"
 }

@@ -1094,5 +1094,17 @@
   "usageDetails": "使用详情",
   "last7Days": "近 7 天",
   "thisMonth": "本月",
-  "today": "今日"
+  "today": "今日",
+  "speedTest": "连接测试",
+  "speedTestReady": "准备就绪",
+  "speedTestTesting": "测试中",
+  "speedTestStart": "开始测试",
+  "speedTestStop": "停止",
+  "speedTestResult": "测试结果",
+  "speedTestFailed": "测试失败",
+  "speedTestRoute": "测试路由",
+  "speedTestSystemRoute": "系统路由",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "毫秒",
+  "speedTestProvider": "服务商"
 }

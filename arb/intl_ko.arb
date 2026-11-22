@@ -1094,5 +1094,17 @@
   "usageDetails": "사용 상세",
   "last7Days": "최근 7일",
   "thisMonth": "이번 달",
-  "today": "오늘"
+  "today": "오늘",
+  "speedTest": "연결 테스트",
+  "speedTestReady": "준비됨",
+  "speedTestTesting": "테스트 중",
+  "speedTestStart": "테스트 시작",
+  "speedTestStop": "중지",
+  "speedTestResult": "결과",
+  "speedTestFailed": "테스트 실패",
+  "speedTestRoute": "테스트 경로",
+  "speedTestSystemRoute": "시스템 경로",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "밀리초",
+  "speedTestProvider": "제공자"
 }

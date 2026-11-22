@@ -95,6 +95,17 @@ class Navigation implements NavigationPort {
         ),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
+      // Connection speed test. Kept out of the fixed mobile dock so its four
+      // walking tabs stay put; it lives in the desktop sidebar and the "more"
+      // section of the phone's Mine page.
+      NavigationItem(
+        glyph: AppGlyphs.speed,
+        label: PageLabel.speedTest,
+        builder: (_) => const SpeedTestView(
+          key: GlobalObjectKey(PageLabel.speedTest),
+        ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.moreFull],
+      ),
     ];
   }
 

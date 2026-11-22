@@ -13,5 +13,6 @@ export 'page_large_title.dart';
 export 'profiles/profiles.dart';
 export 'proxies/proxies.dart';
 export 'resources.dart';
+export 'speed_test/speed_test.dart';
 export 'tools.dart';
 export 'traffic_statistics/traffic_statistics.dart';

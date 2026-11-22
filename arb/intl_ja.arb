@@ -1094,5 +1094,17 @@
   "usageDetails": "使用の詳細",
   "last7Days": "過去 7 日間",
   "thisMonth": "今月",
-  "today": "今日"
+  "today": "今日",
+  "speedTest": "接続テスト",
+  "speedTestReady": "準備完了",
+  "speedTestTesting": "テスト中",
+  "speedTestStart": "テスト開始",
+  "speedTestStop": "停止",
+  "speedTestResult": "結果",
+  "speedTestFailed": "テスト失敗",
+  "speedTestRoute": "テストルート",
+  "speedTestSystemRoute": "システムルート",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "ミリ秒",
+  "speedTestProvider": "プロバイダー"
 }

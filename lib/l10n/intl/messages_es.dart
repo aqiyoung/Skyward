@@ -2078,6 +2078,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedStatistics": MessageLookupByLibrary.simpleMessage(
       "Estadísticas de velocidad",
     ),
+    "speedTest": MessageLookupByLibrary.simpleMessage("Prueba de conexión"),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("Prueba fallida"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Mbps"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("ms"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("Proveedor"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("Listo"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("Resultado"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("Ruta de prueba"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("Iniciar prueba"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("Detener"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage(
+      "Ruta del sistema",
+    ),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("Probando"),
     "splitStrategy": MessageLookupByLibrary.simpleMessage(
       "Estrategia de división",
     ),
