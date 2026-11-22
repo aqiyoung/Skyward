@@ -47,6 +47,7 @@ abstract class TrafficStatistics with _$TrafficStatistics {
     required List<RuleHit> ruleHits,
     required List<TrafficRankItem> ranking,
     required List<TrafficHourPoint> trend,
+    @Default(0) int runtimeMs,
   }) = _TrafficStatistics;
 }
 
