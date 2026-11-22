@@ -206,4 +206,38 @@ for (const [dir, size] of [
   write(`${root}/android/app/src/main/res/mipmap-xhdpi/ic_banner.png`, Buffer.from(banner, 'base64'));
 }
 
+// The quick-settings tile: Android tints this drawable, so it is a white
+// silhouette on transparent, like the notification small icon.
+for (const [dir, size] of [
+  ['mdpi', 48], ['hdpi', 72], ['xhdpi', 96], ['xxhdpi', 144], ['xxxhdpi', 192],
+]) {
+  const tile = await page.evaluate(
+    async ({ mark, size }) => {
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = `data:image/png;base64,${mark}`;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const dw = size * 0.86;
+      const dh = dw / ratio;
+      ctx.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh);
+      const data = ctx.getImageData(0, 0, size, size);
+      for (let i = 0; i < data.data.length; i += 4) {
+        data.data[i] = 255;
+        data.data[i + 1] = 255;
+        data.data[i + 2] = 255;
+      }
+      ctx.putImageData(data, 0, 0);
+      return canvas.toDataURL('image/png').split(',')[1];
+    },
+    { mark, size },
+  );
+  write(`${root}/android/service/src/main/res/drawable-${dir}/ic.png`, Buffer.from(tile, 'base64'));
+}
+
 await browser.close();
