@@ -36,18 +36,26 @@
 /* Their bar is 74% opaque, so headings show through it while scrolling. */
 .nav-bar { background: color-mix(in oklab, var(--bg) 90%, transparent); }
 
-/* Keep the theme and language controls visible on phones. Their stylesheet
-   hides .lang below 960px and lets the long CTA push everything else away, so
-   on small screens we shrink the CTA to just its label width and restore the
-   language toggle; the theme button was already visible but sat under the CTA. */
+/* On phones the nav keeps only the logo, the CTA and the burger; the theme,
+   language and GitHub controls move into the full-screen menu. */
 @media (max-width: 960px) {
-  .nav .lang { display: flex; }
-  .nav .lang a { padding: 6px 9px; }
+  .nav .dd, .nav .lang, .nav-bar > a.nav-a.icon-btn { display: none !important; }
   .nav-bar { gap: 4px; padding: 6px 6px 6px 10px; }
   .btn.btn-primary.btn-s { padding: 0 12px; font-size: 0.86rem; }
-  .logo { gap: 7px; margin-right: 0; }
+  .logo { gap: 7px; margin-right: auto; }
   .logo-mark { height: 22px; }
 }
+
+/* Menu contents: theme buttons and language links. */
+.menu nav > ul { margin-bottom: 4px; }
+.menu .sub button {
+  display: block; width: 100%; text-align: left; padding: 8px 0;
+  background: none; border: 0; cursor: pointer;
+  font: 500 1.05rem var(--text); color: var(--fg-2);
+}
+.menu .sub button.is-active { color: var(--brand-2); font-weight: 700; }
+.menu .sub a[aria-current='true'] { color: var(--brand-2); font-weight: 700; }
+.menu .sub a[aria-current='false'] { color: var(--fg-2); }
 
 /* Hover feedback for when the motion runtime has not run (or is reduced):
    their stylesheet only draws these states through a magnetic plate. */
