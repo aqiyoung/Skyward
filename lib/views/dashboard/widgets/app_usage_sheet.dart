@@ -68,10 +68,9 @@ class _AppUsageSheetState extends ConsumerState<AppUsageSheet> {
           const SizedBox(height: 16),
           usage.when(
             data: (data) => Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: cs.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(16),
+                shape: AppShape.all(20),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
