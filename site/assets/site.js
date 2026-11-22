@@ -23,6 +23,7 @@ function applyStaticText() {
   for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = t(node.dataset.i18n);
   for (const node of document.querySelectorAll('[data-i18n-alt]')) node.alt = t(node.dataset.i18nAlt);
   for (const node of document.querySelectorAll('[data-i18n-placeholder]')) node.placeholder = t(node.dataset.i18nPlaceholder);
+  for (const node of document.querySelectorAll('[data-i18n-aria]')) node.setAttribute('aria-label', t(node.dataset.i18nAria));
   // The comparison table stacks on phones, where each cell needs its column name.
   for (const cell of document.querySelectorAll('.cmp td')) {
     cell.dataset.label = cell.classList.contains('cmp-us') ? t('cmpUs') : t('cmpTypical');
@@ -679,7 +680,6 @@ function startThemes() {
   const btn = $('theme-btn');
   const panel = $('theme-panel');
   if (!dd || !btn || !panel) return;
-  const label = $('theme-label');
   const items = [...panel.querySelectorAll('[data-theme]')];
   const names = { dark: 'themeDark', light: 'themeLight', paper: 'themePaper' };
 
@@ -698,7 +698,6 @@ function startThemes() {
       item.classList.toggle('is-active', on);
       item.setAttribute('aria-checked', String(on));
     }
-    if (label) label.textContent = t(names[next]);
   };
 
   let hovered = false;

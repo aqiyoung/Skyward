@@ -77,9 +77,8 @@
         <li><a class="nav-a" data-mg href="#build" data-i18n="navBuild">Build it yourself</a></li>
       </ul>
       <div class="dd" id="theme-dd">
-        <button class="nav-a" data-mg type="button" id="theme-btn" aria-expanded="false" aria-controls="theme-panel" aria-haspopup="true">
-          <span class="mg-c"><span class="theme-dot" aria-hidden="true"></span><span id="theme-label" data-i18n="themeDark">深色</span></span>
-          <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button class="nav-a icon-btn" data-mg type="button" id="theme-btn" aria-expanded="false" aria-controls="theme-panel" aria-haspopup="true" data-i18n-aria="themeAria" aria-label="Theme">
+          <span class="mg-c"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></span>
         </button>
         <ul class="dd-panel" id="theme-panel" data-group data-items="button" data-cpull="0.04">
           <li><button type="button" role="menuitem" data-theme="dark"><b data-i18n="themeDark">深色</b><span class="s" data-i18n="themeDarkDesc">默认的深色界面</span></button></li>
@@ -87,6 +86,9 @@
           <li><button type="button" role="menuitem" data-theme="paper"><b data-i18n="themePaper">米白</b><span class="s" data-i18n="themePaperDesc">偏黄的纸感底色</span></button></li>
         </ul>
       </div>
+      <a class="nav-a icon-btn" href="https://github.com/aqiyoung/Skyward" target="_blank" rel="noopener" data-i18n-aria="githubAria" aria-label="GitHub">
+        <svg class="ic" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
       <div class="lang" aria-label="Language" data-group>
         <a id="lang-toggle" data-mg href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
       </div>
