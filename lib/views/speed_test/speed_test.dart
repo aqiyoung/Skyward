@@ -146,7 +146,6 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
     );
 
     return CommonScaffold(
-      rowSeparators: false,
       title: appLocalizations.speedTest,
       largeTitle: largeTitle,
       body: largeTitle
@@ -204,7 +203,11 @@ class _Gauge extends StatelessWidget {
               color: orange,
               track: scheme.surfaceContainerHighest,
               tick: scheme.onSurfaceVariant.withValues(alpha: 0.6),
-              tickLabel: scheme.onSurfaceVariant,
+              tickLabel: AppTextStyle.custom(
+                context,
+                size: 11,
+                leading: 14,
+              ).copyWith(color: scheme.onSurfaceVariant),
             ),
             child: Center(
               child: Padding(
@@ -215,11 +218,8 @@ class _Gauge extends StatelessWidget {
                     Text(
                       shown <= 0 ? '—' : shown.toStringAsFixed(1),
                       style: AppTextStyle.largeTitle
-                          .of(context)
-                          .copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: scheme.onSurface,
-                          ),
+                          .of(context, emphasized: true)
+                          .copyWith(color: scheme.onSurface),
                     ),
                     Text(
                       appLocalizations.speedTestMbps,
@@ -231,11 +231,8 @@ class _Gauge extends StatelessWidget {
                     Text(
                       label,
                       style: AppTextStyle.subheadline
-                          .of(context)
-                          .copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: scheme.onSurface,
-                          ),
+                          .of(context, emphasized: true)
+                          .copyWith(color: scheme.onSurface),
                     ),
                   ],
                 ),
@@ -274,7 +271,7 @@ class _GaugePainter extends CustomPainter {
   final Color color;
   final Color track;
   final Color tick;
-  final Color tickLabel;
+  final TextStyle tickLabel;
 
   static const _ticks = <String>[
     '0',
@@ -314,6 +311,7 @@ class _GaugePainter extends CustomPainter {
 
     // Tick marks and their labels around the outside of the arc.
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    final labelStyle = tickLabel;
     for (var i = 0; i < _ticks.length; i++) {
       final angle = _start + _sweep * i / (_ticks.length - 1);
       final inner = Offset(
@@ -338,10 +336,7 @@ class _GaugePainter extends CustomPainter {
         center.dy + (radius + 14) * math.sin(angle),
       );
       textPainter
-        ..text = TextSpan(
-          text: label,
-          style: TextStyle(color: tickLabel, fontSize: 11),
-        )
+        ..text = TextSpan(text: label, style: labelStyle)
         ..layout();
       textPainter.paint(
         canvas,
@@ -395,9 +390,7 @@ class _StartButton extends StatelessWidget {
           running
               ? appLocalizations.speedTestStop
               : appLocalizations.speedTestStart,
-          style: AppTextStyle.body
-              .of(context)
-              .copyWith(fontWeight: FontWeight.w600),
+          style: AppTextStyle.body.of(context, emphasized: true),
         ),
       ),
     );
@@ -487,8 +480,8 @@ class _Metrics extends StatelessWidget {
         Text(
           value,
           style: AppTextStyle.title2
-              .of(context)
-              .copyWith(fontWeight: FontWeight.w700, color: scheme.onSurface),
+              .of(context, emphasized: true)
+              .copyWith(color: scheme.onSurface),
         ),
         const SizedBox(height: 2),
         Text(unit, style: labelStyle),
