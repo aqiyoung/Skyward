@@ -160,7 +160,10 @@ class SpeedTestService {
     if (received == 0 || sw.elapsedMicroseconds == 0) {
       throw const SpeedTestException('download produced no data');
     }
-    return received * 8 / sw.elapsedMicroseconds * 1e6;
+    // bits / microseconds is already megabits per second (1e6 bits per
+    // megabit cancels 1e6 microseconds per second). Multiplying by 1e6
+    // here would report a phone connection in terabits.
+    return received * 8 / sw.elapsedMicroseconds;
   }
 
   Future<double> _upload(void Function(SpeedPhase, double)? onProgress) async {
@@ -188,7 +191,7 @@ class SpeedTestService {
     if (sw.elapsedMicroseconds == 0) {
       throw const SpeedTestException('upload finished too fast to measure');
     }
-    return sent * 8 / sw.elapsedMicroseconds * 1e6;
+    return sent * 8 / sw.elapsedMicroseconds;
   }
 
   Future<int> _latency() async {
