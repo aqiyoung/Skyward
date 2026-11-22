@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>FlClash – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux</title>
-  <meta name="description" content="FlClash is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.">
+  <title>Skyward – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux</title>
+  <meta name="description" content="Skyward is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f3efea" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#181617" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="FlClash">
+  <meta property="og:title" content="Skyward">
   <meta property="og:description" content="A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.">
-  <meta property="og:image" content="https://chen08209.github.io/FlClash/preview.png">
+  <meta property="og:image" content="/preview.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.png">
@@ -22,9 +22,9 @@
       var page = root.dataset.pageLang;
       var lang = null;
       try {
-        var theme = localStorage.getItem('flclash.theme');
+        var theme = localStorage.getItem('skyward.theme');
         if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
-        lang = localStorage.getItem('flclash.lang');
+        lang = localStorage.getItem('skyward.lang');
       } catch (e) {}
       if (page === 'zh') return;
       if (lang !== 'zh' && lang !== 'en') {
@@ -47,7 +47,7 @@
 
   <header class="nav" id="nav">
     <div class="wrap nav-inner">
-      <a class="brand" href="#top" aria-label="FlClash">
+      <a class="brand" href="#top" aria-label="Skyward">
         <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
           <g stroke-width="46.32" stroke-linecap="round">
             <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
@@ -55,14 +55,14 @@
           </g>
           <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
         </svg>
-        <span>FlClash</span>
+        <span>Skyward</span>
       </a>
       <nav class="nav-links" aria-label="Sections" data-ink>
         <a href="#download" data-i18n="navDownload">Download</a>
         <a href="#changelog" data-i18n="navChangelog">Changelog</a>
       </nav>
       <div class="nav-tools" data-ink>
-        <a class="tool gh" href="https://github.com/chen08209/FlClash" id="gh-link" aria-label="GitHub">
+        <a class="tool gh" href="https://github.com/aqiyoung/Skyward" id="gh-link" aria-label="GitHub">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-1.96c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
           <span id="stars" class="stars" hidden></span>
         </a>
@@ -91,7 +91,7 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <h1 class="display">
-              <span class="line word" id="wordmark">FlClash</span>
+              <span class="line word" id="wordmark">Skyward</span>
               <span class="line second" id="tagline"><span class="for" data-i18n="heroFor">for</span> <button class="reel" id="reel" type="button" aria-label="Switch platform"><span class="reel-track" id="reel-track" aria-hidden="true"><span>Android</span><span>Windows</span><span>macOS</span><span>Linux</span></span><span class="sr" id="reel-current">Android</span></button></span>
             </h1>
             <p class="lede" data-i18n="heroLede">A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.</p>
@@ -113,7 +113,7 @@
         <figure class="preview">
           <picture>
             <source id="shot-dark" srcset="preview-dark.png" media="(prefers-color-scheme: dark)">
-            <img class="shot" src="preview.png" width="2400" height="1500" decoding="async" alt="FlClash dashboard on a MacBook and a phone" data-i18n-alt="previewAlt">
+            <img class="shot" src="preview.png" width="2400" height="1500" decoding="async" alt="Skyward dashboard on a MacBook and a phone" data-i18n-alt="previewAlt">
           </picture>
         </figure>
 
@@ -134,8 +134,8 @@
           <p class="section-sub" id="dl-meta"></p>
           <p class="rail-text" data-i18n="dlLead">The build for this device is already selected. Each file says which devices it is for.</p>
           <p class="rail-links">
-            <a id="sums-link" href="https://github.com/chen08209/FlClash/releases/latest">SHA256SUMS</a>
-            <a href="https://github.com/chen08209/FlClash/releases" data-i18n="dlAll">All releases on GitHub</a>
+            <a id="sums-link" href="https://github.com/aqiyoung/Skyward/releases/latest">SHA256SUMS</a>
+            <a href="https://github.com/aqiyoung/Skyward/releases" data-i18n="dlAll">All releases on GitHub</a>
           </p>
         </div>
         <div class="dl">
@@ -159,6 +159,43 @@
             <p class="dl-error" id="dl-error" hidden></p>
             <div class="extras" id="extras"></div>
           </div>
+        </div>
+      </div>
+
+      <div class="verify" id="verify">
+        <div class="verify-head">
+          <h3 data-i18n="verifyTitle">校验你下载的文件</h3>
+          <p data-i18n="verifyLead">把刚下载的安装包拖进来，哈希在你的浏览器里算——文件不会离开这台设备。</p>
+        </div>
+        <label class="verify-drop" id="verify-drop">
+          <input type="file" id="verify-file" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="verify-pick" data-i18n="verifyPick">把文件拖到这里，或点击选择</span>
+          <span class="verify-name" id="verify-name"></span>
+        </label>
+        <p class="verify-result" id="verify-result" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section wrap build" id="build" aria-labelledby="build-title">
+      <div class="rail-grid">
+        <div class="rail">
+          <p class="kicker" aria-hidden="true"><span class="cap"></span>03</p>
+          <h2 id="build-title" data-i18n="buildTitle">不想等发行版？自己构建。</h2>
+          <p class="section-sub" data-i18n="buildSub">亲眼看到你运行的是什么，是信任一个客户端最直接的方式。</p>
+        </div>
+        <div class="build">
+          <p data-i18n="buildPrereq">Flutter 3.47.6（与发行版 CI 一致）、Go 与 Rust/Cargo。mihomo 内核和原生库都从源码构建。</p>
+          <div class="cmd">
+            <pre><code id="build-cmd">git clone --recurse-submodules https://github.com/aqiyoung/Skyward.git
+cd Skyward
+flutter pub get
+dart run setup.dart            # 当前平台
+dart run setup.dart android    # APK
+# → dist/</code></pre>
+            <button class="copy" id="build-copy" type="button" data-i18n="copy">复制</button>
+          </div>
+          <p class="note"><span data-i18n="buildNote">Windows 需要 Visual Studio C++ 工具链；macOS 需要 Xcode。桌面端的可执行文件名是 SkywardCore。</span></p>
         </div>
       </div>
     </section>
@@ -194,14 +231,14 @@
         <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
       </svg>
       <div>
-        <p class="foot-name">FlClash</p>
+        <p class="foot-name">Skyward</p>
         <p class="foot-text"><span data-i18n="footLicense">Free and open source under GPL-3.0.</span> <span data-i18n="footUpdated">This page updates with every release.</span></p>
       </div>
     </div>
     <nav class="foot-links" aria-label="Links">
-      <a href="https://github.com/chen08209/FlClash">GitHub</a>
-      <a href="https://github.com/chen08209/FlClash/releases" data-i18n="footReleases">Releases</a>
-      <a href="https://t.me/FlClash" data-i18n="footTelegram">Telegram channel</a>
+      <a href="https://github.com/aqiyoung/Skyward">GitHub</a>
+      <a href="https://github.com/aqiyoung/Skyward/releases" data-i18n="footReleases">Releases</a>
+      <a href="https://t.me/sanyeinfo" data-i18n="footTelegram">Telegram channel</a>
     </nav>
   </footer>
 

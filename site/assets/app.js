@@ -5,7 +5,7 @@
   const PLATFORM_NAMES = { android: 'Android', windows: 'Windows', macos: 'macOS', linux: 'Linux' };
   const PAGE = 15;
   const { REPO, FIRST_PAGE, parseChangelog, translate, formatDate, changelogMeta, timelineHtml } =
-    globalThis.FlClashSite;
+    globalThis.SkywardSite;
   const SITE = new URL('..', document.currentScript.src);
 
   const root = document.documentElement;
@@ -134,7 +134,7 @@
     if (!release) return [];
     return buildsFor(platform, arch)
       .map((build) => {
-        const name = `FlClash-${release.version}-${build.id}`;
+        const name = `Skyward-${release.version}-${build.id}`;
         const asset = release.assets ? release.assets.get(name) : null;
         if (release.assets && !asset) return null;
         return {
@@ -364,6 +364,7 @@
           type: 'button',
           text: 'SHA-256',
           title: build.digest,
+          'data-name': build.name,
           'aria-label': t('copySha', build.name),
           onclick: (event) => copyText(build.digest, event.currentTarget),
         })
@@ -412,18 +413,6 @@
       case 'android':
         return [
           tip(
-            'tipFdroidTitle',
-            'tipFdroid',
-            el(
-              'p',
-              {},
-              el('a', {
-                href: 'https://chen08209.github.io/FlClash-fdroid-repo/repo?fingerprint=789D6D32668712EF7672F9E58DEEB15FBD6DCEEC5AE7A4371EA72F2AAE8A12FD',
-                text: t('tipFdroidLink'),
-              }),
-            ),
-          ),
-          tip(
             'tipIntentTitle',
             'tipIntent',
             commandBlock(
@@ -434,7 +423,7 @@
           ),
         ];
       case 'macos':
-        return [tip('tipBrewTitle', 'tipBrew', commandBlock('brew tap chen08209/tap\nbrew install --cask flclash'))];
+        return [];
       case 'linux':
         return [
           tip(
@@ -708,6 +697,31 @@
     requestAnimationFrame(() => document.getElementById(tag)?.scrollIntoView());
   }
 
+  // Hash the dropped file in the browser and match it against the release's
+  // own digests. Nothing is uploaded; the comparison is against the hashes the
+  // download list already carries.
+  async function verifyFile(file) {
+    const nameNode = $('#verify-name');
+    const result = $('#verify-result');
+    nameNode.textContent = t('verifyNamed', file.name);
+    result.className = 'verify-result';
+    result.textContent = '';
+    const digests = [...document.querySelectorAll('#files .sha')].map((node) => ({
+      name: node.dataset.name || '',
+      hash: (node.title || '').toLowerCase(),
+    }));
+    if (!digests.length) {
+      result.textContent = t('verifyEmpty');
+      return;
+    }
+    const buffer = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', buffer);
+    const hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    const hit = digests.find((item) => item.hash === hex);
+    result.classList.add(hit ? 'ok' : 'bad');
+    result.textContent = hit ? t('verifyMatch', hit.name) : t('verifyMiss');
+  }
+
   async function copyText(text, button) {
     let ok = false;
     try {
@@ -777,7 +791,7 @@
       syncShot();
       field?.refresh();
       try {
-        localStorage.setItem('flclash.theme', next);
+        localStorage.setItem('skyward.theme', next);
       } catch {}
     };
     if (!document.startViewTransition || reducedMotion.matches) {
@@ -796,7 +810,7 @@
 
   function rememberLang(lang) {
     try {
-      localStorage.setItem('flclash.lang', lang);
+      localStorage.setItem('skyward.lang', lang);
     } catch {}
   }
 
@@ -925,7 +939,7 @@
   }
 
   function wireField() {
-    field = globalThis.FlClashField?.mount($('#field'), {
+    field = globalThis.SkywardField?.mount($('#field'), {
       avoid: () => [
         taglineBox(),
         ...[...document.querySelectorAll('#hero-release, #wordmark, .lede, .cta, #cta-note, #facts')]
@@ -959,6 +973,36 @@
   function wireEvents() {
     wireTabs($('#platform-seg'), (value) => setPlatform(value));
     wireTabs($('#arch-seg'), (value) => setArch(value));
+
+    const buildCopy = $('#build-copy');
+    if (buildCopy) {
+      buildCopy.addEventListener('click', (event) => copyText($('#build-cmd').textContent, event.currentTarget));
+    }
+    const verifyInput = $('#verify-file');
+    const verifyDrop = $('#verify-drop');
+    if (verifyInput && verifyDrop) {
+      verifyInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (file) verifyFile(file);
+        verifyInput.value = '';
+      });
+      for (const type of ['dragenter', 'dragover']) {
+        verifyDrop.addEventListener(type, (event) => {
+          event.preventDefault();
+          verifyDrop.classList.add('over');
+        });
+      }
+      for (const type of ['dragleave', 'drop']) {
+        verifyDrop.addEventListener(type, (event) => {
+          event.preventDefault();
+          verifyDrop.classList.remove('over');
+        });
+      }
+      verifyDrop.addEventListener('drop', (event) => {
+        const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file) verifyFile(file);
+      });
+    }
 
     $('#reel').addEventListener('click', () => {
       const next = PLATFORMS[(PLATFORMS.indexOf(state.platform) + 1) % PLATFORMS.length];

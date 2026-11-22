@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bash tool/build_site.sh build/site",
+  "outputDirectory": "build/site",
+  "trailingSlash": true,
+  "cleanUrls": false,
+  "github": {
+    "silent": true
+  }
+}
