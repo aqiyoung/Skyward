@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Skyward – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux</title>
-  <meta name="description" content="Skyward is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.">
+  <title>Skyward – Download</title>
+  <meta name="description" content="Download Skyward for Android, Windows, macOS and Linux, verify the SHA-256 of what you downloaded, or build it from source.">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Skyward">
@@ -13,154 +13,170 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo.png">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="preload" href="assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/reclash/site.css">
+  <link rel="stylesheet" href="assets/reclash/shell.css">
+  <link rel="stylesheet" href="assets/reclash/brand.css">
+  <link rel="stylesheet" href="assets/reclash/download.css">
 </head>
 <body>
   <a class="skip" href="#download" data-i18n="skip">Skip to downloads</a>
 
   <header class="nav">
-    <div class="wrap nav-in">
-      <a class="brand" href="#top">
-        <img src="logo.png" width="30" height="30" alt="">
+    <nav class="nav-bar" aria-label="Main">
+      <a class="logo" href="#top" aria-label="Skyward">
+        <img class="logo-mark" src="logo.png" width="30" height="30" alt="">
         <span>Skyward</span>
       </a>
-      <nav class="links" aria-label="Sections">
-        <a href="#download" data-i18n="navDownload">Download</a>
-        <a href="#notes" data-i18n="navNotes">What's new</a>
-        <a href="#build" data-i18n="navBuild">Build it yourself</a>
-      </nav>
-      <div class="tools">
-        <span class="tool" id="stars" title="" hidden></span>
-        <a class="tool" id="gh" href="https://github.com/aqiyoung/Skyward" rel="noopener" aria-label="GitHub">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.34c-2.23.49-2.7-.99-2.7-.99-.36-.92-.88-1.17-.88-1.17-.72-.49.05-.48.05-.48.8.06 1.22.82 1.22.82.71 1.21 1.85.86 2.3.66.07-.51.28-.86.5-1.06-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.86 3.75-3.65 3.95.29.25.54.74.54 1.49v2.21c0 .21.15.46.55.38A8.02 8.02 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-        </a>
-        <button class="tool" id="lang-toggle" type="button" data-i18n="langToggle">中文</button>
+      <ul class="nav-links">
+        <li><a class="nav-a" href="#download" data-i18n="navDownload">Download</a></li>
+        <li><a class="nav-a" href="#notes" data-i18n="navNotes">What's new</a></li>
+        <li><a class="nav-a" href="#build" data-i18n="navBuild">Build it yourself</a></li>
+      </ul>
+      <div class="lang" aria-label="Language">
+        <a id="lang-toggle" href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
       </div>
-    </div>
+      <a class="btn btn-primary btn-s" href="#download" data-i18n="navCta">Download</a>
+    </nav>
   </header>
 
-  <main id="top">
-    <!-- 01 hero -->
-    <section class="hero">
-      <div class="wrap hero-in">
-        <div class="hero-copy">
-          <p class="eyebrow"><span class="dot"></span><span data-i18n="heroEyebrow">Latest release</span></p>
+  <main id="top" tabindex="-1">
+    <!-- hero -->
+    <section class="ph">
+      <div class="wrap ph-grid">
+        <div>
+          <p class="ph-eyebrow"><span data-i18n="heroEyebrow">Latest release</span></p>
           <h1 data-i18n="heroTitle">Download, or build it yourself.</h1>
-          <p class="lede" data-i18n="heroLede">The latest release files come straight from GitHub: packages for each system, SHA-256 verification, and building from source.</p>
-          <div class="tags">
+          <p class="lede" data-i18n="heroLede">The latest release files come straight from GitHub: packages for each system, SHA-256 verification and building from source.</p>
+          <div class="ph-tags">
             <span class="tag">GPL-3.0</span>
             <span class="tag" data-i18n="tagPlatforms">Four platforms</span>
             <span class="tag" data-i18n="tagSums">SHA-256 in every release</span>
           </div>
-          <div class="cta-row">
-            <a class="btn primary" href="#download" id="cta">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0-4.5-4.5M12 16l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span data-i18n="ctaDownload">Choose a download</span>
-            </a>
-            <a class="btn ghost" href="#build" data-i18n="heroBuild">Build it yourself</a>
+          <div class="ph-tags">
+            <a class="btn btn-primary" href="#download"><span data-i18n="ctaDownload">Choose a download</span></a>
+            <a class="btn btn-ghost" href="#build" data-i18n="heroBuild">Build it yourself</a>
           </div>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <svg class="ring" viewBox="0 0 400 400">
-            <defs>
-              <linearGradient id="heroGrad" x1="60" y1="60" x2="340" y2="340" gradientUnits="userSpaceOnUse">
-                <stop offset="0" style="stop-color:var(--brand-3)"/>
-                <stop offset=".5" style="stop-color:var(--brand)"/>
-                <stop offset="1" style="stop-color:var(--brand-2)"/>
-              </linearGradient>
-            </defs>
-            <circle class="glow" cx="200" cy="200" r="118"/>
-            <circle class="rg" cx="200" cy="200" r="118" stroke-dasharray="612 126"/>
-            <path class="glyph" d="M120 244c-16-52 36-86 96-80 60 6 108 44 92 92-16 48-92 58-142 26"/>
-          </svg>
-        </div>
+        <svg class="ph-ring" viewBox="0 0 400 400" aria-hidden="true">
+          <defs>
+            <linearGradient id="phG" x1="60" y1="60" x2="340" y2="340" gradientUnits="userSpaceOnUse">
+              <stop offset="0" style="stop-color:var(--brand-3)"/>
+              <stop offset=".5" style="stop-color:var(--brand)"/>
+              <stop offset="1" style="stop-color:var(--brand-2)"/>
+            </linearGradient>
+          </defs>
+          <circle class="glow" cx="200" cy="200" r="120"/>
+          <path class="rg" stroke-width="30"/>
+          <path class="glyph" d="M200 158v80m0 0-30-30m30 30 30-30M165 252h70"/>
+        </svg>
       </div>
     </section>
 
-    <!-- 02 files -->
-    <section class="sec" id="download">
-      <div class="wrap two">
-        <div class="sec-head">
-          <p class="kicker">01</p>
-          <h2 data-i18n="dlTitle">The latest release's files</h2>
-          <p class="lede" data-i18n="dlLead">The build for this device is already selected. Each file says which devices it is for.</p>
-          <p class="meta" id="rel-meta"></p>
-          <p class="cta-row">
-            <a class="btn ghost s" id="sums-link" href="https://github.com/aqiyoung/Skyward/releases/latest" data-i18n="dlSums">SHA256SUMS</a>
-            <a class="btn ghost s" href="https://github.com/aqiyoung/Skyward/releases" data-i18n="dlAll">All releases on GitHub</a>
-          </p>
-        </div>
-        <div class="rel">
-          <div class="seg" id="platform-seg" role="tablist" aria-label="Platform"></div>
-          <div class="seg s" id="arch-seg" role="tablist" aria-label="Architecture" hidden></div>
-          <ul class="files" id="files"></ul>
-          <p class="error" id="dl-error" hidden></p>
+    <!-- latest files -->
+    <section class="sub-sec" id="download">
+      <div class="wrap">
+        <div id="release" class="rel" aria-busy="true" data-state="loading">
+          <div class="rel-top">
+            <div>
+              <div class="rel-ver" id="rel-ver"></div>
+              <div class="rel-meta" id="rel-meta"></div>
+            </div>
+            <div class="row">
+              <a class="btn btn-ghost btn-s" id="rel-all" href="https://github.com/aqiyoung/Skyward/releases" data-i18n="dlAll">All releases</a>
+              <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward" data-i18n="dlGithub">GitHub</a>
+            </div>
+          </div>
+          <div class="pick" id="pick" hidden>
+            <span class="os" aria-hidden="true"></span>
+            <div>
+              <span class="rel-meta" data-i18n="pickTitle">Recommended for your device</span>
+              <b id="pick-name"></b>
+              <small id="pick-meta"></small>
+            </div>
+            <a class="btn btn-primary" id="pick-link" href="#">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="pickCta">Download</span>
+            </a>
+          </div>
+          <p class="rel-empty muted" id="rel-empty" hidden></p>
+          <div class="plat-tabs" id="platform-seg" role="group" aria-label="Platform"></div>
+          <ul class="assets" id="files" aria-live="polite"></ul>
           <div class="extras" id="extras"></div>
+          <p class="rel-meta" data-i18n="dlNote">The platform is detected from your browser and may be wrong. The full file list is always on the releases page.</p>
         </div>
       </div>
     </section>
 
-    <!-- 03 notes -->
-    <section class="sec" id="notes">
+    <!-- notes -->
+    <section class="sub-sec" id="notes">
       <div class="wrap two">
         <div class="sec-head">
-          <p class="kicker">02</p>
-          <h2 data-i18n="clTitle">What's new</h2>
+          <h2 data-i18n="clTitle">What's new.</h2>
           <p class="lede" data-i18n="clLead">Release notes come from GitHub with the file list: the current release first, earlier ones below.</p>
-          <p class="meta" id="cl-meta"></p>
+          <p class="rel-meta" id="cl-meta"></p>
         </div>
         <div class="cl" id="changelog"></div>
       </div>
     </section>
 
-    <!-- 04 platform cards -->
-    <section class="sec" id="platforms">
+    <!-- platform cards -->
+    <section class="sub-sec" id="platforms">
       <div class="wrap two">
         <div class="sec-head">
-          <p class="kicker">03</p>
-          <h2 data-i18n="pfTitle">Which package for which system</h2>
+          <h2 data-i18n="pfTitle">Which package for which system.</h2>
           <p class="lede" data-i18n="pfLead">Every release ships the same four platforms.</p>
         </div>
-        <div class="cards" id="cards"></div>
+        <ul class="pcards" id="cards"></ul>
       </div>
     </section>
 
-    <!-- 05 verify -->
-    <section class="sec" id="verify">
+    <!-- verify -->
+    <section class="sub-sec" id="verify-sec">
       <div class="wrap two">
         <div class="sec-head">
-          <p class="kicker">04</p>
           <h2 data-i18n="vfTitle">Downloaded it? Verify it.</h2>
-          <p class="lede" data-i18n="vfLead">Drop the package you just downloaded here. The hash is computed in this browser — the file never leaves this device.</p>
+          <p class="lede" data-i18n="vfLead">Every release includes SHA256SUMS. Thirty seconds of verification are worthwhile: a tampered client is the last thing you want handling your traffic.</p>
         </div>
         <div class="verify">
           <label class="drop" id="drop">
-            <input type="file" id="verify-file" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5m0 0-4.5 4.5M12 5l4.5 4.5M5 16v3.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="pick" data-i18n="vfPick">Drop a file here, or click to choose</span>
-            <span class="name" id="verify-name"></span>
+            <input type="file" id="verify-file" aria-label="Choose the downloaded file">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <b data-i18n="vfPick">Drop a file here or choose one</b>
+            <small data-i18n="vfNote">The file is never uploaded. Its hash is calculated in your browser.</small>
+            <small id="verify-name"></small>
           </label>
-          <p class="result" id="verify-result" aria-live="polite"></p>
+          <div class="field">
+            <label for="sums" data-i18n="vfField">Expected hash or SHA256SUMS contents</label>
+            <textarea id="sums" class="input" spellcheck="false" data-i18n-placeholder="vfPlaceholder" placeholder="Paste a line from SHA256SUMS or the entire file"></textarea>
+          </div>
+          <div class="verdict" id="verdict" aria-live="polite"></div>
+          <div class="term">
+            <div class="th"><h3 data-i18n="vfTermUnix">Linux and macOS</h3><button class="btn btn-ghost btn-s" type="button" id="copy-unix"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-unix"><code>sha256sum -c SHA256SUMS --ignore-missing</code></pre>
+          </div>
+          <div class="term">
+            <div class="th"><h3>Windows (PowerShell)</h3><button class="btn btn-ghost btn-s" type="button" id="copy-win"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-win"><code>Get-FileHash .\Skyward-&lt;version&gt;-windows-amd64-setup.exe -Algorithm SHA256</code></pre>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 06 build -->
-    <section class="sec" id="build">
+    <!-- build -->
+    <section class="sub-sec" id="build">
       <div class="wrap two">
         <div class="sec-head">
-          <p class="kicker">05</p>
           <h2 data-i18n="bdTitle">Build it yourself without waiting for a release.</h2>
-          <p class="lede" data-i18n="bdLead">Seeing for yourself what you run is the most direct way to trust a client.</p>
+          <p class="lede" data-i18n="bdLead">A direct way to trust your client: see what you build.</p>
         </div>
-        <div class="build">
-          <ul class="chips" id="prereq"></ul>
+        <div>
+          <ul class="chips-list" id="prereq"></ul>
           <div class="term">
-            <div class="th">
-              <h3 data-i18n="bdTerm">Build</h3>
-              <button class="btn ghost s" id="build-copy" type="button" data-i18n="copy">Copy</button>
-            </div>
-            <pre><code id="build-cmd">git clone --recurse-submodules https://github.com/aqiyoung/Skyward.git
+            <div class="th"><h3 data-i18n="bdTerm">Build</h3><button class="btn btn-ghost btn-s" type="button" id="build-copy"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-build"><code>git clone --recurse-submodules https://github.com/aqiyoung/Skyward.git
 cd Skyward
 flutter pub get
 dart run setup.dart            # host platform
@@ -174,19 +190,49 @@ dart run setup.dart android    # APK
   </main>
 
   <footer class="foot">
-    <div class="wrap foot-in">
-      <div class="foot-brand">
-        <img src="logo.png" width="34" height="34" alt="">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-about">
+          <a class="logo" href="#top"><img class="logo-mark" src="logo.png" width="30" height="30" alt=""><span>Skyward</span></a>
+          <p data-i18n="footAbout">An open-source client for Clash Meta (mihomo). It does not sell access or provide subscriptions.</p>
+          <div class="foot-social">
+            <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward">GitHub</a>
+            <a class="btn btn-ghost btn-s" href="https://t.me/sanyeinfo">Telegram</a>
+          </div>
+        </div>
         <div>
-          <p class="foot-name">Skyward</p>
-          <p class="foot-text"><span data-i18n="footLicense">Free and open source under GPL-3.0.</span> <span data-i18n="footUpdated">This page updates with every release.</span></p>
+          <h4 data-i18n="footSite">Site</h4>
+          <ul>
+            <li><a href="#top" data-i18n="navDownload">Download</a></li>
+            <li><a href="#notes" data-i18n="navNotes">What's new</a></li>
+            <li><a href="#platforms" data-i18n="pfTitle">Packages</a></li>
+            <li><a href="#verify-sec" data-i18n="vfTitle">Verify</a></li>
+            <li><a href="#build" data-i18n="navBuild">Build it yourself</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footSource">Source</h4>
+          <ul>
+            <li><a href="https://github.com/aqiyoung/Skyward">GitHub</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/releases" data-i18n="footReleases">Releases</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/issues">Issues</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footBuiltOn">Built on</h4>
+          <ul>
+            <li><a href="https://github.com/chen08209/FlClash">FlClash</a></li>
+            <li><a href="https://github.com/MetaCubeX/mihomo">mihomo</a></li>
+          </ul>
         </div>
       </div>
-      <nav class="foot-links" aria-label="Links">
-        <a href="https://github.com/aqiyoung/Skyward" data-i18n="footGithub">GitHub</a>
-        <a href="https://github.com/aqiyoung/Skyward/releases" data-i18n="footReleases">Releases</a>
-        <a href="https://t.me/sanyeinfo" data-i18n="footTelegram">Telegram channel</a>
-      </nav>
+      <div class="foot-legal">
+        <span>© <span id="year">2026</span> Skyward</span>
+        <span data-i18n="footLicense">GPL-3.0 license</span>
+        <span data-i18n="footFork">A FlClash fork. Not affiliated with FlClash, mihomo or FlClashX.</span>
+        <span class="live"><span class="dot-live"></span><span data-i18n="footLive">Actively maintained</span></span>
+      </div>
     </div>
   </footer>
 

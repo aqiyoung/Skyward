@@ -1,0 +1,15 @@
+/* Skyward's brand hue, fed into ReClash's design tokens.
+   Their stylesheet derives every surface, line and glow from --bl/--bc/--bh;
+   only the hue is ours (indigo-violet, the app mark's family). */
+:root {
+  --bl: 0.62;
+  --bc: 0.2;
+  --bh: 262;
+
+  --good: oklch(0.75 0.15 150);
+  --good-fg: oklch(0.86 0.1 150);
+  --bad: oklch(0.72 0.17 25);
+  --bad-fg: oklch(0.82 0.12 25);
+  --warn: oklch(0.8 0.15 70);
+  --warn-fg: oklch(0.86 0.11 70);
+}
