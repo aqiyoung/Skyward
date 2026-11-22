@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Download: the changelog and release notes rendered from GitHub Markdown.
+   The picker itself (.rel, .pick, .plat-tabs, .asset) is styled in site.css.
+   ========================================================================== */
+
+.cl { display: grid; gap: 14px; min-width: 0; }
+.cl-card { display: grid; gap: 18px; min-width: 0; padding: clamp(22px, 3vw, 34px); border-radius: var(--r-l);
+  background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line); }
+.cl-in { animation: assetIn var(--dur-smooth) var(--ease-smooth) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.cl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.cl-ver { font: 700 clamp(1.45rem, 2.6vw, 2rem) var(--display); letter-spacing: -0.03em; }
+.cl-badge { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; white-space: nowrap;
+  font: 500 0.72rem var(--mono); letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--brand-2); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.cl-badge.is-pre { color: var(--fg-2); background: none; box-shadow: inset 0 0 0 1px var(--line-2); }
+.cl-date { color: var(--fg-3); font-size: 0.92rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cl-gh { margin-left: auto; }
+.cl-skel { display: grid; gap: 12px; }
+.cl-empty, .cl-more { margin: 0; }
+.cl-empty { color: var(--fg-3); }
+.cl-more { font-size: 0.92rem; }
+.cl-fail { justify-items: start; }
+.cl-fail p { margin: 0; color: var(--fg-2); }
+
+/* ---------- earlier releases: accordion with the FAQ's look ---------- */
+.cl-sub { margin-top: 18px; font: 600 0.98rem var(--text); color: var(--fg-2); }
+.cl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cl-item { min-width: 0; border-radius: 20px; box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 0.3s, background-color 0.3s; }
+.cl-item[data-open] { background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.cl-row { margin: 0; font: inherit; }
+.cl-btn { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 16px 18px 16px 22px; border: 0; border-radius: 20px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.cl-v { font: 600 1.06rem/1.35 var(--display); letter-spacing: -0.01em; transition: color 0.2s; }
+.cl-btn:hover .cl-v { color: var(--brand-2); }
+.cl-btn .pm { position: relative; width: 28px; height: 28px; border-radius: 50%; flex: none; margin-left: auto; background: var(--bg-3);
+  transition: background-color 0.3s, transform var(--dur-bouncy) var(--ease-bouncy); }
+.cl-btn .pm::before, .cl-btn .pm::after { content: ''; position: absolute; left: 8px; right: 8px; top: 13px; height: 2px; border-radius: 2px;
+  background: var(--fg); transition: transform var(--dur-bouncy) var(--ease-bouncy); }
+.cl-btn .pm::after { transform: rotate(90deg); }
+.cl-item[data-open] .pm { background: var(--brand); transform: rotate(180deg); }
+.cl-item[data-open] .pm::before, .cl-item[data-open] .pm::after { background: var(--on-brand); }
+.cl-item[data-open] .pm::after { transform: rotate(0); }
+/* Closed panels are out of the tab order; the open/close animation bridges heights only. */
+.cl-panel { height: 0; overflow: hidden; visibility: hidden; }
+.cl-item[data-open] .cl-panel { height: auto; visibility: visible; }
+.cl-body { display: grid; gap: 14px; padding: 0 22px 22px; min-width: 0; }
+
+/* ---------- Markdown ---------- */
+.md { display: grid; gap: 12px; min-width: 0; color: var(--fg-2); font-size: 0.98rem; line-height: 1.65; overflow-wrap: anywhere; }
+.md > *, .md li > *, .md-quote > * { margin: 0; }
+.md .md-h { margin-top: 6px; color: var(--fg); font: 600 1.02rem/1.35 var(--display); letter-spacing: -0.01em; }
+.md h5.md-h, .md h6.md-h { font-size: 0.94rem; }
+.md .md-h:first-child { margin-top: 0; }
+.md strong { color: var(--fg); font-weight: 600; }
+.md del { color: var(--fg-3); }
+.md-ic { padding: 1px 6px; border-radius: 6px; background: var(--bg-3); color: var(--fg); font-size: 0.86em; overflow-wrap: anywhere; }
+.md-code { padding: 14px 16px; border-radius: 14px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg); font: 0.86rem/1.6 var(--mono); white-space: pre; overflow-wrap: normal; overflow-x: auto; tab-size: 2; }
+.md-code code { font: inherit; }
+.md-quote { display: grid; gap: 10px; padding: 2px 0 2px 16px; border-left: 2px solid var(--brand-line); }
+.md-alert { color: var(--brand-2); font: 600 0.76rem var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
+.md-hr { width: 100%; border: 0; border-top: 1px solid var(--line); }
+.md-list { display: grid; gap: 6px; padding: 0; list-style: none; }
+.md ul.md-list > li { position: relative; display: grid; gap: 6px; padding-left: 18px; }
+.md ul.md-list > li::before { content: ''; position: absolute; left: 2px; top: 0.66em; width: 6px; height: 6px; border-radius: 2px; background: var(--brand); }
+.md ul.md-list ul.md-list > li::before { background: none; box-shadow: inset 0 0 0 1.5px var(--brand); }
+.md ol.md-list { padding-left: 1.5em; list-style: decimal; }
+.md ol.md-list > li { padding-left: 4px; }
+.md ol.md-list > li > * + * { margin-top: 6px; }
+.md ol.md-list > li::marker { color: var(--fg-3); font: 0.86em var(--mono); }
+.md ul.md-list > li.md-task { grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; padding-left: 0; }
+.md ul.md-list > li.md-task::before { content: none; }
+.md li.md-task > :not(input) { grid-column: 2; }
+.md-task input { width: 15px; height: 15px; margin: 0.4em 0 0; accent-color: var(--brand); }

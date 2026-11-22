@@ -3,210 +3,452 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>FlClash – Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux</title>
-  <meta name="description" content="FlClash is a free, open-source Clash Meta (mihomo) proxy client for Android, Windows, macOS and Linux, with rule routing, TUN mode and subscription import. No ads.">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f3efea" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#181617" media="(prefers-color-scheme: dark)">
+  <title>Skyward – Download</title>
+  <meta name="description" content="Download Skyward for Android, Windows, macOS and Linux, verify the SHA-256 of what you downloaded, or build it from source.">
+  <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="FlClash">
+  <meta property="og:title" content="Skyward">
   <meta property="og:description" content="A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.">
-  <meta property="og:image" content="https://chen08209.github.io/FlClash/preview.png">
+  <meta property="og:image" content="og.png">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="stylesheet" href="assets/style.css">
   <script>
-    (function () {
-      var root = document.documentElement;
-      var page = root.dataset.pageLang;
-      var lang = null;
-      try {
-        var theme = localStorage.getItem('flclash.theme');
-        if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
-        lang = localStorage.getItem('flclash.lang');
-      } catch (e) {}
-      if (page === 'zh') return;
-      if (lang !== 'zh' && lang !== 'en') {
-        var prefs = navigator.languages || [navigator.language || ''];
-        lang = prefs.some(function (l) { return /^zh/i.test(l); }) ? 'zh' : 'en';
-      }
-      // The built English page is also the x-default URL, so it hands Chinese readers to the zh/ page.
-      if (page === 'en') {
-        if (lang === 'zh' && !/[?&]lang=en(&|$)/.test(location.search)) {
-          location.replace('zh/' + location.search + location.hash);
-        }
-        return;
-      }
-      root.lang = lang === 'zh' ? 'zh-CN' : 'en';
-    })();
+    // Set before first paint: the stylesheet only shows the loader and the
+    // pre-reveal states under html.js, so the page never flashes unstyled.
+    var root = document.documentElement;
+    root.classList.add('js');
+    // Same for the theme: the tokens differ per data-theme, so deciding late
+    // would flash the wrong palette.
+    try {
+      var theme = localStorage.getItem('skyward-theme');
+      if (!theme) theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      root.dataset.theme = theme;
+    } catch (e) {
+      root.dataset.theme = 'dark';
+    }
+    // Hard fallback: if the app script never runs, the cover would sit over the
+    // whole page. Open it the same way the runtime does, then let go.
+    setTimeout(function () {
+      var cover = document.getElementById('loader');
+      if (!cover) return;
+      root.classList.add('is-ready');
+      setTimeout(function () {
+        root.classList.add('is-loaded');
+        cover.remove();
+      }, 1200);
+    }, 3200);
   </script>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/reclash/site.css">
+  <link rel="stylesheet" href="assets/reclash/shell.css">
+  <link rel="stylesheet" href="assets/reclash/brand.css">
+  <link rel="stylesheet" href="assets/reclash/download.css">
+  <!-- Last, so our hue wins: ReClash's own :root sets theirs. -->
+  <link rel="stylesheet" href="assets/tokens.css">
 </head>
 <body>
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader-core">
+      <svg class="bm loader-mark" viewBox="-166 -166 332 332" aria-hidden="true" focusable="false">
+        <g transform="translate(4 0) rotate(-20)" fill="none" stroke-width="62.1" stroke-linecap="round">
+          <path class="bm-bar bm-1" style="--n:0" pathLength="1" d="M-101.2 69V-69"/>
+          <path class="bm-bar bm-2" style="--n:1" pathLength="1" d="M0 138V-138"/>
+          <path class="bm-bar bm-3" style="--n:2" pathLength="1" d="M101.2 46V-46"/>
+        </g>
+      </svg>
+      <span class="loader-word"><span style="--i:0">S</span><span style="--i:1">k</span><span style="--i:2">y</span><span style="--i:3">w</span><span style="--i:4">a</span><span style="--i:5">r</span><span style="--i:6">d</span></span>
+    </div>
+  </div>
+
   <a class="skip" href="#download" data-i18n="skip">Skip to downloads</a>
 
-  <header class="nav" id="nav">
-    <div class="wrap nav-inner">
-      <a class="brand" href="#top" aria-label="FlClash">
-        <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
-          <g stroke-width="46.32" stroke-linecap="round">
-            <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
-            <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
-          </g>
-          <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
-        </svg>
-        <span>FlClash</span>
+  <header class="nav">
+    <nav class="nav-bar" aria-label="Main">
+      <a class="logo" href="#top" aria-label="Skyward">
+        <img class="logo-mark" src="mark.png" width="34" height="26" alt="">
+        <span>Skyward</span>
       </a>
-      <nav class="nav-links" aria-label="Sections" data-ink>
-        <a href="#download" data-i18n="navDownload">Download</a>
-        <a href="#changelog" data-i18n="navChangelog">Changelog</a>
-      </nav>
-      <div class="nav-tools" data-ink>
-        <a class="tool gh" href="https://github.com/chen08209/FlClash" id="gh-link" aria-label="GitHub">
-          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-1.96c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
-          <span id="stars" class="stars" hidden></span>
-        </a>
-        <button class="tool" id="lang-toggle" type="button">中文</button>
-        <button class="tool" id="theme-toggle" type="button" aria-label="Toggle dark mode">
-          <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M12 3.75a8.25 8.25 0 0 1 0 16.5Z" fill="currentColor"/>
-          </svg>
+      <ul class="nav-links" data-group data-sticky>
+        <li><a class="nav-a" data-mg href="#download" data-i18n="navDownload">Download</a></li>
+        <li><a class="nav-a" data-mg href="#features" data-i18n="navFeatures">Features</a></li>
+        <li><a class="nav-a" data-mg href="#notes" data-i18n="navNotes">What's new</a></li>
+        <li><a class="nav-a" data-mg href="#build" data-i18n="navBuild">Build it yourself</a></li>
+      </ul>
+      <div class="dd" id="theme-dd">
+        <button class="nav-a icon-btn" data-mg type="button" id="theme-btn" aria-expanded="false" aria-controls="theme-panel" aria-haspopup="true" data-i18n-aria="themeAria" aria-label="Theme">
+          <span class="mg-c"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></span>
         </button>
+        <ul class="dd-panel" id="theme-panel" data-group data-items="button" data-cpull="0.04">
+          <li><button type="button" role="menuitem" data-theme="dark"><b data-i18n="themeDark">深色</b><span class="s" data-i18n="themeDarkDesc">默认的深色界面</span></button></li>
+          <li><button type="button" role="menuitem" data-theme="light"><b data-i18n="themeLight">浅色</b><span class="s" data-i18n="themeLightDesc">暖白底，白天更舒服</span></button></li>
+          <li><button type="button" role="menuitem" data-theme="paper"><b data-i18n="themePaper">米白</b><span class="s" data-i18n="themePaperDesc">偏黄的纸感底色</span></button></li>
+        </ul>
       </div>
-    </div>
-    <span class="nav-progress" aria-hidden="true"></span>
+      <a class="nav-a icon-btn" href="https://github.com/aqiyoung/Skyward" target="_blank" rel="noopener" data-i18n-aria="githubAria" aria-label="GitHub">
+        <svg class="ic" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <div class="lang" aria-label="Language" data-group>
+        <a id="lang-toggle" data-mg href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
+      </div>
+      <a class="btn btn-primary btn-s" href="#download" data-i18n="navCta">Download</a>
+    </nav>
   </header>
 
-  <main id="top">
-    <section class="hero">
-      <canvas class="field" id="field" aria-hidden="true"></canvas>
-      <div class="wrap">
-        <a class="eyebrow" id="hero-release" href="#changelog">
-          <span class="pulse" aria-hidden="true"></span>
-          <span id="hero-release-text" data-i18n="heroReleaseLoading">Latest release</span>
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-
-        <div class="hero-grid">
-          <div class="hero-copy">
-            <h1 class="display">
-              <span class="line word" id="wordmark">FlClash</span>
-              <span class="line second" id="tagline"><span class="for" data-i18n="heroFor">for</span> <button class="reel" id="reel" type="button" aria-label="Switch platform"><span class="reel-track" id="reel-track" aria-hidden="true"><span>Android</span><span>Windows</span><span>macOS</span><span>Linux</span></span><span class="sr" id="reel-current">Android</span></button></span>
-            </h1>
-            <p class="lede" data-i18n="heroLede">A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.</p>
-            <div class="cta">
-              <a class="btn primary" id="cta" href="#download">
-                <span class="ico-clip" aria-hidden="true"><svg class="ico-down" viewBox="0 0 20 20" width="20" height="20"><path d="M10 3.5v11m0 0-4.5-4.5m4.5 4.5 4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span class="btn-text">
-                  <span id="cta-title" data-i18n="ctaChoose">Choose a download</span>
-                  <span class="btn-sub" id="cta-sub" hidden></span>
-                </span>
-              </a>
-              <a class="btn quiet" href="#download" data-i18n="heroOther">Other platforms</a>
-            </div>
-            <p class="cta-note" id="cta-note" hidden></p>
+  <main id="top" tabindex="-1">
+    <!-- hero -->
+    <section class="ph">
+      <div class="wrap ph-grid">
+        <div>
+          <p class="ph-eyebrow"><span data-i18n="heroEyebrow">Latest release</span></p>
+          <h1 data-words data-i18n="heroTitle">Download, or build it yourself.</h1>
+          <p class="lede" data-fade data-i18n="heroLede">The latest release files come straight from GitHub: packages for each system, SHA-256 verification and building from source.</p>
+          <div class="ph-tags">
+            <span class="tag">GPL-3.0</span>
+            <span class="tag" data-i18n="tagPlatforms">Four platforms</span>
+            <span class="tag" data-i18n="tagSums">SHA-256 in every release</span>
           </div>
-          <div class="stage" id="stage" aria-hidden="true"></div>
+          <div class="ph-cta">
+            <a class="btn btn-primary" href="#download"><span data-i18n="ctaDownload">Choose a download</span></a>
+            <a class="btn btn-ghost" href="#build" data-i18n="heroBuild">Build it yourself</a>
+          </div>
         </div>
+        <svg class="ph-ring" viewBox="0 0 400 400" aria-hidden="true">
+          <defs>
+            <linearGradient id="phG" x1="60" y1="60" x2="340" y2="340" gradientUnits="userSpaceOnUse">
+              <stop offset="0" style="stop-color:var(--brand-3)"/>
+              <stop offset=".5" style="stop-color:var(--brand)"/>
+              <stop offset="1" style="stop-color:var(--brand-2)"/>
+            </linearGradient>
+          </defs>
+          <circle class="glow" cx="200" cy="200" r="120"/>
+          <path class="rg" stroke-width="30"/>
+          <path class="glyph" d="M200 158v80m0 0-30-30m30 30 30-30M165 252h70"/>
+        </svg>
+      </div>
+    </section>
 
-        <figure class="preview">
-          <picture>
-            <source id="shot-dark" srcset="preview-dark.png" media="(prefers-color-scheme: dark)">
-            <img class="shot" src="preview.png" width="2400" height="1500" decoding="async" alt="FlClash dashboard on a MacBook and a phone" data-i18n-alt="previewAlt">
-          </picture>
-        </figure>
-
-        <ul class="facts" id="facts">
-          <li><b data-i18n="fact1Title">mihomo core</b><span data-i18n="fact1">Rule routing, proxy groups and TUN mode.</span></li>
-          <li><b data-i18n="fact2Title">Subscriptions</b><span data-i18n="fact2">Import a profile from a subscription link.</span></li>
-          <li><b data-i18n="fact3Title">WebDAV sync</b><span data-i18n="fact3">Back up and restore your data across devices.</span></li>
-          <li><b data-i18n="fact4Title">Open source</b><span data-i18n="fact4">Licensed under GPL-3.0, with no ads.</span></li>
+    <!-- features -->
+    <section class="sec" id="features" aria-labelledby="feat-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="feat-title" data-words data-i18n="featTitle">What Skyward does for you.</h2>
+          <p class="lede" data-fade data-i18n="featLead">A multi-platform client on the mihomo core: the things you would otherwise dig for are on the screen.</p>
+        </div>
+        <ul class="feats" data-group data-items=".feat" data-cpull="0.03">
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-core" viewBox="0 0 64 64" aria-hidden="true">
+              <g class="orb">
+                <ellipse class="s draw" pathLength="1" cx="32" cy="32" rx="26" ry="10" transform="rotate(-32 32 32)"/>
+                <ellipse class="s draw dim" pathLength="1" cx="32" cy="32" rx="26" ry="10" transform="rotate(32 32 32)" style="--d:.15s"/>
+                <circle class="f" cx="54" cy="18.4" r="3"/>
+              </g>
+              <circle class="f nuc" cx="32" cy="32" r="7"/>
+            </svg>
+            <h3 data-i18n="feat1T">Kernel-level routing</h3>
+            <p data-i18n="feat1B">Rules, strategy groups, GeoIP and fake-ip from mihomo. One subscription link and every platform routes the same way.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-prov" viewBox="0 0 64 64" aria-hidden="true">
+              <rect class="f fill" x="16" y="30" width="32" height="22" rx="6" opacity=".9"/>
+              <rect class="s draw" pathLength="1" x="14" y="28" width="36" height="26" rx="8"/>
+              <path class="f drop" d="M32 4C32 4 25 12 25 16.5a7 7 0 0 0 14 0C39 12 32 4 32 4Z"/>
+            </svg>
+            <h3 data-i18n="feat2T">Traffic and time, always in sight</h3>
+            <p data-i18n="feat2B">Remaining data and the period end stay on the main screen, with a history of usage and rankings you can actually read.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-dpi" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s" d="M42 8v17M42 39v17"/>
+              <path class="s dim" d="M6 32h52" stroke-dasharray="2 5"/>
+              <rect class="f pa" x="8" y="26" width="11" height="12" rx="3"/>
+              <rect class="b pb" x="20" y="26" width="11" height="12" rx="3"/>
+            </svg>
+            <h3 data-i18n="feat3T">A route map, not a server list</h3>
+            <p data-i18n="feat3B">See where traffic leaves: a globe you can switch to a flat map, with the exit and the path drawn out.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-auto" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s r1" pathLength="1" d="M12 48C28 48 36 16 52 16"/>
+              <path class="b r2" pathLength="1" d="M12 48L12 30Q12 16 26 16L52 16"/>
+              <path class="b x" d="M28 28l8 8M36 28l-8 8"/>
+              <circle class="f" cx="12" cy="48" r="4"/><circle cx="52" cy="16" r="4" fill="var(--fg)"/>
+            </svg>
+            <h3 data-i18n="feat4T">Split routing that holds</h3>
+            <p data-i18n="feat4B">Send chosen apps or sites through the exit you pick — or nowhere — whatever the mode or the rest of the rules say.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-meter" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s dim" d="M12 46A21 21 0 1 1 52 46"/>
+              <path class="b arc" pathLength="1" d="M12 46A21 21 0 1 1 52 46"/>
+              <path class="s" d="M24 56h16"/>
+              <circle class="f" cx="32" cy="38" r="3.5"/>
+            </svg>
+            <h3 data-i18n="feat5T">Numbers when you want them</h3>
+            <p data-i18n="feat5B">Live connections, DNS queries and logs, plus the memory the core actually uses — no more guessing what it is doing.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-scope" viewBox="0 0 64 64" aria-hidden="true">
+              <rect class="s draw" pathLength="1" x="8" y="10" width="48" height="38" rx="7"/>
+              <path class="s" d="M24 56h16"/>
+              <rect class="f all" x="13" y="15" width="38" height="28" rx="4" opacity=".35"/>
+              <rect class="s app" x="36" y="30" width="11" height="9" rx="2.5"/>
+              <rect class="s app" x="22" y="30" width="11" height="9" rx="2.5"/>
+            </svg>
+            <h3 data-i18n="feat6T">One client, four platforms</h3>
+            <p data-i18n="feat6B">Windows, macOS, Linux and Android share the same profiles, the same groups and the same settings.</p>
+          </li>
         </ul>
       </div>
     </section>
 
-    <section class="section wrap" id="download" aria-labelledby="download-title">
-      <div class="rail-grid">
-        <div class="rail">
-          <p class="kicker" aria-hidden="true"><span class="cap"></span>01</p>
-          <h2 id="download-title" data-i18n="dlTitle">Download</h2>
-          <p class="section-sub" id="dl-meta"></p>
-          <p class="rail-text" data-i18n="dlLead">The build for this device is already selected. Each file says which devices it is for.</p>
-          <p class="rail-links">
-            <a id="sums-link" href="https://github.com/chen08209/FlClash/releases/latest">SHA256SUMS</a>
-            <a href="https://github.com/chen08209/FlClash/releases" data-i18n="dlAll">All releases on GitHub</a>
-          </p>
+    <!-- compare -->
+    <section class="sec" id="compare" aria-labelledby="cmp-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="cmp-title" data-words data-i18n="cmpTitle">How Skyward differs from a typical client.</h2>
         </div>
-        <div class="dl">
-          <div class="seg" id="platform-seg" role="tablist" aria-label="Platform">
-            <span class="seg-ink" aria-hidden="true"></span>
-            <button type="button" role="tab" id="tab-android" data-value="android" aria-controls="panel">Android</button>
-            <button type="button" role="tab" id="tab-windows" data-value="windows" aria-controls="panel">Windows</button>
-            <button type="button" role="tab" id="tab-macos" data-value="macos" aria-controls="panel">macOS</button>
-            <button type="button" role="tab" id="tab-linux" data-value="linux" aria-controls="panel">Linux</button>
-          </div>
-          <div class="panel" id="panel" role="tabpanel">
-            <div class="panel-top">
-              <p class="panel-hint" id="panel-hint"></p>
-              <div class="seg seg-sm" id="arch-seg" role="tablist" aria-label="Architecture" hidden>
-                <span class="seg-ink" aria-hidden="true"></span>
-                <button type="button" role="tab" id="arch-x64" data-value="x64">x64</button>
-                <button type="button" role="tab" id="arch-arm64" data-value="arm64">ARM64</button>
-              </div>
-            </div>
-            <ul class="files" id="files"></ul>
-            <p class="dl-error" id="dl-error" hidden></p>
-            <div class="extras" id="extras"></div>
+        <table class="cmp" data-fade>
+          <caption class="sr-only" data-i18n="cmpCaption">Skyward compared with a typical client in common situations</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-i18n="cmpSituation">Situation</th>
+              <th scope="col" data-i18n="cmpTypical">Typical client</th>
+              <th scope="col" class="cmp-us" data-i18n="cmpUs">Skyward</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" data-i18n="cmp1S">Traffic left</th>
+              <td data-i18n="cmp1T">Usually buried in the profile settings</td>
+              <td class="cmp-us" data-i18n="cmp1U">On the main screen, with a usage history</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp2S">A site will not open</th>
+              <td data-i18n="cmp2T">Try another server and hope</td>
+              <td class="cmp-us" data-i18n="cmp2U">The route map shows the exit and the path</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp3S">Several configurations</th>
+              <td data-i18n="cmp3T">Edit files or import again by hand</td>
+              <td class="cmp-us" data-i18n="cmp3U">Switch configurations and groups in one tap</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp4S">What is it doing</th>
+              <td data-i18n="cmp4T">No logs to read</td>
+              <td class="cmp-us" data-i18n="cmp4U">Connections, DNS and logs in real time</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp5S">Platforms</th>
+              <td data-i18n="cmp5T">Often phone only</td>
+              <td class="cmp-us" data-i18n="cmp5U">The same experience on all four</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp6S">Price</th>
+              <td data-i18n="cmp6T">Ads or paid features</td>
+              <td class="cmp-us" data-i18n="cmp6U">Free, open source, ad-free</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- setup -->
+    <section class="sec" id="setup" aria-labelledby="setup-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="setup-title" data-words data-i18n="setupTitle">One link and three steps.</h2>
+          <p class="lede" data-fade data-i18n="setupLead">Bring your own subscription. No account, no registration, no email.</p>
+        </div>
+        <div class="setup">
+          <ol class="steps">
+            <li class="step"><span class="step-n">1</span><div><h3 data-i18n="step1T">Install the client</h3><p data-i18n="step1B">Windows, macOS, Linux or Android — installer or portable build, whichever suits you.</p></div></li>
+            <li class="step"><span class="step-n">2</span><div><h3 data-i18n="step2T">Add your subscription</h3><p data-i18n="step2B">Paste the link or import the configuration file. Clash/mihomo profiles and common node links both work.</p></div></li>
+            <li class="step"><span class="step-n">3</span><div><h3 data-i18n="step3T">Connect</h3><p data-i18n="step3B">Pick a profile and a node, then start it. Android asks for the VPN permission; desktop TUN needs the system helper.</p></div></li>
+          </ol>
+          <div class="importer" data-fade>
+            <h3 data-i18n="setupCardT">Already have a link?</h3>
+            <p class="imp-text" data-i18n="setupCardB">Download the client, paste the link into it and the profile appears — no account and nothing to configure by hand.</p>
+            <a class="btn btn-primary" href="#download" data-i18n="setupCardCta">Get Skyward</a>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section wrap" id="changelog" aria-labelledby="changelog-title">
-      <div class="rail-grid">
-        <div class="rail rail-sticky">
-          <p class="kicker" aria-hidden="true"><span class="cap"></span>02</p>
-          <h2 id="changelog-title" data-i18n="clTitle">Changelog</h2>
-          <p class="section-sub" id="cl-meta"></p>
-          <label class="search" for="cl-search">
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.75" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m13.25 13.25 3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <input id="cl-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search changes or versions" data-i18n-placeholder="clSearch">
-            <kbd aria-hidden="true">/</kbd>
-          </label>
-          <p class="cl-status" id="cl-status" aria-live="polite"></p>
+    <!-- latest files -->
+    <section class="sub-sec" id="download">
+      <div class="wrap">
+        <div id="release" class="rel" aria-busy="true" data-state="loading">
+          <div class="rel-top">
+            <div>
+              <div class="rel-ver" id="rel-ver"></div>
+              <div class="rel-meta" id="rel-meta"></div>
+            </div>
+            <div class="row">
+              <a class="btn btn-ghost btn-s" id="rel-all" href="https://github.com/aqiyoung/Skyward/releases" data-i18n="dlAll">All releases</a>
+              <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward" data-i18n="dlGitHub">GitHub</a>
+            </div>
+          </div>
+          <div class="pick" id="pick" hidden>
+            <span class="os" aria-hidden="true"></span>
+            <div>
+              <span class="rel-meta" data-i18n="pickTitle">Recommended for your device</span>
+              <b id="pick-name"></b>
+              <small id="pick-meta"></small>
+            </div>
+            <a class="btn btn-primary" id="pick-link" href="#">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="pickCta">Download</span>
+            </a>
+          </div>
+          <p class="rel-empty muted" id="rel-empty" hidden></p>
+          <div class="plat-tabs" id="platform-seg" role="group" aria-label="Platform" data-group></div>
+          <ul class="assets" id="files" aria-live="polite" data-group data-items=".asset"></ul>
+          <div class="extras" id="extras"></div>
+          <p class="rel-meta" data-i18n="dlNote">The platform is detected from your browser and may be wrong. The full file list is always on the releases page.</p>
         </div>
-        <div class="cl">
-          <div class="timeline" id="timeline"></div>
-          <button class="more" id="cl-more" type="button" hidden></button>
+      </div>
+    </section>
+
+    <!-- notes -->
+    <section class="sub-sec" id="notes">
+      <div class="wrap two">
+        <div class="sec-head">
+          <h2 data-i18n="clTitle">What's new.</h2>
+          <p class="lede" data-i18n="clLead">Release notes come from GitHub with the file list: the current release first, earlier ones below.</p>
+          <p class="rel-meta" id="cl-meta"></p>
+        </div>
+        <div class="cl" id="changelog"></div>
+      </div>
+    </section>
+
+    <!-- platform cards -->
+    <section class="sub-sec" id="platforms">
+      <div class="wrap two">
+        <div class="sec-head">
+          <h2 data-i18n="pfTitle">Which package for which system.</h2>
+          <p class="lede" data-i18n="pfLead">Every release ships the same four platforms.</p>
+        </div>
+        <ul class="pcards" id="cards" data-group data-items=".pcard" data-cpull="0.03"></ul>
+      </div>
+    </section>
+
+    <!-- verify -->
+    <section class="sub-sec" id="verify-sec">
+      <div class="wrap two">
+        <div class="sec-head">
+          <h2 data-i18n="vfTitle">Downloaded it? Verify it.</h2>
+          <p class="lede" data-i18n="vfLead">Every release includes SHA256SUMS. Thirty seconds of verification are worthwhile: a tampered client is the last thing you want handling your traffic.</p>
+        </div>
+        <div class="verify">
+          <label class="drop" id="drop">
+            <input type="file" id="verify-file" aria-label="Choose the downloaded file">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <b data-i18n="vfPick">Drop a file here or choose one</b>
+            <small data-i18n="vfNote">The file is never uploaded. Its hash is calculated in your browser.</small>
+            <small id="verify-name"></small>
+          </label>
+          <div class="field">
+            <label for="sums" data-i18n="vfField">Expected hash or SHA256SUMS contents</label>
+            <textarea id="sums" class="input" spellcheck="false" data-i18n-placeholder="vfPlaceholder" placeholder="Paste a line from SHA256SUMS or the entire file"></textarea>
+          </div>
+          <div class="verdict" id="verdict" aria-live="polite"></div>
+          <div class="term">
+            <div class="th"><h3 data-i18n="vfTermUnix">Linux and macOS</h3><button class="btn btn-ghost btn-s" type="button" id="copy-unix"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-unix"><code>sha256sum -c SHA256SUMS --ignore-missing</code></pre>
+          </div>
+          <div class="term">
+            <div class="th"><h3>Windows (PowerShell)</h3><button class="btn btn-ghost btn-s" type="button" id="copy-win"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-win"><code>Get-FileHash .\Skyward-&lt;version&gt;-windows-amd64-setup.exe -Algorithm SHA256</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- build -->
+    <section class="sub-sec" id="build">
+      <div class="wrap two">
+        <div class="sec-head">
+          <h2 data-i18n="bdTitle">Build it yourself without waiting for a release.</h2>
+          <p class="lede" data-i18n="bdLead">A direct way to trust your client: see what you build.</p>
+        </div>
+        <div>
+          <ul class="chips-list" id="prereq"></ul>
+          <div class="term">
+            <div class="th"><h3 data-i18n="bdTerm">Build</h3><button class="btn btn-ghost btn-s" type="button" id="build-copy"><span class="btn-label" data-i18n="copy">Copy</span></button></div>
+            <pre id="t-build"><code>git clone --recurse-submodules https://github.com/aqiyoung/Skyward.git
+cd Skyward
+flutter pub get
+dart run setup.dart            # host platform
+dart run setup.dart android    # APK
+# → dist/</code></pre>
+          </div>
+          <p class="muted" data-i18n="bdNote">Windows needs the Visual Studio C++ toolchain; macOS needs Xcode. The desktop executable is named SkywardCore.</p>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="foot wrap">
-    <div class="foot-brand">
-      <svg class="glyph" viewBox="0 0 240 240" aria-hidden="true">
-        <g stroke-width="46.32" stroke-linecap="round">
-          <line class="sig sig-3" x1="59.68" y1="100.95" x2="180.02" y2="31.47"/>
-          <line class="sig sig-2" x1="90.56" y1="154.43" x2="150.74" y2="119.69"/>
-        </g>
-        <circle class="sig sig-1" cx="121.44" cy="207.92" r="23.16"/>
-      </svg>
-      <div>
-        <p class="foot-name">FlClash</p>
-        <p class="foot-text"><span data-i18n="footLicense">Free and open source under GPL-3.0.</span> <span data-i18n="footUpdated">This page updates with every release.</span></p>
+  <footer class="foot">
+    <div class="wrap">
+      <div class="wordmark" aria-hidden="true">
+        <span class="wordmark-text">Skyward</span>
+        <svg class="bm wordmark-mark" viewBox="-166 -166 332 332" aria-hidden="true" focusable="false">
+          <g transform="translate(4 0) rotate(-20)" fill="none" stroke="currentColor" stroke-width="62.1" stroke-linecap="round">
+            <path class="bm-bar" pathLength="1" d="M-101.2 69V-69"/>
+            <path class="bm-bar" pathLength="1" d="M0 138V-138"/>
+            <path class="bm-bar" pathLength="1" d="M101.2 46V-46"/>
+          </g>
+        </svg>
+      </div>
+      <div class="foot-grid">
+        <div class="foot-about">
+          <a class="logo" href="#top"><img class="logo-mark" src="mark.png" width="30" height="23" alt=""><span>Skyward</span></a>
+          <p data-i18n="footAbout">An open-source client for Clash Meta (mihomo). It does not sell access or provide subscriptions.</p>
+          <div class="foot-social">
+            <a class="btn btn-ghost btn-s" href="https://github.com/aqiyoung/Skyward">GitHub</a>
+            <a class="btn btn-ghost btn-s" href="https://t.me/sanyeinfo">Telegram</a>
+          </div>
+        </div>
+        <div>
+          <h4 data-i18n="footSite">Site</h4>
+          <ul>
+            <li><a href="#top" data-i18n="navDownload">Download</a></li>
+            <li><a href="#notes" data-i18n="navNotes">What's new</a></li>
+            <li><a href="#platforms" data-i18n="pfTitle">Packages</a></li>
+            <li><a href="#verify-sec" data-i18n="vfTitle">Verify</a></li>
+            <li><a href="#build" data-i18n="navBuild">Build it yourself</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footSource">Source</h4>
+          <ul>
+            <li><a href="https://github.com/aqiyoung/Skyward">GitHub</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/releases" data-i18n="footReleases">Releases</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/issues">Issues</a></li>
+            <li><a href="https://github.com/aqiyoung/Skyward/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footBuiltOn">Built on</h4>
+          <ul>
+            <li><a href="https://github.com/chen08209/FlClash">FlClash</a></li>
+            <li><a href="https://github.com/MetaCubeX/mihomo">mihomo</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot-legal">
+        <span>© <span id="year">2026</span> Skyward</span>
+        <span data-i18n="footLicense">GPL-3.0 license</span>
+        <span data-i18n="footFork">A FlClash fork. Not affiliated with FlClash, mihomo or FlClashX.</span>
+        <span class="live"><span class="dot-live"></span><span data-i18n="footLive">Actively maintained</span></span>
       </div>
     </div>
-    <nav class="foot-links" aria-label="Links">
-      <a href="https://github.com/chen08209/FlClash">GitHub</a>
-      <a href="https://github.com/chen08209/FlClash/releases" data-i18n="footReleases">Releases</a>
-      <a href="https://t.me/FlClash" data-i18n="footTelegram">Telegram channel</a>
-    </nav>
   </footer>
 
+  <script src="assets/motion.js"></script>
   <script src="assets/shared.js"></script>
-  <script src="assets/field.js"></script>
-  <script src="assets/app.js"></script>
+  <script src="assets/site.js"></script>
 </body>
 </html>
