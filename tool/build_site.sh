@@ -24,11 +24,12 @@ copy_if_present() {
     echo "note: $1 is absent; continuing without it" >&2
   fi
 }
+# site/logo.png is a 128px derivative of assets/images/icon.png, committed with
+# the site so building needs no image tooling. Regenerate it when the mark changes.
 copy_if_present "$root/snapshots/preview.png" "$out/preview.png"
 copy_if_present "$root/snapshots/preview-dark.png" "$out/preview-dark.png"
 copy_if_present "$root/assets/images/icon.png" "$out/icon.png"
 copy_if_present "$root/assets_source/images/icon/glyph.svg" "$out/favicon.svg"
-copy_if_present "$root/assets_source/images/icon/mark.png" "$out/mark.png"
 
 # Release metadata feeds the download list, so it has to exist wherever the site
 # is built. `gh` is used when present; Vercel's build image has only curl, which
