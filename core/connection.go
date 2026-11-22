@@ -1,30 +1,10 @@
 package core
 
 import (
-	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
-	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
-
-type requestSnapshot struct {
-	*statistic.TrackerInfo
-	Metadata *constant.Metadata `json:"metadata"`
-}
-
-func snapshotRequest(info *statistic.TrackerInfo, lookup process.PackageNameResolver) *requestSnapshot {
-	metadata := info.Metadata
-	if lookup != nil && metadata != nil && metadata.Type != constant.INNER && metadata.Process == "" {
-		// Find-process-mode can be off; attribute statistics without changing routing metadata.
-		resolved := *metadata
-		if name, err := lookup(&resolved); err == nil && name != "" {
-			resolved.Process = name
-			metadata = &resolved
-		}
-	}
-	return &requestSnapshot{TrackerInfo: info, Metadata: metadata}
-}
 
 func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
 	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)

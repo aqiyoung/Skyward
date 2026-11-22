@@ -33,9 +33,6 @@ func handleInitClash(params *InitParams) bool {
 	// defaults already costs more than the limit it is later squeezed into.
 	applyMemoryBudget()
 	constant.SetHomeDir(params.HomeDir)
-	if runtime.GOOS == "android" {
-		openNativeHistory(params.TimeZone)
-	}
 	initOwnership(params.HomeDir)
 	clearSpilledResponses()
 	isInit.Store(true)

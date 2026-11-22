@@ -52,7 +52,6 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'rule': 'Match',
         'rule-payload': '',
       },
-      CoreMethod.getTrafficHistory => {'rows': <Object?>[], 'revision': 42},
       CoreMethod.getConnections => {
         'connections': [
           {
@@ -399,11 +398,6 @@ void main() {
       ),
     );
     expect((await handler.getConnections()).single.id, 'connection-1');
-    expect(await handler.getTrafficHistory(41), {
-      'rows': <Object?>[],
-      'revision': 42,
-    });
-    expect(handler.calls[CoreMethod.getTrafficHistory], 41);
     expect(await handler.getConnectionCount(), 3);
     expect((await handler.getExternalProviders()).single.name, 'provider-1');
     expect(

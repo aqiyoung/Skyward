@@ -10,7 +10,6 @@ import 'package:skyward/providers/config.dart';
 import 'package:skyward/providers/core.dart';
 import 'package:skyward/providers/route_state.dart';
 import 'package:skyward/providers/state.dart';
-import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,7 +37,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     coreEventManager.addListener(this);
     WidgetsBinding.instance.addObserver(this);
     ref.read(updatingActionProvider.notifier);
-    ref.read(trafficSamplerProvider);
     // A rejected profile stays selected on purpose: silently reverting to
     // the previous one hides the error and looks like the switch was lost.
     ref.listenManual(currentProfileIdProvider, (prev, next) {
@@ -132,7 +130,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void onRequest(TrackerInfo trackerInfo) async {
-    ref.read(trafficSamplerProvider.notifier).capture([trackerInfo]);
     ref.read(requestsProvider.notifier).addRequest(trackerInfo);
     ref.read(requestCountProvider.notifier).update((count) => count + 1);
     super.onRequest(trackerInfo);
@@ -141,14 +138,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   void onRequestTraffic(Map<String, RequestTraffic> traffic) {
     ref.read(requestsProvider.notifier).updateTraffic(traffic);
-    ref
-        .read(trafficSamplerProvider.notifier)
-        .capture(
-          ref
-              .read(requestsProvider)
-              .list
-              .where((r) => traffic.containsKey(r.id)),
-        );
     super.onRequestTraffic(traffic);
   }
 

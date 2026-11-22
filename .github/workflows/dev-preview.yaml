@@ -137,64 +137,53 @@ jobs:
             echo "::error::expected a three-component version in pubspec.yaml, got '$base'"
             exit 1
           fi
-          now=$(date -u +%s)
-          origin=$(date -u -d 2026-01-01 +%s)
-          day_prefix=$(( 20900000 + (now - origin) / 86400 ))
-          # One global, monotonically rising counter for every channel. A dev
-          # built after a beta MUST carry a higher versionCode than that beta:
-          # Android reads nothing but the number and otherwise refuses the
-          # install as a downgrade (-25). Beta claims the 80s of the day's
-          # hundred codes, so reading only dev-* tags left every later dev of
-          # that day below it. Read the build numbers the releases recorded,
-          # the preview tags and dev's own tags, then take one past the highest
-          # number spent today -- whichever channel publishes last ranks highest.
+          # The checkout is one commit deep and carries no tags, so both ledgers
+          # have to be pulled before they can be read.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet \
+            || true
+          major="${base%%.*}"
+          base_patch="${base##*.}"
+          # The version's last two components are one counter: the fourth runs
+          # 1..99 and the third takes the carry, counted from this line's tags.
+          highest_seq=$(git tag --list "v${major}.0.*" \
+            | awk -F'[v.]' -v bp="$base_patch" '
+                NF >= 5 && $4 ~ /^[0-9]+$/ {
+                  rev = $5
+                  sub(/-.*/, "", rev)
+                  if (rev ~ /^[0-9]+$/) print ($4 - bp) * 99 + rev
+                }' \
+            | sort -n | tail -1)
+          seq=$(( ${highest_seq:-0} + 1 ))
+          patch=$(( base_patch + (seq - 1) / 99 ))
+          revision=$(( (seq - 1) % 99 + 1 ))
+          version="${major}.0.${patch}.${revision}"
+          # One global, monotonically rising counter for every channel, one past
+          # the highest ever spent. A dev built after a beta MUST carry a higher
+          # versionCode than that beta: Android reads nothing but the number and
+          # otherwise refuses the install as a downgrade (-25). It stays out of
+          # the version name; the version is its own four-part scheme.
           dev_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-" \
             --jq '.[].ref' 2>/dev/null || true)
           preview_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-${day_prefix}" \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/preview-" \
             --jq '.[].ref' 2>/dev/null || true)
           titles=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '[.[] | .name, .body] | .[]' 2>/dev/null || true)
-          highest_stamp=$(printf '%s\n' "$titles" "$preview_tags" "$dev_tags" \
-            | sed -n "s/.*${day_prefix}\([0-9][0-9]*\).*/\1/p" | sort -n | tail -1)
-          stamp=$(( 10#${highest_stamp:-0} + 1 ))
-          # The whole day's hundred codes are shared with the other channels;
-          # a dev built after them must still out-rank their versionCode.
-          if [ "$stamp" -ge 99 ]; then
-            echo "::error::dev build numbers for today are exhausted"
-            exit 1
-          fi
-          build_number=$(( day_prefix * 100 + stamp ))
-
-          # The visible four-component version is a running counter independent
-          # of the day: component 2 is the channel (0 = dev) and component 4
-          # increments on every build, carrying into component 3 at 99. The
-          # lightweight v<major>.<chan>.<patch>.<rev> tag is its only ledger.
-          major="${base%%.*}"
-          version_tags=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/v${major}.0." \
-            --jq '.[].ref' 2>/dev/null || true)
-          # The last published counter is patch*100 + revision, read from the
-          # version tags themselves. The next build increments it; the patch is
-          # derived from the counter alone so it never double-carries.
-          last=$(printf '%s\n' "$version_tags" \
-            | grep -oE "v${major}\.0\.[0-9]+\.[0-9]+$" \
-            | awk -F. '{n=$3*100+$4; if(n>m)m=n} END{print m+0}')
-          total=$(( last + 1 ))
-          patch=$(( total / 100 ))
-          revision=$(( total % 100 ))
-          version="${major}.0.${patch}.$(printf '%02d' "$revision")"
-          echo "VERSION_TAG=v${version}" >> "$GITHUB_OUTPUT"
-          # Keep pubspec's base in step with the carried patch so the package
-          # name produced by the build matches the visible version.
-          pubspec_base="${major}.0.${patch}"
-          awk -v v="${pubspec_base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
+          last_code=$(printf '%s\n%s\n%s\n' "$titles" "$preview_tags" "$dev_tags" \
+            | sed -nE -e 's/.*skyward:build-number:([0-9]+).*/\1/p' \
+                      -e 's,^refs/tags/(preview|dev)-([0-9]+)$,\2,p' \
+            | sort -n | tail -1)
+          build_number=$(( 10#${last_code:-2090000000} + 1 ))
+          # The pubspec keeps upstream's three components; the four-part version
+          # above is injected as versionName at build time.
+          awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
-          echo "building ${version} from ${base}, versionCode ${build_number}"
+          echo "building ${version} from ${base}, build number ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
       # to write its number down too: a lightweight tag under it. Without that
@@ -214,30 +203,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: dev-${{ steps.version.outputs.build_number }}
-          VERSION_TAG: ${{ steps.version.outputs.VERSION_TAG }}
         run: |
           set -euo pipefail
           sha="$(git rev-parse HEAD)"
-          for tag in "$TAG" "$VERSION_TAG"; do
-            [ -n "$tag" ] || continue
-            claimed="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
-              --jq '.object.sha' 2>/dev/null || true)"
-            # An unknown ref answers 404 with a JSON body on stdout rather than an
-            # empty string, so anything that is not a commit sha means the number
-            # is still free.
-            if ! printf '%s' "$claimed" | grep -Eq '^[0-9a-f]{40}$'; then
-              claimed=""
-            fi
-            if [ -n "$claimed" ] && [ "$claimed" != "$sha" ]; then
-              echo "::error::${tag} is already claimed by ${claimed}; another run took this number"
-              exit 1
-            fi
-            if [ -z "$claimed" ]; then
-              gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-                -f ref="refs/tags/${tag}" -f sha="$sha" > /dev/null
-            fi
-            echo "counter: ${tag} claimed on ${sha}"
-          done
+          claimed="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" \
+            --jq '.object.sha' 2>/dev/null || true)"
+          # An unknown ref answers 404 with a JSON body on stdout rather than an
+          # empty string, so anything that is not a commit sha means the number
+          # is still free.
+          if ! printf '%s' "$claimed" | grep -Eq '^[0-9a-f]{40}$'; then
+            claimed=""
+          fi
+          if [ -n "$claimed" ] && [ "$claimed" != "$sha" ]; then
+            echo "::error::${TAG} is already claimed by ${claimed}; another run took this number"
+            exit 1
+          fi
+          if [ -z "$claimed" ]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${TAG}" -f sha="$sha" > /dev/null
+          fi
+          echo "counter: ${TAG} claimed on ${sha}"
 
       # What changed since the previous preview, so the phone shows the point of
       # the build rather than a bare version number.

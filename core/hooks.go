@@ -1,8 +1,6 @@
 package core
 
 import (
-	"core/tun"
-	"runtime"
 	"sync"
 	"time"
 
@@ -20,15 +18,6 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
-		if runtime.GOOS == "android" {
-			snapshot := snapshotRequest(c.Info(), tun.FindPackageName)
-			nativeHistory.watch(c, snapshot.Metadata)
-			if hasEventListener() {
-				sendMessage(RequestMessage, snapshot)
-				watchRequestTraffic(c)
-			}
-			return
-		}
 		if hasEventListener() {
 			sendMessage(RequestMessage, c)
 			watchRequestTraffic(c)

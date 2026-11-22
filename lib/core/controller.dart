@@ -217,9 +217,6 @@ class CoreController {
     return _interface.getConnections();
   }
 
-  Future<Map<String, Object?>?> getTrafficHistory(int since) =>
-      _interface.getTrafficHistory(since);
-
   Future<int> getConnectionCount() async {
     return _interface.getConnectionCount();
   }

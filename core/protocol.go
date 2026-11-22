@@ -39,7 +39,6 @@ const (
 	outboundIpMethod               CoreMethod = "outboundIp"
 	serviceCheckMethod             CoreMethod = "serviceCheck"
 	getConnectionsMethod           CoreMethod = "getConnections"
-	getTrafficHistoryMethod        CoreMethod = "getTrafficHistory"
 	getConnectionCountMethod       CoreMethod = "getConnectionCount"
 	closeConnectionsMethod         CoreMethod = "closeConnections"
 	resetConnectionsMethod         CoreMethod = "resetConnections"
@@ -90,9 +89,8 @@ type Message struct {
 }
 
 type InitParams struct {
-	TimeZone string `json:"time-zone"`
-	HomeDir  string `json:"home-dir"`
-	Version  int    `json:"version"`
+	HomeDir string `json:"home-dir"`
+	Version int    `json:"version"`
 }
 
 type DecryptConfigParams struct {

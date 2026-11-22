@@ -47,24 +47,34 @@ class AppTrafficHourlyDao extends DatabaseAccessor<Database>
   ) async {
     if (bytes <= 0) return;
     final key = hour.millisecondsSinceEpoch;
-    await customInsert(
-      'INSERT INTO app_traffic_hourly (hour, process, direction, bytes) VALUES (?, ?, ?, ?) '
-      'ON CONFLICT (hour, process, direction) DO UPDATE SET bytes = bytes + excluded.bytes',
-      variables: [
-        Variable(key),
-        Variable(process),
-        Variable(direction),
-        Variable(bytes),
-      ],
-      updates: {appTrafficHourly},
-    );
+    Expression<bool> match($AppTrafficHourlyTable t) =>
+        t.hour.equals(key) &
+        t.process.equals(process) &
+        t.direction.equals(direction);
+    final existing = await (select(
+      appTrafficHourly,
+    )..where(match)).getSingleOrNull();
+    if (existing == null) {
+      await into(appTrafficHourly).insert(
+        AppTrafficHourlyCompanion.insert(
+          hour: key,
+          process: process,
+          direction: direction,
+          bytes: bytes,
+        ),
+      );
+    } else {
+      await (update(appTrafficHourly)..where(match)).write(
+        AppTrafficHourlyCompanion(bytes: Value(existing.bytes + bytes)),
+      );
+    }
   }
 
   Future<List<AppTrafficHour>> between(DateTime start, DateTime end) =>
       (select(appTrafficHourly)..where(
             (t) =>
                 t.hour.isBiggerOrEqualValue(start.millisecondsSinceEpoch) &
-                t.hour.isSmallerThanValue(end.millisecondsSinceEpoch),
+                t.hour.isSmallerOrEqualValue(end.millisecondsSinceEpoch),
           ))
           .get();
 

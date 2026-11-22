@@ -24,7 +24,6 @@ part 'scripts.dart';
 part 'traffic_records.dart';
 part 'traffic_hourly.dart';
 part 'app_traffic_hourly.dart';
-part 'native_traffic.dart';
 
 @DriftDatabase(
   tables: [
@@ -42,7 +41,6 @@ part 'native_traffic.dart';
     TrafficRecords,
     TrafficHourly,
     AppTrafficHourly,
-    NativeTraffic,
   ],
   daos: [
     ProfilesDao,
@@ -58,14 +56,13 @@ part 'native_traffic.dart';
     TrafficRecordsDao,
     TrafficHourlyDao,
     AppTrafficHourlyDao,
-    NativeTrafficDao,
   ],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 24;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -135,9 +132,8 @@ class Database extends _$Database {
         if (from < 23) {
           await _createTableIfMissing(m, trafficHourly);
         }
-        if (from < 25) {
+        if (from < 24) {
           await _createTableIfMissing(m, appTrafficHourly);
-          await _createTableIfMissing(m, nativeTraffic);
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

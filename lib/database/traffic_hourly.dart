@@ -40,39 +40,42 @@ class TrafficHourlyDao extends DatabaseAccessor<Database>
     await _add(hour, 1, upload, proxied);
   }
 
-  Future<void> _add(
-    DateTime hour,
-    int direction,
-    int bytes,
-    bool proxied,
-  ) async {
+  Future<void> _add(DateTime hour, int direction, int bytes, bool proxied) async {
     if (bytes <= 0) return;
     final key = hour.millisecondsSinceEpoch;
     final flag = proxied ? 0 : 1;
-    await customInsert(
-      'INSERT INTO traffic_hourly (hour, direction, proxied, bytes) VALUES (?, ?, ?, ?) '
-      'ON CONFLICT (hour, direction, proxied) DO UPDATE SET bytes = bytes + excluded.bytes',
-      variables: [
-        Variable(key),
-        Variable(direction),
-        Variable(flag),
-        Variable(bytes),
-      ],
-      updates: {trafficHourly},
-    );
+    final existing = await (select(trafficHourly)
+      ..where(
+        (t) => t.hour.equals(key) & t.direction.equals(direction) & t.proxied.equals(flag),
+      ))
+        .getSingleOrNull();
+    if (existing == null) {
+      await into(trafficHourly).insert(
+        TrafficHourlyCompanion.insert(
+          hour: key,
+          direction: direction,
+          proxied: flag,
+          bytes: bytes,
+        ),
+      );
+    } else {
+      await (update(trafficHourly)
+        ..where(
+          (t) => t.hour.equals(key) & t.direction.equals(direction) & t.proxied.equals(flag),
+        ))
+          .write(TrafficHourlyCompanion(bytes: Value(existing.bytes + bytes)));
+    }
   }
 
   Future<List<TrafficHour>> between(DateTime start, DateTime end) =>
-      (select(trafficHourly)..where(
-            (t) =>
-                t.hour.isBiggerOrEqualValue(start.millisecondsSinceEpoch) &
-                t.hour.isSmallerThanValue(end.millisecondsSinceEpoch),
-          ))
+      (select(trafficHourly)
+        ..where(
+          (t) => t.hour.isBiggerOrEqualValue(start.millisecondsSinceEpoch) &
+              t.hour.isSmallerOrEqualValue(end.millisecondsSinceEpoch),
+        ))
           .get();
 
-  Future<int> pruneBefore(DateTime cutoff) =>
-      (delete(trafficHourly)..where(
-            (t) => t.hour.isSmallerThanValue(cutoff.millisecondsSinceEpoch),
-          ))
-          .go();
+  Future<int> pruneBefore(DateTime cutoff) => (delete(trafficHourly)
+    ..where((t) => t.hour.isSmallerThanValue(cutoff.millisecondsSinceEpoch)))
+      .go();
 }
