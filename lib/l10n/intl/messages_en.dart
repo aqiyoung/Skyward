@@ -228,12 +228,32 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "${transport} Headers";
 
-  static String m84(label) => "${label} must be a URL";
+  static String m84(n) => "${n} connections";
 
-  static String m85(count) =>
+  static String m85(d, h) => "${d} d ${h} h";
+
+  static String m86(n) => "${n} hits";
+
+  static String m87(h, m) => "${h} h ${m} min";
+
+  static String m88(n) => "${n} min";
+
+  static String m89(h) => "Peak ${h}:00";
+
+  static String m90(p) => "${p} of total";
+
+  static String m91(n) => "${n} rules hit";
+
+  static String m92(p, n) => "${p} of hits · ${n} times";
+
+  static String m93(m, d) => "${m}/${d} onward";
+
+  static String m94(label) => "${label} must be a URL";
+
+  static String m95(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m86(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m96(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2077,6 +2097,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
     "transport": MessageLookupByLibrary.simpleMessage("Transport"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("Config"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("Day"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("Direct"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("Domain"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("hits"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("Month"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("Next"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("No data"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("Node"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("Traffic overview"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("Previous"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("Proxy"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("Refresh"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("Rule hits"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("Total"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage("Traffic ranking"),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("Traffic trend"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("Uptime"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("Week"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN could not be authorized, so it was turned off.",
@@ -2116,7 +2165,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("Upload bandwidth"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("Usage details"),
     "usageStats": MessageLookupByLibrary.simpleMessage("Usage stats"),
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
@@ -2191,8 +2240,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

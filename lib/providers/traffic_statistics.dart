@@ -206,6 +206,14 @@ class TrafficSampler extends _$TrafficSampler {
   }
 }
 
+/// Monday of the week containing [date]. Weeks run Monday-to-Sunday, so a
+/// weekly view must snap the selected day back to the start of its week both
+/// when querying history and when labelling the date strip.
+DateTime weekStartOf(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  return day.subtract(Duration(days: day.weekday - 1));
+}
+
 /// The range a statistics view currently shows: the start of the period.
 @Riverpod(keepAlive: true)
 class TrafficRange extends _$TrafficRange {
@@ -238,7 +246,10 @@ Future<TrafficStatistics> trafficStatistics(
   final start0 = ref.watch(trafficRangeProvider);
   final (start, end) = switch (period) {
     TrafficPeriod.day => (start0, start0.add(const Duration(days: 1))),
-    TrafficPeriod.week => (start0, start0.add(const Duration(days: 7))),
+    TrafficPeriod.week => (
+      weekStartOf(start0),
+      weekStartOf(start0).add(const Duration(days: 7)),
+    ),
     TrafficPeriod.month => (
       DateTime(start0.year, start0.month, 1),
       DateTime(start0.year, start0.month + 1, 1),

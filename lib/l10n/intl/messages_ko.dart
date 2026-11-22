@@ -204,11 +204,31 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "${transport} 요청 헤더";
 
-  static String m84(label) => "${label}은(는) URL이어야 합니다";
+  static String m84(n) => "${n}개 연결";
 
-  static String m85(count) => "${Intl.plural(count, other: '${count}년 전')}";
+  static String m85(d, h) => "${d}일 ${h}시간";
 
-  static String m86(count) => "${Intl.plural(count, other: '${count}년 전')}";
+  static String m86(n) => "${n}회 히트";
+
+  static String m87(h, m) => "${h}시간 ${m}분";
+
+  static String m88(n) => "${n}분";
+
+  static String m89(h) => "최고 ${h}:00";
+
+  static String m90(p) => "전체의 ${p}";
+
+  static String m91(n) => "${n}개 규칙 히트";
+
+  static String m92(p, n) => "히트의 ${p} · ${n}회";
+
+  static String m93(m, d) => "${m}/${d}부터";
+
+  static String m94(label) => "${label}은(는) URL이어야 합니다";
+
+  static String m95(count) => "${Intl.plural(count, other: '${count}년 전')}";
+
+  static String m96(count) => "${Intl.plural(count, other: '${count}년 전')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1766,6 +1786,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("트래픽 사용량"),
     "transport": MessageLookupByLibrary.simpleMessage("전송"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("설정"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("일"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("직결"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("도메인"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("회 히트"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("월"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("다음"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("데이터 없음"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("노드"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("트래픽 개요"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("이전"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("프록시"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("새로고침"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("규칙 히트"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("총 트래픽"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage("트래픽 순위"),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("트래픽 추이"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("가동 시간"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("주"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN 권한을 얻지 못해 끄기로 되돌렸습니다.",
@@ -1803,7 +1852,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("업로드 대역폭"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("사용 상세"),
     "usageStats": MessageLookupByLibrary.simpleMessage("사용 통계"),
     "useHosts": MessageLookupByLibrary.simpleMessage("hosts 사용"),
@@ -1870,8 +1919,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "시스템에 기록하면 시스템 시계도 설정합니다. Android에서는 무시됩니다.",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
   };

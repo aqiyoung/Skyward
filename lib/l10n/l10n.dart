@@ -9421,6 +9421,191 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Refresh`
+  String get tsRefresh {
+    return Intl.message('Refresh', name: 'tsRefresh', desc: '', args: []);
+  }
+
+  /// `Day`
+  String get tsDay {
+    return Intl.message('Day', name: 'tsDay', desc: '', args: []);
+  }
+
+  /// `Week`
+  String get tsWeek {
+    return Intl.message('Week', name: 'tsWeek', desc: '', args: []);
+  }
+
+  /// `Month`
+  String get tsMonth {
+    return Intl.message('Month', name: 'tsMonth', desc: '', args: []);
+  }
+
+  /// `Rule hits`
+  String get tsRuleHits {
+    return Intl.message('Rule hits', name: 'tsRuleHits', desc: '', args: []);
+  }
+
+  /// `Traffic ranking`
+  String get tsTrafficRank {
+    return Intl.message(
+      'Traffic ranking',
+      name: 'tsTrafficRank',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain`
+  String get tsDomain {
+    return Intl.message('Domain', name: 'tsDomain', desc: '', args: []);
+  }
+
+  /// `Node`
+  String get tsNode {
+    return Intl.message('Node', name: 'tsNode', desc: '', args: []);
+  }
+
+  /// `Config`
+  String get tsConfig {
+    return Intl.message('Config', name: 'tsConfig', desc: '', args: []);
+  }
+
+  /// `{m}/{d} onward`
+  String tsWeekFrom(Object m, Object d) {
+    return Intl.message(
+      '$m/$d onward',
+      name: 'tsWeekFrom',
+      desc: '',
+      args: [m, d],
+    );
+  }
+
+  /// `Previous`
+  String get tsPrev {
+    return Intl.message('Previous', name: 'tsPrev', desc: '', args: []);
+  }
+
+  /// `Next`
+  String get tsNext {
+    return Intl.message('Next', name: 'tsNext', desc: '', args: []);
+  }
+
+  /// `{n} min`
+  String tsMinutes(Object n) {
+    return Intl.message('$n min', name: 'tsMinutes', desc: '', args: [n]);
+  }
+
+  /// `{h} h {m} min`
+  String tsHoursMinutes(Object h, Object m) {
+    return Intl.message(
+      '$h h $m min',
+      name: 'tsHoursMinutes',
+      desc: '',
+      args: [h, m],
+    );
+  }
+
+  /// `{d} d {h} h`
+  String tsDaysHours(Object d, Object h) {
+    return Intl.message(
+      '$d d $h h',
+      name: 'tsDaysHours',
+      desc: '',
+      args: [d, h],
+    );
+  }
+
+  /// `Traffic overview`
+  String get tsOverview {
+    return Intl.message(
+      'Traffic overview',
+      name: 'tsOverview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{n} connections`
+  String tsConnections(Object n) {
+    return Intl.message(
+      '$n connections',
+      name: 'tsConnections',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `Total`
+  String get tsTotal {
+    return Intl.message('Total', name: 'tsTotal', desc: '', args: []);
+  }
+
+  /// `Proxy`
+  String get tsProxy {
+    return Intl.message('Proxy', name: 'tsProxy', desc: '', args: []);
+  }
+
+  /// `Direct`
+  String get tsDirect {
+    return Intl.message('Direct', name: 'tsDirect', desc: '', args: []);
+  }
+
+  /// `Uptime`
+  String get tsUptime {
+    return Intl.message('Uptime', name: 'tsUptime', desc: '', args: []);
+  }
+
+  /// `Traffic trend`
+  String get tsTrend {
+    return Intl.message('Traffic trend', name: 'tsTrend', desc: '', args: []);
+  }
+
+  /// `Peak {h}:00`
+  String tsPeak(Object h) {
+    return Intl.message('Peak $h:00', name: 'tsPeak', desc: '', args: [h]);
+  }
+
+  /// `No data`
+  String get tsNoData {
+    return Intl.message('No data', name: 'tsNoData', desc: '', args: []);
+  }
+
+  /// `{n} hits`
+  String tsHits(Object n) {
+    return Intl.message('$n hits', name: 'tsHits', desc: '', args: [n]);
+  }
+
+  /// `{p} of hits · {n} times`
+  String tsShareOfHits(Object p, Object n) {
+    return Intl.message(
+      '$p of hits · $n times',
+      name: 'tsShareOfHits',
+      desc: '',
+      args: [p, n],
+    );
+  }
+
+  /// `{n} rules hit`
+  String tsRulesWithHits(Object n) {
+    return Intl.message(
+      '$n rules hit',
+      name: 'tsRulesWithHits',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `{p} of total`
+  String tsPercent(Object p) {
+    return Intl.message('$p of total', name: 'tsPercent', desc: '', args: [p]);
+  }
+
+  /// `hits`
+  String get tsHitUnit {
+    return Intl.message('hits', name: 'tsHitUnit', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

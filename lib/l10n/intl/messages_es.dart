@@ -233,12 +233,32 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "Encabezados ${transport}";
 
-  static String m84(label) => "${label} debe ser una URL";
+  static String m84(n) => "${n} conexiones";
 
-  static String m85(count) =>
+  static String m85(d, h) => "${d} d ${h} h";
+
+  static String m86(n) => "${n} activaciones";
+
+  static String m87(h, m) => "${h} h ${m} min";
+
+  static String m88(n) => "${n} min";
+
+  static String m89(h) => "Pico ${h}:00";
+
+  static String m90(p) => "${p} del total";
+
+  static String m91(n) => "${n} reglas activadas";
+
+  static String m92(p, n) => "${p} de impactos · ${n} veces";
+
+  static String m93(m, d) => "Desde ${m}/${d}";
+
+  static String m94(label) => "${label} debe ser una URL";
+
+  static String m95(count) =>
       "${Intl.plural(count, one: 'hace 1 año', other: 'hace ${count} años')}";
 
-  static String m86(count) => "${Intl.plural(count, other: 'hace ${count} a')}";
+  static String m96(count) => "${Intl.plural(count, other: 'hace ${count} a')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2240,6 +2260,37 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Uso de tráfico"),
     "transport": MessageLookupByLibrary.simpleMessage("Transporte"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("Configuración"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("Día"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("Direct"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("Dominio"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("activaciones"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("Mes"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("Siguiente"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("Sin datos"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("Nodo"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("Resumen de tráfico"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("Anterior"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("Proxy"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("Actualizar"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("Reglas activadas"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("Total"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage(
+      "Clasificación de tráfico",
+    ),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("Tendencia de tráfico"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("Tiempo"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("Semana"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo autorizar TUN, por lo que se desactivó.",
@@ -2283,7 +2334,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Ancho de banda de subida",
     ),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("Detalles de uso"),
     "usageStats": MessageLookupByLibrary.simpleMessage("Estadísticas de uso"),
     "useHosts": MessageLookupByLibrary.simpleMessage("Usar hosts"),
@@ -2372,8 +2423,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Escribir en el sistema también ajusta el reloj del sistema; Android lo ignora.",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("Sí"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chino simplificado"),
   };

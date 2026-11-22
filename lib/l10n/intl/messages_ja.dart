@@ -203,11 +203,31 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "${transport} リクエストヘッダー";
 
-  static String m84(label) => "${label}はURLである必要があります";
+  static String m84(n) => "${n} 接続";
 
-  static String m85(count) => "${count} 年前";
+  static String m85(d, h) => "${d} 日 ${h} 時間";
 
-  static String m86(count) => "${count} 年前";
+  static String m86(n) => "${n} 回ヒット";
+
+  static String m87(h, m) => "${h} 時間 ${m} 分";
+
+  static String m88(n) => "${n} 分";
+
+  static String m89(h) => "ピーク ${h}:00";
+
+  static String m90(p) => "全体の ${p}";
+
+  static String m91(n) => "${n} 件のルールがヒット";
+
+  static String m92(p, n) => "ヒットの ${p} · ${n} 回";
+
+  static String m93(m, d) => "${m}/${d} 以降";
+
+  static String m94(label) => "${label}はURLである必要があります";
+
+  static String m95(count) => "${count} 年前";
+
+  static String m96(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1791,6 +1811,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("トラフィック統計"),
     "transport": MessageLookupByLibrary.simpleMessage("トランスポート"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("設定"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("日"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("ダイレクト"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("ドメイン"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("回ヒット"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("月"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("次へ"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("データなし"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("ノード"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("トラフィック概要"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("前へ"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("プロキシ"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("更新"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("ルール命中"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("合計"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage("トラフィック順位"),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("トラフィック推移"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("稼働時間"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("週"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN の権限を取得できなかったため、オフにしました。",
@@ -1826,7 +1875,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("アップロード"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("アップロード帯域幅"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("使用の詳細"),
     "usageStats": MessageLookupByLibrary.simpleMessage("使用状況"),
     "useHosts": MessageLookupByLibrary.simpleMessage("Hostsを使用"),
@@ -1895,8 +1944,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "システムに書き込むを有効にするとシステムクロックも設定します。Android では無視されます。",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("はい"),
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };

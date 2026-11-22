@@ -225,12 +225,32 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "Заголовки ${transport}";
 
-  static String m84(label) => "Значение «${label}» должно быть URL";
+  static String m84(n) => "${n} подключений";
 
-  static String m85(count) =>
+  static String m85(d, h) => "${d} д ${h} ч";
+
+  static String m86(n) => "${n} срабатываний";
+
+  static String m87(h, m) => "${h} ч ${m} мин";
+
+  static String m88(n) => "${n} мин";
+
+  static String m89(h) => "Пик ${h}:00";
+
+  static String m90(p) => "${p} от общего";
+
+  static String m91(n) => "${n} правил срабатывало";
+
+  static String m92(p, n) => "${p} срабатываний · ${n} раз";
+
+  static String m93(m, d) => "с ${m}/${d}";
+
+  static String m94(label) => "Значение «${label}» должно быть URL";
+
+  static String m95(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
-  static String m86(count) =>
+  static String m96(count) =>
       "${Intl.plural(count, one: '${count} г. назад', few: '${count} г. назад', many: '${count} л. назад', other: '${count} г. назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -2173,6 +2193,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Статистика трафика"),
     "transport": MessageLookupByLibrary.simpleMessage("Транспорт"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("Конфиг"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("День"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("Прямое"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("Домен"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("срабатываний"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("Месяц"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("Вперёд"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("Нет данных"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("Узел"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("Обзор трафика"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("Назад"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("Прокси"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("Обновить"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("Срабатывания правил"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("Всего"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage("Рейтинг трафика"),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("Динамика трафика"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("Время работы"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("Неделя"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "Не удалось получить права для TUN, поэтому он выключен.",
@@ -2214,7 +2263,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Отдача"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("Скорость отдачи"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("Подробности"),
     "usageStats": MessageLookupByLibrary.simpleMessage(
       "Статистика использования",
@@ -2301,8 +2350,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "«Записывать в систему» также устанавливает системные часы; Android это игнорирует.",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };

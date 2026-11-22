@@ -237,12 +237,32 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "En-têtes ${transport}";
 
-  static String m84(label) => "${label} doit être une URL";
+  static String m84(n) => "${n} connexions";
 
-  static String m85(count) =>
+  static String m85(d, h) => "${d} j ${h} h";
+
+  static String m86(n) => "${n} déclenchements";
+
+  static String m87(h, m) => "${h} h ${m} min";
+
+  static String m88(n) => "${n} min";
+
+  static String m89(h) => "Pic ${h}:00";
+
+  static String m90(p) => "${p} du total";
+
+  static String m91(n) => "${n} règles déclenchées";
+
+  static String m92(p, n) => "${p} des déclenchements · ${n} fois";
+
+  static String m93(m, d) => "À partir du ${m}/${d}";
+
+  static String m94(label) => "${label} doit être une URL";
+
+  static String m95(count) =>
       "${Intl.plural(count, one: 'il y a 1 an', other: 'il y a ${count} ans')}";
 
-  static String m86(count) =>
+  static String m96(count) =>
       "${Intl.plural(count, other: 'il y a ${count} a')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -2239,6 +2259,37 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Trafic utilisé"),
     "transport": MessageLookupByLibrary.simpleMessage("Transport"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("Config"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("Jour"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("Direct"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("Domaine"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("déclenchements"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("Mois"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("Suivant"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("Aucune donnée"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("Nœud"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("Aperçu du trafic"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("Précédent"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("Proxy"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("Actualiser"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("Règles déclenchées"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("Total"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage(
+      "Classement du trafic",
+    ),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("Tendance du trafic"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("Durée"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("Semaine"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN n’a pas pu être autorisé et a donc été désactivé.",
@@ -2282,7 +2333,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Bande passante d’envoi",
     ),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage(
       "Détails d’utilisation",
     ),
@@ -2373,8 +2424,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Écrire dans le système règle aussi l’horloge système ; Android l’ignore.",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("Oui"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chinois simplifié"),
   };

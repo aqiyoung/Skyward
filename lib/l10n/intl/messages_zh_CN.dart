@@ -200,11 +200,31 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m83(transport) => "${transport} 请求头";
 
-  static String m84(label) => "${label}必须为URL";
+  static String m84(n) => "${n} 条连接";
 
-  static String m85(count) => "${count} 年前";
+  static String m85(d, h) => "${d} 天 ${h} 小时";
 
-  static String m86(count) => "${count} 年前";
+  static String m86(n) => "${n} 次命中";
+
+  static String m87(h, m) => "${h} 小时 ${m} 分";
+
+  static String m88(n) => "${n} 分钟";
+
+  static String m89(h) => "峰值 ${h}:00";
+
+  static String m90(p) => "占 ${p}";
+
+  static String m91(n) => "共 ${n} 条规则有命中";
+
+  static String m92(p, n) => "占命中流量 ${p} · ${n} 次";
+
+  static String m93(m, d) => "${m}/${d} 起";
+
+  static String m94(label) => "${label}必须为URL";
+
+  static String m95(count) => "${count} 年前";
+
+  static String m96(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1634,6 +1654,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "trafficUsage": MessageLookupByLibrary.simpleMessage("流量统计"),
     "transport": MessageLookupByLibrary.simpleMessage("传输协议"),
     "transportHeaders": m83,
+    "tsConfig": MessageLookupByLibrary.simpleMessage("配置"),
+    "tsConnections": m84,
+    "tsDay": MessageLookupByLibrary.simpleMessage("日"),
+    "tsDaysHours": m85,
+    "tsDirect": MessageLookupByLibrary.simpleMessage("直连"),
+    "tsDomain": MessageLookupByLibrary.simpleMessage("域名"),
+    "tsHitUnit": MessageLookupByLibrary.simpleMessage("次命中"),
+    "tsHits": m86,
+    "tsHoursMinutes": m87,
+    "tsMinutes": m88,
+    "tsMonth": MessageLookupByLibrary.simpleMessage("月"),
+    "tsNext": MessageLookupByLibrary.simpleMessage("下一段"),
+    "tsNoData": MessageLookupByLibrary.simpleMessage("暂无数据"),
+    "tsNode": MessageLookupByLibrary.simpleMessage("节点"),
+    "tsOverview": MessageLookupByLibrary.simpleMessage("流量概览"),
+    "tsPeak": m89,
+    "tsPercent": m90,
+    "tsPrev": MessageLookupByLibrary.simpleMessage("上一段"),
+    "tsProxy": MessageLookupByLibrary.simpleMessage("代理"),
+    "tsRefresh": MessageLookupByLibrary.simpleMessage("刷新"),
+    "tsRuleHits": MessageLookupByLibrary.simpleMessage("规则命中"),
+    "tsRulesWithHits": m91,
+    "tsShareOfHits": m92,
+    "tsTotal": MessageLookupByLibrary.simpleMessage("总流量"),
+    "tsTrafficRank": MessageLookupByLibrary.simpleMessage("流量排行"),
+    "tsTrend": MessageLookupByLibrary.simpleMessage("流量趋势"),
+    "tsUptime": MessageLookupByLibrary.simpleMessage("累计运行"),
+    "tsWeek": MessageLookupByLibrary.simpleMessage("周"),
+    "tsWeekFrom": m93,
     "tun": MessageLookupByLibrary.simpleMessage("虚拟网卡"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "虚拟网卡授权失败，已关闭。",
@@ -1667,7 +1716,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("上传"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("上行带宽"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m84,
+    "urlTip": m94,
     "usageDetails": MessageLookupByLibrary.simpleMessage("使用详情"),
     "usageStats": MessageLookupByLibrary.simpleMessage("使用统计"),
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
@@ -1732,8 +1781,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "写入系统会同时设置系统时钟，Android 上不生效。",
     ),
-    "yearsAgo": m85,
-    "yearsAgoShort": m86,
+    "yearsAgo": m95,
+    "yearsAgoShort": m96,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };
