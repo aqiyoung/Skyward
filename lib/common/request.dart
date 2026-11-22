@@ -254,13 +254,30 @@ class Request {
     }
   }
 
-  /// Drops the Android-only preview releases where they have no package to
-  /// install -- on desktop -- and keeps everything else across every channel.
+  /// Rust and Go builds are separate release lines with different signing
+  /// certs and applicationIds. A Rust app must only be offered `-rust` tags,
+  /// and a Go app must never be offered one -- otherwise the update dialog
+  /// proposes a package that cannot be installed (or would swap the core).
   List<dynamic> _platformCandidates(List<dynamic> releases) {
-    if (!system.isDesktop) return releases;
+    // Only Android builds carry the `.rust` applicationId suffix; that is the
+    // one case where the `-rust` release line must be enforced. Desktop/other
+    // hosts keep the previous behaviour and see every non-preview release.
+    final isAndroid = !system.isDesktop;
+    final isRustAndroid = isAndroid &&
+        globalState.hasPackageInfo &&
+        globalState.packageInfo.packageName.endsWith('.rust');
     return releases.where((release) {
       final tag = release is Map ? release['tag_name'] : null;
-      return tag is! String || !tag.startsWith('preview-');
+      if (tag is! String) return true;
+      // Android-only preview releases have no installable package on desktop.
+      if (system.isDesktop && tag.startsWith('preview-')) return false;
+      // On Android the two cores are separate release lines. Never offer a
+      // Go tag to a Rust app or vice versa: different signature + core.
+      if (isAndroid) {
+        final isRustTag = tag.contains('-rust');
+        return isRustAndroid ? isRustTag : !isRustTag;
+      }
+      return true;
     }).toList();
   }
 }
