@@ -696,7 +696,7 @@ void main() {
       {'tag_name': 'v1.0.1.3-rust'},
       {'tag_name': 'preview-win-31301'},
     ];
-    String tags(List<dynamic> rs) =>
+    List<String> tags(List<dynamic> rs) =>
         rs.map((r) => r['tag_name'] as String).toList();
 
     test('a Rust Android app only sees -rust releases', () {
