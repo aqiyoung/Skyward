@@ -21,6 +21,9 @@
 .ph-ring { width: min(100%, 440px); }
 .ph-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 
+/* Their bar is 74% opaque, so headings show through it while scrolling. */
+.nav-bar { background: color-mix(in oklab, var(--bg) 90%, transparent); }
+
 /* Hover feedback for when the motion runtime has not run (or is reduced):
    their stylesheet only draws these states through a magnetic plate. */
 .asset:hover { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--brand-line); }
