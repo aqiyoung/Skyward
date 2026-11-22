@@ -66,8 +66,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # The Rust-core Gradle switches + JNI classes live on this branch.
-          ref: rust-core
+          # Test builds package the branch that dispatched the run, so the APK
+          # carries the exact change under test (logo, cards, UI). Releases
+          # still use rust-core, which carries the Rust Gradle switches + JNI.
+          ref: ${{ inputs.channel == 'test' && github.ref || 'rust-core' }}
           # pubspec.yaml bundles the Go submodule's CA cert as a Flutter asset;
           # that file must exist even though the core itself is now Rust.
           submodules: recursive
