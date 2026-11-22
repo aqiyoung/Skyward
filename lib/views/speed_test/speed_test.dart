@@ -517,7 +517,6 @@ class _RouteTile extends StatelessWidget {
         Navigator.of(context).push(
           PagedSheetRoute(
             builder: (_) => BaseScaffold(
-              rowSeparators: false,
               title: appLocalizations.network,
               body: const NetworkListView(),
             ),
