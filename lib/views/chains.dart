@@ -59,8 +59,7 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
               return _ChainCard(
                 chain: chain,
                 onEdit: () => _openEditor(chain: chain),
-                onDelete: () =>
-                    ref.read(chainsProvider.notifier).del(chain.id),
+                onDelete: () => ref.read(chainsProvider.notifier).del(chain.id),
               );
             },
           );
@@ -115,10 +114,7 @@ class _ChainsEmpty extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          FilledButton(
-            onPressed: onCreate,
-            child: Text(l.chainCreate),
-          ),
+          FilledButton(onPressed: onCreate, child: Text(l.chainCreate)),
         ],
       ),
     );
@@ -126,10 +122,8 @@ class _ChainsEmpty extends StatelessWidget {
 }
 
 class _RouteNode {
-  const _RouteNode.flag(this.flag, this.label, this.caption)
-      : glyph = null;
-  const _RouteNode.glyph(this.glyph, this.label, this.caption)
-      : flag = null;
+  const _RouteNode.flag(this.flag, this.label, this.caption) : glyph = null;
+  const _RouteNode.glyph(this.glyph, this.label, this.caption) : flag = null;
 
   final String? flag;
   final Glyph? glyph;
@@ -161,43 +155,46 @@ class _RouteStrip extends StatelessWidget {
       ...nodes,
       _RouteNode.glyph(AppGlyphs.globe, web, ''),
     ];
-    return LayoutBuilder(builder: (context, constraints) {
-      final cell = constraints.maxWidth / all.length;
-      const size = 44.0;
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final node in all)
-                Expanded(child: _NodeView(node: node, size: size)),
-            ],
-          ),
-          for (var i = 0; i < all.length - 1; i++)
-            Positioned(
-              left: cell * (i + 0.5) + size / 2 + 4,
-              width: math.max(cell - size - 8, 0),
-              top: size / 2 - 1.5,
-              height: 3,
-              child: Container(
-                decoration: ShapeDecoration(
-                  color: connected || (activeIndex != null && i < activeIndex!)
-                      ? cs.primary
-                      : cs.surfaceContainerHighest,
-                  shape: AppShape.all(2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cell = constraints.maxWidth / all.length;
+        const size = 44.0;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final node in all)
+                  Expanded(
+                    child: _NodeView(node: node, size: size),
+                  ),
+              ],
+            ),
+            for (var i = 0; i < all.length - 1; i++)
+              Positioned(
+                left: cell * (i + 0.5) + size / 2 + 4,
+                width: math.max(cell - size - 8, 0),
+                top: size / 2 - 1.5,
+                height: 3,
+                child: Container(
+                  decoration: ShapeDecoration(
+                    color:
+                        connected || (activeIndex != null && i < activeIndex!)
+                        ? cs.primary
+                        : cs.surfaceContainerHighest,
+                    shape: AppShape.all(2),
+                  ),
                 ),
               ),
-            ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 
   String lPhone(BuildContext context) =>
-      ViewScope.isMobileOf(context)
-          ? context.appLocalizations.chainPhone
-          : '';
+      ViewScope.isMobileOf(context) ? context.appLocalizations.chainPhone : '';
 }
 
 class _NodeView extends StatelessWidget {
@@ -221,8 +218,15 @@ class _NodeView extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: node.flag != null
-              ? Text(node.flag!, style: const TextStyle(fontSize: 26))
-              : GlyphIcon(node.glyph!, size: size * 0.5, color: cs.onSurfaceVariant),
+              ? Text(
+                  node.flag!,
+                  style: AppTextStyle.custom(context, size: 26, leading: 30),
+                )
+              : GlyphIcon(
+                  node.glyph!,
+                  size: size * 0.5,
+                  color: cs.onSurfaceVariant,
+                ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -235,9 +239,9 @@ class _NodeView extends StatelessWidget {
         if (node.caption.isNotEmpty)
           Text(
             node.caption,
-            style: AppTextStyle.caption1.of(context).copyWith(
-              color: cs.onSurfaceVariant,
-            ),
+            style: AppTextStyle.caption1
+                .of(context)
+                .copyWith(color: cs.onSurfaceVariant),
           ),
       ],
     );
@@ -276,8 +280,10 @@ class _ChainCard extends StatelessWidget {
               GlyphIcon(AppGlyphs.link, size: 18, color: cs.primary),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(chain.name,
-                    style: AppTextStyle.body.of(context, emphasized: true)),
+                child: Text(
+                  chain.name,
+                  style: AppTextStyle.body.of(context, emphasized: true),
+                ),
               ),
               IconButton(
                 tooltip: context.appLocalizations.chainEdit,
@@ -301,8 +307,8 @@ class _ChainCard extends StatelessWidget {
                   h == chain.hops.first
                       ? context.appLocalizations.chainEntryRole
                       : h == chain.hops.last
-                          ? context.appLocalizations.chainExitRole
-                          : context.appLocalizations.chainMiddleRole,
+                      ? context.appLocalizations.chainExitRole
+                      : context.appLocalizations.chainMiddleRole,
                 ),
             ],
             you: context.appLocalizations.chainYou,
@@ -355,27 +361,29 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
     super.dispose();
   }
 
-  List<String?> get _slots => [
-        _entry,
-        if (_hasMiddle) _middle,
-        _exit,
-      ];
+  List<String?> get _slots => [_entry, if (_hasMiddle) _middle, _exit];
 
   bool get _complete => _slots.every((s) => s != null && s.isNotEmpty);
 
   Future<void> _save() async {
     if (!_complete) return;
     final hops = _slots.cast<String>();
-    final name = _name.text.trim().isEmpty ? hops.join(' → ') : _name.text.trim();
+    final name = _name.text.trim().isEmpty
+        ? hops.join(' → ')
+        : _name.text.trim();
     final id = widget.chain?.id ?? DateTime.now().microsecondsSinceEpoch;
-    await ref.read(chainsProvider.notifier).put(ChainSpec(
-          id: id,
-          name: name,
-          hops: hops,
-          offered: _offered,
-          targetGroup: widget.chain?.targetGroup,
-          heal: widget.chain?.heal ?? false,
-        ));
+    await ref
+        .read(chainsProvider.notifier)
+        .put(
+          ChainSpec(
+            id: id,
+            name: name,
+            hops: hops,
+            offered: _offered,
+            targetGroup: widget.chain?.targetGroup,
+            heal: widget.chain?.heal ?? false,
+          ),
+        );
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -509,7 +517,8 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
     final groups = ref.watch(groupsProvider);
-    final candidates = <({String name, String flag, String? code, bool isGroup})>[];
+    final candidates =
+        <({String name, String flag, String? code, bool isGroup})>[];
     final counts = <String, int>{};
     final seen = <String>{};
     for (final g in groups) {
@@ -537,29 +546,35 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
     final q = _search.text.toLowerCase();
     final groupItems = candidates
         .where((c) => c.isGroup)
-        .where((c) =>
-            (_country == null || c.code == _country) &&
-            (q.isEmpty || c.name.toLowerCase().contains(q)))
+        .where(
+          (c) =>
+              (_country == null || c.code == _country) &&
+              (q.isEmpty || c.name.toLowerCase().contains(q)),
+        )
         .toList();
     final leafItems = candidates
         .where((c) => !c.isGroup)
-        .where((c) =>
-            (_country == null || c.code == _country) &&
-            (q.isEmpty || c.name.toLowerCase().contains(q)))
+        .where(
+          (c) =>
+              (_country == null || c.code == _country) &&
+              (q.isEmpty || c.name.toLowerCase().contains(q)),
+        )
         .toList();
     final hint = widget.slot == 0
         ? l.chainEntryHint2
         : widget.slot == 1
-            ? l.chainMiddleHint
-            : l.chainExitHint2;
+        ? l.chainMiddleHint
+        : l.chainExitHint2;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
-        Text(hint,
-            style: AppTextStyle.subheadline
-                .of(context)
-                .copyWith(color: context.colorScheme.onSurfaceVariant)),
+        Text(
+          hint,
+          style: AppTextStyle.subheadline
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
+        ),
         const SizedBox(height: 12),
         TextField(
           controller: _search,
@@ -583,10 +598,11 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
                 final selected = _country == code;
                 return FilterChip(
                   label: Text(
-                      '${_flagOfCode(code)} ${code.toUpperCase()} · ${counts[code]}'),
+                    '${_flagOfCode(code)} ${code.toUpperCase()} · ${counts[code]}',
+                  ),
                   selected: selected,
-                  onSelected: (_) => setState(
-                      () => _country = selected ? null : code),
+                  onSelected: (_) =>
+                      setState(() => _country = selected ? null : code),
                 );
               },
             ),
@@ -656,10 +672,12 @@ class _SectionHeader extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(text,
-            style: AppTextStyle.subheadline.of(context, emphasized: true)),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Text(
+      text,
+      style: AppTextStyle.subheadline.of(context, emphasized: true),
+    ),
+  );
 }
 
 class _HopRow extends StatelessWidget {
@@ -691,8 +709,10 @@ class _HopRow extends StatelessWidget {
           shape: AppShape.all(16),
         ),
         alignment: Alignment.center,
-        child: Text(flag.isEmpty ? '🌐' : flag,
-            style: const TextStyle(fontSize: 18)),
+        child: Text(
+          flag.isEmpty ? '🌐' : flag,
+          style: AppTextStyle.custom(context, size: 18, leading: 22),
+        ),
       ),
       title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(subtitle, maxLines: 1),
@@ -750,10 +770,12 @@ class _ReadyBody extends StatelessWidget {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(value ?? l.chainPick,
-                          style: AppTextStyle.body
-                              .of(context)
-                              .copyWith(color: context.colorScheme.primary)),
+                      Text(
+                        value ?? l.chainPick,
+                        style: AppTextStyle.body
+                            .of(context)
+                            .copyWith(color: context.colorScheme.primary),
+                      ),
                       const SizedBox(width: 4),
                       const GlyphIcon(AppGlyphs.chevronForward, size: 18),
                     ],
