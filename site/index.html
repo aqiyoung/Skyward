@@ -11,6 +11,11 @@
   <meta property="og:description" content="A multi-platform proxy client based on Clash Meta (mihomo). Simple to use, open source and ad-free.">
   <meta property="og:image" content="logo.png">
   <meta name="twitter:card" content="summary_large_image">
+  <script>
+    // Set before first paint: the stylesheet only shows the loader and the
+    // pre-reveal states under html.js, so the page never flashes unstyled.
+    document.documentElement.classList.add('js');
+  </script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preload" href="assets/fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -22,6 +27,13 @@
   <link rel="stylesheet" href="assets/reclash/download.css">
 </head>
 <body>
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader-core">
+      <img class="loader-mark" src="logo.png" width="112" height="112" alt="">
+      <span class="loader-word"><span style="--i:0">S</span><span style="--i:1">k</span><span style="--i:2">y</span><span style="--i:3">w</span><span style="--i:4">a</span><span style="--i:5">r</span><span style="--i:6">d</span></span>
+    </div>
+  </div>
+
   <a class="skip" href="#download" data-i18n="skip">Skip to downloads</a>
 
   <header class="nav">
@@ -48,8 +60,8 @@
       <div class="wrap ph-grid">
         <div>
           <p class="ph-eyebrow"><span data-i18n="heroEyebrow">Latest release</span></p>
-          <h1 data-i18n="heroTitle">Download, or build it yourself.</h1>
-          <p class="lede" data-i18n="heroLede">The latest release files come straight from GitHub: packages for each system, SHA-256 verification and building from source.</p>
+          <h1 data-words data-i18n="heroTitle">Download, or build it yourself.</h1>
+          <p class="lede" data-fade data-i18n="heroLede">The latest release files come straight from GitHub: packages for each system, SHA-256 verification and building from source.</p>
           <div class="ph-tags">
             <span class="tag">GPL-3.0</span>
             <span class="tag" data-i18n="tagPlatforms">Four platforms</span>

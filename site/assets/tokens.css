@@ -13,3 +13,11 @@
   --warn: oklch(0.8 0.15 70);
   --warn-fg: oklch(0.86 0.11 70);
 }
+
+/* The loader's mark is our artwork, not ReClash's SVG glyph. */
+.loader-mark {
+  width: var(--ls, 112px);
+  height: var(--ls, 112px);
+  border-radius: 22px;
+}
+.loader-word { justify-content: center; }

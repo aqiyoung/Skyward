@@ -487,11 +487,115 @@ async function load() {
   $('year').textContent = String(new Date().getUTCFullYear());
 }
 
+/* ---- ReClash's motion, ported to the pieces a static page needs ---------
+   Their runtime is ~1400 lines of scroll-linked physics. What the eye actually
+   reads is two things: a prerendered cover that opens, and elements that rise
+   into place as they enter. Both are reproduced here with an observer. */
+
+function splitWords(host) {
+  if (host.dataset.split) return;
+  host.dataset.split = '1';
+  const walk = (node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const parts = child.textContent.split(/(\s+)/);
+        const fragment = document.createDocumentFragment();
+        for (const part of parts) {
+          if (!part) continue;
+          if (/^\s+$/.test(part)) {
+            fragment.append(' ');
+            continue;
+          }
+          const outer = el('span', { class: 'w' });
+          const inner = el('span', { class: 'wi', text: part });
+          outer.append(inner);
+          fragment.append(outer);
+        }
+        child.replaceWith(fragment);
+        continue;
+      }
+      walk(child);
+    }
+  };
+  walk(host);
+}
+
+function reveal(root = document) {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  root.querySelectorAll('[data-words]').forEach(splitWords);
+  const targets = root.querySelectorAll('[data-fade], [data-words], [data-group]');
+  if (reduced || !('IntersectionObserver' in window)) {
+    targets.forEach((node) => node.classList.add('is-in'));
+    return;
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-in');
+        observer.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -8% 0px', threshold: 0.02 },
+  );
+  targets.forEach((node, index) => {
+    if (!node.style.getPropertyValue('--i')) node.style.setProperty('--i', String(Math.min(index, 8)));
+    observer.observe(node);
+  });
+}
+
+function markReveals() {
+  // Sections, cards, files and code blocks rise as they enter; the hero is
+  // already on screen, so it is revealed immediately.
+  const selectors = [
+    '.sec-head h2',
+    '.sec-head .lede',
+    '.rel-top',
+    '.pick',
+    '.plat-tabs',
+    '.asset',
+    '.tip',
+    '.pcard',
+    '.drop',
+    '.field',
+    '.term',
+    '.cl-card',
+    '.cl-item',
+    '.foot-about',
+    '.ph-tags',
+    '.ph-eyebrow',
+  ];
+  for (const node of document.querySelectorAll(selectors.join(','))) {
+    if (!node.hasAttribute('data-fade') && !node.hasAttribute('data-words')) {
+      node.setAttribute('data-fade', '');
+    }
+  }
+}
+
+function dismissLoader() {
+  const root = document.documentElement;
+  const loader = $('loader');
+  if (!loader) return;
+  const finish = () => {
+    root.classList.add('is-loaded');
+    loader.remove();
+  };
+  // The cover opens only when the motion runtime asks for it; here the page is
+  // ready, so hold the mark for a beat and let the letters settle first.
+  const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 620;
+  setTimeout(finish, delay);
+}
+
 function start() {
   state.lang = STRINGS[document.documentElement.dataset.pageLang || 'en'] ? document.documentElement.dataset.pageLang : 'en';
   applyStaticText();
+  markReveals();
+  reveal();
   wire();
   load();
+  // The loader is prerendered, so it covers the first paint either way.
+  if (document.readyState === 'complete') dismissLoader();
+  else addEventListener('load', dismissLoader, { once: true });
 }
 
 start();
