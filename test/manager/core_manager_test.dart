@@ -258,6 +258,7 @@ void main() {
     verify(() => coreInterface.stopLog()).called(1);
 
     await tester.pumpWidget(const SizedBox.shrink());
+    container.dispose();
   });
 
   testWidgets('the log stream waits for the core and is restored on '
@@ -291,6 +292,7 @@ void main() {
     verifyNever(() => coreInterface.stopLog());
 
     await tester.pumpWidget(const SizedBox.shrink());
+    container.dispose();
   });
 
   testWidgets('a setting the Core patches live is not re-applied', (
