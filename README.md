@@ -20,10 +20,7 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 </div>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="snapshots/preview-dark.png">
-    <img alt="Skyward dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
-  </picture>
+  <img alt="Skyward dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
 </p>
 
 ## Features
