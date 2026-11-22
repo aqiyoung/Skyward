@@ -12,6 +12,7 @@ export 'profiles.dart';
 export 'proxy_groups.dart';
 export 'routing_board.dart';
 export 'service_status.dart';
+export 'speed_test.dart';
 export 'traffic.dart';
 export 'traffic_usage.dart';
 export 'app_usage_card.dart';
