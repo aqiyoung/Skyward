@@ -12,6 +12,8 @@ const OS_NAMES = { windows: 'Windows', macos: 'macOS', linux: 'Linux', android: 
 const OS_SHORT = { windows: 'W', macos: 'M', linux: 'L', android: 'A' };
 
 const state = { lang: 'en', platform: 'windows', arch: 'x64' };
+// The page is promotional: the notes lead, and only the newest releases follow.
+const RECENT_RELEASES = 3;
 
 const $ = (id) => document.getElementById(id);
 const t = (key, ...args) => translate(state.lang, key, ...args);
@@ -21,6 +23,10 @@ function applyStaticText() {
   for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = t(node.dataset.i18n);
   for (const node of document.querySelectorAll('[data-i18n-alt]')) node.alt = t(node.dataset.i18nAlt);
   for (const node of document.querySelectorAll('[data-i18n-placeholder]')) node.placeholder = t(node.dataset.i18nPlaceholder);
+  // The comparison table stacks on phones, where each cell needs its column name.
+  for (const cell of document.querySelectorAll('.cmp td')) {
+    cell.dataset.label = cell.classList.contains('cmp-us') ? t('cmpUs') : t('cmpTypical');
+  }
 }
 
 function el(tag, props = {}, ...children) {
@@ -171,38 +177,15 @@ function renderRelease(feed) {
       }),
     ),
   );
-  // Their stylesheet gives the pressed label a dark colour and expects a light
-  // plate behind it, drawn by the motion runtime. Without one the selected
-  // platform is dark-on-dark, so the plate is drawn here.
-  placeTabIndicator(true);
+  // The plate belongs to the magnet group; rebuilding the buttons replaces it,
+  // so put it back and re-select the pressed tab.
+  const pressed = seg.querySelector("[aria-pressed='true']");
+  if (seg._mg) {
+    seg.prepend(seg._mg.el);
+    if (pressed) M.frame(() => seg._mg.select(pressed));
+  }
 
   renderAssets(feed);
-}
-
-function placeTabIndicator(instant = false) {
-  const seg = $('platform-seg');
-  if (!seg) return;
-  let indicator = seg.querySelector('.mg-ind');
-  if (!indicator) {
-    indicator = el('span', { class: 'mg-ind', 'aria-hidden': 'true' });
-    seg.prepend(indicator);
-  }
-  const active = seg.querySelector("[aria-pressed='true']") || seg.querySelector('[data-mg]');
-  if (!active) {
-    indicator.style.opacity = '0';
-    return;
-  }
-  const box = seg.getBoundingClientRect();
-  const rect = active.getBoundingClientRect();
-  indicator.style.width = `${rect.width}px`;
-  indicator.style.height = `${rect.height}px`;
-  indicator.style.transform = `translate3d(${rect.left - box.left}px, ${rect.top - box.top}px, 0)`;
-  indicator.style.opacity = '1';
-  for (const button of seg.querySelectorAll('[data-mg]')) {
-    button.classList.toggle('is-mg', button === active);
-  }
-  if (instant) indicator.classList.add('no-anim');
-  requestAnimationFrame(() => indicator && indicator.classList.remove('no-anim'));
 }
 
 function renderAssets(feed) {
@@ -232,6 +215,7 @@ function renderAssets(feed) {
   );
   list.hidden = status === 'ready' && !!failure;
   $('extras').replaceChildren(...extrasFor(state.platform));
+  revealDynamic();
 }
 
 function extrasFor(platform) {
@@ -288,7 +272,7 @@ function toggleRelease(event) {
   });
 }
 
-function renderChangelog(versions) {
+function renderChangelog(versions, total = versions.length) {
   const host = $('changelog');
   if (!versions.length) {
     host.replaceChildren(el('p', { class: 'cl-empty', text: t('clEmpty') }));
@@ -348,8 +332,7 @@ function renderChangelog(versions) {
       ),
     ),
   );
-  const oldest = versions.filter((version) => version.date).slice(-1)[0];
-  $('cl-meta').textContent = t('clMeta', versions.length, oldest ? formatDate(oldest.date, state.lang) : '');
+  $('cl-meta').textContent = t('clRecent', versions.length, total);
 }
 
 function renderCards() {
@@ -466,15 +449,7 @@ function wire() {
     if (file) verify(file);
   });
 
-  // The platform plate follows the pointer, then settles back on the selection.
-  const seg = $('platform-seg');
-  if (seg) {
-    seg.addEventListener('mouseover', (event) => {
-      if (event.target.closest('[data-mg]')) placeTabIndicator();
-    });
-    seg.addEventListener('mouseleave', () => placeTabIndicator(true));
-  }
-
+  // The platform plate belongs to the magnet group now.
   $('copy-unix').addEventListener('click', (event) => copyText($('t-unix').textContent, event.currentTarget));  $('copy-win').addEventListener('click', (event) => copyText($('t-win').textContent, event.currentTarget));
   $('build-copy').addEventListener('click', (event) => copyText($('t-build').textContent, event.currentTarget));
 }
@@ -571,7 +546,8 @@ async function load() {
   renderRelease(feed);
 
   if (markdown.status === 'fulfilled') {
-    renderChangelog(parseChangelog(markdown.value));
+    const versions = parseChangelog(markdown.value);
+    renderChangelog(versions.slice(0, RECENT_RELEASES), versions.length);
   } else {
     $('changelog').replaceChildren(el('p', { class: 'cl-fail', text: t('clError') }));
     $('cl-meta').textContent = '';
@@ -580,39 +556,24 @@ async function load() {
   renderCards();
   renderPrereq();
   $('year').textContent = String(new Date().getUTCFullYear());
-  // reveal() ran before any of these existed, so the observer never saw them
-  // and they stayed at opacity 0. Mark and reveal them once they exist.
-  markReveals();
-  reveal();
+  revealDynamic();
 }
 
-/* ---- ReClash's motion, ported to the pieces a static page needs ---------
-   Their runtime is ~1400 lines of scroll-linked physics. What the eye actually
-   reads is two things: a prerendered cover that opens, and elements that rise
-   into place as they enter. Both are reproduced here with an observer. */
+/* ---- motion: springs, magnetic plates, reveals -------------------------
+   The runtime lives in assets/motion.js; this wires it to our markup. */
 
-/* Their hero ring is a 48-point blob redrawn each frame. Port the shape and
-   its idle wobble; the pointer pull is left out. */
-function blobPath(cx, cy, radii, rot = -Math.PI / 2) {
-  const n = radii.length;
-  const px = [];
-  const py = [];
-  for (let i = 0; i < n; i++) {
-    const angle = rot + (i / n) * Math.PI * 2;
-    px.push(cx + Math.cos(angle) * radii[i]);
-    py.push(cy + Math.sin(angle) * radii[i]);
-  }
-  const f = (value) => value.toFixed(1);
-  let d = `M${f(px[0])} ${f(py[0])}`;
-  for (let i = 0; i < n; i++) {
-    const i0 = (i - 1 + n) % n;
-    const i2 = (i + 1) % n;
-    const i3 = (i + 2) % n;
-    d += `C${f(px[i] + (px[i2] - px[i0]) / 6)} ${f(py[i] + (py[i2] - py[i0]) / 6)} ${f(px[i2] - (px[i3] - px[i]) / 6)} ${f(py[i2] - (py[i3] - py[i]) / 6)} ${f(px[i2])} ${f(py[i2])}`;
-  }
-  return `${d}Z`;
+const M = globalThis.SkywardMotion;
+const { clamp, spring } = M || {};
+const motionOff = () => (M ? M.reduced : true);
+
+/* The motion script is an enhancement: if it never arrives, the page must still
+   show every section instead of sitting at opacity 0. */
+function revealAll() {
+  document.querySelectorAll('[data-fade], [data-words], [data-reveal]').forEach((node) => node.classList.add('is-in'));
 }
 
+/* The hero ring is a 48-point blob: an idle wobble plus a pull toward the
+   pointer, redrawn on the shared frame loop. */
 function startRing() {
   const svg = document.querySelector('.ph-ring');
   const path = svg && svg.querySelector('.rg');
@@ -621,76 +582,180 @@ function startRing() {
   const C = 200;
   const R = 128;
   const radii = new Array(N);
+  let pointer = null;
+  let visible = true;
+
   const draw = (t) => {
-    for (let i = 0; i < N; i++) {
-      const angle = -Math.PI / 2 + (i / N) * Math.PI * 2;
-      radii[i] = R + 7 * Math.sin(3 * angle + t * 0.6) + 4 * Math.sin(5 * angle - t * 0.45);
+    let pa = 0;
+    let pull = 0;
+    if (pointer) {
+      const dx = pointer.x - C;
+      const dy = pointer.y - C;
+      const d = Math.hypot(dx, dy);
+      pa = Math.atan2(dy, dx);
+      pull = clamp((d - R) * 0.3, -18, 26) * (Math.abs(d - R) < 140 ? 1 : 0);
     }
-    path.setAttribute('d', blobPath(C, C, radii));
+    for (let i = 0; i < N; i++) {
+      const a = -Math.PI / 2 + (i / N) * Math.PI * 2;
+      let target = 7 * Math.sin(3 * a + t * 0.6) + 4 * Math.sin(5 * a - t * 0.45);
+      if (pull) {
+        const da = Math.atan2(Math.sin(a - pa), Math.cos(a - pa));
+        target += pull * Math.exp(-(da * da) / 0.2);
+      }
+      radii[i] = R + target;
+    }
+    path.setAttribute('d', M.blobPath(C, C, radii));
   };
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+
+  if (motionOff()) {
     draw(0);
     return;
   }
-  let visible = true;
-  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0 }).observe(svg);
-  const tick = (now) => {
+  M.listen(svg, 'pointermove', (e) => {
+    const r = svg.getBoundingClientRect();
+    pointer = { x: ((e.clientX - r.left) / r.width) * 400, y: ((e.clientY - r.top) / r.height) * 400 };
+  });
+  M.listen(svg, 'pointerleave', () => { pointer = null; });
+  M.observe(([entry]) => { visible = entry.isIntersecting; }, { threshold: 0 }).observe(svg);
+  M.tick((now) => {
     if (visible) draw(now / 1000);
-    requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
+  });
 }
 
-function splitWords(host) {
-  if (host.dataset.split) return;
-  host.dataset.split = '1';
-  const walk = (node) => {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === Node.TEXT_NODE) {
-        const parts = child.textContent.split(/(\s+)/);
-        const fragment = document.createDocumentFragment();
-        for (const part of parts) {
-          if (!part) continue;
-          if (/^\s+$/.test(part)) {
-            fragment.append(' ');
-            continue;
-          }
-          const outer = el('span', { class: 'w' });
-          const inner = el('span', { class: 'wi', text: part });
-          outer.append(inner);
-          fragment.append(outer);
-        }
-        child.replaceWith(fragment);
-        continue;
-      }
-      walk(child);
+/* The cover's intro runs on CSS time; we only decide when to cut the window. */
+function startLoader() {
+  const loader = $('loader');
+  if (!loader) return;
+  const root = document.documentElement;
+  const open = () => {
+    if (!loader.isConnected) return;
+    root.classList.add('is-ready');
+    setTimeout(() => {
+      root.classList.add('is-loaded');
+      loader.remove();
+    }, motionOff() ? 60 : 1200);
+  };
+  const ready = () => setTimeout(open, motionOff() ? 0 : Math.max(0, 1300 - performance.now()));
+  if (document.readyState === 'complete') ready();
+  else addEventListener('load', ready, { once: true });
+}
+
+/* One magnetic plate per group; the stylesheet does the rest. */
+function startMagnets() {
+  const footGrid = document.querySelector('.foot-grid');
+  if (footGrid) {
+    footGrid.setAttribute('data-group', '');
+    footGrid.dataset.items = 'a';
+    footGrid.dataset.cpull = '0';
+    footGrid.querySelectorAll('a').forEach((a) => a.setAttribute('data-mg', ''));
+  }
+  document.querySelectorAll('[data-group]').forEach((group) => {
+    const api = M.magnetGroup(group, {
+      items: group.dataset.items || '[data-mg]',
+      sticky: group.hasAttribute('data-sticky'),
+      contentPull: Number(group.dataset.cpull ?? 0.08),
+    });
+    group._mg = api;
+    const sel = group.querySelector('[aria-current="true"], [aria-current="page"], [aria-pressed="true"]');
+    if (sel && group.hasAttribute('data-sticky')) M.frame(() => api.select(sel));
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      document.querySelectorAll('[data-group]').forEach((g) => g._mg && g._mg.refresh());
+    });
+  }
+}
+
+/* The nav hides going down and returns going up. */
+function startNav() {
+  const nav = document.querySelector('.nav');
+  if (!nav) return;
+  let lastY = scrollY;
+  M.onScroll((y) => {
+    const down = y > lastY + 4;
+    const up = y < lastY - 4;
+    if (down && y > 160) nav.classList.add('is-hidden');
+    else if (up || y < 160) nav.classList.remove('is-hidden');
+    if (down || up) lastY = y;
+  });
+}
+
+/* Setup rail: fills with scroll, each step lights as the fill passes it. */
+function startSteps() {
+  const steps = document.querySelector('.steps');
+  if (!steps) return;
+  const items = [...steps.querySelectorAll('.step')];
+  const fill = spring(0, { preset: 'scroll', precision: 0.0005 });
+  fill.onUpdate = (p) => {
+    steps.style.setProperty('--p', p.toFixed(4));
+    const r = steps.getBoundingClientRect();
+    const top = r.top + 22;
+    const len = r.height - 44;
+    for (const item of items) {
+      const n = item.querySelector('.step-n').getBoundingClientRect();
+      item.classList.toggle('is-on', p >= (n.top + n.height / 2 - top) / len - 0.02);
     }
   };
-  walk(host);
+  M.onScroll(() => {
+    const r = steps.getBoundingClientRect();
+    fill.to(clamp((innerHeight * 0.62 - r.top) / r.height, 0, 1));
+  });
 }
 
-function reveal(root = document) {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  root.querySelectorAll('[data-words]').forEach(splitWords);
-  const targets = root.querySelectorAll('[data-fade], [data-words], [data-group]');
-  if (reduced || !('IntersectionObserver' in window)) {
-    targets.forEach((node) => node.classList.add('is-in'));
-    return;
-  }
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-in');
-        observer.unobserve(entry.target);
-      }
-    },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.02 },
-  );
-  targets.forEach((node, index) => {
-    if (!node.style.getPropertyValue('--i')) node.style.setProperty('--i', String(Math.min(index, 8)));
-    observer.observe(node);
+/* Footer wordmark: letters and the glyph's capsules stretch toward the pointer. */
+function startWordmark() {
+  const wm = document.querySelector('.wordmark');
+  if (!wm || motionOff()) return;
+  const text = wm.querySelector('.wordmark-text');
+  const spans = [...text.textContent.trim()].map((c) => {
+    const s = document.createElement('span');
+    s.textContent = c;
+    return s;
   });
+  text.replaceChildren(...spans);
+  const bars = [...wm.querySelectorAll('.bm-bar')].map((p) => {
+    const s = spring(0.8, { preset: 'jelly', precision: 0.001 });
+    s.onUpdate = (v) => {
+      const l = clamp(v, 0.0001, 1);
+      p.style.strokeDasharray = `${l.toFixed(4)} 2`;
+      p.style.strokeDashoffset = (-(1 - l) / 2).toFixed(4);
+    };
+    return s;
+  });
+  const letters = spans.map((sp) => {
+    const s = spring(1, { preset: 'jelly', precision: 0.001 });
+    s.onUpdate = (v) => {
+      sp.style.transform = `scaleY(${v.toFixed(4)}) scaleX(${(1 - (v - 1) * 0.25).toFixed(4)})`;
+    };
+    return s;
+  });
+  const foot = wm.closest('footer');
+  M.listen(foot, 'pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
+    spans.forEach((sp, i) => {
+      const r = sp.getBoundingClientRect();
+      const d = e.clientX - (r.left + r.width / 2);
+      const near = Math.exp(-(d * d) / (2 * 110 * 110));
+      const vert = clamp(1 - Math.abs(e.clientY - r.bottom) / 520, 0, 1);
+      letters[i].to(1 + 0.32 * near * vert);
+    });
+    const mark = wm.querySelector('.wordmark-mark');
+    if (mark && bars.length) {
+      const r = mark.getBoundingClientRect();
+      const d = e.clientX - (r.left + r.width / 2);
+      const near = Math.exp(-(d * d) / (2 * 160 * 160)) * clamp(1 - Math.abs(e.clientY - r.bottom) / 520, 0, 1);
+      bars.forEach((bar, i) => bar.to(0.8 + 0.2 * near * (1 - Math.abs(clamp((d + 60) / 60, 0, 2) - i) * 0.35)));
+    }
+  });
+  M.listen(foot, 'pointerleave', () => {
+    letters.forEach((s) => s.to(1));
+    bars.forEach((b) => b.to(0.8));
+  });
+}
+
+function startReveals() {
+  document.querySelectorAll('[data-words]').forEach((node) => M.splitWords(node));
+  M.reveal(document.querySelectorAll('[data-words], [data-fade], [data-reveal]'));
 }
 
 function markReveals() {
@@ -719,31 +784,32 @@ function markReveals() {
   }
 }
 
-function dismissLoader() {
-  const root = document.documentElement;
-  const loader = $('loader');
-  if (!loader) return;
-  const finish = () => {
-    root.classList.add('is-loaded');
-    loader.remove();
-  };
-  // The cover opens only when the motion runtime asks for it; here the page is
-  // ready, so hold the mark for a beat and let the letters settle first.
-  const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 620;
-  setTimeout(finish, delay);
+/* Content that arrives after page load (files, cards, notes) needs marking
+   and observing again, or it would sit at opacity 0 forever. */
+function revealDynamic() {
+  markReveals();
+  if (M) M.reveal(document.querySelectorAll('[data-fade], [data-reveal]'));
+  else revealAll();
 }
 
 function start() {
   state.lang = STRINGS[document.documentElement.dataset.pageLang || 'en'] ? document.documentElement.dataset.pageLang : 'en';
   applyStaticText();
-  markReveals();
-  reveal();
-  startRing();
+  startLoader();
+  if (M) {
+    // Make every CSS transition in their stylesheet settle like the springs.
+    M.installEasings();
+    startReveals();
+    startMagnets();
+    startNav();
+    startSteps();
+    startWordmark();
+    startRing();
+  } else {
+    revealAll();
+  }
   wire();
   load();
-  // The loader is prerendered, so it covers the first paint either way.
-  if (document.readyState === 'complete') dismissLoader();
-  else addEventListener('load', dismissLoader, { once: true });
 }
 
 start();

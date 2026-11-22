@@ -16,13 +16,16 @@
     // pre-reveal states under html.js, so the page never flashes unstyled.
     document.documentElement.classList.add('js');
     // Hard fallback: if the app script never runs, the cover would sit over the
-    // whole page. Let go of it on its own.
+    // whole page. Open it the same way the runtime does, then let go.
     setTimeout(function () {
       var cover = document.getElementById('loader');
       if (!cover) return;
-      document.documentElement.classList.add('is-loaded');
-      setTimeout(function () { cover.remove(); }, 120);
-    }, 2600);
+      document.documentElement.classList.add('is-ready');
+      setTimeout(function () {
+        document.documentElement.classList.add('is-loaded');
+        cover.remove();
+      }, 1200);
+    }, 3200);
   </script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo.png">
@@ -38,7 +41,13 @@
 <body>
   <div class="loader" id="loader" aria-hidden="true">
     <div class="loader-core">
-      <img class="loader-mark" src="logo.png" width="112" height="112" alt="">
+      <svg class="bm loader-mark" viewBox="-166 -166 332 332" aria-hidden="true" focusable="false">
+        <g transform="translate(4 0) rotate(-20)" fill="none" stroke-width="62.1" stroke-linecap="round">
+          <path class="bm-bar bm-1" style="--n:0" pathLength="1" d="M-101.2 69V-69"/>
+          <path class="bm-bar bm-2" style="--n:1" pathLength="1" d="M0 138V-138"/>
+          <path class="bm-bar bm-3" style="--n:2" pathLength="1" d="M101.2 46V-46"/>
+        </g>
+      </svg>
       <span class="loader-word"><span style="--i:0">S</span><span style="--i:1">k</span><span style="--i:2">y</span><span style="--i:3">w</span><span style="--i:4">a</span><span style="--i:5">r</span><span style="--i:6">d</span></span>
     </div>
   </div>
@@ -51,13 +60,14 @@
         <img class="logo-mark" src="logo.png" width="30" height="30" alt="">
         <span>Skyward</span>
       </a>
-      <ul class="nav-links">
-        <li><a class="nav-a" href="#download" data-i18n="navDownload">Download</a></li>
-        <li><a class="nav-a" href="#notes" data-i18n="navNotes">What's new</a></li>
-        <li><a class="nav-a" href="#build" data-i18n="navBuild">Build it yourself</a></li>
+      <ul class="nav-links" data-group data-sticky>
+        <li><a class="nav-a" data-mg href="#download" data-i18n="navDownload">Download</a></li>
+        <li><a class="nav-a" data-mg href="#features" data-i18n="navFeatures">Features</a></li>
+        <li><a class="nav-a" data-mg href="#notes" data-i18n="navNotes">What's new</a></li>
+        <li><a class="nav-a" data-mg href="#build" data-i18n="navBuild">Build it yourself</a></li>
       </ul>
-      <div class="lang" aria-label="Language">
-        <a id="lang-toggle" href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
+      <div class="lang" aria-label="Language" data-group>
+        <a id="lang-toggle" data-mg href="zh/" hreflang="zh-CN" lang="zh-CN" aria-label="切换到中文">中文</a>
       </div>
       <a class="btn btn-primary btn-s" href="#download" data-i18n="navCta">Download</a>
     </nav>
@@ -96,6 +106,153 @@
       </div>
     </section>
 
+    <!-- features -->
+    <section class="sec" id="features" aria-labelledby="feat-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="feat-title" data-words data-i18n="featTitle">What Skyward does for you.</h2>
+          <p class="lede" data-fade data-i18n="featLead">A multi-platform client on the mihomo core: the things you would otherwise dig for are on the screen.</p>
+        </div>
+        <ul class="feats" data-group data-items=".feat" data-cpull="0.03">
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-core" viewBox="0 0 64 64" aria-hidden="true">
+              <g class="orb">
+                <ellipse class="s draw" pathLength="1" cx="32" cy="32" rx="26" ry="10" transform="rotate(-32 32 32)"/>
+                <ellipse class="s draw dim" pathLength="1" cx="32" cy="32" rx="26" ry="10" transform="rotate(32 32 32)" style="--d:.15s"/>
+                <circle class="f" cx="54" cy="18.4" r="3"/>
+              </g>
+              <circle class="f nuc" cx="32" cy="32" r="7"/>
+            </svg>
+            <h3 data-i18n="feat1T">Kernel-level routing</h3>
+            <p data-i18n="feat1B">Rules, strategy groups, GeoIP and fake-ip from mihomo. One subscription link and every platform routes the same way.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-prov" viewBox="0 0 64 64" aria-hidden="true">
+              <rect class="f fill" x="16" y="30" width="32" height="22" rx="6" opacity=".9"/>
+              <rect class="s draw" pathLength="1" x="14" y="28" width="36" height="26" rx="8"/>
+              <path class="f drop" d="M32 4C32 4 25 12 25 16.5a7 7 0 0 0 14 0C39 12 32 4 32 4Z"/>
+            </svg>
+            <h3 data-i18n="feat2T">Traffic and time, always in sight</h3>
+            <p data-i18n="feat2B">Remaining data and the period end stay on the main screen, with a history of usage and rankings you can actually read.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-dpi" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s" d="M42 8v17M42 39v17"/>
+              <path class="s dim" d="M6 32h52" stroke-dasharray="2 5"/>
+              <rect class="f pa" x="8" y="26" width="11" height="12" rx="3"/>
+              <rect class="b pb" x="20" y="26" width="11" height="12" rx="3"/>
+            </svg>
+            <h3 data-i18n="feat3T">A route map, not a server list</h3>
+            <p data-i18n="feat3B">See where traffic leaves: a globe you can switch to a flat map, with the exit and the path drawn out.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-auto" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s r1" pathLength="1" d="M12 48C28 48 36 16 52 16"/>
+              <path class="b r2" pathLength="1" d="M12 48L12 30Q12 16 26 16L52 16"/>
+              <path class="b x" d="M28 28l8 8M36 28l-8 8"/>
+              <circle class="f" cx="12" cy="48" r="4"/><circle cx="52" cy="16" r="4" fill="var(--fg)"/>
+            </svg>
+            <h3 data-i18n="feat4T">Split routing that holds</h3>
+            <p data-i18n="feat4B">Send chosen apps or sites through the exit you pick — or nowhere — whatever the mode or the rest of the rules say.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-meter" viewBox="0 0 64 64" aria-hidden="true">
+              <path class="s dim" d="M12 46A21 21 0 1 1 52 46"/>
+              <path class="b arc" pathLength="1" d="M12 46A21 21 0 1 1 52 46"/>
+              <path class="s" d="M24 56h16"/>
+              <circle class="f" cx="32" cy="38" r="3.5"/>
+            </svg>
+            <h3 data-i18n="feat5T">Numbers when you want them</h3>
+            <p data-i18n="feat5B">Live connections, DNS queries and logs, plus the memory the core actually uses — no more guessing what it is doing.</p>
+          </li>
+          <li class="feat" data-mg data-reveal>
+            <svg class="ico i-scope" viewBox="0 0 64 64" aria-hidden="true">
+              <rect class="s draw" pathLength="1" x="8" y="10" width="48" height="38" rx="7"/>
+              <path class="s" d="M24 56h16"/>
+              <rect class="f all" x="13" y="15" width="38" height="28" rx="4" opacity=".35"/>
+              <rect class="s app" x="36" y="30" width="11" height="9" rx="2.5"/>
+              <rect class="s app" x="22" y="30" width="11" height="9" rx="2.5"/>
+            </svg>
+            <h3 data-i18n="feat6T">One client, four platforms</h3>
+            <p data-i18n="feat6B">Windows, macOS, Linux and Android share the same profiles, the same groups and the same settings.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- compare -->
+    <section class="sec" id="compare" aria-labelledby="cmp-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="cmp-title" data-words data-i18n="cmpTitle">How Skyward differs from a typical client.</h2>
+        </div>
+        <table class="cmp" data-fade>
+          <caption class="sr-only" data-i18n="cmpCaption">Skyward compared with a typical client in common situations</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-i18n="cmpSituation">Situation</th>
+              <th scope="col" data-i18n="cmpTypical">Typical client</th>
+              <th scope="col" class="cmp-us" data-i18n="cmpUs">Skyward</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" data-i18n="cmp1S">Traffic left</th>
+              <td data-i18n="cmp1T">Usually buried in the profile settings</td>
+              <td class="cmp-us" data-i18n="cmp1U">On the main screen, with a usage history</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp2S">A site will not open</th>
+              <td data-i18n="cmp2T">Try another server and hope</td>
+              <td class="cmp-us" data-i18n="cmp2U">The route map shows the exit and the path</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp3S">Several configurations</th>
+              <td data-i18n="cmp3T">Edit files or import again by hand</td>
+              <td class="cmp-us" data-i18n="cmp3U">Switch configurations and groups in one tap</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp4S">What is it doing</th>
+              <td data-i18n="cmp4T">No logs to read</td>
+              <td class="cmp-us" data-i18n="cmp4U">Connections, DNS and logs in real time</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp5S">Platforms</th>
+              <td data-i18n="cmp5T">Often phone only</td>
+              <td class="cmp-us" data-i18n="cmp5U">The same experience on all four</td>
+            </tr>
+            <tr>
+              <th scope="row" data-i18n="cmp6S">Price</th>
+              <td data-i18n="cmp6T">Ads or paid features</td>
+              <td class="cmp-us" data-i18n="cmp6U">Free, open source, ad-free</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- setup -->
+    <section class="sec" id="setup" aria-labelledby="setup-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <h2 id="setup-title" data-words data-i18n="setupTitle">One link and three steps.</h2>
+          <p class="lede" data-fade data-i18n="setupLead">Bring your own subscription. No account, no registration, no email.</p>
+        </div>
+        <div class="setup">
+          <ol class="steps">
+            <li class="step"><span class="step-n">1</span><div><h3 data-i18n="step1T">Install the client</h3><p data-i18n="step1B">Windows, macOS, Linux or Android — installer or portable build, whichever suits you.</p></div></li>
+            <li class="step"><span class="step-n">2</span><div><h3 data-i18n="step2T">Add your subscription</h3><p data-i18n="step2B">Paste the link or import the configuration file. Clash/mihomo profiles and common node links both work.</p></div></li>
+            <li class="step"><span class="step-n">3</span><div><h3 data-i18n="step3T">Connect</h3><p data-i18n="step3B">Pick a profile and a node, then start it. Android asks for the VPN permission; desktop TUN needs the system helper.</p></div></li>
+          </ol>
+          <div class="importer" data-fade>
+            <h3 data-i18n="setupCardT">Already have a link?</h3>
+            <p class="imp-text" data-i18n="setupCardB">Download the client, paste the link into it and the profile appears — no account and nothing to configure by hand.</p>
+            <a class="btn btn-primary" href="#download" data-i18n="setupCardCta">Get Skyward</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- latest files -->
     <section class="sub-sec" id="download">
       <div class="wrap">
@@ -124,7 +281,7 @@
           </div>
           <p class="rel-empty muted" id="rel-empty" hidden></p>
           <div class="plat-tabs" id="platform-seg" role="group" aria-label="Platform" data-group></div>
-          <ul class="assets" id="files" aria-live="polite"></ul>
+          <ul class="assets" id="files" aria-live="polite" data-group data-items=".asset"></ul>
           <div class="extras" id="extras"></div>
           <p class="rel-meta" data-i18n="dlNote">The platform is detected from your browser and may be wrong. The full file list is always on the releases page.</p>
         </div>
@@ -150,7 +307,7 @@
           <h2 data-i18n="pfTitle">Which package for which system.</h2>
           <p class="lede" data-i18n="pfLead">Every release ships the same four platforms.</p>
         </div>
-        <ul class="pcards" id="cards"></ul>
+        <ul class="pcards" id="cards" data-group data-items=".pcard" data-cpull="0.03"></ul>
       </div>
     </section>
 
@@ -212,6 +369,16 @@ dart run setup.dart android    # APK
 
   <footer class="foot">
     <div class="wrap">
+      <div class="wordmark" aria-hidden="true">
+        <span class="wordmark-text">Skyward</span>
+        <svg class="bm wordmark-mark" viewBox="-166 -166 332 332" aria-hidden="true" focusable="false">
+          <g transform="translate(4 0) rotate(-20)" fill="none" stroke="currentColor" stroke-width="62.1" stroke-linecap="round">
+            <path class="bm-bar" pathLength="1" d="M-101.2 69V-69"/>
+            <path class="bm-bar" pathLength="1" d="M0 138V-138"/>
+            <path class="bm-bar" pathLength="1" d="M101.2 46V-46"/>
+          </g>
+        </svg>
+      </div>
       <div class="foot-grid">
         <div class="foot-about">
           <a class="logo" href="#top"><img class="logo-mark" src="logo.png" width="30" height="30" alt=""><span>Skyward</span></a>
@@ -257,6 +424,7 @@ dart run setup.dart android    # APK
     </div>
   </footer>
 
+  <script src="assets/motion.js"></script>
   <script src="assets/shared.js"></script>
   <script src="assets/site.js"></script>
 </body>

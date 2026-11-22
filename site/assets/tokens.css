@@ -1,10 +1,10 @@
 /* Skyward's brand hue, fed into ReClash's design tokens.
    Their stylesheet derives every surface, line and glow from --bl/--bc/--bh;
-   only the hue is ours (indigo-violet, the app mark's family). */
+   only the hue is ours (a red-leaning orange, the app mark's warm counterpart). */
 :root {
-  --bl: 0.62;
-  --bc: 0.2;
-  --bh: 262;
+  --bl: 0.7;
+  --bc: 0.19;
+  --bh: 32;
 
   --good: oklch(0.75 0.15 150);
   --good-fg: oklch(0.86 0.1 150);
@@ -20,22 +20,14 @@
 .ph-grid { align-items: center; }
 .ph-ring { width: min(100%, 440px); }
 
-/* Their plate is driven by springs in the motion runtime; a transition is the
-   static-page equivalent. It is skipped for the first placement. */
-.plat-tabs .mg-ind { transition: transform var(--dur-smooth) var(--ease-smooth), width var(--dur-smooth) var(--ease-smooth), height var(--dur-smooth) var(--ease-smooth), opacity 0.2s ease; }
-.plat-tabs .mg-ind.no-anim { transition: none; }
-@media (prefers-reduced-motion: reduce) { .plat-tabs .mg-ind { transition: none; } }
-
-/* Hover feedback their runtime draws with a magnetic plate. */
+/* Hover feedback for when the motion runtime has not run (or is reduced):
+   their stylesheet only draws these states through a magnetic plate. */
 .asset:hover { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .asset:hover .dl { opacity: 1; transform: none; }
 .pcard:hover { background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--brand-line); }
 .pcard:hover h3 { font-weight: 800; }
 
-/* The loader's mark is our artwork, not ReClash's SVG glyph. */
-.loader-mark {
-  width: var(--ls, 112px);
-  height: var(--ls, 112px);
-  border-radius: 22px;
-}
-.loader-word { justify-content: center; }
+/* Their wordmark is sized for "ReClash"; "Skyward" is wider, so it needs a
+   smaller clamp or it overflows the wrap. */
+.wordmark { font-size: clamp(3.4rem, 14.5vw, 12rem); }
+.importer .btn { justify-self: start; }
