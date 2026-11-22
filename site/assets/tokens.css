@@ -19,6 +19,18 @@
 .ph { padding-block: clamp(44px, 5.5vw, 84px); }
 .ph-grid { align-items: center; }
 .ph-ring { width: min(100%, 440px); }
+/* The product render sits in the hero beside the title. It is a wide shot, so
+   it is capped and given a soft plate; on phones it drops below the title. */
+.ph-shot { position: relative; width: 100%; max-width: 560px; justify-self: end; }
+.ph-shot::before {
+  content: ''; position: absolute; inset: 12% 6%;
+  background: radial-gradient(ellipse at center, var(--glow), transparent 70%);
+  filter: blur(40px); z-index: -1;
+}
+.ph-shot img { display: block; width: 100%; height: auto; }
+@media (max-width: 760px) {
+  .ph-shot { order: 0; justify-self: center; margin-top: 8px; }
+}
 .ph-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 
 /* Their bar is 74% opaque, so headings show through it while scrolling. */
