@@ -680,7 +680,9 @@ function startThemes() {
   const btn = $('theme-btn');
   const panel = $('theme-panel');
   if (!dd || !btn || !panel) return;
-  const items = [...panel.querySelectorAll('[data-theme]')];
+  // One set of theme buttons lives in the desktop dropdown and another in the
+  // mobile menu; both drive the same choice and stay in sync.
+  const items = [...panel.querySelectorAll('[data-theme]'), ...document.querySelectorAll('#menu [data-theme]')];
   const names = { dark: 'themeDark', light: 'themeLight', paper: 'themePaper' };
 
   const setOpen = (open) => {
@@ -725,8 +727,52 @@ function startThemes() {
     apply(item.dataset.theme);
     setOpen(false);
   });
+  const menu = $('menu');
+  if (menu) menu.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-theme]');
+    if (!item) return;
+    apply(item.dataset.theme);
+  });
 
   apply(document.documentElement.dataset.theme || 'dark');
+}
+
+/* Mobile menu: a full-screen panel that opens from the burger with a circular
+   reveal (the stylesheet already supplies the clip-path animation). */
+function startMenu() {
+  const btn = $('menu-btn');
+  const menu = $('menu');
+  if (!btn || !menu) return;
+  const nav = document.querySelector('.nav-bar');
+  const setOpen = (open) => {
+    menu.classList.toggle('is-open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    menu.setAttribute('aria-hidden', String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open && btn.focus) btn.focus();
+  };
+  // Grow the circle from the burger's centre.
+  btn.addEventListener('click', () => {
+    if (!menu.classList.contains('is-open')) {
+      const r = btn.getBoundingClientRect();
+      menu.style.setProperty('--ox', `${r.left + r.width / 2}px`);
+      menu.style.setProperty('--oy', `${r.top + r.height / 2}px`);
+    }
+    setOpen(!menu.classList.contains('is-open'));
+  });
+  menu.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.getAttribute('href')?.startsWith('#')) setOpen(false);
+  });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('is-open')) setOpen(false); });
+  // Flag the active language and point the alternate link at the real toggle's
+  // href, which render_site.mjs already computes per page.
+  const pageLang = document.documentElement.dataset.pageLang || 'en';
+  menu.querySelectorAll('[data-menu-lang]').forEach((a) => {
+    a.setAttribute('aria-current', String(a.dataset.menuLang === pageLang));
+  });
+  // The hrefs are relative paths in the template; render_site.mjs rewrites them
+  // with the right prefix for each language page, so no JS adjustment is needed.
 }
 
 /* The nav hides going down and returns going up. */
@@ -866,6 +912,7 @@ function start() {
     startMagnets();
     startNav();
     startThemes();
+    startMenu();
     startSteps();
     startWordmark();
     startRing();
