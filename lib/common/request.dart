@@ -117,10 +117,18 @@ class Request {
       // The cache is best-effort: a slow or unavailable disk must not hold the
       // result, or the row would sit on "Checking…" behind a background write.
       unawaited(_cacheReleases(releases));
-      return newestOfferableRelease(
-        _platformCandidates(releases),
-        installedVersion: globalState.packageInfo.displayVersion,
-      );
+      try {
+        return newestOfferableRelease(
+          _platformCandidates(releases),
+          installedVersion: globalState.packageInfo.displayVersion,
+        );
+      } catch (error) {
+        commonPrint.log(
+          'release parse failed: ${compactError(error)}',
+          logLevel: LogLevel.warning,
+        );
+        return null;
+      }
     } on DioException catch (error) {
       commonPrint.log(
         'releases list failed: ${compactError(error)}',
@@ -132,24 +140,38 @@ class Request {
     // build number, instead of being told there is nothing.
     final cached = await _readCachedReleases();
     if (cached.isNotEmpty) {
-      final offer = newestOfferableRelease(
-        _platformCandidates(cached),
-        installedVersion: globalState.packageInfo.displayVersion,
-      );
-      if (offer != null) return offer;
+      try {
+        final offer = newestOfferableRelease(
+          _platformCandidates(cached),
+          installedVersion: globalState.packageInfo.displayVersion,
+        );
+        if (offer != null) return offer;
+      } catch (_) {
+        // Ignore a bad cache entry and fall through to the release page.
+      }
     }
-    final release = await latestRelease();
-    final remoteVersion = release['tag_name'] as String;
-    final version = globalState.packageInfo.displayVersion;
-    final hasUpdate = shouldOfferUpdate(
-      remoteVersion: releaseVersionOf(
-        remoteVersion,
-        release['name'] as String?,
-      ),
-      remoteBuildNumber: releaseBuildNumber(release['body']),
-      installedVersion: version,
-    );
-    return hasUpdate ? release : null;
+    try {
+      final release = await latestRelease();
+      final remoteVersion = release['tag_name'] as String;
+      final version = globalState.packageInfo.displayVersion;
+      final hasUpdate = shouldOfferUpdate(
+        remoteVersion: releaseVersionOf(
+          remoteVersion,
+          release['name'] as String?,
+        ),
+        remoteBuildNumber: releaseBuildNumber(release['body']),
+        installedVersion: version,
+      );
+      return hasUpdate ? release : null;
+    } catch (error) {
+      // A non-semantic tag (e.g. `dev`) must not turn a reachable GitHub into
+      // a failed update check.
+      commonPrint.log(
+        'release version parse failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      return null;
+    }
   }
 
   /// The release page redirect still answers once the hourly API quota is spent.

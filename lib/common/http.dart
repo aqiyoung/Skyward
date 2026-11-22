@@ -40,6 +40,14 @@ class SkywardHttpOverrides extends HttpOverrides {
     if ([localhost].contains(url.host)) {
       return 'DIRECT';
     }
+    // On Android the system VPN (TUN) already captures every socket from this
+    // process and routes it through the core. The Rust core does not start a
+    // mixed-port listener for TUN, so pointing the App's HTTP client at
+    // localhost:mixedPort gives a guaranteed connection-refused. Going DIRECT
+    // here still traverses the proxy via the VPN.
+    if (system.isAndroid) {
+      return 'DIRECT';
+    }
     final isStart = read(isStartProvider);
     final suspend = read(suspendProvider);
     if (!isStart || suspend) return 'DIRECT';
