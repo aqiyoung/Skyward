@@ -2,6 +2,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/views/traffic_statistics/traffic_statistics.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,15 +68,10 @@ class _AppUsageSheetState extends ConsumerState<AppUsageSheet> {
           ),
           const SizedBox(height: 16),
           usage.when(
-            data: (data) => Container(
-              decoration: ShapeDecoration(
-                color: cs.surfaceContainerLowest,
-                shape: AppShape.all(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _TotalCard(data: data),
+            data: (data) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _TotalCard(data: data),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -112,8 +108,7 @@ class _AppUsageSheetState extends ConsumerState<AppUsageSheet> {
                         ],
                       ),
                     ),
-                ],
-              ),
+              ],
             ),
             loading: () => const Padding(
               padding: EdgeInsets.all(48),
@@ -137,13 +132,9 @@ class _TotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -182,16 +173,21 @@ class _AppRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(16),
-      ),
+      decoration: panelDecoration(context, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              PackageIcon(packageName: app.packageName, size: 40),
+              if (app.packageName.isEmpty || app.packageName == 'mihomo')
+                const IconWell(
+                  AppGlyphs.connections,
+                  side: 40,
+                  glyphSize: 24,
+                  shape: AppShape.md,
+                )
+              else
+                PackageIcon(packageName: app.packageName, size: 40),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -220,7 +216,11 @@ class _AppRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          UsageBar(fraction: app.percent, gradient: gradient),
+          UsageBar(
+            fraction: app.percent,
+            gradient: gradient,
+            trackColor: cs.surfaceContainerHighest,
+          ),
         ],
       ),
     );

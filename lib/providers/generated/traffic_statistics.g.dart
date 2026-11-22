@@ -141,7 +141,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'dee23f8e8589ec7d54edb1370e61cc78568ecc4f';
+String _$trafficSamplerHash() => r'3adbd587d9b19fffbec961d2cbe2c420da981781';
 
 /// Periodically persists the live connection list so the statistics page has
 /// history. Runs only while the core is connected and the app is visible.

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:skyward/ui/typography.dart';
 import 'package:flutter/widgets.dart';
 
 /// One hour's bytes, in the UI's own plain type so the chart stays independent
@@ -15,12 +16,16 @@ class TrafficBarChart extends StatelessWidget {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.labelColor,
+    required this.gridColor,
     this.height = 180,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+  final Color labelColor;
+  final Color gridColor;
   final double height;
 
   @override
@@ -28,7 +33,9 @@ class TrafficBarChart extends StatelessWidget {
     if (points.isEmpty) {
       return SizedBox(
         height: height,
-        child: const Center(child: Text('暂无数据')),
+        child: Center(
+          child: Text('暂无数据', style: TextStyle(color: labelColor)),
+        ),
       );
     }
     return CustomPaint(
@@ -36,6 +43,9 @@ class TrafficBarChart extends StatelessWidget {
         points: points,
         downloadColor: downloadColor,
         uploadColor: uploadColor,
+        labelColor: labelColor,
+        gridColor: gridColor,
+        labelStyle: AppTextStyle.caption2.of(context, emphasized: true),
       ),
       child: SizedBox(height: height, width: double.infinity),
     );
@@ -47,11 +57,17 @@ class _BarPainter extends CustomPainter {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.labelColor,
+    required this.gridColor,
+    required this.labelStyle,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+  final Color labelColor;
+  final Color gridColor;
+  final TextStyle labelStyle;
 
   static const _left = 46.0;
   static const _bottom = 22.0;
@@ -71,7 +87,7 @@ class _BarPainter extends CustomPainter {
     final axisMax = _niceCeil(maxBytes == 0 ? 1 : maxBytes);
 
     final gridPaint = Paint()
-      ..color = const Color(0x22000000)
+      ..color = gridColor
       ..strokeWidth = 1;
     for (var i = 0; i <= 2; i++) {
       final y = _top + plotH * i / 2;
@@ -81,7 +97,7 @@ class _BarPainter extends CustomPainter {
         canvas,
         _formatAxis(value),
         Offset(0, y - 6),
-        const TextStyle(fontSize: 10, color: Color(0x99000000)),
+        labelStyle.copyWith(color: labelColor),
       );
     }
 
@@ -116,7 +132,7 @@ class _BarPainter extends CustomPainter {
           canvas,
           '${p.hour.hour}',
           Offset(cx - 8, _top + plotH + 5),
-          const TextStyle(fontSize: 10, color: Color(0x99000000)),
+          labelStyle.copyWith(color: labelColor),
         );
       }
     }
@@ -150,5 +166,8 @@ class _BarPainter extends CustomPainter {
   bool shouldRepaint(_BarPainter old) =>
       old.points != points ||
       old.downloadColor != downloadColor ||
-      old.uploadColor != uploadColor;
+      old.uploadColor != uploadColor ||
+      old.labelColor != labelColor ||
+      old.gridColor != gridColor ||
+      old.labelStyle != labelStyle;
 }

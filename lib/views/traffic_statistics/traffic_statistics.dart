@@ -5,9 +5,25 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// A panel that still reads against the page in dark and pure-black themes.
+/// The page uses `surface`; one step up keeps the grouping visible when the
+/// lowest surface is forced to black.
+ShapeDecoration panelDecoration(BuildContext context, double radius) {
+  final cs = context.colorScheme;
+  final card = cs.brightness == Brightness.light
+      ? const Color(0xFFFFFFFF)
+      : SurfaceLevel.block.colorOf(cs);
+  return ShapeDecoration(
+    color: card,
+    shape: AppShape.all(radius),
+    shadows: DashboardShadows.e1(context),
+  );
+}
 
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
 /// rule-hit distribution, a traffic ranking and running time. Opened from
@@ -199,10 +215,7 @@ class _OverviewCard extends ConsumerWidget {
     final runMs = ref.watch(runTimeProvider);
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -372,10 +385,7 @@ class _TrendCard extends StatelessWidget {
     final hasData = peak != null && (peak.download + peak.upload) > 0;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -412,6 +422,8 @@ class _TrendCard extends StatelessWidget {
               ],
               downloadColor: downloadColor,
               uploadColor: uploadColor,
+              labelColor: context.colorScheme.onSurfaceVariant,
+              gridColor: cs.onSurface.withValues(alpha: 0.16),
               height: 150,
             )
           else
@@ -468,10 +480,7 @@ class _RuleHits extends StatelessWidget {
     final totalHits = hits.fold<int>(0, (sum, h) => sum + h.hits);
     final top = hits.first;
     return Container(
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -642,10 +651,7 @@ class _Ranking extends StatelessWidget {
       (m, e) => math.max(m, e.upload + e.download),
     );
     return Container(
-      decoration: ShapeDecoration(
-        color: cs.surfaceContainerLowest,
-        shape: AppShape.all(20),
-      ),
+      decoration: panelDecoration(context, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

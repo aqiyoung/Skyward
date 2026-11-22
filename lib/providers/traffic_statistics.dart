@@ -138,7 +138,8 @@ class TrafficSampler extends _$TrafficSampler {
     for (final item in items) {
       final id = item['id'] as String?;
       if (id == null) continue;
-      final endedMs = (item['endedAt'] as num?)?.toInt() ??
+      final endedMs =
+          (item['endedAt'] as num?)?.toInt() ??
           DateTime.now().millisecondsSinceEpoch;
       final ended = DateTime.fromMillisecondsSinceEpoch(endedMs);
       final hour = DateTime(ended.year, ended.month, ended.day, ended.hour);
@@ -297,14 +298,15 @@ Future<TrafficStatistics> trafficStatistics(
 @Riverpod(keepAlive: true)
 Future<AppUsage> appUsage(Ref ref, AppUsagePeriod period) async {
   ref.watch(trafficSamplerProvider);
+  // Watch, not read: the installed-app list loads asynchronously and its
+  // labels are what turn a package name into a readable app name.
+  final packages = ref.watch(packagesProvider);
   final range = appUsageRange(period);
   final buckets = await database.appTrafficHourlyDao.between(
     range.start,
     range.end,
   );
-  final labels = {
-    for (final p in ref.read(packagesProvider)) p.packageName: p.label,
-  };
+  final labels = {for (final p in packages) p.packageName: p.label};
   return aggregateAppUsageTask(
     [
       for (final b in buckets)
