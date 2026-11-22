@@ -18,7 +18,6 @@ import 'package:material_new_shapes/material_new_shapes.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
-import 'halo_loop.dart';
 import 'traffic.dart';
 
 const _builtinOutbounds = {'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'};
@@ -1084,8 +1083,6 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                             ),
                     ),
                   ),
-                  if (widget.running && enabled)
-                    RunningHalo(size: size, color: context.colorScheme.primary),
                 ],
               ),
             ),

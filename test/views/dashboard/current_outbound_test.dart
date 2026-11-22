@@ -78,34 +78,21 @@ OutboundIpResult _address({int coreEpoch = 1}) => OutboundIpResult(
   picksVersion: 1,
 );
 
-Widget _card({
-  DashboardDensity density = DashboardDensity.standard,
-  bool animations = false,
-}) {
-  final Widget card = Scaffold(
-    body: Align(
-      alignment: Alignment.topLeft,
-      child: SizedBox(
-        width: density.isDesktop ? 600 : 380,
-        height: density.isDesktop ? 208 : null,
-        child: DashboardDensityScope(
-          density: density,
-          scale: 1,
-          child: const CurrentOutboundCard(),
+Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
+    Scaffold(
+      body: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: density.isDesktop ? 600 : 380,
+          height: density.isDesktop ? 208 : null,
+          child: DashboardDensityScope(
+            density: density,
+            scale: 1,
+            child: const CurrentOutboundCard(),
+          ),
         ),
       ),
-    ),
-  );
-  // The running button's halo is a sustained loop. Tests that exercise it
-  // disable animations so pumpAndSettle can settle; tests that watch the
-  // country badge's pulse need real animation and opt back in.
-  return animations
-      ? card
-      : MediaQuery(
-          data: const MediaQueryData(disableAnimations: true),
-          child: card,
-        );
-}
+    );
 
 Widget _app(
   Future<IpQuality> Function(Ref ref, String ip) quality, {
@@ -253,7 +240,7 @@ void main() {
             outboundIpProbeProvider.overrideWith(_Ips.new),
             ipQualityProvider.overrideWith((_, _) => quality.future),
           ],
-          child: _card(animations: true),
+          child: _card(),
         ),
       );
       await tester.pump();
