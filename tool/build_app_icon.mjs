@@ -159,9 +159,10 @@ const bg432 = await render({ size: 432, flame: false, rounded: 432 * 0.22 });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_background.png`, bg432);
 const fg432 = await render({ size: 432, background: false });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png`, fg432);
-// The system splash: the full plate, corners rounded. Android 12+ masks it to a
-// circle anyway; the radius is what the artwork carries everywhere else.
-const splash432 = await render({ size: 432, rounded: 432 * 0.22 });
+// The system splash: the bare flame, no plate. The Rust core branch does the
+// same, and it is the plate that reads as a square on a device whose splash
+// shows the artwork unmasked.
+const splash432 = await render({ size: 432, background: false });
 write(`${root}/android/app/src/main/res/drawable-nodpi/splash_icon.png`, splash432);
 const mono432 = await render({ size: 432, background: false, mono: true });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png`, mono432);

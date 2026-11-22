@@ -159,8 +159,6 @@ jobs:
             | sort -n | tail -1)
           seq=$(( ${highest_seq:-0} + 1 ))
           patch=$(( base_patch + (seq - 1) / 99 ))
-          revision=$(( (seq - 1) % 99 + 1 ))
-          version="${major}.1.${patch}.${revision}"
           # The build number is the second ledger: one counter for every
           # channel, one past the highest ever spent, so whichever version
           # ships next outranks whatever is already on a phone. It stays out of
@@ -179,6 +177,10 @@ jobs:
                       -e 's,^refs/tags/(preview|dev)-([0-9]+)$,\2,p' \
             | sort -n | tail -1)
           build_number=$(( 10#${last_code:-2090000000} + 1 ))
+          # A preview's own number, taken from the build counter: the scheme
+          # above counts `v<major>.1.*` tags, and previews never create those,
+          # so every preview used to read exactly the same on a phone.
+          version="${major}.1.${patch}.${build_number % 1000}"
           # The build number is the tag and the versionCode; writing the tag
           # down is what lets the next run read this one back.
           # The pubspec keeps the upstream three components; the four-part
