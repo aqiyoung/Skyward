@@ -111,11 +111,19 @@ function write(file, buf) {
 }
 
 // --- in-app icon and the macOS set -------------------------------------------------
+// Android masks an adaptive icon itself, but a launcher (or the pre-12 splash,
+// which falls back to the app icon) may show it as-is, so the plate carries its
+// corner radius in the artwork. Windows takes a square icon and keeps its own.
+const SIZES = [1024, 512, 256, 128, 64, 32, 16];
 const full = {};
-for (const size of [1024, 512, 256, 128, 64, 32, 16]) full[size] = await render({ size });
-write(`${root}/assets/images/icon.png`, full[1024]);
-for (const size of [1024, 512, 256, 128, 64, 32, 16]) {
-  write(`${root}/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_${size}.png`, full[size]);
+const rounded = {};
+for (const size of SIZES) {
+  full[size] = await render({ size });
+  rounded[size] = await render({ size, rounded: size * 0.22 });
+}
+write(`${root}/assets/images/icon.png`, rounded[1024]);
+for (const size of SIZES) {
+  write(`${root}/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_${size}.png`, rounded[size]);
 }
 
 // --- Windows .ico (PNG entries, which Vista and later accept) ----------------------
@@ -147,7 +155,7 @@ write(`${root}/assets/images/icon.ico`, ico);
 write(`${root}/windows/runner/resources/app_icon.ico`, ico);
 
 // --- Android -----------------------------------------------------------------------
-const bg432 = await render({ size: 432, flame: false });
+const bg432 = await render({ size: 432, flame: false, rounded: 432 * 0.22 });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_background.png`, bg432);
 const fg432 = await render({ size: 432, background: false });
 write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png`, fg432);
@@ -161,7 +169,7 @@ write(`${root}/android/app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.
 // Legacy and TV mipmaps: full composition, and the TV banner.
 await page.evaluate(async (b64) => {
   window.__iconFull = `data:image/png;base64,${b64}`;
-}, full[1024].toString('base64'));
+}, rounded[1024].toString('base64'));
 for (const [dir, size] of [
   ['mdpi', 48], ['hdpi', 72], ['xhdpi', 96], ['xxhdpi', 144], ['xxxhdpi', 192],
 ]) {
