@@ -36,14 +36,20 @@
 /* Their bar is 74% opaque, so headings show through it while scrolling. */
 .nav-bar { background: color-mix(in oklab, var(--bg) 90%, transparent); }
 
-/* On phones the nav keeps only the logo, the CTA and the burger; the theme,
-   language and GitHub controls move into the full-screen menu. */
+/* On phones the nav keeps the logo, a GitHub link and the burger; the Download
+   CTA, theme and language controls move into the full-screen menu. */
 @media (max-width: 960px) {
-  .nav .dd, .nav .lang, .nav-bar > a.nav-a.icon-btn { display: none !important; }
-  .nav-bar { gap: 4px; padding: 6px 6px 6px 10px; }
-  .btn.btn-primary.btn-s { padding: 0 12px; font-size: 0.86rem; }
+  .nav .dd, .nav .lang, .nav-bar > a.btn.btn-primary.btn-s { display: none !important; }
+  .nav-bar { gap: 6px; padding: 6px 6px 6px 10px; }
   .logo { gap: 7px; margin-right: auto; }
   .logo-mark { height: 22px; }
+}
+
+/* The nav is fixed at inset 14px with a ~58px bar. Their stylesheet leaves
+   ~130px of hero top padding to clear it; the shared token below reduced that
+   to 44px on small screens, which pushed "Latest release" under the bar. */
+@media (max-width: 960px) {
+  .ph { padding-top: clamp(104px, 22vw, 132px); }
 }
 
 /* Menu contents: theme buttons and language links. */
