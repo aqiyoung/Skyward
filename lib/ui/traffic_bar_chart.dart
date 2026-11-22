@@ -16,12 +16,19 @@ class TrafficBarChart extends StatelessWidget {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.gridColor,
+    required this.labelColor,
     this.height = 180,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+
+  /// Grid lines and axis labels are drawn in the theme's ink, not a fixed
+  /// black: on a dark card a black grid is darker than the card itself.
+  final Color gridColor;
+  final Color labelColor;
   final double height;
 
   @override
@@ -37,6 +44,8 @@ class TrafficBarChart extends StatelessWidget {
         points: points,
         downloadColor: downloadColor,
         uploadColor: uploadColor,
+        gridColor: gridColor,
+        labelColor: labelColor,
       ),
       child: SizedBox(height: height, width: double.infinity),
     );
@@ -48,11 +57,15 @@ class _BarPainter extends CustomPainter {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
+    required this.gridColor,
+    required this.labelColor,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
+  final Color gridColor;
+  final Color labelColor;
 
   static const _left = 46.0;
   static const _bottom = 22.0;
@@ -72,7 +85,7 @@ class _BarPainter extends CustomPainter {
     final axisMax = _niceCeil(maxBytes == 0 ? 1 : maxBytes);
 
     final gridPaint = Paint()
-      ..color = const Color(0x22000000)
+      ..color = gridColor
       ..strokeWidth = 1;
     for (var i = 0; i <= 2; i++) {
       final y = _top + plotH * i / 2;
@@ -82,7 +95,7 @@ class _BarPainter extends CustomPainter {
         canvas,
         _formatAxis(value),
         Offset(0, y - 6),
-        const TextStyle(fontSize: 10, color: Color(0x99000000)),
+        TextStyle(fontSize: 10, color: labelColor),
       );
     }
 
@@ -117,7 +130,7 @@ class _BarPainter extends CustomPainter {
           canvas,
           '${p.hour.hour}',
           Offset(cx - 8, _top + plotH + 5),
-          const TextStyle(fontSize: 10, color: Color(0x99000000)),
+          TextStyle(fontSize: 10, color: labelColor),
         );
       }
     }
