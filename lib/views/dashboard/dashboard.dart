@@ -85,7 +85,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           child: layout.isDesktop
               ? _DesktopDashboard(
                   platform: platform,
-                  columns: dashboardColumnsOf(room.width),
                   gap: gap,
                 )
               : _MobileDashboard(
@@ -138,18 +137,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 }
 
-/// Four columns fill the window, the tables taking what the rows above them
-/// leave. A window too short for the tables, and every two column one, gets
-/// the summary cards instead, so no list scrolls inside a page that scrolls.
+/// The desktop board follows the product render: a status and speed row above
+/// two equal columns, with the tall Route card on the right.
 class _DesktopDashboard extends StatelessWidget {
   const _DesktopDashboard({
     required this.platform,
-    required this.columns,
     required this.gap,
   });
 
   final SupportPlatform platform;
-  final int columns;
   final double gap;
 
   @override
@@ -165,26 +161,24 @@ class _DesktopDashboard extends StatelessWidget {
     );
     final topHeight = (compact ? 176 : 208) * scale;
     final middleHeight = (compact ? 152 : 176) * scale;
-    // A world map reads best wide: the board takes the full width, and the
-    // connections table below it keeps its row only when the window can spare
-    // it -- on shorter windows the board stays and the table steps down to the
-    // summary cards, which the Connections page still carries in full.
-    final routingHeight = (compact ? 290 : 300) * scale;
+    // In the render the Route card spans the two rows beside it (Network
+    // control and Profile/Memory), so it is twice their height plus the gap.
+    final routingHeight = middleHeight * 2 + gap;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final room =
-            constraints.maxWidth - base.horizontal - gap * (columns - 1);
-        final column = math.min(room / columns, _maxColumnWidth * scale);
-        final inset = (room - column * columns) / 2;
+        // Two equal columns, as in the render: the status card and the pair
+        // of speed cards share the top row, and the two columns below line up
+        // with them. `_maxColumnWidth` keeps the board from stretching.
+        const columnCount = 2;
+        final room = constraints.maxWidth - base.horizontal - gap;
+        final column = math.min(room / columnCount, _maxColumnWidth * scale);
+        final inset = (room - column * columnCount) / 2;
         final padding = base.copyWith(
           start: base.start + inset,
           end: base.end + inset,
         );
         Widget sized(double height, Widget child) =>
             SizedBox(height: height, child: child);
-        // The desktop board follows the product render: a reading column on
-        // the left and a route/groups column on the right, rather than a
-        // full-width route row beneath the status cards.
         Widget halfRow(List<Widget> cards) => Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: gap,
@@ -193,23 +187,30 @@ class _DesktopDashboard extends StatelessWidget {
               Expanded(child: RepaintBoundary(child: card)),
           ],
         );
-        final left = Column(
+        // Top row: status on the left, the two speed cards on the right.
+        final top = Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: gap,
           children: [
-            sized(
-              topHeight,
-              const RepaintBoundary(child: CurrentOutboundCard()),
+            Expanded(
+              child: RepaintBoundary(child: CurrentOutboundCard()),
             ),
-            sized(
-              topHeight,
-              halfRow(const <Widget>[
+            Expanded(
+              child: halfRow(const <Widget>[
                 SpeedCard(direction: TrafficDirection.upload),
                 SpeedCard(direction: TrafficDirection.download),
               ]),
             ),
-            // The reference layout folds the mode selector and the VPN/LAN
-            // switches into one Network control card.
+          ],
+        );
+        // Below it, the reference layout folds the mode selector and the
+        // VPN/LAN switches into one Network control card on the left. The
+        // Route card on the right is the tall one, with the proxy-group
+        // summary underneath it.
+        final left = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
             const RepaintBoundary(child: NetworkControlCard()),
             sized(
               middleHeight,
@@ -238,12 +239,19 @@ class _DesktopDashboard extends StatelessWidget {
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: padding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: gap,
             children: [
-              Expanded(flex: 3, child: left),
-              Expanded(flex: 2, child: right),
+              sized(topHeight, top),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: gap,
+                children: [
+                  Expanded(child: left),
+                  Expanded(child: right),
+                ],
+              ),
             ],
           ),
         );
