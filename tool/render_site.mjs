@@ -10,8 +10,8 @@ if (!out || !siteArg) {
 const siteUrl = new URL(siteArg.replace(/\/*$/, '/')).href;
 
 const PAGES = [
-  { lang: 'en', locale: 'en', ogLocale: 'en_US', path: '', toggle: '?lang=en' },
-  { lang: 'zh', locale: 'zh-CN', ogLocale: 'zh_CN', path: 'zh/', toggle: 'zh/' },
+  { lang: 'en', locale: 'en', ogLocale: 'en_US', path: '', toggle: '/' },
+  { lang: 'zh', locale: 'zh-CN', ogLocale: 'zh_CN', path: 'zh/', toggle: '/zh/' },
 ];
 
 const sandbox = {};
@@ -72,10 +72,12 @@ function render(page) {
     (_match, prefix, rest, key) => `${prefix}${text(key)}${rest}`,
   );
 
-  // The language switch is a plain link between the two built pages.
+  // The language switch is a plain link between the two built pages. The
+  // template ships a single default <a id="lang-toggle">; rewrite its href,
+  // hreflang, lang, label and text for whichever page is being rendered.
   html = html.replace(
-    /<button class="tool" id="lang-toggle"[^>]*>[^<]*<\/button>/,
-    `<a class="tool" id="lang-toggle" href="${up}${other.toggle}" hreflang="${other.locale}" lang="${other.locale}" ` +
+    /<a id="lang-toggle"[^>]*>[^<]*<\/a>/,
+    `<a id="lang-toggle" data-mg href="${other.toggle}" hreflang="${other.locale}" lang="${other.locale}" ` +
       `aria-label="${escape(t.langLabel)}">${escape(t.langToggle)}</a>`,
   );
 
