@@ -659,10 +659,6 @@ enum PageLabel {
   /// The mobile global-search tab: one index over pages, tool entries and
   /// settings rows. Also appended for the same reason.
   search,
-
-  /// Cloudflare-style connection speed test. Appended so every existing
-  /// value keeps its persisted index.
-  speedTest,
 }
 
 enum RuleAction {
