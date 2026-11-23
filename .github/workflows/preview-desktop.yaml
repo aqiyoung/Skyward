@@ -384,14 +384,24 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
-          up=""
-          for _ in $(seq 1 30); do
-            if curl -fsS --max-time 5 "${api}/getMe" > /dev/null 2>&1; then up=1; break; fi
-            sleep 2
-          done
-          if [ -z "$up" ]; then echo "::error::telegram-bot-api never answered on localhost:8081"; exit 1; fi
           chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
+
+          # The self-hosted bot API accepts files over 50 MB, but it can be
+          # slow to come up or fail to reach Telegram's DCs. Wait longer than
+          # before, then fall back to the cloud API for the smaller file.
+          local_api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          cloud_api="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}"
+          api="$local_api"
+          up=""
+          for _ in $(seq 1 60); do
+            if curl -fsS --max-time 5 "${local_api}/getMe" > /dev/null 2>&1; then up=1; break; fi
+            sleep 3
+          done
+          if [ -z "$up" ]; then
+            echo "::warning::telegram-bot-api never answered on localhost:8081, falling back to the cloud API (files over 50 MB will be skipped)"
+            api="$cloud_api"
+          fi
+
           {
             echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）"
             echo
@@ -405,29 +415,57 @@ jobs:
             echo
             echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
-            echo "⬇️ 安装包即本条消息附件"
-            echo "（桌面 Dev 版自己计数，号比正式版小：验完请卸掉再装正式版）"
-          } > "$RUNNER_TEMP/caption.txt"
-          cat "$RUNNER_TEMP/caption.txt"
+          } > "$RUNNER_TEMP/body.txt"
+          cat "$RUNNER_TEMP/body.txt"
+
+          sent=0
           first=1
           for file in dist/*.exe dist/*.zip; do
             [ -f "$file" ] || continue
+            size=$(stat -c %s "$file")
+            # The cloud Bot API refuses files over 50 MB.
+            if [ "$api" = "$cloud_api" ] && [ "$size" -gt 52428800 ]; then
+              echo "::warning::$(basename "$file") is over 50 MB; the local bot API is down so it cannot be attached"
+              continue
+            fi
             if [ "$first" = 1 ]; then
+              cp "$RUNNER_TEMP/body.txt" "$RUNNER_TEMP/caption.txt"
+              printf '\n⬇️ 安装包即本条消息附件\n' >> "$RUNNER_TEMP/caption.txt"
               response="$(curl -fsS --max-time 900 \
                 -F "chat_id=${chat_id}" \
                 -F "document=@${file}" \
                 -F "caption=$(cat "$RUNNER_TEMP/caption.txt")" \
-                "${api}/sendDocument")"
+                "${api}/sendDocument")" || response=""
               first=0
             else
               response="$(curl -fsS --max-time 900 \
                 -F "chat_id=${chat_id}" \
                 -F "document=@${file}" \
-                "${api}/sendDocument")"
+                "${api}/sendDocument")" || response=""
             fi
-            if ! printf '%s' "$response" | grep -q '"ok":true'; then
-              echo "::error::Telegram refused $(basename "$file"): ${response}"
-              exit 1
+            if printf '%s' "$response" | grep -q '"ok":true'; then
+              echo "telegram accepted $(basename "$file")"
+              sent=1
+            else
+              echo "::warning::Telegram refused $(basename "$file"): ${response}"
             fi
-            echo "telegram accepted $(basename "$file")"
           done
+
+          # Last resort: no file got through (e.g. the cloud API rate-limited
+          # and the local one is down). Send the text with links so the reader
+          # can still reach the build, and fail the job so it is visible.
+          if [ "$sent" = 0 ]; then
+            {
+              echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）"
+              echo
+              echo "分支 \`${REF}\` ｜ Windows ${ARCH} ｜ 构建号 ${BASE_NUMBER}"
+              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
+              echo "⚠️ 附件推送失败，请从构建日志页下载。"
+            } > "$RUNNER_TEMP/text.txt"
+            curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
+              --data-urlencode "chat_id=${chat_id}" \
+              --data-urlencode "text@$RUNNER_TEMP/text.txt" \
+              || echo "::error::Telegram 文本兜底也失败"
+            exit 1
+          fi
