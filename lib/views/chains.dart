@@ -377,16 +377,14 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
     super.dispose();
   }
 
-  // Always three positions so the relay slot is visible and selectable while
-  // creating a chain, just as it is when editing one. A null middle simply
-  // means "no relay" and is dropped when saving.
-  List<String?> get _slots => [_entry, _middle, _exit];
+  // Only entry + exit by default. The relay slot appears only after the user
+  // taps "add relay", matching the expected create flow.
+  // Roles currently shown, parallel to _slots. 0 = entry, 1 = relay, 2 = exit.
+  List<int> get _roles => [0, if (_hasMiddle) 1, 2];
 
-  bool get _complete =>
-      _entry != null &&
-      _entry!.isNotEmpty &&
-      _exit != null &&
-      _exit!.isNotEmpty;
+  List<String?> get _slots => [_entry, if (_hasMiddle) _middle, _exit];
+
+  bool get _complete => _slots.every((s) => s != null && s.isNotEmpty);
 
   Future<void> _save() async {
     if (!_complete) return;
@@ -413,18 +411,11 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
   void _fill(String name) {
     setState(() {
       if (_picking == 0) _entry = name;
-      if (_picking == 1) {
-        _middle = name;
-        _hasMiddle = true;
-      }
+      if (_picking == 1) _middle = name;
       if (_picking == 2) _exit = name;
-      // Entry first, then exit; the relay (slot 1) stays optional and is
-      // filled only if the reader taps it themselves.
-      if (_picking == 0) {
-        _picking = (_exit == null || _exit!.isEmpty) ? 2 : null;
-      } else {
-        _picking = null;
-      }
+      // Jump to the next empty ROLE (not display index).
+      final nextIndex = _slots.indexWhere((s) => s == null || s.isEmpty);
+      _picking = nextIndex == -1 ? null : _roles[nextIndex];
     });
   }
 
@@ -448,10 +439,11 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
       for (var i = 0; i < slots.length; i++)
         _RouteNode.flag(
           flagsFor(slots[i]),
-          slots[i] ?? _role(i, slots.length),
-          _caption(i, slots),
-          // Tap any hop in the strip to jump straight to picking it.
-          onTap: () => setState(() => _picking = i),
+          slots[i] ?? _role(_roles[i]),
+          _caption(_roles[i], slots),
+          // Tap a hop to pick that role (0 entry / 1 relay / 2 exit), not
+          // its display index -- the relay slot is conditional.
+          onTap: () => setState(() => _picking = _roles[i]),
         ),
     ];
 
@@ -465,10 +457,11 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
       body: Column(
         children: [
           Padding(
-            // Extra top space: inside a bottom sheet the scaffold's title bar
-            // and drag handle sit above the body, and the route strip's icons
-            // need room or they get clipped under it.
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            // The sheet's toolbar is a floating header (~48dp plus overhang)
+            // layered over the body, so the route strip must start below it.
+            // 64dp keeps the hop icons clear of the X / title / check row and
+            // tappable (24/56dp were clipped under the header).
+            padding: const EdgeInsets.fromLTRB(16, 64, 16, 12),
             child: _RouteStrip(
               nodes: nodes,
               you: l.chainYou,
@@ -501,19 +494,27 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
     );
   }
 
-  String _role(int i, int count) {
+  String _role(int role) {
     final l = currentAppLocalizations;
-    if (i == 0) return l.chainEntryRole;
-    if (i == count - 1) return l.chainExitRole;
-    return l.chainMiddleRole;
+    return switch (role) {
+      0 => l.chainEntryRole,
+      1 => l.chainMiddleRole,
+      _ => l.chainExitRole,
+    };
   }
 
-  String _caption(int i, List<String?> slots) {
+  String _caption(int role, List<String?> slots) {
     final l = currentAppLocalizations;
-    if (_picking == i) return l.chainPick;
-    final filled = slots[i] != null && slots[i]!.isNotEmpty;
-    if (!filled && i > 0 && slots[i - 1] != null) return l.chainThen;
-    return _role(i, slots.length);
+    if (_picking == role) return l.chainPick;
+    // Find this role's display position to read its filled state.
+    final displayIndex = _roles.indexOf(role);
+    final filled =
+        displayIndex >= 0 &&
+        displayIndex < slots.length &&
+        slots[displayIndex] != null &&
+        slots[displayIndex]!.isNotEmpty;
+    if (!filled && displayIndex > 0) return l.chainThen;
+    return _role(role);
   }
 
   String flagsFor(String? name) {
