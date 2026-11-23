@@ -160,10 +160,11 @@ class _DesktopDashboard extends StatelessWidget {
       24 + MediaQuery.paddingOf(context).bottom,
     );
     final topHeight = (compact ? 176 : 208) * scale;
-    final middleHeight = (compact ? 152 : 176) * scale;
-    // In the render the Route card spans the two rows beside it (Network
-    // control and Profile/Memory), so it is twice their height plus the gap.
-    final routingHeight = middleHeight * 2 + gap;
+    // The small cards carry more space than their content needs. Trim it, but
+    // keep the Route card at its old height so the two columns still end at
+    // the same line: the left column loses two rows here, the right only one.
+    final middleHeight = (compact ? 128 : 152) * scale;
+    final routingHeight = (compact ? 316 : 368) * scale;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Two equal columns, as in the render: the status card and the pair
