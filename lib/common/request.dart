@@ -88,6 +88,13 @@ class Request {
     }
   }
 
+  /// Update-check traffic: strict TLS, but allowed through the app's own proxy
+  /// so it works on networks that cannot reach GitHub directly.
+  HttpOverrides _updateOverrides() {
+    final read = _read;
+    return read == null ? DirectOverrides() : SecureUpdateOverrides(read);
+  }
+
   /// Null when this build is current; throws when GitHub cannot be asked.
   ///
   /// The check looks at the whole releases list, not just the latest
@@ -111,7 +118,7 @@ class Request {
           'https://api.github.com/repos/$repository/releases?per_page=30',
           options: Options(responseType: ResponseType.json),
         ),
-        DirectOverrides(),
+        _updateOverrides(),
       );
       final releases = response.data ?? const <dynamic>[];
       // The cache is best-effort: a slow or unavailable disk must not hold the
@@ -161,7 +168,7 @@ class Request {
           'https://api.github.com/repos/$repository/releases/latest',
           options: Options(responseType: ResponseType.json),
         ),
-        DirectOverrides(),
+        _updateOverrides(),
       );
       return response.data!;
     } on DioException catch (error) {
@@ -178,7 +185,7 @@ class Request {
           validateStatus: (status) => status != null && status < 400,
         ),
       ),
-      DirectOverrides(),
+      _updateOverrides(),
     );
     final location = response.headers.value(HttpHeaders.locationHeader);
     final segments = Uri.tryParse(location ?? '')?.pathSegments ?? const [];
