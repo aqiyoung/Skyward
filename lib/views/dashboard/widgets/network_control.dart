@@ -45,9 +45,24 @@ class NetworkControlCard extends ConsumerWidget {
           const OutboundModeSelector(),
           const SizedBox(height: 10),
           if (desktopPlatforms.contains(platform)) ...[
-            const TakeoverSwitchRows(),
-            const SizedBox(height: 8),
-            const LanSwitchRow(showAddress: true),
+            // The render keeps the control card short: the mode selector and
+            // one row of switch tiles, so the cards underneath sit right below
+            // it instead of leaving a gap. LAN access lives in the Intranet IP
+            // card, so it is not repeated here.
+            Row(
+              spacing: 8,
+              children: [
+                for (final kind in TakeoverSwitch.values)
+                  Expanded(
+                    child: TakeoverRow(
+                      kind: kind,
+                      metrics: cardRowMetrics,
+                      showIcon: false,
+                      compact: true,
+                    ),
+                  ),
+              ],
+            ),
           ] else if (platform == SupportPlatform.Android)
             // The two status blocks a phone has sit side by side: each is
             // a single value, and neither needs the card's full width.
