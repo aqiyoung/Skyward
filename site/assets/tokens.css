@@ -18,6 +18,12 @@
    defaults, and the version/date pair in a release row needs a gap. */
 .ph { padding-block: clamp(44px, 5.5vw, 84px); }
 .ph-grid { align-items: center; }
+/* The device render is the hero's visual anchor; the stock 340px column
+   cramps it. Widen the media column on desktop (phones stay single-column). */
+@media (min-width: 961px) {
+  .ph-grid { grid-template-columns: 1fr minmax(300px, 460px); gap: clamp(32px, 4vw, 64px); }
+  .ph-shot { max-width: 460px; }
+}
 .ph-ring { width: min(100%, 440px); }
 /* The product render sits in the hero beside the title. It is a wide shot, so
    it is capped and given a soft plate; on phones it drops below the title. */
