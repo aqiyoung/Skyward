@@ -11,7 +11,7 @@ set -euo pipefail
 # CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-project="${CF_PAGES_PROJECT:-skyward}"
+project="${CF_PAGES_PROJECT:-skyward-web}"
 branch="${CF_PAGES_BRANCH:-main}"
 out="$(mktemp -d)"
 
