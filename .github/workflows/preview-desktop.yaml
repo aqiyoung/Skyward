@@ -320,11 +320,27 @@ jobs:
           set -euo pipefail
           tag="dev-win-${BASE_NUMBER}"
           sha="$(git rev-parse HEAD)"
-          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" -X DELETE 2>/dev/null || true
-          gh api "repos/${GITHUB_REPOSITORY}/git/refs" -X POST \
-            -f "ref=refs/tags/${tag}" -f "sha=${sha}" > /dev/null
+          # The commit URL goes into the Telegram notice regardless of the tag.
           echo "commit=${sha}" >> "$GITHUB_OUTPUT"
-          echo "tagged ${tag} at ${sha}"
+          # The tag is only the counter's ledger, never a Release. GitHub
+          # occasionally answers 403 here; a retry covers that. If it still
+          # fails, warn instead of losing the build -- the next run may reuse
+          # the number, which is preferable to shipping no package at all.
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" -X DELETE 2>/dev/null || true
+          tagged=""
+          for _ in 1 2 3; do
+            if gh api "repos/${GITHUB_REPOSITORY}/git/refs" -X POST \
+                 -f "ref=refs/tags/${tag}" -f "sha=${sha}" > /dev/null 2>&1; then
+              tagged=1
+              break
+            fi
+            sleep 3
+          done
+          if [ -n "$tagged" ]; then
+            echo "tagged ${tag} at ${sha}"
+          else
+            echo "::warning::could not create ${tag}; the next preview may reuse this number"
+          fi
 
   # The bot API needs a container to accept files over 50 MB, and GitHub only
   # runs services on Linux. The Windows build uploads its artifacts above; this
