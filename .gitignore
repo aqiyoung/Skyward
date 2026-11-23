@@ -81,3 +81,6 @@ devtools_options.yaml
 /coverage/lcov.info
 .vercel
 .env.local
+
+# Cloudflare Pages / wrangler local cache
+.wrangler/
