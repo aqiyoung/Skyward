@@ -4,23 +4,16 @@ name: dev-desktop
 # `dev-win-` tag so it can be tried on a desktop without waiting for a full
 # build of every platform.
 #
-# Started by a push to `dev` that touches `.desktop-preview`, not by the
-# dispatch button: GitHub only dispatches a workflow the default branch carries,
-# and this repository promotes `beta` into `main`, so a CI-only commit on main
-# would make every promotion non-fast-forward. The branch that builds is `dev`,
-# so the workflow lives there and its trigger is a file in the tree.
-# `workflow_dispatch` stays for whenever it does reach main.
+# Started by hand via workflow_dispatch (pass `ref` for the branch to build).
+# Builds never run on a push: merge, check and test first, then dispatch.
 #
 # The tag is not `v*`, so the version counter in ci.yaml -- which reads `v*`
 # tags and release titles -- never counts it, and the Android numbering is
 # untouched. Its number is its own: see the version step for why it cannot
 # reuse the phone dev channel's.
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - '.desktop-preview'
+  # Builds are manual now: merge, check and test first, then dispatch
+  # this workflow. No APK/EXE is produced by a push alone.
   workflow_dispatch:
     inputs:
       ref:

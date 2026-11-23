@@ -1,8 +1,8 @@
 name: preview
 
 # The preview channel: one platform, no tests, the fast loop for putting a
-# change on a phone. Every push to `beta` rebuilds it, and ci.yaml calls it for
-# `channel=preview` right after a manual upstream sync.
+# change on a phone. Started by hand, or by ci.yaml for `channel=preview`
+# once the merge, checks and tests have passed.
 #
 # The release is a prerelease under a `preview-` tag. A preview shares the
 # version counter with the releases rather than sitting above them -- Android
@@ -11,20 +11,8 @@ name: preview
 # ci.yaml, sees that number as taken.
 
 on:
-  push:
-    branches:
-      - beta
-    # A preview exists to put app code on a phone; a docs or automation commit
-    # has nothing to install.
-    paths-ignore:
-      - '.github/**'
-      - '**/*.md'
-      # README screenshots. `assets/**` is not here: that is bundled into the
-      # app, and a tray or About change has to be built.
-      - 'snapshots/**'
-      # The desktop preview's trigger. A build of that one changes no app code,
-      # and rebuilding the phone preview beside it would only add a tag.
-      - '.desktop-preview'
+  # Builds are manual now: merge, check and test first, then dispatch
+  # this workflow. No APK/EXE is produced by a push alone.
   workflow_dispatch:
     inputs:
       ref:
