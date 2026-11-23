@@ -96,10 +96,10 @@ class _ChainsEmpty extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 380),
             child: _RouteStrip(
               nodes: [
-                _RouteNode.flag('🇷🇺', l.chainEntryRole, l.chainEntry),
-                _RouteNode.flag('🇳🇱', l.chainExitRole, l.chainExit),
+                _RouteNode.placeholder(l.chainEntryRole, l.chainEntry),
+                _RouteNode.placeholder(l.chainExitRole, l.chainExit),
               ],
-              connected: true,
+              connected: false,
               you: l.chainYou,
               web: l.chainInternet,
             ),
@@ -122,13 +122,25 @@ class _ChainsEmpty extends StatelessWidget {
 }
 
 class _RouteNode {
-  const _RouteNode.flag(this.flag, this.label, this.caption) : glyph = null;
-  const _RouteNode.glyph(this.glyph, this.label, this.caption) : flag = null;
+  const _RouteNode.flag(this.flag, this.label, this.caption, {this.onTap})
+    : glyph = null,
+      placeholder = false;
+  const _RouteNode.glyph(this.glyph, this.label, this.caption)
+    : flag = null,
+      placeholder = false,
+      onTap = null;
+  const _RouteNode.placeholder(this.label, this.caption)
+    : flag = null,
+      glyph = null,
+      placeholder = true,
+      onTap = null;
 
   final String? flag;
   final Glyph? glyph;
+  final bool placeholder;
   final String label;
   final String caption;
+  final VoidCallback? onTap;
 }
 
 /// A horizontal chain diagram: you -> [hops] -> web, joined by green segments.
@@ -206,28 +218,32 @@ class _NodeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = context.colorScheme;
+    final mark = Container(
+      width: size,
+      height: size,
+      decoration: ShapeDecoration(
+        color: cs.surfaceContainerHigh,
+        shape: AppShape.all(size / 2),
+      ),
+      alignment: Alignment.center,
+      child: node.flag != null
+          ? Text(
+              node.flag!,
+              style: AppTextStyle.custom(context, size: 26, leading: 30),
+            )
+          : GlyphIcon(
+              node.placeholder ? AppGlyphs.add : node.glyph!,
+              size: size * 0.5,
+              color: cs.onSurfaceVariant,
+            ),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: ShapeDecoration(
-            color: cs.surfaceContainerHigh,
-            shape: AppShape.all(size / 2),
-          ),
-          alignment: Alignment.center,
-          child: node.flag != null
-              ? Text(
-                  node.flag!,
-                  style: AppTextStyle.custom(context, size: 26, leading: 30),
-                )
-              : GlyphIcon(
-                  node.glyph!,
-                  size: size * 0.5,
-                  color: cs.onSurfaceVariant,
-                ),
-        ),
+        if (node.onTap != null)
+          GestureDetector(onTap: node.onTap, child: mark)
+        else
+          mark,
         const SizedBox(height: 8),
         Text(
           node.label,
@@ -361,13 +377,20 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
     super.dispose();
   }
 
-  List<String?> get _slots => [_entry, if (_hasMiddle) _middle, _exit];
+  // Always three positions so the relay slot is visible and selectable while
+  // creating a chain, just as it is when editing one. A null middle simply
+  // means "no relay" and is dropped when saving.
+  List<String?> get _slots => [_entry, _middle, _exit];
 
-  bool get _complete => _slots.every((s) => s != null && s.isNotEmpty);
+  bool get _complete =>
+      _entry != null &&
+      _entry!.isNotEmpty &&
+      _exit != null &&
+      _exit!.isNotEmpty;
 
   Future<void> _save() async {
     if (!_complete) return;
-    final hops = _slots.cast<String>();
+    final hops = _slots.whereType<String>().toList();
     final name = _name.text.trim().isEmpty
         ? hops.join(' → ')
         : _name.text.trim();
@@ -390,10 +413,18 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
   void _fill(String name) {
     setState(() {
       if (_picking == 0) _entry = name;
-      if (_picking == 1) _middle = name;
+      if (_picking == 1) {
+        _middle = name;
+        _hasMiddle = true;
+      }
       if (_picking == 2) _exit = name;
-      final next = _slots.indexWhere((s) => s == null || s.isEmpty);
-      _picking = next == -1 ? null : next;
+      // Entry first, then exit; the relay (slot 1) stays optional and is
+      // filled only if the reader taps it themselves.
+      if (_picking == 0) {
+        _picking = (_exit == null || _exit!.isEmpty) ? 2 : null;
+      } else {
+        _picking = null;
+      }
     });
   }
 
@@ -419,6 +450,8 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
           flagsFor(slots[i]),
           slots[i] ?? _role(i, slots.length),
           _caption(i, slots),
+          // Tap any hop in the strip to jump straight to picking it.
+          onTap: () => setState(() => _picking = i),
         ),
     ];
 
@@ -432,7 +465,10 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            // Extra top space: inside a bottom sheet the scaffold's title bar
+            // and drag handle sit above the body, and the route strip's icons
+            // need room or they get clipped under it.
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: _RouteStrip(
               nodes: nodes,
               you: l.chainYou,
