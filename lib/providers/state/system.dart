@@ -249,6 +249,13 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   final safeMode = ref.watch(safeModeProvider);
   final routeAddress = ref.watch(vpnRouteAddressProvider.future);
   final tun = clashConfig.tun;
+  final accessControl = vpnSetting.accessControlProps;
+  commonPrint.log(
+    '[VPN] accessControl enable=${accessControl.enable} '
+    'mode=${accessControl.mode.name} '
+    'accept=[${accessControl.acceptList.join(",")}] '
+    'reject=[${accessControl.rejectList.join(",")}]',
+  );
   return VpnOptions(
     enable: vpnSetting.enable && !safeMode,
     stack: tun.stack.name,
