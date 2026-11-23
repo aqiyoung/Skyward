@@ -616,21 +616,23 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          local_api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          cloud_api="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}"
+          api="$local_api"
 
-          # A container without TELEGRAM_API_ID/TELEGRAM_API_HASH exits at
-          # once, and the only symptom would be a refused connection here.
+          # The self-hosted bot API accepts files over 50 MB but can be slow
+          # to come up or fail to reach a Telegram DC. Wait longer, then fall
+          # back to the cloud API (APKs are usually under its 50 MB limit).
           up=""
-          for _ in $(seq 1 30); do
-            if curl -fsS --max-time 5 "${api}/getMe" > /tmp/getme.json 2>/dev/null; then
-              up=1
-              break
+          for _ in $(seq 1 60); do
+            if curl -fsS --max-time 5 "${local_api}/getMe" > /tmp/getme.json 2>/dev/null; then
+              if grep -q '"ok":true' /tmp/getme.json; then up=1; break; fi
             fi
-            sleep 2
+            sleep 3
           done
-          if [ -z "$up" ] || ! grep -q '"ok":true' /tmp/getme.json; then
-            echo "::error::telegram-bot-api never answered on localhost:8081 — check TELEGRAM_API_ID/TELEGRAM_API_HASH (container log above) and TELEGRAM_BOT_TOKEN"
-            exit 1
+          if [ -z "$up" ]; then
+            echo "::warning::telegram-bot-api never answered on localhost:8081, falling back to the cloud API"
+            api="$cloud_api"
           fi
 
           # A caption is capped at 1024 characters. The entries are already
@@ -655,21 +657,40 @@ jobs:
           cat /tmp/caption.txt
 
           shopt -s nullglob
+          chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
+          sent=0
           for apk in dist/*.apk; do
             echo "uploading $(basename "${apk}") ($(du -h "${apk}" | cut -f1))..."
-            # Prefer the preview-only chat; fall back to the public one when it
-            # is not configured.
-            chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
+            size=$(stat -c %s "$apk")
+            if [ "$api" = "$cloud_api" ] && [ "$size" -gt 52428800 ]; then
+              echo "::warning::$(basename "${apk}") is over 50 MB and the local bot API is down; skipping the attachment"
+              continue
+            fi
             response="$(curl -fsS --max-time 900 \
               -F "chat_id=${chat_id}" \
               -F "document=@${apk}" \
               -F "caption=$(cat /tmp/caption.txt)" \
-              "${api}/sendDocument")"
-            if ! printf '%s' "$response" | grep -q '"ok":true'; then
-              echo "::error::Telegram refused $(basename "${apk}"): ${response}"
-              exit 1
+              "${api}/sendDocument")" || response=""
+            if printf '%s' "$response" | grep -q '"ok":true'; then
+              echo "telegram accepted $(basename "${apk}")"
+              sent=1
+            else
+              echo "::warning::Telegram refused $(basename "${apk}"): ${response}"
             fi
-            echo "telegram accepted $(basename "${apk}")"
           done
+
+          if [ "$sent" = 0 ]; then
+            {
+              echo "🧪 Skyward ${VERSION}（Dev 版）构建完成，但附件推送失败。"
+              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
+              echo "请从构建日志页下载 APK。"
+            } > /tmp/text.txt
+            curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
+              --data-urlencode "chat_id=${chat_id}" \
+              --data-urlencode "text@/tmp/text.txt" \
+              || echo "::error::Telegram 文本兜底也失败"
+            exit 1
+          fi
 
 
