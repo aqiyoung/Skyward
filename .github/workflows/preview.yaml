@@ -631,6 +631,8 @@ jobs:
               printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
             echo "⬇️ 安装包即本条消息附件"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt

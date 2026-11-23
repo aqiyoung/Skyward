@@ -64,6 +64,7 @@ jobs:
       build_number: ${{ steps.version.outputs.build_number }}
       previous: ${{ steps.changelog.outputs.previous }}
       entries: ${{ steps.changelog.outputs.entries }}
+      commit: ${{ steps.tag.outputs.commit }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -310,6 +311,7 @@ jobs:
       # A tag, not a Release: it is only the counter's diary. The next run
       # reads it back so two previews on the same day do not claim same number.
       - name: Tag the preview
+        id: tag
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -321,6 +323,7 @@ jobs:
           gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" -X DELETE 2>/dev/null || true
           gh api "repos/${GITHUB_REPOSITORY}/git/refs" -X POST \
             -f "ref=refs/tags/${tag}" -f "sha=${sha}" > /dev/null
+          echo "commit=${sha}" >> "$GITHUB_OUTPUT"
           echo "tagged ${tag} at ${sha}"
 
   # The bot API needs a container to accept files over 50 MB, and GitHub only
@@ -361,6 +364,7 @@ jobs:
           ARCH: ${{ inputs.arch || 'amd64' }}
           PREVIOUS: ${{ needs.preview.outputs.previous }}
           CHANGELOG: ${{ needs.preview.outputs.entries }}
+          COMMIT: ${{ needs.preview.outputs.commit }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -383,6 +387,8 @@ jobs:
               printf '%s\n' "$CHANGELOG" | awk 'NR<=8'
             fi
             echo
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
             echo "⬇️ 安装包即本条消息附件"
             echo "（桌面 Dev 版自己计数，号比正式版小：验完请卸掉再装正式版）"
           } > "$RUNNER_TEMP/caption.txt"
