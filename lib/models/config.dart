@@ -119,7 +119,6 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.proxyGroups,
   DashboardWidget.trafficStats,
   DashboardWidget.appUsage,
-  DashboardWidget.speedTest,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field

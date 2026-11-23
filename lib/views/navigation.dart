@@ -104,7 +104,8 @@ class Navigation implements NavigationPort {
         builder: (_) => const SpeedTestView(
           key: GlobalObjectKey(PageLabel.speedTest),
         ),
-        modes: [NavigationItemMode.desktop, NavigationItemMode.moreFull],
+        // Android only: the phone exposes it in the "more" section of Mine.
+        modes: [NavigationItemMode.moreFull],
       ),
     ];
   }
