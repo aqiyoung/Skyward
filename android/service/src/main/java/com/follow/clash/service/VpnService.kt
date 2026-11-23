@@ -248,11 +248,10 @@ class VpnService : SystemVpnService(), ManagedService {
         if (!accessControl.enable) return
         when (accessControl.mode) {
             AccessControlMode.ACCEPT_SELECTED -> {
-                val names = accessControl.acceptList + packageName
-                GlobalState.log("AccessControl ALLOW list: ${names.joinToString(",")}")
-                names.forEach { name ->
-                    addApplication(name, ::addAllowedApplication)
-                }
+                // Only apps passed to addAllowedApplication enter the tunnel;
+                // everything else bypasses the VPN entirely and cannot use
+                // any proxy or DNS we set up. Route every app instead.
+                GlobalState.log("AccessControl ACCEPT_SELECTED: routing all apps through the tunnel")
             }
 
             AccessControlMode.REJECT_SELECTED -> {
