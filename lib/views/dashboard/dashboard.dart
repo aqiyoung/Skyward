@@ -22,7 +22,6 @@ import 'widgets/widgets.dart';
 
 // Narrower columns leave the service grid's cells too tight for a status, so
 // the grid takes the memory card's column instead.
-const _memoryColumnMin = 290.0;
 
 const _maxColumnWidth = 440.0;
 
@@ -167,8 +166,6 @@ class _DesktopDashboard extends StatelessWidget {
     final topHeight = (compact ? 176 : 208) * scale;
     final controlHeight = (compact ? 56 : 64) * scale;
     final middleHeight = (compact ? 152 : 176) * scale;
-    final tablesHeight = connectionsTableMinHeight(density, scale);
-    final summaryHeight = (compact ? 112 : 120) * scale;
     // A world map reads best wide: the board takes the full width, and the
     // connections table below it keeps its row only when the window can spare
     // it -- on shorter windows the board stays and the table steps down to the
@@ -184,18 +181,6 @@ class _DesktopDashboard extends StatelessWidget {
           start: base.start + inset,
           end: base.end + inset,
         );
-        double span(int columns) => column * columns + gap * (columns - 1);
-        Widget row(List<(int, Widget)> cards) => Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: gap,
-          children: [
-            for (final (columns, card) in cards)
-              SizedBox(
-                width: span(columns),
-                child: RepaintBoundary(child: card),
-              ),
-          ],
-        );
         Widget sized(double height, Widget child) =>
             SizedBox(height: height, child: child);
         final switches = desktopPlatforms.contains(platform)
@@ -204,123 +189,74 @@ class _DesktopDashboard extends StatelessWidget {
                 (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
               ]
             : const [(2, VpnTile())];
-        final half = columns ~/ 2;
-        final summaries = row([
-          (half, const ConnectionStatsCard()),
-          (half, const ProxyGroupsSummaryCard()),
-        ]);
-        if (columns == 2) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: padding,
-            child: Column(
-              spacing: gap,
-              children: [
-                sized(
-                  topHeight,
-                  const RepaintBoundary(child: CurrentOutboundCard()),
-                ),
-                sized(
-                  topHeight,
-                  row(const [
-                    (1, SpeedCard(direction: TrafficDirection.upload)),
-                    (1, SpeedCard(direction: TrafficDirection.download)),
-                  ]),
-                ),
-                sized(
-                  controlHeight,
-                  const RepaintBoundary(child: OutboundModeBar()),
-                ),
-                sized(controlHeight, row(switches)),
-                sized(
-                  middleHeight,
-                  row(const [(1, IntranetIpCard()), (1, ProfilesCard())]),
-                ),
-                sized(
-                  middleHeight,
-                  row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
-                ),
-                sized(
-                  routingHeight,
-                  const RepaintBoundary(child: RoutingBoardCard()),
-                ),
-                sized(summaryHeight, summaries),
-              ],
+        // The desktop board follows the product render: a reading column on
+        // the left and a route/groups column on the right, rather than a
+        // full-width route row beneath the status cards.
+        Widget halfRow(List<Widget> cards) => Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            for (final card in cards)
+              Expanded(child: RepaintBoundary(child: card)),
+          ],
+        );
+        final left = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            sized(
+              topHeight,
+              const RepaintBoundary(child: CurrentOutboundCard()),
             ),
-          );
-        }
-        final rows = [
-          sized(
-            topHeight,
-            row(const [
-              (2, CurrentOutboundCard()),
-              (1, SpeedCard(direction: TrafficDirection.upload)),
-              (1, SpeedCard(direction: TrafficDirection.download)),
-            ]),
-          ),
-          sized(
-            controlHeight,
-            row([(2, const OutboundModeBar()), ...switches]),
-          ),
-          sized(
-            middleHeight,
-            row([
-              (1, const IntranetIpCard()),
-              (1, const ProfilesCard()),
-              if (column >= _memoryColumnMin * scale) ...[
-                (1, const ServiceStatusCard()),
-                (1, const MemoryInfo()),
-              ] else
-                (2, const ServiceStatusCard()),
-            ]),
-          ),
-          sized(routingHeight, row(const [(4, RoutingBoardCard())])),
-        ];
-        final rowsHeight =
-            padding.vertical +
-            topHeight +
-            controlHeight +
-            middleHeight +
-            routingHeight +
-            gap * 4;
-        final tablesFit = constraints.maxHeight >= rowsHeight + tablesHeight;
-        final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
+            sized(
+              topHeight,
+              halfRow(const <Widget>[
+                SpeedCard(direction: TrafficDirection.upload),
+                SpeedCard(direction: TrafficDirection.download),
+              ]),
+            ),
+            sized(
+              controlHeight,
+              const RepaintBoundary(child: OutboundModeBar()),
+            ),
+            sized(
+              controlHeight,
+              halfRow([for (final (_, tile) in switches) tile]),
+            ),
+            sized(
+              middleHeight,
+              halfRow(const <Widget>[IntranetIpCard(), ProfilesCard()]),
+            ),
+            sized(
+              middleHeight,
+              halfRow(const <Widget>[ServiceStatusCard(), MemoryInfo()]),
+            ),
+          ],
+        );
+        final right = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            sized(
+              routingHeight,
+              const RepaintBoundary(child: RoutingBoardCard()),
+            ),
+            sized(
+              middleHeight,
+              const RepaintBoundary(child: ProxyGroupsSummaryCard()),
+            ),
+          ],
+        );
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: fills ? constraints.maxHeight : null,
-            child: Padding(
-              padding: padding,
-              child: Column(
-                spacing: gap,
-                children: [
-                  ...rows,
-                  if (tablesFit)
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: gap,
-                        children: const [
-                          Expanded(
-                            flex: 3,
-                            child: RepaintBoundary(
-                              child: ConnectionsTableCard(),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: RepaintBoundary(child: ProxyGroupsCard()),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (fills)
-                    Expanded(child: summaries)
-                  else
-                    sized(summaryHeight, summaries),
-                ],
-              ),
-            ),
+          padding: padding,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: gap,
+            children: [
+              Expanded(flex: 3, child: left),
+              Expanded(flex: 2, child: right),
+            ],
           ),
         );
       },
