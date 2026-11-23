@@ -105,8 +105,46 @@ if [[ -s "$rust_list" ]]; then
   else
     echo "note: no -rust release found; page omits the Rust-core card" >&2
   fi
+
+  # A release often ships only one platform (e.g. an Android-only point
+  # release), which would leave desktop visitors with no recommended download.
+  # Build a per-platform map: for each OS, the most recent release that actually
+  # carries an installer for it. The page falls back to this when the latest
+  # release has nothing for the visitor's device.
+  platform_releases="$(node -e '
+    try {
+      const list = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+      const osOf = (name) => {
+        const n = name.toLowerCase();
+        if (/android/.test(n) || n.endsWith(".apk")) return "android";
+        if (/windows|\.exe|\.msi/.test(n)) return "windows";
+        if (/macos|mac-|\.dmg/.test(n)) return "macos";
+        if (/linux|\.deb|\.rpm|\.appimage/.test(n)) return "linux";
+        return null;
+      };
+      const result = {};
+      for (const r of (Array.isArray(list) ? list : [])) {
+        if (/-rust$/.test(r.tag_name) || /^preview-|^dev-/.test(r.tag_name)) continue;
+        for (const a of (r.assets || [])) {
+          const os = osOf(a.name);
+          if (!os || result[os]) continue;
+          result[os] = {
+            tag: r.tag_name,
+            publishedAt: r.published_at,
+            name: a.name,
+            size: a.size,
+            url: a.browser_download_url || a.url,
+            releaseUrl: r.html_url,
+          };
+        }
+      }
+      console.log(JSON.stringify(result));
+    } catch { console.log("{}"); }
+  ' "$rust_list")"
+  printf '%s\n' "$platform_releases" >"$out/platform-releases.json"
 else
   echo "warning: releases unreachable; page omits the Rust-core card" >&2
+  printf '{}\n' >"$out/platform-releases.json"
 fi
 
 # The changelog is built from this repository's own releases, so the timeline

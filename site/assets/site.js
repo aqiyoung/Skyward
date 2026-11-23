@@ -151,7 +151,8 @@ function renderRelease(feed) {
   pick.hidden = !best;
   if (best) {
     pick.querySelector('.os').textContent = OS_SHORT[best.os];
-    $('pick-name').textContent = `${OS_NAMES[best.os]} · ${best.kind}${best.arch ? ` · ${best.arch}` : ''}`;
+    const label = best.isFallback ? best.fallbackTag : best.kind;
+    $('pick-name').textContent = `${OS_NAMES[best.os]} · ${label}${best.arch ? ` · ${best.arch}` : ''}`;
     $('pick-meta').replaceChildren(
       el('span', { text: best.name }),
       document.createTextNode(' · '),
@@ -565,16 +566,32 @@ function bestAsset(groups, device) {
 }
 
 async function load() {
-  const [meta, markdown, rustMeta] = await Promise.allSettled([
+  const [meta, markdown, rustMeta, platformMeta] = await Promise.allSettled([
     fetch(new URL('release.json', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
     fetch(new URL('CHANGELOG.md', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.text() : Promise.reject(r.status))),
     fetch(new URL('rust-release.json', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
+    fetch(new URL('platform-releases.json', SITE), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
   ]);
+  state.platformReleases = platformMeta.status === 'fulfilled' ? platformMeta.value : null;
 
   const feed = buildFeed(meta.status === 'fulfilled' ? meta.value : null);
   if (feed.current) {
     state.platform = feed.current.best?.os || feed.detected.os || 'windows';
     state.arch = feed.current.best?.arch || feed.detected.arch || 'x64';
+  }
+  // If the newest release has no asset for the visitor's platform, inject the
+  // most recent release that does so the recommended pick and the file list
+  // both show a real download instead of an empty state.
+  const alt = !feed.current?.best && feed.detected.os
+    ? state.platformReleases?.[feed.detected.os]
+    : null;
+  if (alt) {
+    const asset = { name: alt.name, size: alt.size, url: alt.url, os: feed.detected.os, kind: '', arch: '', isFallback: true, fallbackTag: alt.tag };
+    (feed.current.groups ||= {})[feed.detected.os] = [asset];
+    feed.current.assets = [asset];
+    feed.current.best = asset;
+    feed.oses = PLATFORMS.filter((os) => feed.current.groups[os]);
+    state.platform = feed.detected.os;
   }
   renderRelease(feed);
   renderRust(rustMeta.status === 'fulfilled' ? rustMeta.value : null);
@@ -707,9 +724,10 @@ function startThemes() {
   const btn = $('theme-btn');
   const panel = $('theme-panel');
   if (!dd || !btn || !panel) return;
-  // One set of theme buttons lives in the desktop dropdown and another in the
-  // mobile menu; both drive the same choice and stay in sync.
-  const items = [...panel.querySelectorAll('[data-theme]'), ...document.querySelectorAll('#menu [data-theme]')];
+  // One set of theme buttons lives in the desktop dropdown (data-theme) and
+  // another in the mobile menu (data-set-theme — a different attribute so the
+  // per-theme CSS blocks don't match the buttons themselves).
+  const items = [...panel.querySelectorAll('[data-theme]'), ...document.querySelectorAll('#menu [data-set-theme]')];
   const names = { dark: 'themeDark', light: 'themeLight', paper: 'themePaper' };
 
   const setOpen = (open) => {
@@ -723,7 +741,7 @@ function startThemes() {
       localStorage.setItem('skyward-theme', next);
     } catch {}
     for (const item of items) {
-      const on = item.dataset.theme === next;
+      const on = (item.dataset.theme || item.dataset.setTheme) === next;
       item.classList.toggle('is-active', on);
       item.setAttribute('aria-checked', String(on));
     }
@@ -756,9 +774,9 @@ function startThemes() {
   });
   const menu = $('menu');
   if (menu) menu.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-theme]');
+    const item = e.target.closest('#menu [data-set-theme]');
     if (!item) return;
-    apply(item.dataset.theme);
+    apply(item.dataset.setTheme);
   });
 
   apply(document.documentElement.dataset.theme || 'dark');
