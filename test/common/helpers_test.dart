@@ -737,5 +737,15 @@ void main() {
         ['v1.2.1.2', 'v1.0.1.4-rust', 'v1.0.1.3-rust'],
       );
     });
+
+    test('Rust rejects a Go /latest tag, accepts a -rust one', () {
+      expect(isTagForCore('v1.2.1.4', true), isFalse);
+      expect(isTagForCore('v1.0.1.4-rust', true), isTrue);
+    });
+
+    test('Go rejects a -rust /latest tag, accepts a plain one', () {
+      expect(isTagForCore('v1.2.1.4', false), isTrue);
+      expect(isTagForCore('v1.0.1.4-rust', false), isFalse);
+    });
   });
 }

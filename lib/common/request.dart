@@ -151,7 +151,25 @@ class Request {
       }
     }
     try {
-      final release = await latestRelease();
+      // The /latest endpoint always names the newest release of the whole
+      // repository, which is the Go line -- offering that to a Rust app is
+      // wrong (different signature + core). The cached list was already
+      // core-filtered above; fall back to the redirect only as a last resort,
+      // and only when its tag belongs to this core's line.
+      Map<String, dynamic>? release;
+      final coreCandidates = _platformCandidates(cached);
+      if (coreCandidates.isNotEmpty) {
+        release = (coreCandidates.first as Map).cast<String, dynamic>();
+      } else {
+        final redirect = await latestRelease();
+        final tag = redirect['tag_name'] as String? ?? '';
+        final isRustAndroid =
+            !system.isDesktop &&
+            globalState.hasPackageInfo &&
+            globalState.packageInfo.packageName.endsWith('.rust');
+        if (isTagForCore(tag, isRustAndroid)) release = redirect;
+      }
+      if (release == null) return null;
       final remoteVersion = release['tag_name'] as String;
       final version = globalState.packageInfo.displayVersion;
       final hasUpdate = shouldOfferUpdate(
@@ -272,6 +290,13 @@ class Request {
   }
 }
 
+/// Whether a release tag belongs to this build's core line. A Rust app must
+/// reject Go tags (and vice versa): different signature, applicationId, core.
+bool isTagForCore(String tag, bool isRustAndroid) {
+  final isRustTag = tag.contains('-rust');
+  return isRustAndroid ? isRustTag : !isRustTag;
+}
+
 /// Keeps only releases installable by this build's core. Rust and Go apps are
 /// different signatures + applicationIds, so a Rust app must never be offered
 /// a Go tag (like `v1.2.1.2`) -- it cannot be installed and would swap cores.
@@ -286,10 +311,7 @@ List<dynamic> filterReleasesForCore(
     if (tag is! String) return true;
     // Android-only preview releases have no installable package on desktop.
     if (isDesktop && tag.startsWith('preview-')) return false;
-    if (isAndroid) {
-      final isRustTag = tag.contains('-rust');
-      return isRustAndroid ? isRustTag : !isRustTag;
-    }
+    if (isAndroid) return isTagForCore(tag, isRustAndroid);
     return true;
   }).toList();
 }
