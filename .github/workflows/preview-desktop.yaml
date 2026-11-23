@@ -5,16 +5,20 @@ name: dev-desktop
 # platform. No GitHub Release is created here: a Release is only ever beta or
 # stable, both published manually through ci.yaml.
 #
-# Started by hand via workflow_dispatch (pass `ref` for the branch to build).
-# Builds never run on a push: merge, check and test first, then dispatch.
+# A push to `dev` that touches `.desktop-preview` rebuilds it; it can also be
+# started by hand via workflow_dispatch. The packages go to the private
+# Telegram chat -- no GitHub Release, which stays manual (beta/stable only).
 #
 # Its number is its own: it has to fit in a Windows file version (four 16-bit
 # fields), so the larger phone counter cannot be reused. A git tag records the
 # number so the next run can advance it; a tag is not a Release. The tag is not
 # `v*` either, so ci.yaml's version counter never counts it.
 on:
-  # Builds are manual now: merge, check and test first, then dispatch
-  # this workflow. No APK/EXE is produced by a push alone.
+  push:
+    branches:
+      - dev
+    paths:
+      - '.desktop-preview'
   workflow_dispatch:
     inputs:
       ref:

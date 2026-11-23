@@ -3,7 +3,8 @@ name: dev-preview
 # The independent dev channel: one platform, no tests, the fast loop for putting
 # a `dev`-branch change on a phone. Every push to `dev` rebuilds it. This is a
 # standalone workflow -- it does NOT go through `beta` or the `preview` channel,
-# so dev work stays isolated from the release/preview pipeline.
+# so dev work stays isolated from the release/preview pipeline. The APK goes to
+# the private Telegram chat; only GitHub Releases (beta/stable) are manual.
 #
 # A dev build is a prerelease under a `dev-` tag. It shares the version counter
 # with the releases (and reads the preview tags too, so numbers never collide)
@@ -12,8 +13,17 @@ name: dev-preview
 # the next reader sees that number as taken.
 
 on:
-  # Builds are manual now: merge, check and test first, then dispatch
-  # this workflow. No APK/EXE is produced by a push alone.
+  push:
+    branches:
+      - dev
+    # A preview exists to put app code on a phone; a docs or automation commit
+    # has nothing to install.
+    paths-ignore:
+      - '.github/**'
+      - '**/*.md'
+      # The desktop preview's trigger. A build of that one changes no app code,
+      # and rebuilding the phone preview beside it would only add a tag.
+      - '.desktop-preview'
   workflow_dispatch:
     inputs:
       ref:
