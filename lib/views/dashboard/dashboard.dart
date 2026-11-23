@@ -164,7 +164,6 @@ class _DesktopDashboard extends StatelessWidget {
       24 + MediaQuery.paddingOf(context).bottom,
     );
     final topHeight = (compact ? 176 : 208) * scale;
-    final controlHeight = (compact ? 56 : 64) * scale;
     final middleHeight = (compact ? 152 : 176) * scale;
     // A world map reads best wide: the board takes the full width, and the
     // connections table below it keeps its row only when the window can spare
@@ -183,12 +182,6 @@ class _DesktopDashboard extends StatelessWidget {
         );
         Widget sized(double height, Widget child) =>
             SizedBox(height: height, child: child);
-        final switches = desktopPlatforms.contains(platform)
-            ? const [
-                (1, NetworkTakeoverTile(TakeoverSwitch.systemProxy)),
-                (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
-              ]
-            : const [(2, VpnTile())];
         // The desktop board follows the product render: a reading column on
         // the left and a route/groups column on the right, rather than a
         // full-width route row beneath the status cards.
@@ -215,14 +208,9 @@ class _DesktopDashboard extends StatelessWidget {
                 SpeedCard(direction: TrafficDirection.download),
               ]),
             ),
-            sized(
-              controlHeight,
-              const RepaintBoundary(child: OutboundModeBar()),
-            ),
-            sized(
-              controlHeight,
-              halfRow([for (final (_, tile) in switches) tile]),
-            ),
+            // The reference layout folds the mode selector and the VPN/LAN
+            // switches into one Network control card.
+            const RepaintBoundary(child: NetworkControlCard()),
             sized(
               middleHeight,
               halfRow(const <Widget>[IntranetIpCard(), ProfilesCard()]),
