@@ -394,7 +394,7 @@ jobs:
               response="$(curl -fsS --max-time 900 \
                 -F "chat_id=${chat_id}" \
                 -F "document=@${file}" \
-                -F "caption@$RUNNER_TEMP/caption.txt" \
+                -F "caption=$(cat "$RUNNER_TEMP/caption.txt")" \
                 "${api}/sendDocument")"
               first=0
             else
