@@ -701,24 +701,39 @@ void main() {
 
     test('a Rust Android app only sees -rust releases', () {
       expect(
-        tags(filterReleasesForCore(releases,
-            isDesktop: false, isRustAndroid: true)),
+        tags(
+          filterReleasesForCore(
+            releases,
+            isDesktop: false,
+            isRustAndroid: true,
+          ),
+        ),
         ['v1.0.1.4-rust', 'v1.0.1.3-rust'],
       );
     });
 
     test('a Go Android app never sees -rust releases', () {
       expect(
-        tags(filterReleasesForCore(releases,
-            isDesktop: false, isRustAndroid: false)),
+        tags(
+          filterReleasesForCore(
+            releases,
+            isDesktop: false,
+            isRustAndroid: false,
+          ),
+        ),
         ['v1.2.1.2', 'preview-win-31301'],
       );
     });
 
     test('desktop keeps every non-preview release', () {
       expect(
-        tags(filterReleasesForCore(releases,
-            isDesktop: true, isRustAndroid: false)),
+        tags(
+          filterReleasesForCore(
+            releases,
+            isDesktop: true,
+            isRustAndroid: false,
+          ),
+        ),
         ['v1.2.1.2', 'v1.0.1.4-rust', 'v1.0.1.3-rust'],
       );
     });

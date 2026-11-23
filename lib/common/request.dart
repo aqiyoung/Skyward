@@ -260,7 +260,8 @@ class Request {
   /// proposes a package that cannot be installed (or would swap the core).
   List<dynamic> _platformCandidates(List<dynamic> releases) {
     final isAndroid = !system.isDesktop;
-    final isRustAndroid = isAndroid &&
+    final isRustAndroid =
+        isAndroid &&
         globalState.hasPackageInfo &&
         globalState.packageInfo.packageName.endsWith('.rust');
     return filterReleasesForCore(

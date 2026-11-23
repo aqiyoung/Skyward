@@ -244,16 +244,21 @@ class VpnService : SystemVpnService(), ManagedService {
 
     private fun Builder.configureAccessControl(options: VpnOptions) {
         val accessControl = options.accessControlProps
+        GlobalState.log("AccessControl: enable=${accessControl.enable} mode=${accessControl.mode} accept=${accessControl.acceptList.size} reject=${accessControl.rejectList.size}")
         if (!accessControl.enable) return
         when (accessControl.mode) {
             AccessControlMode.ACCEPT_SELECTED -> {
-                (accessControl.acceptList + packageName).forEach { name ->
+                val names = accessControl.acceptList + packageName
+                GlobalState.log("AccessControl ALLOW list: ${names.joinToString(",")}")
+                names.forEach { name ->
                     addApplication(name, ::addAllowedApplication)
                 }
             }
 
             AccessControlMode.REJECT_SELECTED -> {
-                (accessControl.rejectList - packageName).forEach { name ->
+                val names = accessControl.rejectList - packageName
+                GlobalState.log("AccessControl DENY list: ${names.joinToString(",")}")
+                names.forEach { name ->
                     addApplication(name, ::addDisallowedApplication)
                 }
             }
@@ -264,8 +269,9 @@ class VpnService : SystemVpnService(), ManagedService {
     private fun addApplication(name: String, add: (String) -> Builder) {
         try {
             add(name)
-        } catch (_: PackageManager.NameNotFoundException) {
-            GlobalState.log("Access control skipped an uninstalled package: $name")
+            GlobalState.log("AccessControl added: $name")
+        } catch (e: Exception) {
+            GlobalState.log("AccessControl FAILED $name: ${e.javaClass.simpleName}: ${e.message}")
         }
     }
 
