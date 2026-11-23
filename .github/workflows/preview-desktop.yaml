@@ -59,6 +59,16 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       # Dev 版推送优先发到私聊 user ID；未设置时回退到公开频道 TELEGRAM_CHAT_ID。
       TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+    # A self-hosted bot API: the cloud Bot API refuses files over 50 MB and the
+    # installer is larger than that.
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -296,72 +306,14 @@ jobs:
           path: ./dist
           if-no-files-found: error
 
-      - name: Publish the preview
+      - name: Prepare checksums
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
-          REF: ${{ inputs.ref || 'beta' }}
-          ARCH: ${{ inputs.arch || 'amd64' }}
-          PREVIOUS: ${{ steps.changelog.outputs.previous }}
-          CHANGELOG: ${{ steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          tag="dev-win-${BASE_NUMBER}"
-          commit="$(git rev-parse --short HEAD)"
           (cd dist && sha256sum ./* > SHA256SUMS)
 
-          cat > preview-notes.md <<EOF
-          Skyward ${VERSION} 桌面 Dev 版，只含 Windows ${ARCH}。
-          EOF
-          {
-            echo
-            echo "- 分支：\`${REF}\`"
-            echo "- 版本：\`${VERSION}\`"
-            echo "- 平台：\`Windows ${ARCH}\`"
-            echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
-            echo "- 构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
-              echo
-              echo "**自 \`${PREVIOUS}\` 以来**"
-              echo
-              printf '%s\n' "$CHANGELOG"
-            fi
-            echo
-            echo "桌面 Dev 版自己计数（100/天），与正式版的构建号不在一条线上：它的数字更小，装上之后正式版的更新检查不会提示升级到同一个版本。验完请卸掉再装正式版。这不是正式发布。"
-          } >> preview-notes.md
-
-          # A retried run reuses its number, so the tag may already exist.
-          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-            -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
-          gh release create "$tag" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Skyward ${VERSION}（Windows 桌面 Dev 版）" \
-            --notes-file preview-notes.md \
-            --prerelease
-
-      # Only the newest few desktop previews are worth keeping; the rest would
-      # fill the release list.
-      - name: Prune old previews
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
-            --json tagName,createdAt,isPrerelease \
-            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("dev-win-")))]
-                  | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' \
-          | while read -r tag; do
-              [ -z "$tag" ] && continue
-              echo "deleting $tag"
-              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-            done
-
       - name: Announce on Telegram
-        if: env.TELEGRAM_BOT_TOKEN != '' && (env.TELEGRAM_PREVIEW_CHAT_ID != '' || env.TELEGRAM_CHAT_ID != '')
+        if: env.TELEGRAM_BOT_TOKEN != ''
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -373,35 +325,48 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          # gh-proxy.com in front of github.com: the assets live on GitHub,
-          # which is unreachable for a large part of the audience.
-          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}/"
-
+          api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          up=""
+          for _ in $(seq 1 30); do
+            if curl -fsS --max-time 5 "${api}/getMe" > /dev/null 2>&1; then up=1; break; fi
+            sleep 2
+          done
+          if [ -z "$up" ]; then echo "::error::telegram-bot-api never answered on localhost:8081"; exit 1; fi
+          chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
           {
-            echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）构建成功"
-            echo
-            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
-              echo "自 \`${PREVIOUS}\` 以来："
-              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
-              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
-              echo
-            fi
-            for f in dist/*; do
-              name="$(basename "$f")"
-              [ "$name" = SHA256SUMS ] && continue
-              echo "• ${name}"
-              echo "  ${prefix}${name}"
-            done
+            echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）"
             echo
             echo "分支 \`${REF}\` ｜ Windows ${ARCH}"
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/dev-win-${BASE_NUMBER}"
-            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "构建号 ${BASE_NUMBER}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              echo "📝 自 \`${PREVIOUS}\` 以来："
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=8'
+            fi
             echo
+            echo "⬇️ 安装包即本条消息附件"
             echo "（桌面 Dev 版自己计数，号比正式版小：验完请卸掉再装正式版）"
-          } > "$RUNNER_TEMP/msg.txt"
-
-          cat "$RUNNER_TEMP/msg.txt"
-          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text@$RUNNER_TEMP/msg.txt" \
-            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
+          } > "$RUNNER_TEMP/caption.txt"
+          cat "$RUNNER_TEMP/caption.txt"
+          first=1
+          for file in dist/*.exe dist/*.zip; do
+            [ -f "$file" ] || continue
+            if [ "$first" = 1 ]; then
+              response="$(curl -fsS --max-time 900 \
+                -F "chat_id=${chat_id}" \
+                -F "document=@${file}" \
+                -F "caption@$RUNNER_TEMP/caption.txt" \
+                "${api}/sendDocument")"
+              first=0
+            else
+              response="$(curl -fsS --max-time 900 \
+                -F "chat_id=${chat_id}" \
+                -F "document=@${file}" \
+                "${api}/sendDocument")"
+            fi
+            if ! printf '%s' "$response" | grep -q '"ok":true'; then
+              echo "::error::Telegram refused $(basename "$file"): ${response}"
+              exit 1
+            fi
+            echo "telegram accepted $(basename "$file")"
+          done
