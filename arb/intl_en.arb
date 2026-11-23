@@ -1118,5 +1118,17 @@
   "ruleHitShare": "{percent} of hit traffic · {count}",
   "ruleHitCount": "{count} rules hit",
   "ruleHitDetail": "{count} · ↑ {upload} ↓ {download}",
-  "rankDetail": "{percent} · ↑ {upload} ↓ {download}"
+  "rankDetail": "{percent} · ↑ {upload} ↓ {download}",
+  "speedTest": "Connection test",
+  "speedTestReady": "Ready",
+  "speedTestTesting": "Testing",
+  "speedTestStart": "Start test",
+  "speedTestStop": "Stop",
+  "speedTestResult": "Result",
+  "speedTestFailed": "Test failed",
+  "speedTestRoute": "Test route",
+  "speedTestSystemRoute": "System route",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "ms",
+  "speedTestProvider": "Provider"
 }

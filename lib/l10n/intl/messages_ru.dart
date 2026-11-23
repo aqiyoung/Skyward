@@ -2309,5 +2309,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m98,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("Тест соединения"),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("Тест не удался"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Мбит/с"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("мс"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("Готово"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("Результат"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("Тестовый маршрут"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("Начать тест"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("Стоп"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage(
+      "Системный маршрут",
+    ),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("Тестирование"),
   };
 }

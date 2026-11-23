@@ -1118,5 +1118,17 @@
   "ruleHitShare": "占命中流量 {percent} · {count} 次",
   "ruleHitCount": "共 {count} 条规则有命中",
   "ruleHitDetail": "{count} 次 · ↑ {upload} ↓ {download}",
-  "rankDetail": "占 {percent} · ↑ {upload} ↓ {download}"
+  "rankDetail": "占 {percent} · ↑ {upload} ↓ {download}",
+  "speedTest": "连接测试",
+  "speedTestReady": "准备就绪",
+  "speedTestTesting": "测试中",
+  "speedTestStart": "开始测试",
+  "speedTestStop": "停止",
+  "speedTestResult": "测试结果",
+  "speedTestFailed": "测试失败",
+  "speedTestRoute": "测试路由",
+  "speedTestSystemRoute": "系统路由",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "毫秒",
+  "speedTestProvider": "服务商"
 }

@@ -1887,5 +1887,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m98,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("연결 테스트"),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("테스트 실패"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Mbps"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("밀리초"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("제공자"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("준비됨"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("결과"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("테스트 경로"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("테스트 시작"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("중지"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage("시스템 경로"),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("테스트 중"),
   };
 }

@@ -1753,5 +1753,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m98,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("连接测试"),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("测试失败"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Mbps"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("毫秒"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("服务商"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("准备就绪"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("测试结果"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("测试路由"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("开始测试"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("停止"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage("系统路由"),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("测试中"),
   };
 }

@@ -206,5 +206,6 @@ String? _keywordsOf(PageLabel label) => switch (label) {
   PageLabel.dns => 'dns query domain 域名 解析',
   PageLabel.resources => 'resource rule 资源',
   PageLabel.logs => 'log 日志',
+  PageLabel.speedTest => 'speed test bandwidth 测速 网速 连接测试',
   _ => null,
 };

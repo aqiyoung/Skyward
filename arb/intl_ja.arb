@@ -1118,5 +1118,17 @@
   "ruleHitShare": "ヒット流量の {percent} · {count}",
   "ruleHitCount": "{count} 件のルールにヒット",
   "ruleHitDetail": "{count} · ↑ {upload} ↓ {download}",
-  "rankDetail": "{percent} · ↑ {upload} ↓ {download}"
+  "rankDetail": "{percent} · ↑ {upload} ↓ {download}",
+  "speedTest": "接続テスト",
+  "speedTestReady": "準備完了",
+  "speedTestTesting": "テスト中",
+  "speedTestStart": "テスト開始",
+  "speedTestStop": "停止",
+  "speedTestResult": "結果",
+  "speedTestFailed": "テスト失敗",
+  "speedTestRoute": "テストルート",
+  "speedTestSystemRoute": "システムルート",
+  "speedTestMbps": "Mbps",
+  "speedTestMs": "ミリ秒",
+  "speedTestProvider": "プロバイダー"
 }

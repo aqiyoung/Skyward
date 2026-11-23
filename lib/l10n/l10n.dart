@@ -9366,6 +9366,101 @@ class AppLocalizations {
       args: [percent, upload, download],
     );
   }
+  /// `Connection test`
+  String get speedTest {
+    return Intl.message(
+      'Connection test',
+      name: 'speedTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready`
+  String get speedTestReady {
+    return Intl.message('Ready', name: 'speedTestReady', desc: '', args: []);
+  }
+
+  /// `Testing`
+  String get speedTestTesting {
+    return Intl.message(
+      'Testing',
+      name: 'speedTestTesting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start test`
+  String get speedTestStart {
+    return Intl.message(
+      'Start test',
+      name: 'speedTestStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop`
+  String get speedTestStop {
+    return Intl.message('Stop', name: 'speedTestStop', desc: '', args: []);
+  }
+
+  /// `Result`
+  String get speedTestResult {
+    return Intl.message('Result', name: 'speedTestResult', desc: '', args: []);
+  }
+
+  /// `Test failed`
+  String get speedTestFailed {
+    return Intl.message(
+      'Test failed',
+      name: 'speedTestFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Test route`
+  String get speedTestRoute {
+    return Intl.message(
+      'Test route',
+      name: 'speedTestRoute',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System route`
+  String get speedTestSystemRoute {
+    return Intl.message(
+      'System route',
+      name: 'speedTestSystemRoute',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mbps`
+  String get speedTestMbps {
+    return Intl.message('Mbps', name: 'speedTestMbps', desc: '', args: []);
+  }
+
+  /// `ms`
+  String get speedTestMs {
+    return Intl.message('ms', name: 'speedTestMs', desc: '', args: []);
+  }
+
+  /// `Provider`
+  String get speedTestProvider {
+    return Intl.message(
+      'Provider',
+      name: 'speedTestProvider',
+      desc: '',
+      args: [],
+    );
+  }
+
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

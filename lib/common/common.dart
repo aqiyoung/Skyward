@@ -39,6 +39,7 @@ export 'path.dart';
 export 'picker.dart';
 export 'preferences.dart';
 export 'print.dart';
+export 'speed_test.dart';
 export 'protocol.dart';
 export 'provider_reader.dart';
 export 'proxy.dart';

@@ -2386,5 +2386,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "yearsAgoShort": m98,
     "yes": MessageLookupByLibrary.simpleMessage("Sí"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chino simplificado"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("Prueba de conexión"),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("Prueba fallida"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Mbps"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("ms"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("Proveedor"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("Listo"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("Resultado"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("Ruta de prueba"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("Iniciar prueba"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("Detener"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage(
+      "Ruta del sistema",
+    ),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("Probando"),
   };
 }

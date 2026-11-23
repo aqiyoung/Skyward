@@ -1118,5 +1118,17 @@
   "ruleHitShare": "{percent} du trafic correspondant · {count}",
   "ruleHitCount": "{count} règles correspondantes",
   "ruleHitDetail": "{count} · ↑ {upload} ↓ {download}",
-  "rankDetail": "{percent} · ↑ {upload} ↓ {download}"
+  "rankDetail": "{percent} · ↑ {upload} ↓ {download}",
+  "speedTest": "Test de connexion",
+  "speedTestReady": "Prêt",
+  "speedTestTesting": "Test en cours",
+  "speedTestStart": "Démarrer le test",
+  "speedTestStop": "Arrêter",
+  "speedTestResult": "Résultat",
+  "speedTestFailed": "Échec du test",
+  "speedTestRoute": "Route de test",
+  "speedTestSystemRoute": "Route système",
+  "speedTestMbps": "Mb/s",
+  "speedTestMs": "ms",
+  "speedTestProvider": "Fournisseur"
 }

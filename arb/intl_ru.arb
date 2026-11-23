@@ -1118,5 +1118,17 @@
   "ruleHitShare": "{percent} трафика срабатываний · {count}",
   "ruleHitCount": "сработало правил: {count}",
   "ruleHitDetail": "{count} · ↑ {upload} ↓ {download}",
-  "rankDetail": "{percent} · ↑ {upload} ↓ {download}"
+  "rankDetail": "{percent} · ↑ {upload} ↓ {download}",
+  "speedTest": "Тест соединения",
+  "speedTestReady": "Готово",
+  "speedTestTesting": "Тестирование",
+  "speedTestStart": "Начать тест",
+  "speedTestStop": "Стоп",
+  "speedTestResult": "Результат",
+  "speedTestFailed": "Тест не удался",
+  "speedTestRoute": "Тестовый маршрут",
+  "speedTestSystemRoute": "Системный маршрут",
+  "speedTestMbps": "Мбит/с",
+  "speedTestMs": "мс",
+  "speedTestProvider": "Провайдер"
 }

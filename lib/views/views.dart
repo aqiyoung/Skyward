@@ -15,3 +15,4 @@ export 'proxies/proxies.dart';
 export 'resources.dart';
 export 'tools.dart';
 export 'traffic_statistics/traffic_statistics.dart';
+export 'speed_test/speed_test.dart';
