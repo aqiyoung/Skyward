@@ -475,7 +475,7 @@ jobs:
             fi
             if [ "$first" = 1 ]; then
               cp "$RUNNER_TEMP/body.txt" "$RUNNER_TEMP/caption.txt"
-              printf '\n⬇️ 安装包即本条消息附件\n' >> "$RUNNER_TEMP/caption.txt"
+              printf '\n⬇️ 点击下方直链下载安装包\n' >> "$RUNNER_TEMP/caption.txt"
               response="$(curl -fsS --max-time 900 \
                 -F "chat_id=${chat_id}" \
                 -F "document=@${file}" \
@@ -504,17 +504,21 @@ jobs:
               echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）"
               echo
               echo "分支 \`${REF}\` ｜ Windows ${ARCH} ｜ 构建号 ${BASE_NUMBER}"
+              if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+                echo
+                echo "📝 自 \`${PREVIOUS}\` 以来："
+                printf '%s\n' "$CHANGELOG" | awk 'NR<=8'
+              fi
+              echo
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
               base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
               for f in dist/*.exe dist/*.zip; do
                 [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
               done
               echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
-              echo "⚠️ 附件推送失败，请用上面的直链下载。"
             } > "$RUNNER_TEMP/text.txt"
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \
               --data-urlencode "text@$RUNNER_TEMP/text.txt" \
               || echo "::warning::Telegram 文本兜底也失败"
-            echo "::warning::附件未发出，已改发带链接的文本消息"
           fi
