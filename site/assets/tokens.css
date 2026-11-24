@@ -195,3 +195,22 @@ button.nav-a { background: none; border: 0; cursor: pointer; font: inherit; }
 .rust-assets .asset:hover { border-color: var(--brand-line); }
 .rust-assets .asset .n { font: 600 0.9rem var(--text); }
 .rust-assets .asset .s { font: 500 0.8rem var(--text); color: var(--fg-3); white-space: nowrap; }
+
+/* Selected tabs and the active language must stay readable in every theme.
+   ReClash colors a pressed tab with var(--bg), assuming a magnetic light pill
+   sits under it; when that pill is absent or slow the label is invisible. Give
+   the pressed state its own brand-tinted pill and contrasting text instead. */
+.plat-tabs button[aria-pressed='true'],
+.lang a[aria-current='true'] {
+  color: var(--on-brand) !important;
+  background: var(--brand) !important;
+}
+
+/* Menu selections follow the same rule: a brand pill that reads on every base. */
+.menu .sub button.is-active,
+.menu .sub a[aria-current='true'] {
+  color: var(--on-brand) !important;
+  background: var(--brand) !important;
+  border-radius: 999px;
+  padding-inline: 10px;
+}
