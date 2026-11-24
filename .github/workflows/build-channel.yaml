@@ -50,7 +50,7 @@ on:
 env:
   FLUTTER_VERSION: '3.50.1'
   GO_VERSION: '1.27.4'
-  NDK_VERSION: r30
+  NDK_VERSION: r28c
 
 jobs:
   test:
