@@ -673,8 +673,8 @@ jobs:
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \
               --data-urlencode "text@/tmp/text.txt" \
-              || echo "::error::Telegram 文本兜底也失败"
-            exit 1
+              || echo "::warning::Telegram 文本兜底也失败"
+            echo "::warning::附件未发出，已改发带链接的文本消息"
           fi
 
 

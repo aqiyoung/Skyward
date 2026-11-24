@@ -46,9 +46,9 @@ class NetworkControlCard extends ConsumerWidget {
           const SizedBox(height: 10),
           if (desktopPlatforms.contains(platform)) ...[
             // The render keeps the control card short: the mode selector and
-            // one row of switch tiles, so the cards underneath sit right below
-            // it instead of leaving a gap. LAN access lives in the Intranet IP
-            // card, so it is not repeated here.
+            // one row of switch tiles, then the intranet address folded in
+            // from the old standalone card -- the address and its LAN switch
+            // belong together, so they live here and there is no second card.
             Row(
               spacing: 8,
               children: [
@@ -63,6 +63,7 @@ class NetworkControlCard extends ConsumerWidget {
                   ),
               ],
             ),
+            const _IntranetIpSection(),
           ] else if (platform == SupportPlatform.Android)
             // The two status blocks a phone has sit side by side: each is
             // a single value, and neither needs the card's full width.
@@ -201,6 +202,68 @@ class _LanStatusTile extends ConsumerWidget {
       subtitle: allowLan ? appLocalizations.enabled : appLocalizations.disabled,
       onTap: () =>
           unawaited(BaseNavigator.push(context, const LanAccessView())),
+    );
+  }
+}
+
+/// The intranet address and its LAN switch, folded into the control card on
+/// desktop. The old IntranetIpCard was a card of its own with the same two
+/// controls; keeping them here means one place shows the address and the
+/// switch that exposes it.
+class _IntranetIpSection extends ConsumerWidget {
+  const _IntranetIpSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    final localIp = ref.watch(localIpProvider);
+    final allowLan = ref.watch(
+      patchClashConfigProvider.select((state) => state.allowLan),
+    );
+    final address = lanAddress(ref, allowLan: allowLan);
+    final style = DashboardText.figure(
+      context,
+      AppTextStyle.title2,
+    ).copyWith(letterSpacing: 0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              appLocalizations.intranetIP,
+              style: DashboardText.label(context),
+            ),
+            DashboardIconButton(
+              glyph: AppGlyphs.copy,
+              tooltip: appLocalizations.copy,
+              onPressed: address == null
+                  ? null
+                  : () => copyToClipboard(context, address),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: AppTextStyle.title2.leading,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: switch (localIp) {
+              null => SkeletonText(width: 120, style: style),
+              '' => Text(
+                  appLocalizations.noNetwork,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              final ip => DashboardFitText(ip, style: style),
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        const LanSwitchRow(),
+      ],
     );
   }
 }

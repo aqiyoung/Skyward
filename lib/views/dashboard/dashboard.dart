@@ -164,7 +164,11 @@ class _DesktopDashboard extends StatelessWidget {
     // keep the Route card at its old height so the two columns still end at
     // the same line: the left column loses two rows here, the right only one.
     final middleHeight = (compact ? 128 : 152) * scale;
-    final routingHeight = (compact ? 316 : 368) * scale;
+    // The control card plus the config/memory row stack to this height; the
+    // Route card on the right is given the same height so the two columns end
+    // on one line.
+    final controlHeight = (compact ? 200 : 236) * scale;
+    final routeHeight = controlHeight + gap + middleHeight;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Two equal columns, as in the render: the status card and the pair
@@ -204,38 +208,41 @@ class _DesktopDashboard extends StatelessWidget {
             ),
           ],
         );
-        // Below it, the reference layout folds the mode selector and the
-        // VPN/LAN switches into one Network control card on the left. The
-        // Route card on the right is the tall one, with the proxy-group
-        // summary underneath it.
-        final left = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // The control card now holds the intranet address too. Below it the
+        // config and memory cards sit side by side on the left, and the Route
+        // map takes the right column at the same total height.
+        final middle = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           spacing: gap,
           children: [
-            const RepaintBoundary(child: NetworkControlCard()),
-            sized(
-              middleHeight,
-              halfRow(const <Widget>[IntranetIpCard(), ProfilesCard()]),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: gap,
+                children: [
+                  sized(controlHeight, const RepaintBoundary(child: NetworkControlCard())),
+                  sized(
+                    middleHeight,
+                    halfRow(const <Widget>[ProfilesCard(), MemoryInfo()]),
+                  ),
+                ],
+              ),
             ),
-            sized(
-              middleHeight,
-              halfRow(const <Widget>[ServiceStatusCard(), MemoryInfo()]),
+            Expanded(
+              child: sized(
+                routeHeight,
+                const RepaintBoundary(child: RoutingBoardCard()),
+              ),
             ),
           ],
         );
-        final right = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: gap,
-          children: [
-            sized(
-              routingHeight,
-              const RepaintBoundary(child: RoutingBoardCard()),
-            ),
-            sized(
-              middleHeight,
-              const RepaintBoundary(child: ProxyGroupsSummaryCard()),
-            ),
-          ],
+        // Service status and the proxy-group summary share the bottom row,
+        // each taking half the board's width so they read as one pair.
+        final bottom = sized(
+          middleHeight,
+          halfRow(
+            const <Widget>[ServiceStatusCard(), ProxyGroupsSummaryCard()],
+          ),
         );
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -245,14 +252,8 @@ class _DesktopDashboard extends StatelessWidget {
             spacing: gap,
             children: [
               sized(topHeight, top),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: gap,
-                children: [
-                  Expanded(child: left),
-                  Expanded(child: right),
-                ],
-              ),
+              middle,
+              bottom,
             ],
           ),
         );
