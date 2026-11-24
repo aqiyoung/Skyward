@@ -328,9 +328,6 @@ jobs:
           # Harmless for the other platforms, which take the pubspec's three.
           APP_VERSION_NAME: ${{ inputs.version }}
           APP_BUILD_NUMBER: ${{ inputs.build_number }}
-          # NDK 30 headers reject unversioned target triples; bindgen needs the
-          # API level (merged with the sysroot args the Rust hook supplies).
-          BINDGEN_EXTRA_CLANG_ARGS: --target=aarch64-linux-android35
         run: dart setup.dart android --env ${{ inputs.env }} --arch arm64 -v
 
       - name: Build

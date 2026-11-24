@@ -445,9 +445,6 @@ jobs:
           # installs by it, the user reads the version above.
           APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
           APP_CHANNEL_NAME: dev
-          # NDK 30 headers reject unversioned target triples; bindgen needs the
-          # API level (merged with the sysroot args the Rust hook supplies).
-          BINDGEN_EXTRA_CLANG_ARGS: --target=aarch64-linux-android35
         run: dart setup.dart android --env ${{ inputs.env || 'pre' }} --arch arm64 -v
 
       - name: Name the artifact after our version

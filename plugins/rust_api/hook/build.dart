@@ -28,12 +28,22 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
     return const {};
   }
   final llvmRoot = File.fromUri(compiler).parent.parent;
+  final sep = Platform.pathSeparator;
+  // NDK r30's cdefs.h rejects unversioned target triples. bindgen derives its
+  // --target from the Rust TARGET (aarch64-linux-android), so give it the
+  // versioned triple explicitly along with the sysroot includes it needs.
+  final sysroot = '$llvmRoot${sep}sysroot';
+  final bindgenArgs =
+      '--target=aarch64-linux-android35 '
+      '--sysroot=$sysroot '
+      '-I$sysroot${sep}usr${sep}include${sep}aarch64-linux-android';
   for (final name in const ['lib', 'lib64']) {
-    final directory = Directory(
-      '${llvmRoot.path}${Platform.pathSeparator}$name',
-    );
+    final directory = Directory('${llvmRoot.path}$sep$name');
     if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
-      return {'LIBCLANG_PATH': directory.path};
+      return {
+        'LIBCLANG_PATH': directory.path,
+        'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android': bindgenArgs,
+      };
     }
   }
   throw StateError(
