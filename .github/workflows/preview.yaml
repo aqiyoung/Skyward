@@ -551,6 +551,58 @@ jobs:
           path: ./dist
           if-no-files-found: error
       
+      # Publish the APK as a prerelease so the Telegram notice can carry a
+      # public download link (via gh-proxy) for people who cannot log in to
+      # GitHub. The tag is already claimed by "Claim the build number".
+      - name: Publish the preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REF: ${{ inputs.ref || github.ref_name }}
+          APPLICATION_ID: ${{ inputs.package == 'upstream' && 'com.follow.clash' || 'com.threely.skyward' }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          tag="preview-${BASE_NUMBER}"
+          commit="$(git rev-parse --short HEAD)"
+          (cd dist && sha256sum ./* > SHA256SUMS)
+
+          cat > preview-notes.md <<EOF
+          Skyward ${VERSION} 预览版，只含 Android arm64-v8a。
+          EOF
+          {
+            echo
+            echo "- 分支：\`${REF}\`"
+            echo "- 包名：\`${APPLICATION_ID}\`"
+            echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
+            echo "- 构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              echo "**自 \`${PREVIOUS}\` 以来**"
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=40'
+            fi
+            echo
+            echo "签名与正式版相同，可直接覆盖安装。这不是正式发布。"
+          } >> preview-notes.md
+
+          # A retry reuses the number; drop a previous release with the tag.
+          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          # Move a leftover tag (no release) to this commit, or create it.
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" > /dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" \
+              -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          fi
+          gh release create "$tag" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Skyward ${VERSION}（预览版）" \
+            --notes-file preview-notes.md \
+            --prerelease
+
       - name: Prune old previews
         env:
           GH_TOKEN: ${{ github.token }}
@@ -634,7 +686,8 @@ jobs:
             fi
             echo
             echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（APK 也在私聊附件里）"
+            apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
             echo "⬇️ 安装包即本条消息附件"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
@@ -668,9 +721,9 @@ jobs:
             {
               echo "🧪 Skyward ${VERSION}（预览版）构建完成，但附件推送失败。"
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（APK 也在私聊附件里）"
+              apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+              echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
               echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-              echo "请从构建日志页下载 APK。"
             } > /tmp/text.txt
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \

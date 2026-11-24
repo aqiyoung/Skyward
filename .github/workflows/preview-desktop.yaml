@@ -342,6 +342,47 @@ jobs:
             echo "::warning::could not create ${tag}; the next preview may reuse this number"
           fi
 
+      # Publish the installers as a prerelease so the Telegram notice can carry
+      # public gh-proxy download links for readers who cannot log in to GitHub.
+      - name: Publish the preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REF: ${{ inputs.ref || 'beta' }}
+          ARCH: ${{ inputs.arch || 'amd64' }}
+          PREVIOUS: ${{ steps.changelog.outputs.previous }}
+          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+        run: |
+          set -euo pipefail
+          tag="dev-win-${BASE_NUMBER}"
+          (cd dist && sha256sum ./* > SHA256SUMS)
+          cat > release-notes.md <<EOF
+          Skyward ${VERSION} 桌面 Dev 版，只含 Windows ${ARCH}。
+          EOF
+          {
+            echo
+            echo "- 分支：\`${REF}\`"
+            echo "- 版本：\`${VERSION}\`"
+            echo "- 构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              echo "**自 \`${PREVIOUS}\` 以来**"
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=40'
+            fi
+          } >> release-notes.md
+          # The tag was just created by "Tag the preview"; repoint it to HEAD
+          # in case a retry left it elsewhere, then publish.
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" \
+            -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null 2>&1 || true
+          gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Skyward ${VERSION}（Windows Dev 版）" \
+            --notes-file release-notes.md \
+            --prerelease
+
   # The bot API needs a container to accept files over 50 MB, and GitHub only
   # runs services on Linux. The Windows build uploads its artifacts above; this
   # job downloads them and sends them as Telegram documents. No Release here.
@@ -414,7 +455,10 @@ jobs:
             fi
             echo
             echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（setup.exe 也在附件里）"
+            base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
+            for f in dist/*.exe dist/*.zip; do
+              [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
+            done
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
           } > "$RUNNER_TEMP/body.txt"
           cat "$RUNNER_TEMP/body.txt"
@@ -461,10 +505,12 @@ jobs:
               echo
               echo "分支 \`${REF}\` ｜ Windows ${ARCH} ｜ 构建号 ${BASE_NUMBER}"
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-              echo "📦 安装包：打开上面链接，点下方 Artifacts 下载"
-            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（setup.exe 也在附件里）"
+              base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
+              for f in dist/*.exe dist/*.zip; do
+                [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
+              done
               echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
-              echo "⚠️ 附件推送失败，请从构建日志页下载。"
+              echo "⚠️ 附件推送失败，请用上面的直链下载。"
             } > "$RUNNER_TEMP/text.txt"
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \
