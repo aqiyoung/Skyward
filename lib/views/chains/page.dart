@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'editor.dart';
 import 'state.dart';
+import 'widgets.dart';
 
 /// Opens the link-chain page.
 Future<void> openChainsPage(BuildContext context) =>
@@ -43,12 +44,27 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
       ),
       body: chains.isEmpty
           ? _Empty(onCreate: () => showChainEditor(context), zh: zh)
-          : ListView.separated(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: chains.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) =>
-                  _ChainCard(chain: chains[index], zh: zh),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 4),
+                  child: Text(
+                    zh ? '配置 当前订阅' : 'Profile current',
+                    style: AppTextStyle.subheadline.of(context, emphasized: true),
+                  ),
+                ),
+                for (final chain in chains) _ChainCard(chain: chain, zh: zh),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+                  child: Text(
+                    zh
+                        ? '已启用的链路位于“🚀 节点选择”中普通服务器旁边。长按可调整顺序。'
+                        : 'Enabled chains appear beside regular servers in the proxy group. Long-press to reorder.',
+                    style: AppTextStyle.footnote.of(context),
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -186,32 +202,35 @@ class _ChainCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.colorScheme;
-    return Card(
-      child: ListTile(
-        leading: SizedBox(
-          width: 120,
-          child: Row(
-            children: [
-              for (final hop in chain.hops) ...[
-                CircleAvatar(
-                  radius: 14,
-                  child: Text(
-                    geoCountryOfNode(hop)?.code.countryFlagEmoji ?? '🌐',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                if (hop != chain.hops.last) const SizedBox(width: 2),
-              ],
-            ],
+    final entry = chain.hops.first;
+    final exit = chain.hops.last;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        child: ListTile(
+          leading: PairedFlags(entry, exit, size: 28),
+          title: Text(chain.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(
+            zh
+                ? '入口 — · 路径 —'
+                : 'Entry — · Path —',
           ),
+          trailing: Switch(
+            value: chain.enabled,
+            onChanged: (value) async {
+              final updated = SavedChain(
+                id: chain.id,
+                name: chain.name,
+                hops: chain.hops,
+                targetGroup: chain.targetGroup,
+                enabled: value,
+                offered: chain.offered,
+              );
+              await ref.read(chainsProvider.notifier).upsert(updated);
+            },
+          ),
+          onTap: () => showChainEditor(context, chain: chain),
         ),
-        title: Text(chain.name),
-        subtitle: Text(chain.hops.join(' → ')),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline),
-          onPressed: () => ref.read(chainsProvider.notifier).remove(chain.id),
-        ),
-        onTap: () => showChainEditor(context, chain: chain),
       ),
     );
   }
