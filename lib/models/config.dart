@@ -117,8 +117,8 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+  // trafficStats and appUsage are now one switchable UsageCard.
   DashboardWidget.trafficStats,
-  DashboardWidget.appUsage,
 ];
 
 /// A phone starts without the diagnostic cards, which stay addable. The field
@@ -140,7 +140,6 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
         DashboardWidget.trafficStats,
-        DashboardWidget.appUsage,
         DashboardWidget.speedTest,
       ]
     : defaultDashboardWidgets;
@@ -255,8 +254,19 @@ const _retiredDashboardWidgets = {
   'overrideNtpButton',
 };
 
+/// Legacy configs could carry both stats cards; they are one switchable card
+/// now, so keep only one and drop the redundant legacy value.
+List<DashboardWidget> dashboardWidgetsFromJson(List<dynamic>? dashboardWidgets) {
+  final parsed = _dashboardWidgetsFromJson(dashboardWidgets);
+  if (parsed.contains(DashboardWidget.trafficStats) &&
+      parsed.contains(DashboardWidget.appUsage)) {
+    return parsed.where((c) => c != DashboardWidget.appUsage).toList();
+  }
+  return parsed;
+}
+
 /// The current outbound card cannot be removed: a list without it predates it.
-List<DashboardWidget> dashboardWidgetsFromJson(
+List<DashboardWidget> _dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
   if (dashboardWidgets == null) {
@@ -323,6 +333,11 @@ List<List<DashboardWidget>>? dashboardStacksFromJson(
     for (final name in raw) {
       final card = _legacyDashboardWidgets[name] ?? byName[name];
       if (card == null || !seen.add(card)) {
+        continue;
+      }
+      // The two legacy stats cards are one switchable card now.
+      if (card == DashboardWidget.appUsage &&
+          seen.contains(DashboardWidget.trafficStats)) {
         continue;
       }
       pile.add(card);
