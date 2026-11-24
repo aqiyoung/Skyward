@@ -140,7 +140,6 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
         DashboardWidget.trafficStats,
-        DashboardWidget.speedTest,
       ]
     : defaultDashboardWidgets;
 
@@ -258,11 +257,17 @@ const _retiredDashboardWidgets = {
 /// now, so keep only one and drop the redundant legacy value.
 List<DashboardWidget> dashboardWidgetsFromJson(List<dynamic>? dashboardWidgets) {
   final parsed = _dashboardWidgetsFromJson(dashboardWidgets);
-  if (parsed.contains(DashboardWidget.trafficStats) &&
-      parsed.contains(DashboardWidget.appUsage)) {
-    return parsed.where((c) => c != DashboardWidget.appUsage).toList();
+  // The speed-test card is being polished off-home; drop it from saved boards
+  // so upgrading devices do not keep showing it until it ships again.
+  final withoutSpeedTest =
+      parsed.where((c) => c != DashboardWidget.speedTest).toList();
+  if (withoutSpeedTest.contains(DashboardWidget.trafficStats) &&
+      withoutSpeedTest.contains(DashboardWidget.appUsage)) {
+    return withoutSpeedTest
+        .where((c) => c != DashboardWidget.appUsage)
+        .toList();
   }
-  return parsed;
+  return withoutSpeedTest;
 }
 
 /// The current outbound card cannot be removed: a list without it predates it.
@@ -332,7 +337,11 @@ List<List<DashboardWidget>>? dashboardStacksFromJson(
     final pile = <DashboardWidget>[];
     for (final name in raw) {
       final card = _legacyDashboardWidgets[name] ?? byName[name];
-      if (card == null || !seen.add(card)) {
+      // The speed-test card is being polished off-home; drop saved piles.
+      if (card == null || card == DashboardWidget.speedTest) {
+        continue;
+      }
+      if (!seen.add(card)) {
         continue;
       }
       // The two legacy stats cards are one switchable card now.

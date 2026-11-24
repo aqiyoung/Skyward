@@ -254,7 +254,9 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
     final shown = _shown;
     final addable = [
       for (final card in DashboardWidget.values)
-        if (card.platforms.contains(widget.platform) && !shown.contains(card))
+        if (card != DashboardWidget.speedTest &&
+            card.platforms.contains(widget.platform) &&
+            !shown.contains(card))
           card,
     ];
     final sway = context.disableAnimations ? null : _sway;
