@@ -146,58 +146,67 @@ class SpeedTestService {
   double _mbps(int bytes, int microseconds) =>
       bytes * 8 / microseconds; // bits/µs == Mbit/s
 
+  /// Parallel connections, like a real speed test. A single TCP stream is
+  /// capped by its congestion window on high-latency proxy paths; several at
+  /// once fill the pipe and give a number comparable to other speed tests.
+  static const _downloadConnections = 4;
+
   Future<double> _download(
     void Function(SpeedPhase, double)? onProgress,
   ) async {
-    final client = _trackedClient();
-    final request = await client.getUrl(
-      endpoint.download(endpoint.downloadBytes),
-    );
-    final response = await request.close();
-    if (response.statusCode != HttpStatus.ok) {
-      await response.drain();
-      throw SpeedTestException(
-        'download failed with status ${response.statusCode}',
-      );
-    }
-    final sw = Stopwatch()..start();
+    final perConnection = endpoint.downloadBytes ~/ _downloadConnections;
+    final sw = Stopwatch();
     var received = 0;
     var lastReportMs = 0;
     var lastWindowBytes = 0;
     var lastWindowMs = 0;
     final steady = <double>[];
-    await for (final chunk in response) {
-      received += chunk.length;
-      final ms = sw.elapsedMilliseconds;
-      final us = sw.elapsedMicroseconds;
-      if (us <= 0) continue;
-      // Live window value over the last ~1s, not the whole run.
-      if (ms - lastWindowMs >= _windowMs) {
-        final windowBytes = received - lastWindowBytes;
-        final windowUs = (ms - lastWindowMs) * 1000;
-        if (windowUs > 0 && ms >= _settleMs) {
-          steady.add(_mbps(windowBytes, windowUs));
-        }
-        lastWindowBytes = received;
-        lastWindowMs = ms;
+
+    Future<void> pull() async {
+      final client = _trackedClient();
+      final request = await client.getUrl(endpoint.download(perConnection));
+      final response = await request.close();
+      if (response.statusCode != HttpStatus.ok) {
+        await response.drain();
+        throw SpeedTestException(
+          'download failed with status ${response.statusCode}',
+        );
       }
-      if (onProgress != null && ms - lastReportMs >= _reportEveryMs && ms > 0) {
-        final windowBytes = received - lastWindowBytes;
-        final windowUs = ms - lastWindowMs;
-        final live = windowUs > 0
-            ? _mbps(windowBytes, windowUs * 1000)
-            : _mbps(received, us);
-        onProgress(SpeedPhase.download, live);
-        lastReportMs = ms;
+      await for (final chunk in response) {
+        received += chunk.length;
+        final ms = sw.elapsedMilliseconds;
+        final us = sw.elapsedMicroseconds;
+        if (us <= 0) continue;
+        if (ms - lastWindowMs >= _windowMs) {
+          final windowBytes = received - lastWindowBytes;
+          final windowUs = (ms - lastWindowMs) * 1000;
+          if (windowUs > 0 && ms >= _settleMs) {
+            steady.add(_mbps(windowBytes, windowUs));
+          }
+          lastWindowBytes = received;
+          lastWindowMs = ms;
+        }
+        if (onProgress != null && ms - lastReportMs >= _reportEveryMs && ms > 0) {
+          final windowBytes = received - lastWindowBytes;
+          final windowUs = ms - lastWindowMs;
+          final live = windowUs > 0
+              ? _mbps(windowBytes, windowUs * 1000)
+              : _mbps(received, us);
+          onProgress(SpeedPhase.download, live);
+          lastReportMs = ms;
+        }
       }
     }
+
+    sw.start();
+    await Future.wait(List.generate(_downloadConnections, (_) => pull()));
     sw.stop();
     if (received == 0 || sw.elapsedMicroseconds == 0) {
       throw const SpeedTestException('download produced no data');
     }
     if (steady.isNotEmpty) {
       steady.sort();
-      return steady[steady.length ~/ 2]; // median resists spikes
+      return steady[steady.length ~/ 2];
     }
     return _mbps(received, sw.elapsedMicroseconds);
   }
