@@ -199,12 +199,13 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
             zh: zh,
           ),
           SizedBox(
-            height: 30,
+            height: 46,
             child: switch (run.error) {
               final error? => Center(
                 child: Text(
                   '${context.appLocalizations.speedTestFailed}: $error',
-                  maxLines: 1,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: cs.error, fontSize: 13),
                 ),

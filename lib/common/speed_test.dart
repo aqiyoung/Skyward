@@ -183,6 +183,11 @@ class SpeedTestService {
   HttpClient _client() {
     final client = _clientFactory();
     client.findProxy = _findProxy;
+    // The test endpoints are built for browsers; some answer the default
+    // Dart user agent with a 403.
+    client.userAgent =
+        'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
     _clients.add(client);
     return client;
   }
@@ -291,30 +296,35 @@ class SpeedTestService {
     Future<void> pull() async {
       final client = _client();
       stageClients.add(client);
-      try {
-        while (!aborted &&
-            !_stopped &&
-            sw.elapsed < _stageDuration &&
-            (meter.bytes < _downloadCap || sw.elapsed < _capFloor)) {
+      while (!aborted &&
+          !_stopped &&
+          sw.elapsed < _stageDuration &&
+          (meter.bytes < _downloadCap || sw.elapsed < _capFloor)) {
+        try {
           final request = await client.getUrl(
             endpoint.download(endpoint.downloadBytes),
           );
           final response = await request.close();
           if (response.statusCode != HttpStatus.ok) {
             await response.drain();
-            throw SpeedTestException(
+            firstError ??= SpeedTestException(
               'download failed with status ${response.statusCode}',
             );
+            await Future<void>.delayed(const Duration(milliseconds: 400));
+            continue;
           }
           await for (final chunk in response) {
             meter.add(chunk.length, sw.elapsedMicroseconds);
             report();
           }
+        } catch (e) {
+          // The deadline abort closes the stage's clients mid-stream; that
+          // error is the expected end of the stage, not a failure.
+          if (!aborted && !_stopped) {
+            firstError ??= e;
+            await Future<void>.delayed(const Duration(milliseconds: 400));
+          }
         }
-      } catch (e) {
-        // The deadline abort closes the stage's clients mid-stream; that
-        // error is the expected end of the stage, not a failure.
-        if (!aborted && !_stopped) firstError ??= e;
       }
     }
 
