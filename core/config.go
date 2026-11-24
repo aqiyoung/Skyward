@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"go.yaml.in/yaml/v3"
+
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/adapter/provider"
@@ -117,9 +119,38 @@ func handleDecryptConfig(params DecryptConfigParams) (string, error) {
 var systemTimeWritable = runtime.GOOS != "android"
 
 func loadConfig(path string) (*config.Config, error) {
+	return loadConfigPrepared(path, nil)
+}
+
+// loadConfigPrepared optionally rewrites the config's YAML tree before it is
+// parsed. Chains use this to materialize their generated groups into the
+// config on disk, so getChainReport can later read them back.
+func loadConfigPrepared(path string, prepare func(*yaml.Node)) (*config.Config, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
+	}
+	if prepare != nil {
+		var document yaml.Node
+		if err := yaml.Unmarshal(buf, &document); err != nil {
+			return nil, err
+		}
+		// documentMapping unwraps the YAML document into its mapping root;
+		// chain materialization reads keys off the mapping, not the document.
+		root, err := documentMapping(&document)
+		if err != nil {
+			return nil, err
+		}
+		prepare(root)
+		// writeConfigDocument expects a DocumentNode and writes its Content[0],
+		// so wrap the modified mapping back up before persisting.
+		wrapped := &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{root}}
+		if err := writeConfigDocument(path, wrapped); err != nil {
+			return nil, err
+		}
+		if buf, err = os.ReadFile(path); err != nil {
+			return nil, err
+		}
 	}
 	cfg, err := executor.ParseWithBytes(buf)
 	if err != nil {
@@ -142,10 +173,19 @@ func runningConfigPath() string {
 
 func loadSetupConfig(params *SetupParams) (*config.Config, error) {
 	path := runningConfigPath()
-	if params.Base != nil {
-		return loadConfigWithBase(params.Base, path)
+	// Chains are materialized into the config's YAML tree before it is parsed;
+	// the generated groups are written to disk so getChainReport can read them.
+	recordChains(nil, nil)
+	var prepare func(*yaml.Node)
+	if len(params.Chains) > 0 {
+		prepare = func(root *yaml.Node) {
+			applyChains(root, params.Chains, params.MainGroupHint)
+		}
 	}
-	return loadConfig(path)
+	if params.Base != nil {
+		return loadConfigWithBase(params.Base, path, prepare)
+	}
+	return loadConfigPrepared(path, prepare)
 }
 
 func applyConfig(params *SetupParams) error {

@@ -67,6 +67,8 @@ const (
 	compileRuleSetMethod           CoreMethod = "compileRuleSet"
 	clearEffectMethod              CoreMethod = "clearEffect"
 	watchRouteMethod               CoreMethod = "watchRoute"
+	getChainReportMethod           CoreMethod = "getChainReport"
+	inspectChainMethod             CoreMethod = "inspectChain"
 )
 
 type MessageType string
@@ -109,6 +111,10 @@ type SetupParams struct {
 	// by skip-cert-verify in the proxy config.
 	SkipCertVerify bool       `json:"skip-cert-verify"`
 	Base           *SetupBase `json:"base,omitempty"`
+	// Chains describes the link chains to materialize into the config, and
+	// MainGroupHint names the group a chain's target resolves against.
+	Chains        []ChainSpec `json:"chains,omitempty"`
+	MainGroupHint string      `json:"main-group-hint,omitempty"`
 }
 
 type SetupBase struct {
