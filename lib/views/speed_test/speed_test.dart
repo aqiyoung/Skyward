@@ -12,8 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Connection speed test: paired download/upload readouts, ping and jitter,
-/// and a live logarithmic gauge. The endpoint set is pluggable through
-/// [SpeedTestService], so no provider is hard-wired.
+/// and a live logarithmic gauge. Colors follow the app theme.
 class SpeedTestView extends ConsumerStatefulWidget {
   const SpeedTestView({super.key});
 
@@ -85,15 +84,6 @@ class _LiveSpeeds extends Notifier<({double down, double up})> {
 final liveSpeedsProvider =
     NotifierProvider<_LiveSpeeds, ({double down, double up})>(_LiveSpeeds.new);
 
-// Dark, instrument-like palette matching a dedicated speed-test tool.
-const _bg = Color(0xFF0E1420);
-const _panel = Color(0xFF141C2B);
-const _panelBorder = Color(0xFF2A3547);
-const _cyan = Color(0xFF38E1D6);
-const _violet = Color(0xFFA76BF2);
-const _muted = Color(0xFF8A97AC);
-const _text = Color(0xFFF2F5FA);
-
 class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   SpeedTestService? _service;
   int? _serviceIndex;
@@ -162,6 +152,7 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
     final progress = ref.watch(speedProgressProvider);
     final live = ref.watch(liveSpeedsProvider);
     final providerIndex = ref.watch(speedProviderProvider);
+    final cs = context.colorScheme;
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     final largeTitle =
         ViewScope.isMobileOf(context) && !context.isInCompactSheet;
@@ -178,7 +169,7 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
       _RunState.running => live.down,
       _ => 0.0,
     };
-    final gaugeColor = phase == SpeedPhase.upload ? _violet : _cyan;
+    final gaugeColor = phase == SpeedPhase.upload ? cs.tertiary : cs.primary;
 
     final body = ListView(
       padding: EdgeInsets.fromLTRB(16, 12, 16, 20 + context.bottomInset),
@@ -190,12 +181,11 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
           up: up,
           downActive: phase == SpeedPhase.download,
           upActive: phase == SpeedPhase.upload,
-          zh: zh,
           highlightDown: result != null &&
               (result.downloadMbps ?? 0) >= (result.uploadMbps ?? 0),
         ),
         const SizedBox(height: 10),
-        _PingRow(result: result, zh: zh),
+        _PingRow(result: result),
         const SizedBox(height: 8),
         _QualityIcons(down: result?.downloadMbps, zh: zh),
         const SizedBox(height: 4),
@@ -207,19 +197,14 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
           zh: zh,
         ),
         const SizedBox(height: 8),
-        _StartButton(
-          state: run.state,
-          onStart: _start,
-          onStop: _stop,
-          zh: zh,
-        ),
+        _StartButton(state: run.state, onStart: _start, onStop: _stop, zh: zh),
         if (run.error case final error?)
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Text(
               '${zh ? '测试失败' : 'Test failed'}: $error',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFFF7B7B)),
+              style: TextStyle(color: cs.error),
             ),
           ),
         const SizedBox(height: 16),
@@ -229,7 +214,7 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
 
     return CommonScaffold(
       title: zh ? '连接测速' : 'Speed test',
-      backgroundColor: _bg,
+      backgroundColor: cs.surface,
       largeTitle: largeTitle,
       body: largeTitle
           ? PageLargeTitle(
@@ -249,12 +234,12 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
 
 class _ReadoutRow extends StatelessWidget {
   const _ReadoutRow({
+    super.key,
     required this.down,
     required this.up,
     required this.downActive,
     required this.upActive,
     required this.highlightDown,
-    required this.zh,
   });
 
   final String down;
@@ -262,18 +247,18 @@ class _ReadoutRow extends StatelessWidget {
   final bool downActive;
   final bool upActive;
   final bool highlightDown;
-  final bool zh;
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     return Row(
       children: [
         Expanded(
           child: _ReadoutCard(
             icon: Icons.arrow_downward_rounded,
-            label: zh ? '下载' : 'Download',
+            label: context.appLocalizations.download,
             value: down,
-            color: _cyan,
+            color: cs.primary,
             active: downActive,
             highlight: highlightDown,
           ),
@@ -282,9 +267,9 @@ class _ReadoutRow extends StatelessWidget {
         Expanded(
           child: _ReadoutCard(
             icon: Icons.arrow_upward_rounded,
-            label: zh ? '上传' : 'Upload',
+            label: context.appLocalizations.upload,
             value: up,
-            color: _violet,
+            color: cs.tertiary,
             active: upActive,
             highlight: !highlightDown,
           ),
@@ -296,6 +281,7 @@ class _ReadoutRow extends StatelessWidget {
 
 class _ReadoutCard extends StatelessWidget {
   const _ReadoutCard({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
@@ -313,13 +299,14 @@ class _ReadoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: _panel,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: highlight || active ? color : _panelBorder,
+          color: highlight || active ? color : cs.outlineVariant,
           width: highlight || active ? 2 : 1,
         ),
       ),
@@ -332,8 +319,8 @@ class _ReadoutCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: _text,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -347,16 +334,16 @@ class _ReadoutCard extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
-                  color: _text,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              const Text(
-                'Mbps',
-                style: TextStyle(color: _muted, fontSize: 13),
+              Text(
+                context.appLocalizations.speedTestMbps,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
               ),
             ],
           ),
@@ -367,20 +354,20 @@ class _ReadoutCard extends StatelessWidget {
 }
 
 class _PingRow extends StatelessWidget {
-  const _PingRow({required this.result, required this.zh});
+  const _PingRow({super.key, required this.result});
   final SpeedResult? result;
-  final bool zh;
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     final ping = result?.latencyMs;
     final jitter = result?.jitterMs;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _panel,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _panelBorder),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -388,26 +375,22 @@ class _PingRow extends StatelessWidget {
           _PingItem(
             label: 'Ping',
             value: ping == null ? '—' : '$ping',
-            unit: 'ms',
-            color: _cyan,
+            color: cs.primary,
           ),
           _PingItem(
-            label: zh ? '下载延迟' : 'D. lat',
+            label: context.appLocalizations.download,
             value: ping == null ? '—' : '${(ping * 0.6).round()}',
-            unit: 'ms',
-            color: _cyan,
+            color: cs.primary,
           ),
           _PingItem(
-            label: zh ? '上传延迟' : 'U. lat',
+            label: context.appLocalizations.upload,
             value: ping == null ? '—' : '${(ping * 1.4).round()}',
-            unit: 'ms',
-            color: _violet,
+            color: cs.tertiary,
           ),
           _PingItem(
             label: 'Jitter',
             value: jitter == null ? '—' : '$jitter',
-            unit: 'ms',
-            color: const Color(0xFFFFB35C),
+            color: cs.warning,
           ),
         ],
       ),
@@ -417,53 +400,52 @@ class _PingRow extends StatelessWidget {
 
 class _PingItem extends StatelessWidget {
   const _PingItem({
+    super.key,
     required this.label,
     required this.value,
-    required this.unit,
     required this.color,
   });
   final String label;
   final String value;
-  final String unit;
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Text(
-        label,
-        style: const TextStyle(color: _muted, fontSize: 11),
-      ),
-      const SizedBox(height: 4),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: _text,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    return Column(
+      children: [
+        Text(label, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11)),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-          ),
-          const SizedBox(width: 2),
-          Text(unit, style: const TextStyle(color: _muted, fontSize: 10)),
-        ],
-      ),
-    ],
-  );
+            const SizedBox(width: 5),
+            Text(
+              value,
+              style: TextStyle(
+                color: cs.onSurface,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Text('ms', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10)),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 /// Four quality hints derived from the measured download speed.
 class _QualityIcons extends StatelessWidget {
-  const _QualityIcons({required this.down, required this.zh});
+  const _QualityIcons({super.key, required this.down, required this.zh});
   final double? down;
   final bool zh;
 
@@ -477,6 +459,7 @@ class _QualityIcons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     final items = [
       (Icons.language_rounded, zh ? '网页' : 'Web', 5.0),
       (Icons.sports_esports_rounded, zh ? '游戏' : 'Game', 20.0),
@@ -489,7 +472,7 @@ class _QualityIcons extends StatelessWidget {
         for (final (icon, label, threshold) in items)
           Column(
             children: [
-              Icon(icon, color: _muted, size: 26),
+              Icon(icon, color: cs.onSurfaceVariant, size: 26),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -499,14 +482,19 @@ class _QualityIcons extends StatelessWidget {
                       height: 4,
                       margin: const EdgeInsets.symmetric(horizontal: 1),
                       decoration: BoxDecoration(
-                        color: i < _stars(threshold) ? _cyan : _panelBorder,
+                        color: i < _stars(threshold)
+                            ? cs.primary
+                            : cs.outlineVariant,
                         shape: BoxShape.circle,
                       ),
                     ),
                 ],
               ),
               const SizedBox(height: 2),
-              Text(label, style: const TextStyle(color: _muted, fontSize: 10)),
+              Text(
+                label,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10),
+              ),
             ],
           ),
       ],
@@ -516,6 +504,7 @@ class _QualityIcons extends StatelessWidget {
 
 class _Gauge extends StatelessWidget {
   const _Gauge({
+    super.key,
     required this.value,
     required this.color,
     required this.running,
@@ -531,6 +520,7 @@ class _Gauge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     final label = running
         ? switch (phase) {
             SpeedPhase.download => (zh ? '下载测试中' : 'Downloading'),
@@ -545,9 +535,9 @@ class _Gauge extends StatelessWidget {
         painter: _GaugePainter(
           fraction: _logFraction(value),
           color: color,
-          track: const Color(0xFF1E2A3D),
-          tick: _muted,
-          tickLabel: const TextStyle(color: _muted, fontSize: 11),
+          track: cs.surfaceContainerHighest,
+          tick: cs.onSurfaceVariant,
+          tickLabel: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
         ),
         child: Center(
           child: Padding(
@@ -557,8 +547,8 @@ class _Gauge extends StatelessWidget {
               children: [
                 Text(
                   value > 0 ? value.toStringAsFixed(2) : '0.00',
-                  style: const TextStyle(
-                    color: _text,
+                  style: TextStyle(
+                    color: cs.onSurface,
                     fontSize: 46,
                     fontWeight: FontWeight.w300,
                   ),
@@ -566,19 +556,15 @@ class _Gauge extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.arrow_upward_rounded,
-                        color: color, size: 14),
-                    const Text(
-                      ' Mbps',
-                      style: TextStyle(color: _muted, fontSize: 14),
+                    Icon(Icons.arrow_upward_rounded, color: color, size: 14),
+                    Text(
+                      ' ${context.appLocalizations.speedTestMbps}',
+                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: TextStyle(color: color, fontSize: 13),
-                ),
+                Text(label, style: TextStyle(color: color, fontSize: 13)),
               ],
             ),
           ),
@@ -677,6 +663,7 @@ class _GaugePainter extends CustomPainter {
 
 class _StartButton extends StatelessWidget {
   const _StartButton({
+    super.key,
     required this.state,
     required this.onStart,
     required this.onStop,
@@ -689,14 +676,15 @@ class _StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.colorScheme;
     final running = state == _RunState.running;
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: FilledButton.icon(
         style: FilledButton.styleFrom(
-          backgroundColor: running ? _panelBorder : _cyan,
-          foregroundColor: running ? _text : _bg,
+          backgroundColor: running ? cs.surfaceContainerHighest : cs.primary,
+          foregroundColor: running ? cs.onSurface : cs.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
           ),
@@ -718,7 +706,7 @@ class _StartButton extends StatelessWidget {
 }
 
 class _ProviderPicker extends ConsumerWidget {
-  const _ProviderPicker({required this.selected});
+  const _ProviderPicker({super.key, required this.selected});
   final int selected;
 
   @override
@@ -731,7 +719,6 @@ class _ProviderPicker extends ConsumerWidget {
             child: ChoiceChip(
               label: Text(speedTestEndpoints[i].name),
               selected: i == selected,
-              selectedColor: const Color(0xFF1E4A4A),
               onSelected: (_) {
                 ref.read(speedProviderProvider.notifier).select(i);
                 ref.read(speedRunProvider.notifier).idle();
@@ -745,28 +732,31 @@ class _ProviderPicker extends ConsumerWidget {
 }
 
 class _ServerRow extends StatelessWidget {
-  const _ServerRow({required this.endpoint, required this.zh});
+  const _ServerRow({super.key, required this.endpoint, required this.zh});
   final SpeedTestEndpoint endpoint;
   final bool zh;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      const Icon(Icons.public_rounded, color: _muted, size: 20),
-      const SizedBox(width: 10),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            endpoint.name,
-            style: const TextStyle(color: _text, fontSize: 14),
-          ),
-          Text(
-            zh ? '测速服务器' : 'Test server',
-            style: const TextStyle(color: _muted, fontSize: 11),
-          ),
-        ],
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final cs = context.colorScheme;
+    return Row(
+      children: [
+        Icon(Icons.public_rounded, color: cs.onSurfaceVariant, size: 20),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              endpoint.name,
+              style: TextStyle(color: cs.onSurface, fontSize: 14),
+            ),
+            Text(
+              zh ? '测速服务器' : 'Test server',
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
