@@ -27,18 +27,19 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
   if (compiler == null) {
     return const {};
   }
-  final llvmRoot = File.fromUri(compiler).parent.parent;
-  final sep = Platform.pathSeparator;
+  final llvmRoot = File.fromUri(compiler).parent.parent.path;
   // NDK r30's cdefs.h rejects unversioned target triples. bindgen derives its
   // --target from the Rust TARGET (aarch64-linux-android), so give it the
   // versioned triple explicitly along with the sysroot includes it needs.
-  final sysroot = '$llvmRoot${sep}sysroot';
+  // Use forward slashes: bindgen passes these to clang, which rejects
+  // backslashes on Windows hosts.
+  final sysroot = '$llvmRoot/sysroot';
   final bindgenArgs =
       '--target=aarch64-linux-android35 '
       '--sysroot=$sysroot '
-      '-I$sysroot${sep}usr${sep}include${sep}aarch64-linux-android';
+      '-I$sysroot/usr/include/aarch64-linux-android';
   for (final name in const ['lib', 'lib64']) {
-    final directory = Directory('${llvmRoot.path}$sep$name');
+    final directory = Directory('$llvmRoot/$name');
     if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
       return {
         'LIBCLANG_PATH': directory.path,
@@ -47,7 +48,7 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
     }
   }
   throw StateError(
-    'No libclang under ${llvmRoot.path} (lib or lib64); the NDK Flutter '
+    'No libclang under $llvmRoot (lib or lib64); the NDK Flutter '
     'passed cannot run bindgen for rquickjs',
   );
 }
