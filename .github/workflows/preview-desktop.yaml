@@ -448,18 +448,18 @@ jobs:
             echo
             echo "分支 \`${REF}\` ｜ Windows ${ARCH}"
             echo "构建号 ${BASE_NUMBER}"
-            echo
-            base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
-            for f in dist/*.exe dist/*.zip; do
-              [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
-            done
-            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
             if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
               echo
               echo "📝 自 \`${PREVIOUS}\` 以来："
               printf '%s\n' "$CHANGELOG" | awk 'NR<=8'
             fi
+            echo
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
+            base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
+            for f in dist/*.exe dist/*.zip; do
+              [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
+            done
           } > "$RUNNER_TEMP/body.txt"
           cat "$RUNNER_TEMP/body.txt"
 
@@ -511,11 +511,11 @@ jobs:
               fi
               echo
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
               base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
               for f in dist/*.exe dist/*.zip; do
                 [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
               done
-              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
             } > "$RUNNER_TEMP/text.txt"
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \
