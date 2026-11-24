@@ -84,9 +84,52 @@ class _LiveSpeeds extends Notifier<({double down, double up})> {
 final liveSpeedsProvider =
     NotifierProvider<_LiveSpeeds, ({double down, double up})>(_LiveSpeeds.new);
 
+/// Endpoints available to the picker: the built-in set plus a saved custom
+/// URL. The custom slot is kept even when empty so the picker can offer it.
+class _Endpoints extends Notifier<List<SpeedTestEndpoint>> {
+  static const _customKey = 'speed-test-custom-url';
+  String? customUrl;
+
+  @override
+  List<SpeedTestEndpoint> build() {
+    customUrl = null;
+    return speedTestEndpoints;
+  }
+
+  Future<void> load() async {
+    final saved = await Preferences().getString(_customKey);
+    if (saved != null && saved.trim().isNotEmpty) {
+      customUrl = saved;
+      state = [...speedTestEndpoints, customSpeedTestEndpoint(saved)];
+    }
+  }
+
+  Future<void> setCustom(String? url) async {
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      await Preferences().setString(_customKey, '');
+      customUrl = null;
+      state = speedTestEndpoints;
+      return;
+    }
+    await Preferences().setString(_customKey, trimmed);
+    customUrl = trimmed;
+    state = [...speedTestEndpoints, customSpeedTestEndpoint(trimmed)];
+  }
+}
+
+final endpointsProvider =
+    NotifierProvider<_Endpoints, List<SpeedTestEndpoint>>(_Endpoints.new);
+
 class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   SpeedTestService? _service;
   int? _serviceIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(endpointsProvider.notifier).load());
+  }
 
   @override
   void dispose() {
@@ -102,7 +145,7 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
       _service = SpeedTestService(
         findProxy: (uri) =>
             SkywardHttpOverrides.findProxyForReader(ref.read, uri),
-        endpoint: speedTestEndpoints[index],
+        endpoint: ref.read(endpointsProvider)[index],
       );
     }
     return _service!;
@@ -152,13 +195,14 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
     final progress = ref.watch(speedProgressProvider);
     final live = ref.watch(liveSpeedsProvider);
     final providerIndex = ref.watch(speedProviderProvider);
+    final endpoints = ref.watch(endpointsProvider);
     final cs = context.colorScheme;
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     final largeTitle =
         ViewScope.isMobileOf(context) && !context.isInCompactSheet;
     final statusBarTop = MediaQuery.paddingOf(context).top;
 
-    final endpoint = speedTestEndpoints[providerIndex];
+    final endpoint = endpoints[providerIndex];
     final result = run.result;
     final down = _figure(live.down, result?.downloadMbps);
     final up = _figure(live.up, result?.uploadMbps);
@@ -464,7 +508,7 @@ class _QualityIcons extends StatelessWidget {
       (Icons.language_rounded, zh ? '网页' : 'Web', 5.0),
       (Icons.sports_esports_rounded, zh ? '游戏' : 'Game', 20.0),
       (Icons.video_library_rounded, zh ? '视频' : 'Video', 25.0),
-      (Icons.call_rounded, zh ? '通话' : 'VoIP', 2.0),
+      (Icons.badge_rounded, zh ? '通话' : 'VoIP', 2.0),
     ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -472,8 +516,17 @@ class _QualityIcons extends StatelessWidget {
         for (final (icon, label, threshold) in items)
           Column(
             children: [
-              Icon(icon, color: cs.onSurfaceVariant, size: 26),
-              const SizedBox(height: 4),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
+              ),
+              const SizedBox(height: 6),
               Row(
                 children: [
                   for (var i = 0; i < 5; i++)
@@ -490,10 +543,10 @@ class _QualityIcons extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 label,
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 10),
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
               ),
             ],
           ),
@@ -711,13 +764,15 @@ class _ProviderPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final endpoints = ref.watch(endpointsProvider);
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
     return Row(
       children: [
-        for (var i = 0; i < speedTestEndpoints.length; i++)
+        for (var i = 0; i < endpoints.length; i++)
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text(speedTestEndpoints[i].name),
+              label: Text(endpoints[i].name),
               selected: i == selected,
               onSelected: (_) {
                 ref.read(speedProviderProvider.notifier).select(i);
@@ -726,8 +781,74 @@ class _ProviderPicker extends ConsumerWidget {
               },
             ),
           ),
+        const Spacer(),
+        IconButton(
+          tooltip: zh ? '自定义服务器' : 'Custom server',
+          icon: const Icon(Icons.edit_rounded),
+          onPressed: () => _editCustom(context, ref, endpoints.length),
+        ),
       ],
     );
+  }
+
+  Future<void> _editCustom(BuildContext context, WidgetRef ref, int count) async {
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    final endpointsNotifier = ref.read(endpointsProvider.notifier);
+    final controller = TextEditingController(text: endpointsNotifier.customUrl ?? '');
+    final saved = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(zh ? '自定义测速服务器' : 'Custom speed server'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              zh
+                  ? '填一个下载链接，用 {bytes} 占位表示大小，或用 bytes 查询参数。例如：\nhttps://speed.example.com/down?bytes={bytes}'
+                  : 'Enter a download URL. Use {bytes} as the size placeholder or a bytes query parameter.\ne.g. https://speed.example.com/down?bytes={bytes}',
+              style: TextStyle(
+                fontSize: 12,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'https://.../{bytes}',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(zh ? '取消' : 'Cancel'),
+          ),
+          if (endpointsNotifier.customUrl != null)
+            TextButton(
+              onPressed: () async {
+                await endpointsNotifier.setCustom(null);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: Text(zh ? '清除' : 'Clear'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(zh ? '保存' : 'Save'),
+          ),
+        ],
+      ),
+    );
+    if (saved == null) return;
+    // The new endpoint is appended; select it.
+    await endpointsNotifier.setCustom(saved);
+    if (!context.mounted) return;
+    final updated = ref.read(endpointsProvider);
+    ref.read(speedProviderProvider.notifier).select(updated.length - 1);
+    ref.read(speedRunProvider.notifier).idle();
   }
 }
 

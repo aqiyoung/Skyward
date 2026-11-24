@@ -66,10 +66,35 @@ final speedTestOvh = SpeedTestEndpoint(
   downloadBytes: 10 * 1024 * 1024,
 );
 
+final speedTestHetzner = SpeedTestEndpoint(
+  name: 'Hetzner',
+  download: (bytes) =>
+      Uri.https('speed.hetzner.de', '/${bytes ~/ (1024 * 1024)}MB.bin'),
+  downloadBytes: 10 * 1024 * 1024,
+);
+
+/// A user-supplied endpoint. The URL must accept a `bytes` query parameter
+/// (Cloudflare-style) or a `{bytes}` placeholder in the path.
+SpeedTestEndpoint customSpeedTestEndpoint(String url) {
+  final trimmed = url.trim();
+  final uri = Uri.parse(trimmed);
+  final hasPlaceholder = trimmed.contains('{bytes}');
+  Uri build(int bytes) {
+    if (hasPlaceholder) {
+      return Uri.parse(trimmed.replaceAll('{bytes}', '$bytes'));
+    }
+    final query = Map<String, String>.from(uri.queryParameters)
+      ..['bytes'] = '$bytes';
+    return uri.replace(queryParameters: query);
+  }
+  return SpeedTestEndpoint(name: 'Custom', download: build);
+}
+
 /// The providers offered in the page picker, in display order.
 final speedTestEndpoints = <SpeedTestEndpoint>[
   speedTestCloudflare,
   speedTestOvh,
+  speedTestHetzner,
 ];
 
 /// Downloads and uploads measured byte streams through the app's proxy and
