@@ -37,7 +37,7 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
         title: Text(zh ? '链路' : 'Chains'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const GlyphIcon(AppGlyphs.add),
             onPressed: () => showChainEditor(context),
           ),
         ],
@@ -91,28 +91,28 @@ class _Empty extends StatelessWidget {
                 _Node(
                   label: zh ? '你' : 'You',
                   sub: zh ? '手机' : 'Phone',
-                  icon: Icons.person_outline,
+                  icon: GlyphIcon(AppGlyphs.devices),
                   active: false,
                 ),
                 _Connector(active: false),
                 _Node(
                   label: zh ? '入口' : 'Entry',
                   sub: zh ? '选择' : 'Select',
-                  icon: Icons.add,
+                  icon: GlyphIcon(AppGlyphs.add),
                   active: true,
                 ),
                 _Connector(active: false),
                 _Node(
                   label: zh ? '出口' : 'Exit',
                   sub: zh ? '然后' : 'Then',
-                  icon: Icons.add,
+                  icon: GlyphIcon(AppGlyphs.add),
                   active: false,
                 ),
                 _Connector(active: false),
                 _Node(
                   label: zh ? '互联网' : 'Internet',
                   sub: '',
-                  icon: Icons.public,
+                  icon: GlyphIcon(AppGlyphs.globe),
                   active: false,
                 ),
               ],

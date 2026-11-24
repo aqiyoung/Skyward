@@ -1,6 +1,6 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:flutter/material.dart';
+import 'package:skyward/ui/ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -23,7 +23,7 @@ class RoundFlag extends StatelessWidget {
         height: size,
         color: context.colorScheme.surfaceContainerHighest,
         alignment: Alignment.center,
-        child: Icon(Icons.public, size: size * 0.55),
+        child: GlyphIcon(AppGlyphs.globe, size: size * 0.55),
       ),
     );
     if (!valid) return fallback;

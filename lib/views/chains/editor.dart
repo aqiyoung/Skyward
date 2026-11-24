@@ -159,12 +159,12 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
       appBar: AppBar(
         title: Text(context.cNewChain),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const GlyphIcon(AppGlyphs.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check),
+            icon: const GlyphIcon(AppGlyphs.check),
             onPressed: canSave ? _save : null,
           ),
         ],
@@ -303,12 +303,13 @@ class _Step extends StatelessWidget {
                   : scheme.surfaceContainerHighest,
               border: active ? Border.all(color: scheme.primary, width: 2) : null,
             ),
-            child: Icon(
+            child: GlyphIcon(
               label == context.cInternet
-                  ? Icons.public
+                  ? AppGlyphs.globe
                   : label == context.cYou
-                  ? Icons.devices_other
-                  : Icons.add,
+                  ? AppGlyphs.devices
+                  : AppGlyphs.add,
+              size: 22,
               color: active ? scheme.primary : scheme.onSurfaceVariant,
             ),
           );
@@ -388,7 +389,7 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: context.cSearch,
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const GlyphIcon(AppGlyphs.search),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -485,7 +486,7 @@ class _CandidateRow extends ConsumerWidget {
         : (delay == null ? context.cGroup : '$delay ms');
     return ListTile(
       leading: candidate.isGroup
-          ? CircleAvatar(child: Icon(Icons.group_work_outlined, size: 18))
+          ? CircleAvatar(child: GlyphIcon(AppGlyphs.globe, size: 18))
           : RoundFlag(candidate.name, size: 32),
       title: Text(candidate.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(subtitle),
