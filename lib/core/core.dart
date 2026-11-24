@@ -1,3 +1,4 @@
+export 'chains_state.dart';
 export 'controller.dart';
 export 'core.dart';
 export 'desktop/model.dart';
