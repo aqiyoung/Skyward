@@ -154,7 +154,6 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final canSave = _entry != null && _exit != null;
-    final complete = canSave && _middle == null == false || canSave;
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(
