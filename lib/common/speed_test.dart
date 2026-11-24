@@ -35,8 +35,8 @@ class SpeedTestEndpoint {
     required this.download,
     this.upload,
     this.ping,
-    this.downloadBytes = 10 * 1024 * 1024,
-    this.uploadBytes = 2 * 1024 * 1024,
+    this.downloadBytes = 20 * 1024 * 1024,
+    this.uploadBytes = 8 * 1024 * 1024,
   });
 
   final String name;
@@ -131,6 +131,16 @@ class SpeedTestService {
     return client;
   }
 
+  /// Keeps a short rolling window so the live figure tracks the current
+  /// bandwidth instead of a lifetime average that hides speed changes.
+  /// Final score is the mean of the steady samples, skipping ramp-up.
+  static const _reportEveryMs = 200;
+  static const _windowMs = 1000;
+  static const _settleMs = 500;
+
+  double _mbps(int bytes, int microseconds) =>
+      bytes * 8 / microseconds; // bits/µs == Mbit/s
+
   Future<double> _download(
     void Function(SpeedPhase, double)? onProgress,
   ) async {
@@ -147,51 +157,99 @@ class SpeedTestService {
     }
     final sw = Stopwatch()..start();
     var received = 0;
-    var lastReport = 0;
+    var lastReportMs = 0;
+    var lastWindowBytes = 0;
+    var lastWindowMs = 0;
+    final steady = <double>[];
     await for (final chunk in response) {
       received += chunk.length;
       final ms = sw.elapsedMilliseconds;
-      if (onProgress != null && ms - lastReport >= 200 && ms > 0) {
-        onProgress(SpeedPhase.download, received * 8 / ms / 1000);
-        lastReport = ms;
+      final us = sw.elapsedMicroseconds;
+      if (us <= 0) continue;
+      // Live window value over the last ~1s, not the whole run.
+      if (ms - lastWindowMs >= _windowMs) {
+        final windowBytes = received - lastWindowBytes;
+        final windowUs = (ms - lastWindowMs) * 1000;
+        if (windowUs > 0 && ms >= _settleMs) {
+          steady.add(_mbps(windowBytes, windowUs));
+        }
+        lastWindowBytes = received;
+        lastWindowMs = ms;
+      }
+      if (onProgress != null && ms - lastReportMs >= _reportEveryMs && ms > 0) {
+        final windowBytes = received - lastWindowBytes;
+        final windowUs = ms - lastWindowMs;
+        final live = windowUs > 0
+            ? _mbps(windowBytes, windowUs * 1000)
+            : _mbps(received, us);
+        onProgress(SpeedPhase.download, live);
+        lastReportMs = ms;
       }
     }
     sw.stop();
     if (received == 0 || sw.elapsedMicroseconds == 0) {
       throw const SpeedTestException('download produced no data');
     }
-    // bits / microseconds is already megabits per second (1e6 bits per
-    // megabit cancels 1e6 microseconds per second). Multiplying by 1e6
-    // here would report a phone connection in terabits.
-    return received * 8 / sw.elapsedMicroseconds;
+    if (steady.isNotEmpty) {
+      steady.sort();
+      return steady[steady.length ~/ 2]; // median resists spikes
+    }
+    return _mbps(received, sw.elapsedMicroseconds);
   }
 
   Future<double> _upload(void Function(SpeedPhase, double)? onProgress) async {
     final client = _trackedClient();
     final request = await client.postUrl(endpoint.upload!);
     request.contentLength = endpoint.uploadBytes;
-    const chunkSize = 64 * 1024;
+    // 256 KB chunks, flushed to the socket one at a time. request.add alone
+    // only fills Dart's buffer, so its timing said nothing about the network;
+    // flush pushes each chunk out and makes the progress real and visible.
+    const chunkSize = 256 * 1024;
     final chunk = Uint8List(chunkSize);
     final sw = Stopwatch()..start();
     var sent = 0;
-    var lastReport = 0;
+    var lastReportMs = 0;
+    var lastWindowBytes = 0;
+    var lastWindowMs = 0;
+    final steady = <double>[];
     while (sent < endpoint.uploadBytes) {
       final size = math.min(chunkSize, endpoint.uploadBytes - sent);
       request.add(Uint8List.sublistView(chunk, 0, size));
+      await request.flush();
       sent += size;
       final ms = sw.elapsedMilliseconds;
-      if (onProgress != null && ms - lastReport >= 200 && ms > 0) {
-        onProgress(SpeedPhase.upload, sent * 8 / ms / 1000);
-        lastReport = ms;
+      final us = sw.elapsedMicroseconds;
+      if (us <= 0) continue;
+      if (ms - lastWindowMs >= _windowMs) {
+        final windowBytes = sent - lastWindowBytes;
+        final windowUs = (ms - lastWindowMs) * 1000;
+        if (windowUs > 0 && ms >= _settleMs) {
+          steady.add(_mbps(windowBytes, windowUs));
+        }
+        lastWindowBytes = sent;
+        lastWindowMs = ms;
+      }
+      if (onProgress != null && ms - lastReportMs >= _reportEveryMs && ms > 0) {
+        final windowBytes = sent - lastWindowBytes;
+        final windowUs = ms - lastWindowMs;
+        final live = windowUs > 0
+            ? _mbps(windowBytes, windowUs * 1000)
+            : _mbps(sent, us);
+        onProgress(SpeedPhase.upload, live);
+        lastReportMs = ms;
       }
     }
     final response = await request.close();
     await response.drain();
     sw.stop();
-    if (sw.elapsedMicroseconds == 0) {
-      throw const SpeedTestException('upload finished too fast to measure');
+    if (sent == 0 || sw.elapsedMicroseconds == 0) {
+      throw const SpeedTestException('upload produced no data');
     }
-    return sent * 8 / sw.elapsedMicroseconds;
+    if (steady.isNotEmpty) {
+      steady.sort();
+      return steady[steady.length ~/ 2];
+    }
+    return _mbps(sent, sw.elapsedMicroseconds);
   }
 
   Future<int> _latency() async {
