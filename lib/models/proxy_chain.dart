@@ -2,6 +2,51 @@
 /// so they need no code generation and stay in lockstep with the Go structs in
 /// core/chains_types.go.
 
+/// A chain saved in preferences. Hops are proxy/group names, entry first.
+class SavedChain {
+  const SavedChain({
+    required this.id,
+    required this.name,
+    required this.hops,
+    this.targetGroup,
+    this.enabled = true,
+    this.offered = true,
+  });
+
+  final int id;
+  final String name;
+  final List<String> hops;
+  final String? targetGroup;
+  final bool enabled;
+  final bool offered;
+
+  ChainSpec toSpec() => ChainSpec(
+    id: id,
+    name: name,
+    hops: hops,
+    offered: offered,
+    targetGroup: targetGroup,
+  );
+
+  factory SavedChain.fromJson(Map<String, dynamic> json) => SavedChain(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    name: (json['name'] as String?) ?? '',
+    hops: (json['hops'] as List?)?.cast<String>() ?? const [],
+    targetGroup: json['targetGroup'] as String?,
+    enabled: json['enabled'] as bool? ?? true,
+    offered: json['offered'] as bool? ?? true,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'hops': hops,
+    if (targetGroup != null) 'targetGroup': targetGroup,
+    'enabled': enabled,
+    'offered': offered,
+  };
+}
+
 class HopFingerprint {
   const HopFingerprint({
     required this.type,

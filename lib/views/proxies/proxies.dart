@@ -3,6 +3,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/chains/page.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -110,6 +111,14 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           (state) =>
               state.copyWith(hideTimeoutProxies: !state.hideTimeoutProxies),
         ),
+      ),
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.proxies,
+        label: Localizations.localeOf(context).languageCode == 'zh'
+            ? '链路'
+            : 'Chains',
+        section: const CommonPopupMenuSection(),
+        onPressed: () => openChainsPage(context),
       ),
     ];
   }
