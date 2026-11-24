@@ -1130,5 +1130,8 @@
   "speedTestSystemRoute": "Системный маршрут",
   "speedTestMbps": "Мбит/с",
   "speedTestMs": "мс",
-  "speedTestProvider": "Провайдер"
+  "speedTestProvider": "Провайдер",
+  "speedTestDownloading": "Проверка загрузки",
+  "speedTestUploading": "Проверка отдачи",
+  "speedTestPinging": "Измерение задержки"
 }

@@ -1899,5 +1899,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestStop": MessageLookupByLibrary.simpleMessage("중지"),
     "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage("시스템 경로"),
     "speedTestTesting": MessageLookupByLibrary.simpleMessage("테스트 중"),
+    "speedTestDownloading": MessageLookupByLibrary.simpleMessage("다운로드 속도 측정 중"),
+    "speedTestUploading": MessageLookupByLibrary.simpleMessage("업로드 속도 측정 중"),
+    "speedTestPinging": MessageLookupByLibrary.simpleMessage("지연 시간 측정 중"),
   };
 }

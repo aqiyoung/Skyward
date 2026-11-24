@@ -24,6 +24,7 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
   SpeedTestService? _service;
   bool _running = false;
   double _mbps = 0;
+  SpeedPhase? _phase;
   SpeedResult? _result;
   String? _error;
 
@@ -42,6 +43,7 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
     setState(() {
       _running = true;
       _mbps = 0;
+      _phase = null;
       _error = null;
       _result = null;
     });
@@ -53,7 +55,10 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
       final result = await service.run(
         onProgress: (phase, mbps) {
           if (!mounted) return;
-          setState(() => _mbps = mbps);
+          setState(() {
+            _mbps = mbps;
+            _phase = phase;
+          });
         },
       );
       if (!mounted) return;
@@ -80,6 +85,16 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
         : _mbps > 0
         ? _mbps.toStringAsFixed(1)
         : '—';
+    // During a run, the caption names the stage rather than the unit, so the
+    // live figure reads as "downloading" or "uploading" instead of a bare Mbps.
+    final caption = _running
+        ? switch (_phase) {
+            SpeedPhase.download => appLocalizations.speedTestDownloading,
+            SpeedPhase.upload => appLocalizations.speedTestUploading,
+            SpeedPhase.latency => appLocalizations.speedTestPinging,
+            null => appLocalizations.speedTestTesting,
+          }
+        : appLocalizations.speedTestMbps;
     return DashboardCard(
       semanticLabel: appLocalizations.speedTest,
       onTap: _running
@@ -127,7 +142,7 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
                       ),
                     ),
                     Text(
-                      appLocalizations.speedTestMbps,
+                      caption,
                       style: DashboardText.label(context),
                     ),
                   ],

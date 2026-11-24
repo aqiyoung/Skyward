@@ -2400,5 +2400,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Ruta del sistema",
     ),
     "speedTestTesting": MessageLookupByLibrary.simpleMessage("Probando"),
+    "speedTestDownloading": MessageLookupByLibrary.simpleMessage("Probando descarga"),
+    "speedTestUploading": MessageLookupByLibrary.simpleMessage("Probando subida"),
+    "speedTestPinging": MessageLookupByLibrary.simpleMessage("Midiendo latencia"),
   };
 }

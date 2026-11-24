@@ -1130,5 +1130,8 @@
   "speedTestSystemRoute": "システムルート",
   "speedTestMbps": "Mbps",
   "speedTestMs": "ミリ秒",
-  "speedTestProvider": "プロバイダー"
+  "speedTestProvider": "プロバイダー",
+  "speedTestDownloading": "ダウンロード速度を測定中",
+  "speedTestUploading": "アップロード速度を測定中",
+  "speedTestPinging": "レイテンシを測定中"
 }

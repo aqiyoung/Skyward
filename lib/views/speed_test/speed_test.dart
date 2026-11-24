@@ -208,12 +208,22 @@ class _Gauge extends StatelessWidget {
     final orange = scheme.warning;
     final shown = switch (state) {
       _RunState.done => result?.downloadMbps ?? 0,
+      // Latency is measured in ms, not Mbps; showing the previous stage's
+      // throughput under a "measuring latency" label would be misleading.
+      _RunState.running when phase == SpeedPhase.latency => 0.0,
       _RunState.running => progress,
       _ => 0.0,
     };
+    // While running, name the stage so the reader knows whether the live
+    // number is download, upload or latency -- a bare "testing" hides it.
     final label = switch (state) {
       _RunState.idle => appLocalizations.speedTestReady,
-      _RunState.running => appLocalizations.speedTestTesting,
+      _RunState.running => switch (phase) {
+        SpeedPhase.download => appLocalizations.speedTestDownloading,
+        SpeedPhase.upload => appLocalizations.speedTestUploading,
+        SpeedPhase.latency => appLocalizations.speedTestPinging,
+        null => appLocalizations.speedTestTesting,
+      },
       _RunState.done => appLocalizations.speedTestResult,
       _RunState.failed => appLocalizations.speedTestFailed,
     };

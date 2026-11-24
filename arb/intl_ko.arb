@@ -1130,5 +1130,8 @@
   "speedTestSystemRoute": "시스템 경로",
   "speedTestMbps": "Mbps",
   "speedTestMs": "밀리초",
-  "speedTestProvider": "제공자"
+  "speedTestProvider": "제공자",
+  "speedTestDownloading": "다운로드 속도 측정 중",
+  "speedTestUploading": "업로드 속도 측정 중",
+  "speedTestPinging": "지연 시간 측정 중"
 }

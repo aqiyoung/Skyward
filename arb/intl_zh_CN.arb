@@ -1130,5 +1130,8 @@
   "speedTestSystemRoute": "系统路由",
   "speedTestMbps": "Mbps",
   "speedTestMs": "毫秒",
-  "speedTestProvider": "服务商"
+  "speedTestProvider": "服务商",
+  "speedTestDownloading": "下载测速中",
+  "speedTestUploading": "上传测速中",
+  "speedTestPinging": "测量延迟中"
 }

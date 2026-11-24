@@ -1130,5 +1130,8 @@
   "speedTestSystemRoute": "System route",
   "speedTestMbps": "Mbps",
   "speedTestMs": "ms",
-  "speedTestProvider": "Provider"
+  "speedTestProvider": "Provider",
+  "speedTestDownloading": "Testing download",
+  "speedTestUploading": "Testing upload",
+  "speedTestPinging": "Measuring latency"
 }

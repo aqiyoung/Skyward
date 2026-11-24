@@ -1924,5 +1924,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestStop": MessageLookupByLibrary.simpleMessage("停止"),
     "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage("システムルート"),
     "speedTestTesting": MessageLookupByLibrary.simpleMessage("テスト中"),
+    "speedTestDownloading": MessageLookupByLibrary.simpleMessage("ダウンロード速度を測定中"),
+    "speedTestUploading": MessageLookupByLibrary.simpleMessage("アップロード速度を測定中"),
+    "speedTestPinging": MessageLookupByLibrary.simpleMessage("レイテンシを測定中"),
   };
 }

@@ -9391,6 +9391,21 @@ class AppLocalizations {
     );
   }
 
+  /// `Testing download`
+  String get speedTestDownloading {
+    return Intl.message('Testing download', name: 'speedTestDownloading', desc: '', args: []);
+  }
+
+  /// `Testing upload`
+  String get speedTestUploading {
+    return Intl.message('Testing upload', name: 'speedTestUploading', desc: '', args: []);
+  }
+
+  /// `Measuring latency`
+  String get speedTestPinging {
+    return Intl.message('Measuring latency', name: 'speedTestPinging', desc: '', args: []);
+  }
+
   /// `Start test`
   String get speedTestStart {
     return Intl.message(

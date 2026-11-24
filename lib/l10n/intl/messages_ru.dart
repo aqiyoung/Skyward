@@ -2323,5 +2323,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Системный маршрут",
     ),
     "speedTestTesting": MessageLookupByLibrary.simpleMessage("Тестирование"),
+    "speedTestDownloading": MessageLookupByLibrary.simpleMessage("Проверка загрузки"),
+    "speedTestUploading": MessageLookupByLibrary.simpleMessage("Проверка отдачи"),
+    "speedTestPinging": MessageLookupByLibrary.simpleMessage("Измерение задержки"),
   };
 }
