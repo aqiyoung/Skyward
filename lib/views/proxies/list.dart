@@ -5,6 +5,9 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/chains/page.dart';
+import 'package:skyward/views/chains/state.dart';
+import 'package:skyward/views/chains/widgets.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -318,6 +321,22 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   );
   late final _unfold = UnfoldEntryTransition.curveOf(_controller);
 
+  /// Enabled link chains that the Core injected into this group. They show in
+  /// their own band above the servers, so they must be kept out of the server
+  /// rows to avoid showing each one twice.
+  List<SavedChain> get _chainsInGroup {
+    final chains = ref.watch(chainsProvider);
+    if (chains.isEmpty) return const [];
+    final names = widget.group.all.map((p) => p.name).toSet();
+    return chains.where((c) => c.enabled && names.contains(c.name)).toList();
+  }
+
+  List<Proxy> get _serverProxies {
+    final chains = _chainsInGroup.map((c) => c.name).toSet();
+    if (chains.isEmpty) return widget.group.all;
+    return widget.group.all.where((p) => !chains.contains(p.name)).toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -388,7 +407,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   }
 
   Widget _buildRows(double extent) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
+    final rows = _serverProxies.chunks(widget.columns).toList();
     return SliverFixedExtentList(
       itemExtent: extent,
       delegate: SliverChildBuilderDelegate(
@@ -402,7 +421,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   /// The card reaches up behind the header's rounded bottom corners, so the
   /// two read as one while the rows unfold or fold.
   Widget _buildUnfoldingRows(double extent, ShapeDecoration decoration) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
+    final rows = _serverProxies.chunks(widget.columns).toList();
     final visible = min(
       rows.length.toDouble(),
       MediaQuery.sizeOf(context).height / extent,
@@ -498,7 +517,75 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     return SliverPadding(
       padding: EdgeInsets.only(bottom: widget.gap),
       sliver: SliverMainAxisGroup(
-        slivers: [_buildPinnedHeader(isExpand, buildHeader), ?rows],
+        slivers: [
+          _buildPinnedHeader(isExpand, buildHeader),
+          ?_buildChainBand(),
+          ?rows,
+        ],
+      ),
+    );
+  }
+
+  /// The chains band above the servers, with a link to manage them all.
+  Widget? _buildChainBand() {
+    final chains = _chainsInGroup;
+    if (chains.isEmpty) return null;
+    final scheme = context.colorScheme;
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          _headerInset,
+          2,
+          _headerInset,
+          proxyGridSpacing,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    zh ? '链路' : 'Chains',
+                    style: AppTextStyle.footnote.of(
+                      context,
+                      emphasized: true,
+                    ).copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => openChainsPage(context),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(zh ? '全部链路' : 'All chains'),
+                      const GlyphIcon(AppGlyphs.chevronForward, size: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SurfaceScope(
+              level: context.raisedSurfaceLevel,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final chain in chains)
+                      _ChainChip(chain: chain, zh: zh),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -513,7 +600,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     Widget Function({double floating, double lift}) buildHeader,
   ) {
     final columns = widget.columns;
-    final rowCount = (widget.group.all.length + columns - 1) ~/ columns;
+    final rowCount = (_serverProxies.length + columns - 1) ~/ columns;
     final rowsExtent = isExpand ? _rowsExtent(rowCount, _rowExtent) : 0.0;
     final groupExtent =
         listHeaderHeight +
@@ -875,6 +962,58 @@ class _GroupActions extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// One enabled chain in the band: paired flags, its name and a status hint.
+class _ChainChip extends ConsumerWidget {
+  const _ChainChip({required this.chain, required this.zh});
+
+  final SavedChain chain;
+  final bool zh;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = context.colorScheme;
+    final entry = chain.hops.first;
+    final exit = chain.hops.last;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 260),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: ShapeDecoration(
+          color: context.raisedSurfaceLevel.colorOf(scheme),
+          shape: AppShape.all(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PairedFlags(entry, exit, size: 24),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    chain.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.footnote.of(context),
+                  ),
+                  Text(
+                    '${chain.hops.first} → ${chain.hops.last}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.caption2.of(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
