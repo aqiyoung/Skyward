@@ -13,6 +13,7 @@ class SpeedResult {
     this.downloadMbps,
     this.uploadMbps,
     this.latencyMs,
+    this.jitterMs,
     this.downloadBytes = 0,
     this.uploadBytes = 0,
   });
@@ -21,6 +22,9 @@ class SpeedResult {
   final double? downloadMbps;
   final double? uploadMbps;
   final int? latencyMs;
+
+  /// Variation between ping samples, in milliseconds. Lower is steadier.
+  final int? jitterMs;
   final int downloadBytes;
   final int uploadBytes;
 }
@@ -101,12 +105,13 @@ class SpeedTestService {
       final uploadMbps = endpoint.upload != null
           ? await _upload(onProgress)
           : null;
-      final latencyMs = endpoint.ping != null ? await _latency() : null;
+      final latency = endpoint.ping != null ? await _latency() : null;
       return SpeedResult(
         service: endpoint.name,
         downloadMbps: downloadMbps,
         uploadMbps: uploadMbps,
-        latencyMs: latencyMs,
+        latencyMs: latency?.$1,
+        jitterMs: latency?.$2,
         downloadBytes: endpoint.downloadBytes,
         uploadBytes: endpoint.upload != null ? endpoint.uploadBytes : 0,
       );
@@ -252,9 +257,12 @@ class SpeedTestService {
     return _mbps(sent, sw.elapsedMicroseconds);
   }
 
-  Future<int> _latency() async {
-    const samples = 3;
-    var total = 0;
+  /// Returns (average ping, jitter) in milliseconds. Jitter is the mean
+  /// absolute difference between consecutive samples, the usual network
+  /// measure of latency variation.
+  Future<(int, int)> _latency() async {
+    const samples = 8;
+    final times = <int>[];
     for (var i = 0; i < samples; i++) {
       final client = _trackedClient();
       final sw = Stopwatch()..start();
@@ -262,9 +270,16 @@ class SpeedTestService {
       final response = await request.close();
       await response.drain();
       sw.stop();
-      total += sw.elapsedMilliseconds;
+      times.add(sw.elapsedMilliseconds);
     }
-    return (total / samples).round();
+    if (times.isEmpty) return (0, 0);
+    final average = times.reduce((a, b) => a + b) / times.length;
+    var variation = 0;
+    for (var i = 1; i < times.length; i++) {
+      variation += (times[i] - times[i - 1]).abs();
+    }
+    final jitter = variation / (times.length - 1);
+    return (average.round(), jitter.round());
   }
 }
 
