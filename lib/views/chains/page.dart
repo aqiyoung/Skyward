@@ -214,7 +214,7 @@ class _ChainCard extends ConsumerWidget {
         message: TextSpan(
           text: zh ? '删除链路“${chain.name}”？' : 'Delete chain "${chain.name}"?',
         ),
-        title: TextSpan(text: zh ? '删除链路' : 'Delete chain'),
+        title: zh ? '删除链路' : 'Delete chain',
         confirmText: zh ? '删除' : 'Delete',
         destructive: true,
       );
