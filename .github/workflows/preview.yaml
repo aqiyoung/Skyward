@@ -679,17 +679,17 @@ jobs:
             echo
             echo "分支 ${REF} ｜ 包名 ${APPLICATION_ID}"
             echo "versionCode ${VERSION_CODE} ｜ Android arm64-v8a 单架构"
+            echo
+            apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
             if [ -n "${CHANGELOG}" ]; then
               echo
               echo "📝 本次更新"
               printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
             fi
             echo
-            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
-            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-            echo "⬇️ 点击下方直链下载安装包"
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
@@ -720,16 +720,16 @@ jobs:
           if [ "$sent" = 0 ]; then
             {
               echo "🧪 Skyward ${VERSION}（预览版）构建完成"
+              echo
+              apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+              echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
+              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
               if [ -n "${CHANGELOG}" ]; then
                 echo
                 echo "📝 本次更新"
                 printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
               fi
-              echo
-              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-              apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-              echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
-              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
             } > /tmp/text.txt
             curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
               --data-urlencode "chat_id=${chat_id}" \
