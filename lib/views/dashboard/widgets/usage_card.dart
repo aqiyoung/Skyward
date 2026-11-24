@@ -78,28 +78,33 @@ class _UsageCardState extends ConsumerState<UsageCard> {
           ),
           const SizedBox(height: 12),
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _open,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  figure,
-                  style: DashboardText.figure(context, AppTextStyle.title1),
-                ),
-                const SizedBox(height: 4),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      context.appLocalizations.today,
-                      style: DashboardText.label(context),
+                      figure,
+                      style: DashboardText.figure(context, AppTextStyle.title1),
                     ),
                     const Spacer(),
-                    GlyphIcon(
-                      AppGlyphs.chevronForward,
-                      size: 16,
-                      color: context.colorScheme.onSurfaceVariant,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: GlyphIcon(
+                        AppGlyphs.chevronForward,
+                        size: 20,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.appLocalizations.today,
+                  style: DashboardText.label(context),
                 ),
               ],
             ),
