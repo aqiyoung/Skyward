@@ -414,6 +414,7 @@ jobs:
             fi
             echo
             echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（setup.exe 也在附件里）"
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
           } > "$RUNNER_TEMP/body.txt"
           cat "$RUNNER_TEMP/body.txt"
@@ -460,6 +461,8 @@ jobs:
               echo
               echo "分支 \`${REF}\` ｜ Windows ${ARCH} ｜ 构建号 ${BASE_NUMBER}"
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              echo "📦 安装包：打开上面链接，点下方 Artifacts 下载"
+            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（setup.exe 也在附件里）"
               echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
               echo "⚠️ 附件推送失败，请从构建日志页下载。"
             } > "$RUNNER_TEMP/text.txt"

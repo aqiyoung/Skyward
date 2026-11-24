@@ -650,6 +650,7 @@ jobs:
             fi
             echo
             echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（APK 也在私聊附件里）"
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
             echo "⬇️ 安装包即本条消息附件"
             echo "（Dev 版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
@@ -683,6 +684,7 @@ jobs:
             {
               echo "🧪 Skyward ${VERSION}（Dev 版）构建完成，但附件推送失败。"
               echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "📦 安装包：打开上面链接，点下方 Artifacts 下载（APK 也在私聊附件里）"
               echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
               echo "请从构建日志页下载 APK。"
             } > /tmp/text.txt
