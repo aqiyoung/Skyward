@@ -72,7 +72,7 @@ permissions:
 env:
   FLUTTER_VERSION: '3.50.1'
   GO_VERSION: '1.27.4'
-  NDK_VERSION: r28c
+  NDK_VERSION: r30
 
 jobs:
   preview:
@@ -452,6 +452,9 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           APP_VERSION_NAME: ${{ steps.version.outputs.version }}
           APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          # NDK 30 headers reject unversioned target triples; bindgen needs the
+          # API level (merged with the sysroot args the Rust hook supplies).
+          BINDGEN_EXTRA_CLANG_ARGS: --target=aarch64-linux-android35
         run: dart setup.dart android --env ${{ inputs.env || 'pre' }} --arch arm64 -v
 
       - name: Name the artifact after our version
