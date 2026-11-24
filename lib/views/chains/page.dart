@@ -152,7 +152,7 @@ class _Node extends StatelessWidget {
 
   final String label;
   final String sub;
-  final IconData icon;
+  final Widget icon;
   final bool active;
 
   @override
@@ -168,7 +168,12 @@ class _Node extends StatelessWidget {
             color: scheme.surfaceContainerHighest,
             border: active ? Border.all(color: scheme.primary, width: 2) : null,
           ),
-          child: Icon(icon, color: active ? scheme.primary : scheme.onSurfaceVariant),
+          child: IconTheme(
+            data: IconThemeData(
+              color: active ? scheme.primary : scheme.onSurfaceVariant,
+            ),
+            child: icon,
+          ),
         ),
         const SizedBox(height: 6),
         Text(label, style: AppTextStyle.footnote.of(context)),

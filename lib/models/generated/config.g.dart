@@ -187,6 +187,7 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.memoryInfo: 'memoryInfo',
   DashboardWidget.trafficStats: 'trafficStats',
   DashboardWidget.appUsage: 'appUsage',
+  DashboardWidget.speedTest: 'speedTest',
 };
 
 _AccessControlProps _$AccessControlPropsFromJson(Map<String, dynamic> json) =>
