@@ -60,16 +60,6 @@ final speedProgressProvider = NotifierProvider<_SpeedProgress, double>(
   _SpeedProgress.new,
 );
 
-class _SelectedProvider extends Notifier<int> {
-  @override
-  int build() => 0;
-  void select(int index) => state = index;
-}
-
-final speedProviderProvider = NotifierProvider<_SelectedProvider, int>(
-  _SelectedProvider.new,
-);
-
 /// Live throughput per phase, so both readouts can animate while running.
 class _LiveSpeeds extends Notifier<({double down, double up})> {
   @override
@@ -82,54 +72,9 @@ class _LiveSpeeds extends Notifier<({double down, double up})> {
 final liveSpeedsProvider =
     NotifierProvider<_LiveSpeeds, ({double down, double up})>(_LiveSpeeds.new);
 
-/// Endpoints available to the picker: the built-in set plus a saved custom
-/// URL. The custom slot is kept even when empty so the picker can offer it.
-class _Endpoints extends Notifier<List<SpeedTestEndpoint>> {
-  static const _customKey = 'speed-test-custom-url';
-  String? customUrl;
-
-  @override
-  List<SpeedTestEndpoint> build() {
-    customUrl = null;
-    return speedTestEndpoints;
-  }
-
-  Future<void> load() async {
-    final saved = await Preferences().getString(_customKey);
-    if (saved != null && saved.trim().isNotEmpty) {
-      customUrl = saved;
-      state = [...speedTestEndpoints, customSpeedTestEndpoint(saved)];
-    }
-  }
-
-  Future<void> setCustom(String? url) async {
-    final trimmed = url?.trim() ?? '';
-    if (trimmed.isEmpty) {
-      await Preferences().setString(_customKey, '');
-      customUrl = null;
-      state = speedTestEndpoints;
-      return;
-    }
-    await Preferences().setString(_customKey, trimmed);
-    customUrl = trimmed;
-    state = [...speedTestEndpoints, customSpeedTestEndpoint(trimmed)];
-  }
-}
-
-final endpointsProvider = NotifierProvider<_Endpoints, List<SpeedTestEndpoint>>(
-  _Endpoints.new,
-);
-
 class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   SpeedTestService? _service;
-  int? _serviceIndex;
   int _runId = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => ref.read(endpointsProvider.notifier).load());
-  }
 
   @override
   void dispose() {
@@ -138,17 +83,10 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
   }
 
   SpeedTestService _serviceOf() {
-    final index = ref.read(speedProviderProvider);
-    if (_service == null || _serviceIndex != index) {
-      _service?.clientClose();
-      _serviceIndex = index;
-      _service = SpeedTestService(
-        findProxy: (uri) =>
-            SkywardHttpOverrides.findProxyForReader(ref.read, uri),
-        endpoint: ref.read(endpointsProvider)[index],
-      );
-    }
-    return _service!;
+    return _service ??= SpeedTestService(
+      findProxy: (uri) =>
+          SkywardHttpOverrides.findProxyForReader(ref.read, uri),
+    );
   }
 
   Future<void> _start() async {
@@ -197,72 +135,85 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
     final run = ref.watch(speedRunProvider);
     final phase = ref.watch(speedPhaseProvider);
     final live = ref.watch(liveSpeedsProvider);
-    final providerIndex = ref.watch(speedProviderProvider);
-    final endpoints = ref.watch(endpointsProvider);
     final cs = context.colorScheme;
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     final largeTitle =
         ViewScope.isMobileOf(context) && !context.isInCompactSheet;
     final statusBarTop = MediaQuery.paddingOf(context).top;
 
-    final endpoint = endpoints[providerIndex];
     final result = run.result;
     final running = run.state == _RunState.running;
     final down = _figure(live.down, result?.downloadMbps);
     final up = _figure(live.up, result?.uploadMbps);
+    // The gauge's arrow and color follow the value it shows: while running
+    // that is the live phase; once done it settles on the download result.
+    final gaugePhase = running
+        ? (phase ?? SpeedPhase.latency)
+        : SpeedPhase.download;
     final gaugeValue = switch (run.state) {
       _RunState.done => result?.downloadMbps ?? 0,
-      _RunState.running when phase == SpeedPhase.upload => live.up,
-      _RunState.running when phase == SpeedPhase.latency => 0.0,
+      _RunState.running when gaugePhase == SpeedPhase.upload => live.up,
+      _RunState.running when gaugePhase == SpeedPhase.latency => 0.0,
       _RunState.running => live.down,
       _ => 0.0,
     };
-    final gaugeColor = switch (phase) {
+    final gaugeColor = switch (gaugePhase) {
       SpeedPhase.upload => cs.tertiary,
       SpeedPhase.latency => cs.secondary,
       _ => cs.primary,
     };
 
-    final body = ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 20 + context.bottomInset),
-      children: [
-        _ProviderPicker(selected: providerIndex),
-        const SizedBox(height: 12),
-        _GaugeCard(
-          value: gaugeValue,
-          color: gaugeColor,
-          running: running,
-          phase: phase,
-          result: result,
-          endpoint: endpoint,
-          zh: zh,
-        ),
-        const SizedBox(height: 12),
-        _ReadoutRow(
-          down: down,
-          up: up,
-          downActive: running && phase == SpeedPhase.download,
-          upActive: running && phase == SpeedPhase.upload,
-          downBytes: result?.downloadBytes,
-          upBytes: result?.uploadBytes,
-          zh: zh,
-        ),
-        const SizedBox(height: 12),
-        _StatsStrip(result: result, endpoint: endpoint, zh: zh),
-        const SizedBox(height: 14),
-        _QualityIcons(result: result, zh: zh),
-        const SizedBox(height: 16),
-        _StartButton(state: run.state, onStart: _start, onStop: _stop, zh: zh),
-        if (run.error case final error?)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              '${context.appLocalizations.speedTestFailed}: $error',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: cs.error),
-            ),
+    final body = Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + context.bottomInset),
+      child: Column(
+        children: [
+          _GaugeCard(
+            value: gaugeValue,
+            color: gaugeColor,
+            running: running,
+            phase: gaugePhase,
+            done: run.state == _RunState.done,
+            result: result,
+            endpoint: speedTestCloudflare,
+            zh: zh,
           ),
-      ],
+          const SizedBox(height: 12),
+          _ReadoutRow(
+            down: down,
+            up: up,
+            downActive: running && phase == SpeedPhase.download,
+            upActive: running && phase == SpeedPhase.upload,
+            downBytes: result?.downloadBytes,
+            upBytes: result?.uploadBytes,
+            zh: zh,
+          ),
+          const SizedBox(height: 12),
+          _StatsStrip(result: result, zh: zh),
+          const SizedBox(height: 14),
+          _QualityIcons(result: result, zh: zh),
+          const Spacer(),
+          _StartButton(
+            state: run.state,
+            onStart: _start,
+            onStop: _stop,
+            zh: zh,
+          ),
+          SizedBox(
+            height: 30,
+            child: switch (run.error) {
+              final error? => Center(
+                child: Text(
+                  '${context.appLocalizations.speedTestFailed}: $error',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: cs.error, fontSize: 13),
+                ),
+              ),
+              null => null,
+            },
+          ),
+        ],
+      ),
     );
 
     return CommonScaffold(
@@ -295,6 +246,7 @@ class _GaugeCard extends StatelessWidget {
     required this.color,
     required this.running,
     required this.phase,
+    required this.done,
     required this.result,
     required this.endpoint,
     required this.zh,
@@ -304,6 +256,7 @@ class _GaugeCard extends StatelessWidget {
   final Color color;
   final bool running;
   final SpeedPhase? phase;
+  final bool done;
   final SpeedResult? result;
   final SpeedTestEndpoint endpoint;
   final bool zh;
@@ -337,6 +290,7 @@ class _GaugeCard extends StatelessWidget {
               color: color,
               running: running,
               phase: phase,
+              done: done,
               zh: zh,
             ),
             const SizedBox(height: 4),
@@ -454,6 +408,7 @@ class _Gauge extends StatelessWidget {
     required this.color,
     required this.running,
     required this.phase,
+    required this.done,
     required this.zh,
   });
 
@@ -461,6 +416,7 @@ class _Gauge extends StatelessWidget {
   final Color color;
   final bool running;
   final SpeedPhase? phase;
+  final bool done;
   final bool zh;
 
   @override
@@ -475,9 +431,11 @@ class _Gauge extends StatelessWidget {
             SpeedPhase.latency => context.appLocalizations.speedTestPinging,
             null => context.appLocalizations.speedTestTesting,
           }
+        : done
+        ? (zh ? '测试完成' : 'Done')
         : context.appLocalizations.speedTestReady;
     return SizedBox(
-      height: 232,
+      height: 208,
       child: CustomPaint(
         painter: _GaugePainter(
           fraction: _logFraction(value),
@@ -486,50 +444,45 @@ class _Gauge extends StatelessWidget {
           tick: cs.onSurfaceVariant,
           tickLabel: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (measuringLatency)
-                  Icon(Icons.network_ping_rounded, color: color, size: 40)
-                else
-                  Text(
-                    value > 0 ? value.toStringAsFixed(1) : '0.0',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontSize: 44,
-                      fontWeight: FontWeight.w300,
-                    ),
+        child: Align(
+          alignment: const Alignment(0, 0.45),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (measuringLatency)
+                Icon(Icons.network_ping_rounded, color: color, size: 40)
+              else
+                Text(
+                  value > 0 ? value.toStringAsFixed(1) : '0.0',
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w300,
                   ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!measuringLatency)
-                      Icon(
-                        phase == SpeedPhase.upload
-                            ? Icons.arrow_upward_rounded
-                            : Icons.arrow_downward_rounded,
-                        color: color,
-                        size: 14,
-                      ),
-                    Text(
-                      measuringLatency
-                          ? ' ms'
-                          : ' ${context.appLocalizations.speedTestMbps}',
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
                 ),
-                const SizedBox(height: 5),
-                Text(label, style: TextStyle(color: color, fontSize: 13)),
-              ],
-            ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!measuringLatency)
+                    Icon(
+                      phase == SpeedPhase.upload
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                      color: color,
+                      size: 14,
+                    ),
+                  Text(
+                    measuringLatency
+                        ? ' ms'
+                        : ' ${context.appLocalizations.speedTestMbps}',
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(label, style: TextStyle(color: color, fontSize: 13)),
+            ],
           ),
         ),
       ),
@@ -766,14 +719,9 @@ class _ReadoutCard extends StatelessWidget {
 /// server used and, once finished, how long the run took and how much data
 /// it moved.
 class _StatsStrip extends StatelessWidget {
-  const _StatsStrip({
-    required this.result,
-    required this.endpoint,
-    required this.zh,
-  });
+  const _StatsStrip({required this.result, required this.zh});
 
   final SpeedResult? result;
-  final SpeedTestEndpoint endpoint;
   final bool zh;
 
   @override
@@ -800,12 +748,15 @@ class _StatsStrip extends StatelessWidget {
               label: 'Jitter',
               value: result?.jitterMs == null ? '—' : '${result!.jitterMs} ms',
             ),
-            _StatItem(label: zh ? '服务器' : 'Server', value: endpoint.name),
             _StatItem(
-              label: zh ? '用时 / 流量' : 'Time / Data',
+              label: zh ? '用时' : 'Time',
               value: result == null
                   ? '—'
-                  : '${(result!.elapsedMs / 1000).toStringAsFixed(0)}s · ${_formatBytes(totalBytes)}',
+                  : '${(result!.elapsedMs / 1000).toStringAsFixed(0)}s',
+            ),
+            _StatItem(
+              label: zh ? '流量' : 'Data',
+              value: result == null ? '—' : _formatBytes(totalBytes),
             ),
           ],
         ),
@@ -989,114 +940,5 @@ class _StartButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _ProviderPicker extends ConsumerWidget {
-  const _ProviderPicker({required this.selected});
-  final int selected;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final endpoints = ref.watch(endpointsProvider);
-    final zh = Localizations.localeOf(context).languageCode == 'zh';
-    final cs = context.colorScheme;
-    return Row(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (var i = 0; i < endpoints.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(endpoints[i].name),
-                      selected: i == selected,
-                      shape: AppShape.full,
-                      side: BorderSide(
-                        color: i == selected ? cs.primary : cs.outlineVariant,
-                      ),
-                      onSelected: (_) {
-                        ref.read(speedProviderProvider.notifier).select(i);
-                        ref.read(speedRunProvider.notifier).idle();
-                        ref.read(liveSpeedsProvider.notifier).reset();
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        IconButton(
-          tooltip: zh ? '自定义服务器' : 'Custom server',
-          icon: const Icon(Icons.edit_rounded),
-          onPressed: () => _editCustom(context, ref),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _editCustom(BuildContext context, WidgetRef ref) async {
-    final zh = Localizations.localeOf(context).languageCode == 'zh';
-    final endpointsNotifier = ref.read(endpointsProvider.notifier);
-    final controller = TextEditingController(
-      text: endpointsNotifier.customUrl ?? '',
-    );
-    final saved = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(zh ? '自定义测速服务器' : 'Custom speed server'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              zh
-                  ? '填一个下载链接，用 {bytes} 占位表示大小，或用 bytes 查询参数。例如：\nhttps://speed.example.com/down?bytes={bytes}'
-                  : 'Enter a download URL. Use {bytes} as the size placeholder or a bytes query parameter.\ne.g. https://speed.example.com/down?bytes={bytes}',
-              style: TextStyle(
-                fontSize: 12,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'https://.../{bytes}',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(zh ? '取消' : 'Cancel'),
-          ),
-          if (endpointsNotifier.customUrl != null)
-            TextButton(
-              onPressed: () async {
-                await endpointsNotifier.setCustom(null);
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: Text(zh ? '清除' : 'Clear'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(zh ? '保存' : 'Save'),
-          ),
-        ],
-      ),
-    );
-    if (saved == null) return;
-    // The new endpoint is appended; select it.
-    await endpointsNotifier.setCustom(saved);
-    if (!context.mounted) return;
-    final updated = ref.read(endpointsProvider);
-    ref.read(speedProviderProvider.notifier).select(updated.length - 1);
-    ref.read(speedRunProvider.notifier).idle();
   }
 }

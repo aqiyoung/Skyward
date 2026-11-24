@@ -103,12 +103,9 @@ SpeedTestEndpoint customSpeedTestEndpoint(String url) {
   return SpeedTestEndpoint(name: 'Custom', download: build);
 }
 
-/// The providers offered in the page picker, in display order.
-final speedTestEndpoints = <SpeedTestEndpoint>[
-  speedTestCloudflare,
-  speedTestOvh,
-  speedTestHetzner,
-];
+/// The providers the speed test can use; only Cloudflare offers the full
+/// latency + download + upload set, so it is the only one offered.
+final speedTestEndpoints = <SpeedTestEndpoint>[speedTestCloudflare];
 
 /// Cumulative byte counter with timestamped samples, so a stage's score can
 /// be taken over its steady stretch instead of a whole-run average that
@@ -351,7 +348,7 @@ class SpeedTestService {
     var aborted = false;
     Object? firstError;
     var lastReportUs = 0;
-    const chunkSize = 256 * 1024;
+    const chunkSize = 64 * 1024;
     final chunk = Uint8List(chunkSize);
 
     void report() {
@@ -362,6 +359,17 @@ class SpeedTestService {
       final from = math.max(0, now - 1000000);
       onProgress(SpeedPhase.upload, meter.rateMbps(from, now));
     }
+
+    // flush() completes rarely under backpressure, so a timer reports the
+    // rate on a wider window between flushes.
+    final progressTimer = Timer.periodic(const Duration(milliseconds: 200), (
+      _,
+    ) {
+      if (onProgress == null) return;
+      final now = sw.elapsedMicroseconds;
+      final from = math.max(0, now - 2000000);
+      onProgress(SpeedPhase.upload, meter.rateMbps(from, now));
+    });
 
     Future<void> push() async {
       final client = _client();
@@ -400,6 +408,7 @@ class SpeedTestService {
       }
     });
     await Future.wait(List.generate(_uploadConnections, (_) => push()));
+    progressTimer.cancel();
     abort.cancel();
     sw.stop();
     meter.finish(sw.elapsedMicroseconds);
