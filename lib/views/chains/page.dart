@@ -59,8 +59,8 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
                   padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
                   child: Text(
                     zh
-                        ? '已启用的链路位于“🚀 节点选择”中普通服务器旁边。长按可调整顺序。'
-                        : 'Enabled chains appear beside regular servers in the proxy group. Long-press to reorder.',
+                        ? '已启用的链路位于“🚀 节点选择”中普通服务器旁边。长按链路可删除。'
+                        : 'Enabled chains appear beside regular servers in the proxy group. Long-press a chain to delete it.',
                     style: AppTextStyle.footnote.of(context),
                   ),
                 ),
@@ -209,6 +209,20 @@ class _ChainCard extends ConsumerWidget {
     final scheme = context.colorScheme;
     final entry = chain.hops.first;
     final exit = chain.hops.last;
+    Future<void> confirmDelete() async {
+      final confirmed = await dialogs.showMessage(
+        message: TextSpan(
+          text: zh ? '删除链路“${chain.name}”？' : 'Delete chain "${chain.name}"?',
+        ),
+        title: TextSpan(text: zh ? '删除链路' : 'Delete chain'),
+        confirmText: zh ? '删除' : 'Delete',
+        destructive: true,
+      );
+      if (confirmed == true) {
+        await ref.read(chainsProvider.notifier).remove(chain.id);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Card(
@@ -235,6 +249,7 @@ class _ChainCard extends ConsumerWidget {
             },
           ),
           onTap: () => showChainEditor(context, chain: chain),
+          onLongPress: confirmDelete,
         ),
       ),
     );
