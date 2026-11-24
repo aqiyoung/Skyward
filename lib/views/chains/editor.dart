@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -155,8 +156,8 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
   }
 
   String _captionFor(int slot) => slot == 1
-      ? context.cEntryIsTheServerYourDeviceConnectsTo
-      : context.cExitIsTheServerTheWebsiteSees;
+      ? context.cEntryCaption
+      : context.cExitCaption;
 
   void _pickHop(String name) {
     setState(() {
