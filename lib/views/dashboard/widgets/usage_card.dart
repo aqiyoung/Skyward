@@ -91,13 +91,10 @@ class _UsageCardState extends ConsumerState<UsageCard> {
                       style: DashboardText.figure(context, AppTextStyle.title1),
                     ),
                     const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: GlyphIcon(
-                        AppGlyphs.chevronForward,
-                        size: 20,
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                    GlyphIcon(
+                      AppGlyphs.chevronForward,
+                      size: 20,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
