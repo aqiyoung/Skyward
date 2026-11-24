@@ -50,9 +50,11 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
     final service = _service ??= SpeedTestService(
       findProxy: (uri) =>
           SkywardHttpOverrides.findProxyForReader(ref.read, uri),
+      stageDuration: const Duration(seconds: 6),
     );
     try {
       final result = await service.run(
+        phases: const {SpeedPhase.download},
         onProgress: (phase, mbps) {
           if (!mounted) return;
           setState(() {
@@ -141,10 +143,7 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
                         color: scheme.onSurface,
                       ),
                     ),
-                    Text(
-                      caption,
-                      style: DashboardText.label(context),
-                    ),
+                    Text(caption, style: DashboardText.label(context)),
                   ],
                 ),
               ),
@@ -160,9 +159,8 @@ class _SpeedTestCardState extends ConsumerState<SpeedTestCard> {
                   _running
                       ? appLocalizations.speedTestStop
                       : appLocalizations.speedTestStart,
-                  style: DashboardText.label(
-                    context,
-                  ).copyWith(color: scheme.onPrimary),
+                  style: DashboardText.label(context)
+                      .copyWith(color: scheme.onPrimary),
                 ),
               ),
             ],
