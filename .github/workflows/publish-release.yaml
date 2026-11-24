@@ -45,7 +45,7 @@ jobs:
     # TELEGRAM_API_HASH secrets.
     services:
       telegram-bot-api:
-        image: aiogram/telegram-bot-api:latest
+        image: aiogram/telegram-bot-api:latest@sha256:e71b78c32ac7d6a56a127f8bb432aaa9cb0055fda37c3ef79d2b1b0723eadf70
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
