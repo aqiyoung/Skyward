@@ -481,8 +481,8 @@ func TestLoadSetupConfigMaterializesChainsIntoThePlainConfig(t *testing.T) {
 
 	load, err := loadSetupConfig(params)
 
-	if err != nil || load.Proxies["c"] == nil {
-		t.Errorf("loadSetupConfig = %v, chain group = %v, reports = %+v", err, load.Proxies["c"], handleGetChainReport())
+	if err != nil || load.cfg.Proxies["c"] == nil {
+		t.Errorf("loadSetupConfig = %v, chain group = %v, reports = %+v", err, load.cfg.Proxies["c"], handleGetChainReport())
 		written, _ := os.ReadFile(configPath)
 		t.Logf("written:\n%s", written)
 	}
@@ -526,7 +526,7 @@ func TestLoadSetupConfigMaterializesChainsIntoABase(t *testing.T) {
 
 	load, err := loadSetupConfig(params)
 
-	if err != nil || load.Proxies["c"] == nil || load.Proxies["c ⟶ b"] == nil {
+	if err != nil || load.cfg.Proxies["c"] == nil || load.cfg.Proxies["c ⟶ b"] == nil {
 		t.Fatalf("loadSetupConfig = %v", err)
 	}
 	recordChains(nil, nil)
