@@ -274,6 +274,14 @@ class CommonAction extends _$CommonAction {
     required bool automatic,
   }) async {
     final updater = detectDesktopUpdater();
+    // A hands-free desktop replacement exits the app, so only do it while the
+    // reader has been away. The manual path happens on their explicit tap.
+    if (automatic) {
+      final idle = updater?.systemIdle();
+      if (updater == null || idle == null || idle < const Duration(minutes: 15)) {
+        return;
+      }
+    }
     final tag = release['tag_name'] as String?;
     final asset = updater?.selectAsset(release['assets'], tag ?? '');
     if (updater == null || asset == null || asset.sha256 == null) {
