@@ -8,15 +8,23 @@ class ProfilesAction extends _$ProfilesAction {
   void build() {}
 
   void updateCurrentSelectedMap(String groupName, String proxyName) {
+    mergeCurrentSelectedMap({groupName: proxyName});
+  }
+
+  /// Saves several picks as one profile write.
+  void mergeCurrentSelectedMap(Map<String, String> picks) {
     final currentProfile = ref.read(currentProfileProvider);
-    if (currentProfile != null &&
-        currentProfile.selectedMap[groupName] != proxyName) {
-      final selectedMap = Map<String, String>.from(currentProfile.selectedMap)
-        ..[groupName] = proxyName;
-      ref
-          .read(profilesProvider.notifier)
-          .put(currentProfile.copyWith(selectedMap: selectedMap));
+    if (currentProfile == null ||
+        picks.entries.every(
+          (pick) => currentProfile.selectedMap[pick.key] == pick.value,
+        )) {
+      return;
     }
+    final selectedMap = Map<String, String>.from(currentProfile.selectedMap)
+      ..addAll(picks);
+    ref
+        .read(profilesProvider.notifier)
+        .put(currentProfile.copyWith(selectedMap: selectedMap));
   }
 
   Future<void> deleteProfile(int id) async {

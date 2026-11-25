@@ -256,14 +256,18 @@ const _retiredDashboardWidgets = {
 /// The speed-test card is off-home while it is being polished, and app usage
 /// is now a tab of the traffic-stats card rather than a card of its own. Both
 /// are dropped here so saved boards cannot bring them back.
-List<DashboardWidget> dashboardWidgetsFromJson(List<dynamic>? dashboardWidgets) {
+List<DashboardWidget> dashboardWidgetsFromJson(
+  List<dynamic>? dashboardWidgets,
+) {
   final parsed = _dashboardWidgetsFromJson(dashboardWidgets);
   // Canonicalise the legacy second stats card before de-duplicating: checking
   // for trafficStats first made the old de-dup depend on save order, so a board
   // that listed appUsage first kept two identical cards.
   final canonical = parsed
       .where((c) => c != DashboardWidget.speedTest)
-      .map((c) => c == DashboardWidget.appUsage ? DashboardWidget.trafficStats : c);
+      .map(
+        (c) => c == DashboardWidget.appUsage ? DashboardWidget.trafficStats : c,
+      );
   final seen = <DashboardWidget>{};
   return canonical.where(seen.add).toList();
 }
@@ -727,6 +731,9 @@ abstract class Config with _$Config {
     WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default([]) List<String> excludeSSIDs,
+
+    /// The user's own routing profiles, shared by every subscription.
+    @Default({}) Map<String, RcxUserProfile> rcxProfiles,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) =>

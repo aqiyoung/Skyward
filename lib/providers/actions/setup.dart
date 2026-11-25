@@ -83,6 +83,7 @@ class SetupAction extends _$SetupAction {
       selectedMap: selectedMap,
       testUrl: appSetting.testUrl,
       skipCertVerify: !appSetting.checkCertificate,
+      rcx: ref.read(currentRoutingLayerProvider),
     );
   }
 
@@ -389,7 +390,13 @@ class SetupAction extends _$SetupAction {
     }, args: [silence]);
   }
 
+  /// A mode the user picks wins over a scenario's until they pick Auto.
   void changeMode(Mode mode) {
+    if (ref.read(rcxStatusStateProvider)?.autoMode ?? false) {
+      unawaited(
+        ref.read(rcxRoutingActionProvider.notifier).setManualMode(true),
+      );
+    }
     ref
         .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(mode: mode));
@@ -763,7 +770,18 @@ class SetupAction extends _$SetupAction {
       return getProfile(setupState: state, patchConfig: realPatchConfig);
     }, title: 'build profile');
     final profileFailed = realProfile == null;
-    final setupParams = _setupParams.copyWith(base: realProfile?.base);
+    // The layer sent to the Core is the one built for the profile actually
+    // being applied, not merely the one on screen when the task started.
+    RcxUserLayer appliedRouting() => routingLayerFor(
+      profile == null
+          ? null
+          : ref.read(profilesProvider).getProfile(profile.id) ?? profile,
+      ref.read(rcxProfilesProvider),
+    );
+    final setupParams = _setupParams.copyWith(
+      rcx: appliedRouting(),
+      base: realProfile?.base,
+    );
     final inputs = switch (setupState) {
       final state? when !profileFailed => (
         state,

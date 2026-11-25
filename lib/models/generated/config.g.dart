@@ -489,6 +489,12 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  rcxProfiles:
+      (json['rcxProfiles'] as Map<String, dynamic>?)?.map(
+        (k, e) =>
+            MapEntry(k, RcxUserProfile.fromJson(e as Map<String, dynamic>)),
+      ) ??
+      const {},
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -503,4 +509,5 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'windowGeometry': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
   'excludeSSIDs': instance.excludeSSIDs,
+  'rcxProfiles': instance.rcxProfiles,
 };
