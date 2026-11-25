@@ -283,9 +283,9 @@ jobs:
             # kept because the merge commit is often the only one carrying the
             # trailer; duplicates are folded after, not filtered before.
             entries=$(git log --reverse \
-              --format='%h%x09%(trailers:key=Changelog-Zh,valueonly)' \
+              --format='%h%x09%(trailers:key=Changelog-Zh,valueonly,separator=%x09)' \
               "$previous..$commit" 2>/dev/null \
-              | awk -F'\t' 'NF > 1 && $2 != "" { print "- " $2 }' \
+              | awk -F'\t' 'NF > 1 { for (i = 2; i <= NF; i++) if ($i != "") print "- " $i }' \
               | awk '!seen[$0]++' \
               | tac | awk 'NR<=8' || true)
           fi

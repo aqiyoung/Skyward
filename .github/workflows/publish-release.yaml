@@ -103,9 +103,9 @@ jobs:
               echo "::notice::the compare API carried no Changelog-Zh trailer; trying the local range"
               git fetch --tags --quiet || true
               entries=$(git log --no-merges --reverse \
-                --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+                --format='%h%x09%(trailers:key=Changelog-Zh,valueonly,separator=%x09)' \
                 "$previous..$commit" 2>/dev/null \
-                | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+                | awk -F'\t' 'NF > 1 { for (i = 2; i <= NF; i++) if ($i != "") print "- " $i }' \
                 | tac | awk 'NR<=40' || true)
             fi
           else
