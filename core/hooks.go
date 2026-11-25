@@ -1,7 +1,9 @@
 package core
 
 import (
+	"context"
 	"core/tun"
+	"errors"
 	"runtime"
 	"sync"
 	"time"
@@ -17,6 +19,27 @@ import (
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16, timedOut bool) {
 		sendMessage(DelayMessage, &Delay{Url: url, Name: name, Value: delayValue(delay, timedOut)})
+		// Feed RCX's delay learning from the same URL test the app shows. Its
+		// own probes are excluded so they are not counted twice.
+		if e := rcxIfReady(); e != nil && url == currentTestURL() && !rcxOwnProbes.owns(name) {
+			e.NoteURLTest(name, int(delay))
+		}
+	}
+	adapter.DialResultHook = func(name string, _ string, err error, _ time.Duration) {
+		if err == nil || errors.Is(err, context.Canceled) {
+			return
+		}
+		if e := rcxIfReady(); e != nil {
+			e.NoteDial(name, true)
+		}
+	}
+	// The whole chain is credited so an opaque nested group gets the signal.
+	statistic.DefaultFirstProgressNotify = func(c statistic.Tracker) {
+		if e := rcxIfReady(); e != nil {
+			for _, name := range c.Info().Chain {
+				e.NoteTraffic(name)
+			}
+		}
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
@@ -40,6 +63,7 @@ func init() {
 		}
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
+		requestRcxTopologyRefresh()
 		scheduleReclaimOwnership()
 		scheduleLoadMemoryRelease()
 		sendMessage(LoadedMessage, providerName)

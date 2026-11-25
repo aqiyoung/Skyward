@@ -171,7 +171,15 @@ func runningConfigPath() string {
 	return filepath.Join(constant.Path.HomeDir(), "config.yaml")
 }
 
-func loadSetupConfig(params *SetupParams) (*config.Config, error) {
+// setupLoad is a config together with the automatic-routing state it was
+// built with, so applyConfig can hand both to the RCX engine.
+type setupLoad struct {
+	cfg          *config.Config
+	subscription rcx.SubscriptionLayer
+	routes       rcx.AppliedRoutes
+}
+
+func loadSetupConfig(params *SetupParams) (setupLoad, error) {
 	path := runningConfigPath()
 	// Chains are materialized into the config's YAML tree before it is parsed;
 	// the generated groups are written to disk so getChainReport can read them.
@@ -182,10 +190,59 @@ func loadSetupConfig(params *SetupParams) (*config.Config, error) {
 			applyChains(root, params.Chains, params.MainGroupHint)
 		}
 	}
+	var buf []byte
+	var err error
 	if params.Base != nil {
-		return loadConfigWithBase(params.Base, path, prepare)
+		cfg, baseErr := loadConfigWithBase(params.Base, path, prepare)
+		if baseErr != nil {
+			return setupLoad{}, baseErr
+		}
+		// Base profiles are parsed as a ready config; there is no raw tree to
+		// inject scenario routes into.
+		return setupLoad{cfg: withPlatformLimits(cfg)}, nil
 	}
-	return loadConfigPrepared(path, prepare)
+	buf, err = os.ReadFile(path)
+	if err != nil {
+		return setupLoad{}, err
+	}
+	if prepare != nil {
+		var document yaml.Node
+		if err := yaml.Unmarshal(buf, &document); err != nil {
+			return setupLoad{}, err
+		}
+		root, err := documentMapping(&document)
+		if err != nil {
+			return setupLoad{}, err
+		}
+		prepare(root)
+		wrapped := &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{root}}
+		if err := writeConfigDocument(path, wrapped); err != nil {
+			return setupLoad{}, err
+		}
+		if buf, err = os.ReadFile(path); err != nil {
+			return setupLoad{}, err
+		}
+	}
+	raw, err := unmarshalRawConfig(buf)
+	if err != nil {
+		return setupLoad{}, err
+	}
+	load := setupLoad{subscription: rcxReadSubscription(path)}
+	user := rcxCurrentUser()
+	if params.Rcx != nil {
+		user = *params.Rcx
+	}
+	routes, key := rcx.ScenarioRoutes(load.subscription, user)
+	load.cfg, load.routes, err = parseRouted(raw, routes, key)
+	if err != nil {
+		// A second parse with the counted routes marks them applied so the
+		// engine does not retry a config that cannot be built.
+		load = setupLoad{routes: rcx.AppliedRoutes{Applied: true, Key: key}}
+	}
+	if load.cfg != nil {
+		load.cfg = withPlatformLimits(load.cfg)
+	}
+	return load, err
 }
 
 func applyConfig(params *SetupParams) error {
@@ -193,8 +250,10 @@ func applyConfig(params *SetupParams) error {
 	configMu.Lock()
 	defer configMu.Unlock()
 
+	params = withLatestRoutingPolicy(params)
 	setTestURL(params.TestURL)
-	cfg, err := loadSetupConfig(params)
+	load, err := loadSetupConfig(params)
+	cfg := load.cfg
 	if err != nil {
 		// The fallback is what keeps the listeners serving while the host
 		// reports the error, but it applies a config with no proxies in it.
@@ -212,10 +271,20 @@ func applyConfig(params *SetupParams) error {
 		cfg = fallback
 	}
 
+	user := rcxCurrentUser()
+	if params.Rcx != nil {
+		user = *params.Rcx
+	}
+	appliedRCXProfileScope = user.ProfileScope
 	currentConfig = cfg
 	hub.ApplyConfig(cfg)
+	tunnel.SetMode(rcxSetUserMode(cfg.General.Mode))
 	patchSelectGroup(params.SelectedMap)
 	bumpRouteEpoch()
+	rcxApplyConfig(params.Rcx, load.subscription, load.routes)
+	if params.Rcx != nil && err == nil {
+		latestRCXPolicyCall = max(latestRCXPolicyCall, params.callSequence)
+	}
 	updateListeners(cfg)
 	reconcileGeoUpdater()
 	scheduleLoadMemoryRelease()
@@ -253,7 +322,7 @@ func updateConfig(params *UpdateParams) error {
 	if params.Mode != nil {
 		routeChanged = routeChanged || general.Mode != *params.Mode
 		general.Mode = *params.Mode
-		tunnel.SetMode(general.Mode)
+		tunnel.SetMode(rcxSetUserMode(general.Mode))
 	}
 	if params.LogLevel != nil {
 		general.LogLevel = *params.LogLevel
