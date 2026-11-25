@@ -50,22 +50,22 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
     final chains = ref.watch(chainsProvider);
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     void create() => showChainEditor(context);
-    return CommonScaffold(
-      title: zh ? '链路' : 'Chains',
-      primaryAction: IconButtonData(
-        glyph: AppGlyphs.add,
-        tooltip: zh ? '新建链路' : 'New chain',
-        onPressed: create,
+    // Keep the plain Scaffold/AppBar here: nesting a ListView inside
+    // CommonScaffold let its first card scroll up behind the transparent bar.
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(zh ? '链路' : 'Chains'),
+        actions: [
+          IconButton(
+            icon: const GlyphIcon(AppGlyphs.add),
+            onPressed: create,
+          ),
+        ],
       ),
       body: chains.isEmpty
           ? _Empty(onCreate: create, zh: zh)
           : ListView(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                0,
-                16,
-                16 + context.bottomInset,
-              ),
+              padding: const EdgeInsets.all(16),
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8, left: 4),
