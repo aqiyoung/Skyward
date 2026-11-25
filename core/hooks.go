@@ -1,9 +1,7 @@
 package core
 
 import (
-	"context"
 	"core/tun"
-	"errors"
 	"runtime"
 	"sync"
 	"time"
@@ -25,22 +23,10 @@ func init() {
 			e.NoteURLTest(name, int(delay))
 		}
 	}
-	adapter.DialResultHook = func(name string, _ string, err error, _ time.Duration) {
-		if err == nil || errors.Is(err, context.Canceled) {
-			return
-		}
-		if e := rcxIfReady(); e != nil {
-			e.NoteDial(name, true)
-		}
-	}
-	// The whole chain is credited so an opaque nested group gets the signal.
-	statistic.DefaultFirstProgressNotify = func(c statistic.Tracker) {
-		if e := rcxIfReady(); e != nil {
-			for _, name := range c.Info().Chain {
-				e.NoteTraffic(name)
-			}
-		}
-	}
+	// This fork's mihomo has no DialResultHook or DefaultFirstProgressNotify,
+	// so RCX does not get dial-failure and traffic signals here. Its delay
+	// learning still works through UrlTestHook below; the engine treats the
+	// missing signals as simply unobserved.
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
 		if runtime.GOOS == "android" {

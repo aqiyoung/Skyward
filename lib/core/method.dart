@@ -57,6 +57,14 @@ enum CoreMethod {
   watchRoute,
   getChainReport,
   inspectChain,
+  rcxSetPolicy,
+  rcxStatus,
+  rcxExplain,
+  rcxJournal,
+  rcxAction,
+  rcxHints,
+  rcxProfiles,
+  rcxStudio,
 }
 
 class CoreMethodCall {

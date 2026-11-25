@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"core/rcx"
+
 	"go.yaml.in/yaml/v3"
 
 	"github.com/metacubex/mihomo/adapter"
