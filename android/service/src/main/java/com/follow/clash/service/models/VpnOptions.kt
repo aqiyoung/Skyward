@@ -28,6 +28,10 @@ data class VpnOptions(
     val congestionController: String? = null,
 )
 
+val VpnOptions.shouldAllowBypass: Boolean
+    get() = allowBypass &&
+        (!accessControlProps.enable || accessControlProps.mode != AccessControlMode.ACCEPT_SELECTED)
+
 private const val DEFAULT_TUN_MTU = 9000
 
 // establish() rejects an MTU above 65535, and below 1280 the kernel drops the

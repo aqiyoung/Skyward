@@ -170,3 +170,67 @@ class TunOptionsTest {
         assertEquals("", json["congestion-controller"].asString)
     }
 }
+
+private fun optionsWithAccessControl(
+    enabled: Boolean,
+    mode: AccessControlMode,
+    allowBypass: Boolean,
+) = optionsWithRoutes(emptyList()).copy(
+    accessControlProps = AccessControlProps(
+        enable = enabled,
+        mode = mode,
+        acceptList = listOf("com.example.selected"),
+        rejectList = emptyList(),
+    ),
+    allowBypass = allowBypass,
+)
+
+class VpnBypassPolicyTest {
+    @Test
+    fun `whitelist does not let selected apps bypass the VPN`() {
+        assertEquals(
+            false,
+            optionsWithAccessControl(
+                enabled = true,
+                mode = AccessControlMode.ACCEPT_SELECTED,
+                allowBypass = true,
+            ).shouldAllowBypass,
+        )
+    }
+
+    @Test
+    fun `blacklist mode honors the bypass setting`() {
+        assertEquals(
+            true,
+            optionsWithAccessControl(
+                enabled = true,
+                mode = AccessControlMode.REJECT_SELECTED,
+                allowBypass = true,
+            ).shouldAllowBypass,
+        )
+    }
+
+    @Test
+    fun `disabled app filtering honors the bypass setting`() {
+        assertEquals(
+            true,
+            optionsWithAccessControl(
+                enabled = false,
+                mode = AccessControlMode.ACCEPT_SELECTED,
+                allowBypass = true,
+            ).shouldAllowBypass,
+        )
+    }
+
+    @Test
+    fun `the bypass setting remains respected when switched off`() {
+        assertEquals(
+            false,
+            optionsWithAccessControl(
+                enabled = true,
+                mode = AccessControlMode.REJECT_SELECTED,
+                allowBypass = false,
+            ).shouldAllowBypass,
+        )
+    }
+}

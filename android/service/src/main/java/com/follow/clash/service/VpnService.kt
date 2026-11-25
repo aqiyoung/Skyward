@@ -17,6 +17,7 @@ import com.follow.clash.service.models.CIDR
 import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
+import com.follow.clash.service.models.shouldAllowBypass
 import com.follow.clash.service.models.toCIDR
 import com.follow.clash.service.models.tunMtu
 import com.follow.clash.service.models.tunOptions
@@ -135,7 +136,7 @@ class VpnService : SystemVpnService(), ManagedService {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setMetered(false)
             }
-            if (options.allowBypass) {
+            if (options.shouldAllowBypass) {
                 allowBypass()
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && options.systemProxy) {
