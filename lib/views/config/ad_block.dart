@@ -24,7 +24,7 @@ class AdBlockView extends ConsumerWidget {
       appSettingProvider.select((state) => state.adBlock),
     );
     final zh = Localizations.localeOf(context).languageCode == 'zh';
-    final hits = ref.watch(adBlockHitsProvider);
+    final hits = ref.watch(adBlockHitListProvider);
     return BaseScaffold(
       rowSeparators: false,
       title: appLocalizations.rulePresetAdBlock,

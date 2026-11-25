@@ -46,7 +46,7 @@ class _UsageCardState extends ConsumerState<UsageCard> {
             ? '—'
             : (total.totalUpload + total.totalDownload).traffic.show;
       case _UsageTab.blocked:
-        final blocked = ref.watch(adBlockHitsProvider).value;
+        final blocked = ref.watch(adBlockHitListProvider).value;
         if (blocked == null) return '—';
         return '${blocked.fold<int>(0, (sum, hit) => sum + hit.hits)}';
     }
@@ -75,7 +75,7 @@ class _UsageCardState extends ConsumerState<UsageCard> {
     final caption = switch (_tab) {
       _UsageTab.traffic || _UsageTab.app => context.appLocalizations.today,
       _UsageTab.blocked => () {
-        final blocked = ref.watch(adBlockHitsProvider).value;
+        final blocked = ref.watch(adBlockHitListProvider).value;
         return blocked == null
             ? (zh ? '近 7 天' : 'Last 7 days')
             : (zh

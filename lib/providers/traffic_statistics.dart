@@ -22,7 +22,8 @@ Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
 /// Domains blocked by the ad-block module in the last seven days, read from
 /// the same native history the traffic card uses. The sampler below keeps it
 /// fresh, so the dashboard card never shows a stale count.
-final adBlockHitsProvider = FutureProvider<List<AdBlockHit>>((ref) async {
+@Riverpod(keepAlive: true)
+Future<List<AdBlockHit>> adBlockHitList(Ref ref) async {
   ref.watch(trafficSamplerProvider);
   final now = DateTime.now();
   final rows = await database.nativeTrafficDao.between(
@@ -30,7 +31,7 @@ final adBlockHitsProvider = FutureProvider<List<AdBlockHit>>((ref) async {
     now,
   );
   return adBlockHits(rows);
-});
+}
 
 @Riverpod(keepAlive: true)
 bool nativeTrafficHistoryEnabled(Ref ref) => system.isAndroid;
@@ -161,7 +162,7 @@ class TrafficSampler extends _$TrafficSampler {
     if (changed && ref.mounted) {
       ref.invalidate(trafficStatisticsProvider);
       ref.invalidate(appUsageProvider);
-      ref.invalidate(adBlockHitsProvider);
+      ref.invalidate(adBlockHitListProvider);
     }
   }
 
@@ -182,7 +183,7 @@ class TrafficSampler extends _$TrafficSampler {
       if (rows.isNotEmpty && ref.mounted) {
         ref.invalidate(trafficStatisticsProvider);
         ref.invalidate(appUsageProvider);
-        ref.invalidate(adBlockHitsProvider);
+        ref.invalidate(adBlockHitListProvider);
       }
     } catch (error) {
       commonPrint.log(

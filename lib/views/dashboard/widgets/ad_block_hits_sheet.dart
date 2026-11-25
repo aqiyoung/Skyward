@@ -15,7 +15,7 @@ class AdBlockHitsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final zh = Localizations.localeOf(context).languageCode == 'zh';
-    final hits = ref.watch(adBlockHitsProvider);
+    final hits = ref.watch(adBlockHitListProvider);
     final unit = context.appLocalizations.hitsUnit;
     return CommonScaffold(
       title: zh ? '广告拦截 · 近 7 天' : 'Blocked ads · last 7 days',
