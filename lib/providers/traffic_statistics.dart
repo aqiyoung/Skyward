@@ -162,7 +162,9 @@ class TrafficSampler extends _$TrafficSampler {
     if (changed && ref.mounted) {
       ref.invalidate(trafficStatisticsProvider);
       ref.invalidate(appUsageProvider);
-      ref.invalidate(adBlockHitListProvider);
+      // adBlockHitListProvider reads nativeTrafficDao, which only _importNative
+      // writes. Invalidating it here re-queries seven days of history every
+      // five seconds for no new data -- a visible stutter on the UI isolate.
     }
   }
 

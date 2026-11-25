@@ -469,6 +469,28 @@ class _ReadyBody extends StatelessWidget {
               title: Text(context.cName),
               dialogTitle: context.cName,
               value: name,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 170),
+                    child: EmojiText(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.subheadline
+                          .of(context)
+                          .copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GlyphIcon(
+                    AppGlyphs.chevronForward,
+                    size: 18,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
               onChanged: onName,
             ),
             ListItem.toggle(

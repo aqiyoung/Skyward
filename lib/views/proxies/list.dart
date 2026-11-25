@@ -38,10 +38,20 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   int _groupColumns = 1;
   double _gap = 0;
 
+  /// Chain reports are shared by every group band; loading them once here
+  /// keeps each group sliver from calling the core for the same data.
+  List<ChainReport> _chainReports = const [];
+
   @override
   void initState() {
     super.initState();
     _controller = sheetScrollController(context);
+    unawaited(_loadChainReports());
+  }
+
+  Future<void> _loadChainReports() async {
+    final reports = await ref.read(coreHandlerProvider).getChainReport();
+    if (mounted) setState(() => _chainReports = reports);
   }
 
   @override
@@ -215,6 +225,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 columns: columns,
                 cardType: cardType,
                 gap: gap,
+                reports: _chainReports,
                 onChange: _handleChange,
                 onScrollToSelected: _scrollToGroupSelected,
               );
@@ -297,6 +308,7 @@ class _GroupSliver extends ConsumerStatefulWidget {
     required this.columns,
     required this.cardType,
     required this.gap,
+    required this.reports,
     required this.onChange,
     required this.onScrollToSelected,
   });
@@ -305,6 +317,7 @@ class _GroupSliver extends ConsumerStatefulWidget {
   final int columns;
   final ProxyCardType cardType;
   final double gap;
+  final List<ChainReport> reports;
   final void Function(String groupName) onChange;
   final void Function(String groupName) onScrollToSelected;
 
@@ -332,17 +345,10 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     return chains.where((c) => c.enabled && names.contains(c.name)).toList();
   }
 
-  /// Core reports carry the chain's status and issues; refresh them whenever
-  /// the band is read so the warning mark follows the applied config.
-  List<ChainReport> _reports = const [];
-
-  Future<void> _loadReports() async {
-    final reports = await ref.read(coreHandlerProvider).getChainReport();
-    if (mounted) setState(() => _reports = reports);
-  }
-
+  /// Reports are loaded once by the parent view and passed down; each group
+  /// used to call the core on its own, which meant one round trip per group.
   ChainReport? _reportOf(int id) {
-    for (final report in _reports) {
+    for (final report in widget.reports) {
       if (report.id == id) return report;
     }
     return null;
@@ -357,7 +363,6 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   @override
   void initState() {
     super.initState();
-    unawaited(_loadReports());
     _controller.addStatusListener((_) => setState(() {}));
     ref.listenManual(
       unfoldSetProvider.select((state) => state.contains(widget.group.name)),
