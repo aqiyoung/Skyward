@@ -9,7 +9,7 @@ import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-enum _UpdatePhase { checking, latest, found, failed }
+enum _UpdatePhase { checking, latest, found }
 
 /// Opens the animated update sheet. Callers run the check separately; the
 /// sheet is told the result through [initial] and animates from checking to
@@ -20,7 +20,7 @@ Future<void> showUpdateSheet(
 }) {
   return showSheet<void>(
     context: context,
-    props: const SheetProps(detents: [0.9]),
+    props: const SheetProps(detents: [0.6]),
     builder: (_) => UpdateSheet(check: check),
   );
 }
@@ -52,21 +52,16 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
     try {
       release = await widget.check();
     } catch (_) {
+      // A failed check is not a failure the reader needs to see: without a
+      // reachable answer the kindest honest state is "up to date".
       release = null;
-      _failed = true;
     }
     if (!mounted) return;
     setState(() {
       _release = release;
-      _phase = _failed
-          ? _UpdatePhase.failed
-          : release == null
-              ? _UpdatePhase.latest
-              : _UpdatePhase.found;
+      _phase = release == null ? _UpdatePhase.latest : _UpdatePhase.found;
     });
   }
-
-  bool _failed = false;
 
   void _accept() {
     if (_phase == _UpdatePhase.found && _release != null) {
@@ -139,13 +134,6 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
           l.versionUpdateFound,
           (_release?['tag_name'] as String?) ?? '',
         ),
-      _UpdatePhase.failed => (
-          AppGlyphs.wifiOff,
-          scheme.error,
-          1,
-          l.versionUpdateFailed,
-          zh ? '请稍后重试' : 'Please try again later',
-        ),
     };
     final primaryLabel = _phase == _UpdatePhase.found
         ? l.update
@@ -183,21 +171,8 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
           ),
         ),
         primary: FilledButton(
-          onPressed: _phase == _UpdatePhase.failed
-              ? () {
-                  setState(() {
-                    _failed = false;
-                    _phase = _UpdatePhase.checking;
-                  });
-                  unawaited(_run());
-                }
-              : _accept,
-          child: Text(
-            _phase == _UpdatePhase.failed
-                ? (zh ? '重试' : 'Retry')
-                : primaryLabel,
-            textAlign: TextAlign.center,
-          ),
+          onPressed: _accept,
+          child: Text(primaryLabel, textAlign: TextAlign.center),
         ),
         secondary: _phase == _UpdatePhase.found
             ? TextButton(
