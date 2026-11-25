@@ -324,6 +324,13 @@ void main() {
       );
       expect(releaseVersionOf('preview-2090029901'), '1.0.0.2090029901');
     });
+
+    test('rebuilds a dev version from its name', () {
+      expect(
+        releaseVersionOf('dev-win-32701', 'Skyward 1.0.1.01（Windows Dev 版）'),
+        '1.0.1.01',
+      );
+    });
   });
 
   group('newestOfferableRelease', () {
@@ -427,6 +434,54 @@ void main() {
           nextStable,
         ], installedVersion: '1.2.0.23'),
         nextStable,
+      );
+    });
+
+    test(
+      'a newer Android preview wins even when dev releases share the list',
+      () {
+        // The releases endpoint is one list for every platform. A dev tag is
+        // not a version; it used to make int.parse throw here and silence the
+        // whole check before the newer preview was ever compared.
+        final dev = release(
+          'dev-win-32701',
+          'Skyward 1.0.1.01（Windows Dev 版）',
+          'notes',
+        );
+        final preview526 = release(
+          'preview-2090032526',
+          'Skyward 1.1.1.526（预览版）',
+          'notes',
+        );
+        final preview530 = release(
+          'preview-2090032530',
+          'Skyward 1.1.1.530（预览版）',
+          'notes',
+        );
+        expect(
+          newestOfferableRelease([
+            preview530,
+            preview526,
+            dev,
+          ], installedVersion: '1.1.1.526'),
+          preview530,
+        );
+      },
+    );
+
+    test('a tag with no version at all does not abort the check', () {
+      final unnamedDev = release('dev-win-32701', '', 'notes');
+      final preview530 = release(
+        'preview-2090032530',
+        'Skyward 1.1.1.530（预览版）',
+        'notes',
+      );
+      expect(
+        newestOfferableRelease([
+          preview530,
+          unnamedDev,
+        ], installedVersion: '1.1.1.526'),
+        preview530,
       );
     });
   });

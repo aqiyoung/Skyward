@@ -104,18 +104,20 @@ int compareVersions(String version1, String version2) {
   // `int.parse('07-pre')` would throw and take the update check with it.
   final List<String> v1 = version1.split('+')[0].split('-')[0].split('.');
   final List<String> v2 = version2.split('+')[0].split('-')[0].split('.');
-  final int major1 = int.parse(v1[0]);
-  final int major2 = int.parse(v2[0]);
+  // A tag that is not a version (a dev tag read without a release name) must
+  // not abort the whole update check with a FormatException.
+  final int major1 = int.tryParse(v1[0]) ?? 0;
+  final int major2 = int.tryParse(v2[0]) ?? 0;
   if (major1 != major2) {
     return major1.compareTo(major2);
   }
-  final int minor1 = v1.length > 1 ? int.parse(v1[1]) : 0;
-  final int minor2 = v2.length > 1 ? int.parse(v2[1]) : 0;
+  final int minor1 = v1.length > 1 ? int.tryParse(v1[1]) ?? 0 : 0;
+  final int minor2 = v2.length > 1 ? int.tryParse(v2[1]) ?? 0 : 0;
   if (minor1 != minor2) {
     return minor1.compareTo(minor2);
   }
-  final int patch1 = v1.length > 2 ? int.parse(v1[2]) : 0;
-  final int patch2 = v2.length > 2 ? int.parse(v2[2]) : 0;
+  final int patch1 = v1.length > 2 ? int.tryParse(v1[2]) ?? 0 : 0;
+  final int patch2 = v2.length > 2 ? int.tryParse(v2[2]) ?? 0 : 0;
   if (patch1 != patch2) {
     return patch1.compareTo(patch2);
   }
@@ -150,10 +152,10 @@ int compareVersions(String version1, String version2) {
     return rank1.compareTo(rank2);
   }
   final int build1 = version1.contains('+')
-      ? int.parse(version1.split('+')[1])
+      ? int.tryParse(version1.split('+')[1]) ?? 0
       : 0;
   final int build2 = version2.contains('+')
-      ? int.parse(version2.split('+')[1])
+      ? int.tryParse(version2.split('+')[1]) ?? 0
       : 0;
   return build1.compareTo(build2);
 }
@@ -342,6 +344,15 @@ String releaseVersionOf(String tag, [String? name]) {
         ? null
         : RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0);
     return named ?? '1.0.0.${preview.group(1)}';
+  }
+  // Dev tags (`dev-win-32701`) are not versions either. The release name
+  // carries the real one; without it the raw tag still reaches
+  // compareVersions, which now tolerates non-numeric components.
+  if (tag.startsWith('dev-')) {
+    final named = name == null
+        ? null
+        : RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0);
+    return named ?? tag;
   }
   return tag;
 }
