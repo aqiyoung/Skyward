@@ -220,40 +220,37 @@ String? releaseApkSha256(Object? body, String assetName) {
 /// Whether [remoteVersion] should be offered to someone running
 /// [installedVersion].
 ///
-/// Every channel draws its build number from one counter, and Android orders
-/// installs by exactly that number -- so where both sides have one, the counter
-/// decides and the version name is decoration. Comparing names instead offers a
-/// build a release its own number already outranks, and Android refuses a
-/// downgrade: the app would promise an update it cannot install.
-///
-/// Without numbers on both sides the version names are all there is, and they
-/// are not comparable across the two conventions -- a snapshot's fourth
-/// component counts the day, a release's counts releases. A snapshot is
-/// therefore never offered anything by name; silence is the honest answer.
+/// The version name is the primary comparison because its fourth component is
+/// the one revision counter shared across every channel: a preview `1.1.1.523`
+/// and a stable `1.2.1.4` are comparable by name and the stable wins. A build
+/// number is only a tie-breaker when both sides come from the same counter --
+/// the injected `buildNumber` and a release's `build-number:` marker do, but a
+/// preview's injected number and an older release's marker can drift apart by
+/// two million, so trusting it alone would hide a higher-versioned stable from
+/// a preview. The marker is therefore checked only when the names are equal.
 bool shouldOfferUpdate({
   required String remoteVersion,
   required int? remoteBuildNumber,
   required String installedVersion,
   int? installedBuildNumber,
 }) {
-  // A build knows the versionCode it was made with, injected by the build; a
-  // caller that found this build's own release may also read it from the notes.
-  // Builds old enough to carry neither wrote it into the version instead.
   installedBuildNumber ??=
       int.tryParse(buildNumber) ?? _legacyBuildNumber(installedVersion);
+
+  // The version name carries the shared revision counter and channel rank, so
+  // it decides whenever the two names differ. This is what lets a preview see
+  // a higher stable, and a stable see a higher beta, regardless of how the two
+  // build-number ledgers happen to line up.
+  final byName = compareVersions(remoteVersion, installedVersion);
+  if (byName != 0) return byName > 0;
+
+  // Same name: fall back to the build counter to tell a rebuild from its
+  // original. Only compare when both numbers exist; a snapshot with no
+  // comparable number stays silent rather than guessing.
   if (installedBuildNumber != null && remoteBuildNumber != null) {
     return remoteBuildNumber > installedBuildNumber;
   }
-  if (_isSnapshot(installedVersion)) {
-    // A release that does not state its number cannot be placed on the
-    // counter, and the version names are not comparable across the two
-    // conventions -- the snapshot's fourth component always reads larger. That
-    // is every answer taken from the release page redirect, which carries the
-    // tag and nothing else: the fallback the API drops to once its quota is
-    // spent. (Both numbers present is already handled above.)
-    return false;
-  }
-  return compareVersions(remoteVersion, installedVersion) > 0;
+  return false;
 }
 
 /// The newest release in [releases] that should be offered to someone running

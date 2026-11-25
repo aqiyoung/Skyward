@@ -203,14 +203,31 @@ void main() {
       );
     });
 
-    test('a release is withheld from a preview that already outranks it', () {
-      // Android refuses a downgrade, so offering this one would be a promise
-      // the install cannot keep.
+    test('a higher version is offered even when the build numbers drift', () {
+      // A preview's injected build number and a release's notes marker come
+      // from different ledgers and can be two million apart. The shared
+      // revision counter in the version name is the reliable comparison, so a
+      // higher stable is offered to a lower preview regardless of the numbers.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.2.0.15',
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.1.1.523',
+          installedBuildNumber: 2090034523,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a release is withheld at the same version with a newer build', () {
+      // Once the names match, the build counter breaks the tie: an older
+      // rebuild cannot replace a newer one.
       expect(
         shouldOfferUpdate(
           remoteVersion: release,
           remoteBuildNumber: releaseBuild,
-          installedVersion: '1.0.0.2090029704',
+          installedVersion: release,
+          installedBuildNumber: 2090029704,
         ),
         isFalse,
       );
@@ -269,18 +286,17 @@ void main() {
       );
     });
 
-    test('withholds a release it cannot place on the build counter', () {
+    test('compares by version when the notes carry no build number', () {
       // The release page redirect the API falls back to once its quota is
-      // spent carries the tag alone. Without the number there is no way to say
-      // whether this release outranks the preview that is installed, and
-      // reading the names instead would always answer that it does.
+      // spent carries the tag alone. With no number to tie on, the version
+      // name still decides -- a higher version is a real update.
       expect(
         shouldOfferUpdate(
           remoteVersion: release,
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         shouldOfferUpdate(
@@ -288,7 +304,7 @@ void main() {
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
-        isFalse,
+        isTrue,
       );
     });
   });
