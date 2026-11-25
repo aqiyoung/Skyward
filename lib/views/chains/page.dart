@@ -60,7 +60,7 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
       body: chains.isEmpty
           ? _Empty(onCreate: create, zh: zh)
           : ListView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 16,
                 0,
                 16,
@@ -266,52 +266,54 @@ class _ChainCard extends ConsumerWidget {
       child: generateSection(
         leadingGap: false,
         items: [
-          ListItem(
-            leading: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                PairedFlags(chain.hops.first, chain.hops.last, size: 28),
-                if (warned && chain.enabled)
-                  Positioned(
-                    right: -4,
-                    bottom: -4,
-                    child: GlyphIcon(
-                      broken ? AppGlyphs.error : AppGlyphs.warning,
-                      size: 14,
-                      color: broken ? scheme.error : scheme.warning,
-                    ),
-                  ),
-              ],
-            ),
-            title: Text(
-              chain.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: !chain.enabled
-                  ? TextStyle(color: scheme.onSurfaceVariant)
-                  : null,
-            ),
-            subtitle: Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Switch(
-              value: chain.enabled,
-              onChanged: (value) async {
-                final updated = SavedChain(
-                  id: chain.id,
-                  name: chain.name,
-                  hops: chain.hops,
-                  targetGroup: chain.targetGroup,
-                  enabled: value,
-                  offered: chain.offered,
-                );
-                await ref.read(chainsProvider.notifier).upsert(updated);
-              },
-            ),
-            onTap: () => showChainEditor(context, chain: chain),
+          GestureDetector(
             onLongPress: confirmDelete,
+            child: ListItem(
+              leading: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  PairedFlags(chain.hops.first, chain.hops.last, size: 28),
+                  if (warned && chain.enabled)
+                    Positioned(
+                      right: -4,
+                      bottom: -4,
+                      child: GlyphIcon(
+                        broken ? AppGlyphs.error : AppGlyphs.warning,
+                        size: 14,
+                        color: broken ? scheme.error : scheme.warning,
+                      ),
+                    ),
+                ],
+              ),
+              title: Text(
+                chain.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: !chain.enabled
+                    ? TextStyle(color: scheme.onSurfaceVariant)
+                    : null,
+              ),
+              subtitle: Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Switch(
+                value: chain.enabled,
+                onChanged: (value) async {
+                  final updated = SavedChain(
+                    id: chain.id,
+                    name: chain.name,
+                    hops: chain.hops,
+                    targetGroup: chain.targetGroup,
+                    enabled: value,
+                    offered: chain.offered,
+                  );
+                  await ref.read(chainsProvider.notifier).upsert(updated);
+                },
+              ),
+              onTap: () => showChainEditor(context, chain: chain),
+            ),
           ),
         ],
       ),
