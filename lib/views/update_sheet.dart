@@ -115,7 +115,10 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
           scheme.primary,
           1,
           l.versionUpdateFound,
-          (_release?['tag_name'] as String?) ?? '',
+          releaseVersionOf(
+            (_release?['tag_name'] as String?) ?? '',
+            _release?['name'] as String?,
+          ),
         ),
     };
     final primaryLabel = _phase == _UpdatePhase.found
