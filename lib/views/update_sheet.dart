@@ -219,9 +219,9 @@ class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet>
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
-    await ref.read(appSettingProvider.notifier).update(
-          (state) => state.copyWith(autoCheckUpdate: _check),
-        );
+    ref.read(appSettingProvider.notifier).update(
+      (state) => state.copyWith(autoCheckUpdate: _check),
+    );
     final configured = _channel == defaultUpdateChannel(isPreBuild: globalState.isPre)
         ? null
         : _channel;
