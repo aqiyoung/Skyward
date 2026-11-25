@@ -168,6 +168,39 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('saving preserves selected system apps hidden by filters', (
+      tester,
+    ) async {
+      seedAccessControl(
+        const AccessControlProps(
+          enable: true,
+          mode: AccessControlMode.acceptSelected,
+          isFilterSystemApp: false,
+          acceptList: ['com.android.settings'],
+        ),
+      );
+      await pumpAccessView(tester);
+      final l10n = AppLocalizations.current;
+      Finder inMenu(Finder finder) =>
+          find.descendant(of: find.byType(CommonPopupMenu), matching: finder);
+
+      await openBarMenu(tester);
+      await tester.tap(inMenu(find.text(l10n.settings)).last);
+      await tester.pumpAndSettle();
+      await tester.tap(inMenu(find.text(l10n.systemApp)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Settings'), findsNothing);
+      await tester.tap(find.byTooltip('Save'));
+      await tester.pump();
+
+      expect(
+        container.read(vpnSettingProvider).accessControlProps.acceptList,
+        ['com.android.settings'],
+      );
+      await teardownView(tester);
+    });
+
     testWidgets('shows offline apps once the internet filter is disabled', (
       tester,
     ) async {

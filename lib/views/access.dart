@@ -198,16 +198,12 @@ class _AccessViewState extends ConsumerState<AccessView>
     if (packages.isEmpty) {
       return accessControl;
     }
-    final viewPackageNames = packages
-        .whereVisible(
-          isFilterSystemApp: accessControl.isFilterSystemApp,
-          isFilterNonInternetApp: accessControl.isFilterNonInternetApp,
-        )
+    final installedPackageNames = packages
         .map((item) => item.packageName)
         .toSet();
     return accessControl.copyWithNewList(
       accessControl.currentList
-          .where((item) => viewPackageNames.contains(item))
+          .where((item) => installedPackageNames.contains(item))
           .toList()
         ..sort(),
     );
