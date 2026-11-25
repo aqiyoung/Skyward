@@ -457,7 +457,6 @@ jobs:
           cat "$RUNNER_TEMP/body.txt"
 
           sent=0
-          first=1
           for file in dist/*.exe dist/*.zip; do
             [ -f "$file" ] || continue
             size=$(stat -c %s "$file")
@@ -466,20 +465,11 @@ jobs:
               echo "::warning::$(basename "$file") is over 50 MB; the local bot API is down so it cannot be attached"
               continue
             fi
-            if [ "$first" = 1 ]; then
-              cp "$RUNNER_TEMP/body.txt" "$RUNNER_TEMP/caption.txt"
-              response="$(curl -fsS --max-time 900 \
-                -F "chat_id=${chat_id}" \
-                -F "document=@${file}" \
-                -F "caption=$(cat "$RUNNER_TEMP/caption.txt")" \
-                "${api}/sendDocument")" || response=""
-              first=0
-            else
-              response="$(curl -fsS --max-time 900 \
-                -F "chat_id=${chat_id}" \
-                -F "document=@${file}" \
-                "${api}/sendDocument")" || response=""
-            fi
+            # The files go out alone; all text and links are in the second message.
+            response="$(curl -fsS --max-time 900 \
+              -F "chat_id=${chat_id}" \
+              -F "document=@${file}" \
+              "${api}/sendDocument")" || response=""
             if printf '%s' "$response" | grep -q '"ok":true'; then
               echo "telegram accepted $(basename "$file")"
               sent=1
@@ -488,16 +478,21 @@ jobs:
             fi
           done
 
-          # Separate plain-text message so Telegram renders the GitHub link as a card.
+          # All text plus the links in one message; the build-log URL is the
+          # last line but is still the one Telegram previews as a GitHub card.
           {
-            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            cat "$RUNNER_TEMP/body.txt"
+            echo
             base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
             for f in dist/*.exe dist/*.zip; do
               [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
             done
             echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } > "$RUNNER_TEMP/links.txt"
+          preview_options="{\"url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}"
           curl -fsS --max-time 60 -X POST "${api}/sendMessage" \
             --data-urlencode "chat_id=${chat_id}" \
             --data-urlencode "text@$RUNNER_TEMP/links.txt" \
+            --data-urlencode "link_preview_options=${preview_options}" \
             || echo "::warning::链接消息推送失败"
