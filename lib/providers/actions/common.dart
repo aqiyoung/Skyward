@@ -406,7 +406,14 @@ class CommonAction extends _$CommonAction {
       );
       if (allowed != true) return;
       await ref.read(setupActionProvider.notifier).setRunning(false);
-      await Future<void>.delayed(const Duration(seconds: 1));
+      // Stopping the service is asynchronous. Wait until the native state
+      // machine actually reports the VPN gone before retrying the install;
+      // a fixed delay races it and gets refused again.
+      final deadline = DateTime.now().add(const Duration(seconds: 8));
+      while (await installer.updateInstallBlockedByVpn()) {
+        if (DateTime.now().isAfter(deadline)) break;
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+      }
       result = await attempt();
     }
 
