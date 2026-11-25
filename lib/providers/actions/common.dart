@@ -405,10 +405,18 @@ class CommonAction extends _$CommonAction {
         confirmText: zh ? '停止并安装' : 'Stop and install',
       );
       if (allowed != true) return;
-      await ref.read(setupActionProvider.notifier).setRunning(false);
-      // Stopping the service is asynchronous. Wait until the native state
-      // machine actually reports the VPN gone before retrying the install;
-      // a fixed delay races it and gets refused again.
+      dialogs.showNotifier(
+        zh ? '正在停止 VPN 以安装更新…' : 'Stopping the VPN to install the update…',
+      );
+      // Do not await the run request: a core that is slow to answer would
+      // hold the install here with no feedback. The native state below is
+      // the authority on whether the VPN is really gone.
+      unawaited(
+        ref
+            .read(setupActionProvider.notifier)
+            .setRunning(false)
+            .catchError((_) => false),
+      );
       final deadline = DateTime.now().add(const Duration(seconds: 8));
       while (await installer.updateInstallBlockedByVpn()) {
         if (DateTime.now().isAfter(deadline)) break;
