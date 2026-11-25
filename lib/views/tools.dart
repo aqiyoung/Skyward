@@ -145,11 +145,14 @@ class _VersionItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
+    final progress = ref.watch(updateDownloadProgressProvider);
     final version = globalState.hasPackageInfo
         ? globalState.packageInfo.labeledVersion
         : null;
     final text = downloading
-        ? appLocalizations.versionUpdateDownloading
+        ? (progress == null
+              ? appLocalizations.versionUpdateDownloading
+              : '${appLocalizations.versionUpdateDownloading} ${(progress * 100).round()}%')
         : version;
     Future<void> checkUpdate() async {
       if (ref.read(commonActionProvider.notifier).isDownloadingUpdate) {

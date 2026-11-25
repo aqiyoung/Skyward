@@ -256,11 +256,16 @@ class CommonAction extends _$CommonAction {
       final target = File(join(directory.path, 'update-$safeTag.apk'));
       final size = _apkAssetSize(release, asset.name);
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
+      ref.read(updateDownloadProgressProvider.notifier).set(0);
       final error = await request.downloadUpdateFile(
         Uri.parse(asset.url),
         target.path,
         cancelToken: cancelToken,
-        onProgress: (received, total) {},
+        onProgress: (received, total) {
+          if (total <= 0) return;
+          final fraction = (received / total).clamp(0.0, 1.0);
+          ref.read(updateDownloadProgressProvider.notifier).set(fraction);
+        },
         expectedSha256: sha256,
         expectedSize: size,
       );
@@ -353,6 +358,7 @@ class CommonAction extends _$CommonAction {
     } finally {
       _ongoingUpdateDownload = false;
       _updateCancelToken = null;
+      ref.read(updateDownloadProgressProvider.notifier).set(null);
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
@@ -386,18 +392,26 @@ class CommonAction extends _$CommonAction {
     final zh = _isZh();
     switch (started) {
       case ApkInstallResult.permissionRequired:
-        dialogs.showNotifier(
-          zh
-              ? '需要授予安装未知应用权限后才能自动更新'
-              : 'Allow installing unknown apps to update',
-          level: MessageLevel.warning,
+        unawaited(
+          dialogs.showMessage(
+            title: zh ? '无法安装更新' : 'Cannot install update',
+            message: TextSpan(
+              text: zh
+                  ? '需要授予安装未知应用权限后才能自动更新'
+                  : 'Allow installing unknown apps to update',
+            ),
+          ),
         );
       case ApkInstallResult.vpnActive:
-        dialogs.showNotifier(
-          zh
-              ? 'VPN 运行时无法安装更新，请先断开'
-              : 'Disconnect the VPN before installing an update',
-          level: MessageLevel.warning,
+        unawaited(
+          dialogs.showMessage(
+            title: zh ? '无法安装更新' : 'Cannot install update',
+            message: TextSpan(
+              text: zh
+                  ? 'VPN 运行时无法安装更新，请先断开 VPN 再点安装'
+                  : 'Disconnect the VPN before installing an update',
+            ),
+          ),
         );
       case ApkInstallResult.started:
         break;

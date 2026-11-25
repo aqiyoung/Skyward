@@ -37,15 +37,18 @@ class _ResumeMetadata {
 
   String? get validator => etag ?? lastModified;
 
-  _ResumeMetadata withResponse({int? total, String? etag, String? lastModified}) =>
-      _ResumeMetadata(
-        url: url,
-        sha256: sha256,
-        size: size,
-        total: total ?? this.total,
-        etag: etag ?? this.etag,
-        lastModified: lastModified ?? this.lastModified,
-      );
+  _ResumeMetadata withResponse({
+    int? total,
+    String? etag,
+    String? lastModified,
+  }) => _ResumeMetadata(
+    url: url,
+    sha256: sha256,
+    size: size,
+    total: total ?? this.total,
+    etag: etag ?? this.etag,
+    lastModified: lastModified ?? this.lastModified,
+  );
 
   Map<String, Object?> toJson() => {
     'schemaVersion': 1,
@@ -96,7 +99,11 @@ class _ContentRange {
     final start = int.tryParse(match.group(1)!);
     final end = int.tryParse(match.group(2)!);
     final total = int.tryParse(match.group(3)!);
-    if (start == null || end == null || total == null || start > end || end >= total) {
+    if (start == null ||
+        end == null ||
+        total == null ||
+        start > end ||
+        end >= total) {
       return null;
     }
     return _ContentRange(start, end, total);
@@ -197,7 +204,9 @@ class UpdateFileTransfer {
         if (await _metadataFile.length() > 16384) {
           throw const FormatException('metadata too large');
         }
-        final saved = _ResumeMetadata.fromJson(jsonDecode(await _metadataFile.readAsString()));
+        final saved = _ResumeMetadata.fromJson(
+          jsonDecode(await _metadataFile.readAsString()),
+        );
         final length = await _partial.length();
         final total = saved.total ?? saved.size;
         if (saved.url == _metadata.url &&
@@ -232,7 +241,8 @@ class UpdateFileTransfer {
           headers: {
             HttpHeaders.acceptEncodingHeader: 'identity',
             if (offset > 0) HttpHeaders.rangeHeader: 'bytes=$offset-',
-            if (offset > 0 && validator != null) HttpHeaders.ifRangeHeader: validator,
+            if (offset > 0 && validator != null)
+              HttpHeaders.ifRangeHeader: validator,
           },
           validateStatus: (_) => true,
         ),
@@ -245,11 +255,17 @@ class UpdateFileTransfer {
           return true;
         }
         if (_rangeRestarted) {
-          throw const UpdateDownloadVerificationException('Server rejected the update range');
+          throw const UpdateDownloadVerificationException(
+            'Server rejected the update range',
+          );
         }
         _rangeRestarted = true;
         await _discardPartial();
-        _metadata = _ResumeMetadata(url: uri.toString(), sha256: expectedSha256.toLowerCase(), size: expectedSize);
+        _metadata = _ResumeMetadata(
+          url: uri.toString(),
+          sha256: expectedSha256.toLowerCase(),
+          size: expectedSize,
+        );
         return false;
       }
       if (status != HttpStatus.ok && status != HttpStatus.partialContent) {
@@ -259,38 +275,60 @@ class UpdateFileTransfer {
           response: response,
         );
       }
-      final encoding = response.headers.value(HttpHeaders.contentEncodingHeader);
+      final encoding = response.headers.value(
+        HttpHeaders.contentEncodingHeader,
+      );
       if (encoding != null && encoding.toLowerCase() != 'identity') {
-        throw const UpdateDownloadVerificationException('Encoded update ranges are not supported');
+        throw const UpdateDownloadVerificationException(
+          'Encoded update ranges are not supported',
+        );
       }
       final rawLength = response.headers.value(HttpHeaders.contentLengthHeader);
       final length = rawLength == null ? null : int.tryParse(rawLength);
       if (rawLength != null && (length == null || length < 0)) {
-        throw const UpdateDownloadVerificationException('Invalid Content-Length');
+        throw const UpdateDownloadVerificationException(
+          'Invalid Content-Length',
+        );
       }
       final range = status == HttpStatus.partialContent
-          ? _ContentRange.parse(response.headers.value(HttpHeaders.contentRangeHeader))
+          ? _ContentRange.parse(
+              response.headers.value(HttpHeaders.contentRangeHeader),
+            )
           : null;
       if (status == HttpStatus.partialContent &&
-          (range == null || range.start != offset || (length != null && length != range.length))) {
-        throw const UpdateDownloadVerificationException('Invalid Content-Range');
+          (range == null ||
+              range.start != offset ||
+              (length != null && length != range.length))) {
+        throw const UpdateDownloadVerificationException(
+          'Invalid Content-Range',
+        );
       }
       final total = range?.total ?? length ?? expectedSize;
       if (expectedSize != null && total != null && total != expectedSize) {
-        throw const UpdateDownloadVerificationException('Update length does not match the release');
+        throw const UpdateDownloadVerificationException(
+          'Update length does not match the release',
+        );
       }
       if (status == HttpStatus.ok) {
         await _safeDelete(_partial);
         _received = 0;
-        _metadata = _ResumeMetadata(url: uri.toString(), sha256: expectedSha256.toLowerCase(), size: expectedSize);
+        _metadata = _ResumeMetadata(
+          url: uri.toString(),
+          sha256: expectedSha256.toLowerCase(),
+          size: expectedSize,
+        );
       }
       if (body == null) {
-        throw const UpdateDownloadVerificationException('The update response has no body');
+        throw const UpdateDownloadVerificationException(
+          'The update response has no body',
+        );
       }
       final segmentLength = range?.length ?? length;
       final startedAt = _received;
       await _partial.parent.create(recursive: true);
-      final file = await _partial.open(mode: _received > 0 ? FileMode.append : FileMode.write);
+      final file = await _partial.open(
+        mode: _received > 0 ? FileMode.append : FileMode.write,
+      );
       try {
         onProgress(_received, total ?? -1);
         consumed = true;
@@ -299,7 +337,9 @@ class UpdateFileTransfer {
           final next = _received + chunk.length;
           if ((total != null && next > total) ||
               (segmentLength != null && next - startedAt > segmentLength)) {
-            throw const UpdateDownloadVerificationException('The update body exceeds its declared length');
+            throw const UpdateDownloadVerificationException(
+              'The update body exceeds its declared length',
+            );
           }
           await file.writeFrom(chunk);
           _received = next;
@@ -315,7 +355,9 @@ class UpdateFileTransfer {
       }
       _ensureActive();
       if (segmentLength != null && _received - startedAt != segmentLength) {
-        throw const HttpException('The update download ended before its declared length');
+        throw const HttpException(
+          'The update download ended before its declared length',
+        );
       }
       if (total != null && _received < total) {
         if (range != null && _received > startedAt) return false;
@@ -332,20 +374,35 @@ class UpdateFileTransfer {
   }
 
   Future<void> _publish() async {
-    if (!await _partial.exists() || await _partial.length() != _received || _received == 0) {
-      throw const UpdateDownloadVerificationException('The update download produced an invalid file');
+    // The bytes on disk are the truth: the running counter can drift when a
+    // chunked/proxied response is resumed, while the digest below is what
+    // actually guarantees the package is the one the release published.
+    if (!await _partial.exists()) {
+      throw const UpdateDownloadVerificationException(
+        'The update download produced an invalid file',
+      );
     }
-    if (expectedSize != null && _received != expectedSize) {
-      throw const UpdateDownloadVerificationException('The update file length is invalid');
+    final length = await _partial.length();
+    if (length == 0) {
+      throw const UpdateDownloadVerificationException(
+        'The update download produced an invalid file',
+      );
+    }
+    if (expectedSize != null && length != expectedSize) {
+      throw const UpdateDownloadVerificationException(
+        'The update file length is invalid',
+      );
     }
     if (await _fileSha256(_partial) != expectedSha256.toLowerCase()) {
-      throw const UpdateDownloadVerificationException('The update SHA-256 does not match the release');
+      throw const UpdateDownloadVerificationException(
+        'The update SHA-256 does not match the release',
+      );
     }
     _ensureActive();
     await _safeDelete(target);
     await _partial.rename(target.path);
     await _safeDelete(_metadataFile);
-    onProgress(_received, _received);
+    onProgress(length, length);
   }
 
   Future<void> _discardPartial() async {
@@ -355,7 +412,8 @@ class UpdateFileTransfer {
   }
 
   void _ensureActive() {
-    if (_timedOut) throw TimeoutException('Update download timed out', _timeout);
+    if (_timedOut)
+      throw TimeoutException('Update download timed out', _timeout);
     if (cancelToken.cancelError case final error?) throw error;
   }
 }
