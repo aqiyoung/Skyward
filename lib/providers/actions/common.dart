@@ -202,7 +202,13 @@ class CommonAction extends _$CommonAction {
     }
     final abi = await systemDownloader!.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
-    if (asset == null || asset.sha256 == null) {
+    // Preview releases list only a generic arm64 APK and publish their hash
+    // in a SHA256SUMS asset instead of a comment in the notes. Resolve both
+    // before deciding there is no installable package for this device.
+    final sha256 =
+        asset?.sha256 ??
+        (asset == null ? null : await _sha256FromSums(release, asset.name));
+    if (asset == null || sha256 == null) {
       // No installable package for this device: let the reader download by hand.
       final page = release['html_url'];
       final tag = release['tag_name'];
@@ -229,9 +235,12 @@ class CommonAction extends _$CommonAction {
     final cancelToken = CancelToken();
     _updateCancelToken = cancelToken;
     try {
-      final directory = Directory(join(await appPath.homeDirPath, 'app-updates'));
+      final directory = Directory(
+        join(await appPath.homeDirPath, 'app-updates'),
+      );
       await directory.create(recursive: true);
-      final safeTag = tag?.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_') ?? 'update';
+      final safeTag =
+          tag?.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_') ?? 'update';
       final target = File(join(directory.path, 'update-$safeTag.apk'));
       final size = _apkAssetSize(release, asset.name);
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
@@ -240,7 +249,7 @@ class CommonAction extends _$CommonAction {
         target.path,
         cancelToken: cancelToken,
         onProgress: (received, total) {},
-        expectedSha256: asset.sha256!,
+        expectedSha256: sha256,
         expectedSize: size,
       );
       if (error == '') return; // canceled
@@ -248,7 +257,7 @@ class CommonAction extends _$CommonAction {
       await _installDownloadedApk(
         target.path,
         version: version,
-        sha256: asset.sha256!,
+        sha256: sha256,
         automatic: automatic,
       );
     } catch (error) {
@@ -278,7 +287,9 @@ class CommonAction extends _$CommonAction {
     // reader has been away. The manual path happens on their explicit tap.
     if (automatic) {
       final idle = updater?.systemIdle();
-      if (updater == null || idle == null || idle < const Duration(minutes: 15)) {
+      if (updater == null ||
+          idle == null ||
+          idle < const Duration(minutes: 15)) {
         return;
       }
     }
@@ -301,7 +312,9 @@ class CommonAction extends _$CommonAction {
     final cancelToken = CancelToken();
     _updateCancelToken = cancelToken;
     try {
-      final directory = Directory(join(await appPath.homeDirPath, 'app-updates'));
+      final directory = Directory(
+        join(await appPath.homeDirPath, 'app-updates'),
+      );
       await directory.create(recursive: true);
       final target = File(join(directory.path, asset.name));
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
@@ -316,11 +329,7 @@ class CommonAction extends _$CommonAction {
       if (error == '') return;
       if (error != null) throw StateError(error);
       final logPath = join(directory.path, 'desktop-update.log');
-      await updater.launch(
-        target.path,
-        relaunch: automatic,
-        logPath: logPath,
-      );
+      await updater.launch(target.path, relaunch: automatic, logPath: logPath);
       // The replacement waits for this process to exit before swapping files.
       exit(0);
     } catch (error) {
@@ -366,12 +375,16 @@ class CommonAction extends _$CommonAction {
     switch (started) {
       case ApkInstallResult.permissionRequired:
         dialogs.showNotifier(
-          zh ? '需要授予安装未知应用权限后才能自动更新' : 'Allow installing unknown apps to update',
+          zh
+              ? '需要授予安装未知应用权限后才能自动更新'
+              : 'Allow installing unknown apps to update',
           level: MessageLevel.warning,
         );
       case ApkInstallResult.vpnActive:
         dialogs.showNotifier(
-          zh ? 'VPN 运行时无法安装更新，请先断开' : 'Disconnect the VPN before installing an update',
+          zh
+              ? 'VPN 运行时无法安装更新，请先断开'
+              : 'Disconnect the VPN before installing an update',
           level: MessageLevel.warning,
         );
       case ApkInstallResult.started:
@@ -402,23 +415,64 @@ class CommonAction extends _$CommonAction {
     if (assets is! List) {
       return null;
     }
+    ({String url, String name, String? sha256})? generic;
     for (final asset in assets) {
       if (asset is! Map) {
         continue;
       }
       final name = asset['name'];
       final url = asset['browser_download_url'];
-      if (name is! String || url is! String) {
+      if (name is! String || url is! String || !name.endsWith('.apk')) {
         continue;
       }
-      if (!name.endsWith('.apk') || !name.contains(abi)) {
-        continue;
-      }
-      return (
+      final entry = (
         url: url,
         name: name,
         sha256: releaseApkSha256(release['body'], name),
       );
+      if (name.contains(abi)) return entry;
+      // A preview only ships one arm64 APK, named `...-android.apk` rather
+      // than after its ABI. Keep it as a fallback, never ahead of an exact
+      // ABI build when a release carries both.
+      if (abi == 'arm64-v8a' && name.endsWith('-android.apk')) {
+        generic ??= entry;
+      }
+    }
+    return generic;
+  }
+
+  /// Reads the hash a release publishes in its SHA256SUMS asset. Releases
+  /// from this repository do not put an inline `skyward:apk-sha256:` comment
+  /// in the notes, so the body-only lookup would send the reader to GitHub
+  /// instead of installing the verified package.
+  Future<String?> _sha256FromSums(
+    Map<String, dynamic> release,
+    String apkName,
+  ) async {
+    final assets = release['assets'];
+    if (assets is! List) return null;
+    for (final asset in assets) {
+      if (asset is! Map || asset['name'] != 'SHA256SUMS') continue;
+      final url = asset['browser_download_url'];
+      if (url is! String) return null;
+      try {
+        final response = await request.getUpdateTextResponseForUrl(url);
+        for (final line in (response.data ?? '').split('\n')) {
+          final parts = line.trim().split(RegExp(r'\s+'));
+          if (parts.length < 2) continue;
+          final name = parts.last.replaceFirst(RegExp(r'^\./'), '');
+          if (name == apkName &&
+              RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(parts.first)) {
+            return parts.first.toLowerCase();
+          }
+        }
+      } catch (error) {
+        commonPrint.log(
+          'read SHA256SUMS failed: ${compactError(error)}',
+          logLevel: LogLevel.warning,
+        );
+      }
+      return null;
     }
     return null;
   }
@@ -446,7 +500,11 @@ class CommonAction extends _$CommonAction {
       final wifiOnly = preloadWifi;
       if (autoInstall || (preloadWifi && await _isOnWifi())) {
         // No dialog and no navigator needed: the download is the answer.
-        await _downloadRelease(data, wifiOnly: wifiOnly, automatic: autoInstall);
+        await _downloadRelease(
+          data,
+          wifiOnly: wifiOnly,
+          automatic: autoInstall,
+        );
         return;
       }
       final context = globalState.navigatorKey.currentContext;

@@ -104,6 +104,15 @@ class Request {
     }
   }
 
+  /// Reads a release asset through the same proxy/certificate setup as the
+  /// update check. Used for the SHA256SUMS file when the release notes carry
+  /// no inline hash for the APK.
+  Future<Response<String>> getUpdateTextResponseForUrl(String url) =>
+      HttpOverrides.runWithHttpOverrides(
+        () => getTextResponseForUrl(url),
+        _updateOverrides(),
+      );
+
   /// Downloads an update APK into the app-private directory and verifies its
   /// SHA-256 before returning the final path. A canceled download returns an
   /// empty string; any other failure returns a human-readable error, matching
@@ -300,14 +309,18 @@ class Request {
   /// the selected update channel. `release` keeps only stable releases; `pre`
   /// keeps every prerelease (beta, preview, dev). Filtering happens here --
   /// before `newestOfferableRelease` compares build numbers across channels.
-  List<dynamic> _platformCandidates(List<dynamic> releases, UpdateChannel? channel) {
+  List<dynamic> _platformCandidates(
+    List<dynamic> releases,
+    UpdateChannel? channel,
+  ) {
     final wanted = effectiveUpdateChannel(
       configured: channel,
       isPreBuild: globalState.isPre,
     );
     return releases.where((release) {
       if (release is! Map) return false;
-      final prerelease = release['prerelease'] == true ||
+      final prerelease =
+          release['prerelease'] == true ||
           _isPrereleaseTag(release['tag_name']);
       if (wanted == UpdateChannel.release && prerelease) return false;
       if (wanted == UpdateChannel.pre && !prerelease) return false;
