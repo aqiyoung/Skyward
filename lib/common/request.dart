@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:path/path.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/common/secure_client.dart';
 import 'package:skyward/common/subscription.dart';
@@ -111,7 +112,7 @@ class Request {
   /// to the latest stable alone. Without the cache a preview would be told
   /// there is no update, because the release-page redirect the last fallback
   /// follows names a tag and nothing more.
-  Future<Map<String, dynamic>?> checkForUpdate() async {
+  Future<Map<String, dynamic>?> checkForUpdate([UpdateChannel? channel]) async {
     try {
       final response = await HttpOverrides.runWithHttpOverrides(
         () => dio.get<List<dynamic>>(
@@ -125,7 +126,7 @@ class Request {
       // result, or the row would sit on "Checking…" behind a background write.
       unawaited(_cacheReleases(releases));
       return newestOfferableRelease(
-        _platformCandidates(releases),
+        _platformCandidates(releases, channel),
         installedVersion: globalState.packageInfo.displayVersion,
       );
     } on DioException catch (error) {
@@ -140,10 +141,20 @@ class Request {
     final cached = await _readCachedReleases();
     if (cached.isNotEmpty) {
       final offer = newestOfferableRelease(
-        _platformCandidates(cached),
+        _platformCandidates(cached, channel),
         installedVersion: globalState.packageInfo.displayVersion,
       );
       if (offer != null) return offer;
+    }
+    // The last fallback is the /latest page, which only ever names a stable
+    // tag. On the pre-release channel that is not what the reader asked for,
+    // so stay silent rather than offering a stable behind their back.
+    if (effectiveUpdateChannel(
+          configured: channel,
+          isPreBuild: globalState.isPre,
+        ) ==
+        UpdateChannel.pre) {
+      return null;
     }
     final release = await latestRelease();
     final remoteVersion = release['tag_name'] as String;
@@ -239,14 +250,38 @@ class Request {
     }
   }
 
-  /// Drops the Android-only preview releases where they have no package to
-  /// install -- on desktop -- and keeps everything else across every channel.
-  List<dynamic> _platformCandidates(List<dynamic> releases) {
-    if (!system.isDesktop) return releases;
+  /// Drops Android-only preview releases on desktop, and narrows the list to
+  /// the selected update channel. `release` keeps only stable releases; `pre`
+  /// keeps every prerelease (beta, preview, dev). Filtering happens here --
+  /// before `newestOfferableRelease` compares build numbers across channels.
+  List<dynamic> _platformCandidates(List<dynamic> releases, UpdateChannel? channel) {
+    final wanted = effectiveUpdateChannel(
+      configured: channel,
+      isPreBuild: globalState.isPre,
+    );
     return releases.where((release) {
-      final tag = release is Map ? release['tag_name'] : null;
-      return tag is! String || !tag.startsWith('preview-');
+      if (release is! Map) return false;
+      final prerelease = release['prerelease'] == true ||
+          _isPrereleaseTag(release['tag_name']);
+      if (wanted == UpdateChannel.release && prerelease) return false;
+      if (wanted == UpdateChannel.pre && !prerelease) return false;
+      // Previews have no desktop package.
+      if (system.isDesktop) {
+        final tag = release['tag_name'];
+        if (tag is String && tag.startsWith('preview-')) return false;
+      }
+      return true;
     }).toList();
+  }
+
+  /// True for the tag shapes that only a prerelease build uses.
+  bool _isPrereleaseTag(Object? tag) {
+    if (tag is! String) return false;
+    return tag.startsWith('preview-') ||
+        tag.startsWith('dev-') ||
+        tag.contains('-beta') ||
+        tag.contains('-dev') ||
+        tag.contains('-pre');
   }
 }
 

@@ -84,14 +84,23 @@ class CommonAction extends _$CommonAction {
 
   Future<bool> autoCheckUpdate() async {
     if (!ref.read(appSettingProvider).autoCheckUpdate) return false;
+    final prefs = await loadUpdatePreferences();
+    final channel = effectiveUpdateChannel(
+      configured: prefs.channel,
+      isPreBuild: globalState.isPre,
+    );
     final Map<String, dynamic>? res;
     try {
-      res = await request.checkForUpdate();
+      res = await request.checkForUpdate(channel);
       // Announcing it needs a mounted navigator, and startup does not always
       // have one yet. The handler steps aside in that case; the check itself
       // is best effort, so a failed announcement must not travel out of an
       // unawaited future.
-      await checkUpdateResultHandle(data: res);
+      await checkUpdateResultHandle(
+        data: res,
+        autoInstall: prefs.autoInstall,
+        preloadWifi: prefs.preloadWifi,
+      );
     } catch (error) {
       commonPrint.log(
         'checkForUpdate failed: ${compactError(error)}',
@@ -162,6 +171,13 @@ class CommonAction extends _$CommonAction {
   /// duplicate download, and there is no dialog to tell the user apart.
   int? _ongoingUpdateDownloadId;
 
+  /// One-shot query for the Wi-Fi gate. A VPN can be reported alongside
+  /// Wi-Fi, so membership is the test, not an exact list length.
+  Future<bool> _isOnWifi() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.contains(ConnectivityResult.wifi);
+  }
+
   /// The package that fits the device goes to the system download manager,
   /// which keeps it in the Downloads folder, while the app itself polls
   /// that manager in the background and opens the system installer once
@@ -169,7 +185,10 @@ class CommonAction extends _$CommonAction {
   /// Nothing modal is shown while it downloads, so the app stays usable
   /// throughout. The desktop has no such manager, so the release page
   /// opens there.
-  Future<void> _downloadRelease(Map<String, dynamic> release) async {
+  Future<void> _downloadRelease(
+    Map<String, dynamic> release, {
+    bool wifiOnly = false,
+  }) async {
     final downloader = systemDownloader;
     final abi = downloader == null ? null : await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
@@ -202,6 +221,7 @@ class CommonAction extends _$CommonAction {
         url: asset.url,
         fileName: asset.name,
         expectedSha256: asset.sha256,
+        wifiOnly: wifiOnly,
       );
       if (downloadId == null) {
         throw StateError('download did not start');
@@ -320,8 +340,24 @@ class CommonAction extends _$CommonAction {
     // before its background download starts, so a stray tap never pulls
     // an APK on its own. Startup auto-check is unaffected.
     bool silent = false,
+    // With auto-install on, skip the confirmation and go straight to the
+    // download (the system installer still opens at the end -- Android does
+    // not let a normal app install silently).
+    bool autoInstall = false,
+    // With Wi-Fi pre-download on, an automatic check pulls the package over
+    // Wi-Fi without asking; on mobile data it still asks first.
+    bool preloadWifi = false,
   }) async {
     if (data != null) {
+      // Only the Wi-Fi pre-download preference restricts the download
+      // manager to unmetered networks. Auto-install merely skips the
+      // confirmation; the manual path keeps the old permissive behaviour.
+      final wifiOnly = preloadWifi;
+      if (autoInstall || (preloadWifi && await _isOnWifi())) {
+        // No dialog and no navigator needed: the download is the answer.
+        await _downloadRelease(data, wifiOnly: wifiOnly);
+        return;
+      }
       final context = globalState.navigatorKey.currentContext;
       if (context == null) {
         return;

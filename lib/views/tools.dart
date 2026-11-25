@@ -1,5 +1,6 @@
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
@@ -154,7 +155,15 @@ class _VersionItem extends ConsumerWidget {
       if (ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
         return;
       }
-      await showUpdateSheet(context, check: request.checkForUpdate);
+      final prefs = await loadUpdatePreferences();
+      final channel = effectiveUpdateChannel(
+        configured: prefs.channel,
+        isPreBuild: globalState.isPre,
+      );
+      await showUpdateSheet(
+        context,
+        check: () => request.checkForUpdate(channel),
+      );
     }
 
     return ListItem(
