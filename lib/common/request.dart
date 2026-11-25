@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
+  late final Dio _updateFileDio;
   String? userAgent;
 
   ProviderReader? _read;
@@ -27,6 +28,20 @@ class Request {
 
   Request() {
     dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
+    // Update packages are security-sensitive: strict TLS, but allowed through
+    // the app's own proxy so GitHub stays reachable on restricted networks.
+    _updateFileDio = Dio();
+    _updateFileDio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.findProxy = (uri) {
+          final read = _read;
+          if (read == null) return 'DIRECT';
+          return SkywardHttpOverrides.findProxyForReader(read, uri);
+        };
+        return client;
+      },
+    );
     _clashDio = Dio();
     _clashDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
@@ -86,6 +101,37 @@ class Request {
         logLevel: LogLevel.warning,
       );
       rethrow;
+    }
+  }
+
+  /// Downloads an update APK into the app-private directory and verifies its
+  /// SHA-256 before returning the final path. A canceled download returns an
+  /// empty string; any other failure returns a human-readable error, matching
+  /// the contract callers already use for release checks.
+  Future<String?> downloadUpdateFile(
+    Uri uri,
+    String targetPath, {
+    required CancelToken cancelToken,
+    required void Function(int received, int total) onProgress,
+    required String expectedSha256,
+    int? expectedSize,
+  }) async {
+    try {
+      final transfer = UpdateFileTransfer(
+        dio: _updateFileDio,
+        uri: uri,
+        target: File(targetPath),
+        cancelToken: cancelToken,
+        onProgress: onProgress,
+        expectedSha256: expectedSha256,
+        expectedSize: expectedSize,
+      );
+      await transfer.run();
+      return null;
+    } catch (error) {
+      if (error is DioException && CancelToken.isCancel(error)) return '';
+      if (error is UpdateDownloadVerificationException) rethrow;
+      return compactError(error);
     }
   }
 

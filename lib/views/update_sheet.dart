@@ -64,15 +64,18 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
     });
   }
 
-  void _accept() {
+  Future<void> _accept() async {
     if (_phase == _UpdatePhase.found && _release != null) {
-      unawaited(
-        ref
-            .read(commonActionProvider.notifier)
-            .checkUpdateResultHandle(data: _release, isUser: true),
+      // The reader already confirmed by tapping "Update". Skip the second
+      // dialog and let the download start, using the auto-install preference
+      // to decide whether the system install is hands-free.
+      final prefs = await loadUpdatePreferences();
+      await ref.read(commonActionProvider.notifier).checkUpdateResultHandle(
+        data: _release,
+        autoInstall: prefs.autoInstall,
       );
     }
-    Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop();
   }
 
   void _preferences() {
@@ -151,7 +154,7 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
           ),
         ),
         primary: FilledButton(
-          onPressed: _accept,
+          onPressed: () => unawaited(_accept()),
           child: Text(primaryLabel, textAlign: TextAlign.center),
         ),
         secondary: _phase == _UpdatePhase.found
@@ -216,6 +219,27 @@ class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet>
         onChanged: _saving ? null : onChanged,
       );
 
+  /// ReClash asks for consent before turning on hands-free installation, and
+  /// spells out the platform limits: an eligible, verified self-update can be
+  /// installed without asking each time, but Android may still prompt.
+  Future<void> _setAutomatic(bool enabled, bool zh) async {
+    if (!enabled) {
+      setState(() => _autoInstall = false);
+      return;
+    }
+    final allowed = await dialogs.showMessage(
+      title: zh ? '允许自动安装吗？' : 'Allow automatic installation?',
+      message: TextSpan(
+        text: zh
+            ? 'Skyward 可以安装已验证且符合条件的稳定更新，无需每次询问。它绝不会断开你的 VPN。Android 仍可能要求确认安装。'
+            : 'Skyward may install verified, eligible stable updates without asking each time. It will never disconnect your VPN. Android may still ask you to confirm an installation.',
+      ),
+      confirmText: zh ? '允许自动安装' : 'Allow automatic',
+      cancelText: zh ? '保持手动安装' : 'Keep manual',
+    );
+    if (allowed == true && mounted) setState(() => _autoInstall = true);
+  }
+
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -268,7 +292,7 @@ class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet>
               _toggle(
                 zh ? '自动安装' : 'Auto install',
                 _autoInstall,
-                (value) => setState(() => _autoInstall = value),
+                (value) => unawaited(_setAutomatic(value, zh)),
               ),
             ],
           ),

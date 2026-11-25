@@ -27,6 +27,7 @@ import 'package:path/path.dart' show basename, join;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 
 part 'actions/common.dart';
 part 'actions/setup.dart';

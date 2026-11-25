@@ -166,10 +166,15 @@ class CommonAction extends _$CommonAction {
     ];
   }
 
-  /// The download id of an update that is already running in the
-  /// background, if any: a second tap while one runs must not start a
-  /// duplicate download, and there is no dialog to tell the user apart.
-  int? _ongoingUpdateDownloadId;
+  /// Whether an update package is on its way right now: a second tap while one
+  /// runs must not set off another check over the top of it.
+  bool _ongoingUpdateDownload = false;
+  CancelToken? _updateCancelToken;
+
+  bool _isZh() =>
+      Localizations.maybeLocaleOf(globalState.navigatorKey.currentContext)
+          ?.languageCode ==
+      'zh';
 
   /// One-shot query for the Wi-Fi gate. A VPN can be reported alongside
   /// Wi-Fi, so membership is the test, not an exact list length.
@@ -178,25 +183,18 @@ class CommonAction extends _$CommonAction {
     return results.contains(ConnectivityResult.wifi);
   }
 
-  /// The package that fits the device goes to the system download manager,
-  /// which keeps it in the Downloads folder, while the app itself polls
-  /// that manager in the background and opens the system installer once
-  /// the download completes -- the browser is never involved on Android.
-  /// Nothing modal is shown while it downloads, so the app stays usable
-  /// throughout. The desktop has no such manager, so the release page
-  /// opens there.
+  /// Downloads the matching APK into the app-private `app-updates` directory,
+  /// verifies it, then hands it to the native PackageInstaller for a silent
+  /// self-update. The native verifier only accepts APKs from that directory
+  /// with a matching name and certificate. On desktop the release page opens.
   Future<void> _downloadRelease(
     Map<String, dynamic> release, {
     bool wifiOnly = false,
+    bool automatic = false,
   }) async {
-    final downloader = systemDownloader;
-    final abi = downloader == null ? null : await downloader.supportedAbi();
-    final asset = abi == null ? null : _apkAssetOf(release, abi);
-    if (downloader == null || asset == null) {
-      // The offered release may be a beta or a preview, which the
-      // /releases/latest page never points at -- open this release's own
-      // page, falling back to the tag page, so the download offered is the
-      // one that was actually found.
+    if (_ongoingUpdateDownload) return;
+    if (systemDownloader == null) {
+      // No PackageInstaller on desktop: open the release the check found.
       final page = release['html_url'];
       final tag = release['tag_name'];
       await launchUrl(
@@ -210,33 +208,57 @@ class CommonAction extends _$CommonAction {
       );
       return;
     }
-    if (_ongoingUpdateDownloadId != null) {
-      // A background download is already running: starting another one
-      // would download the same file twice, and with no dialog there is
-      // no place to ask which one to keep.
+    final abi = await systemDownloader!.supportedAbi();
+    final asset = abi == null ? null : _apkAssetOf(release, abi);
+    if (asset == null || asset.sha256 == null) {
+      // No installable package for this device: let the reader download by hand.
+      final page = release['html_url'];
+      final tag = release['tag_name'];
+      await launchUrl(
+        Uri.parse(
+          page is String
+              ? page
+              : tag is String
+              ? 'https://github.com/$repository/releases/tag/$tag'
+              : 'https://github.com/$repository/releases/latest',
+        ),
+      );
       return;
     }
+    // A hands-free download must not spend mobile data. The user-confirmed
+    // path keeps the old permissive behaviour.
+    if (wifiOnly && !await _isOnWifi()) {
+      commonPrint.log('Skipping automatic update download on mobile data');
+      return;
+    }
+    final tag = release['tag_name'] as String?;
+    final version = releaseVersionOf(tag ?? '', release['name'] as String?);
+    _ongoingUpdateDownload = true;
+    final cancelToken = CancelToken();
+    _updateCancelToken = cancelToken;
     try {
-      final downloadId = await downloader.download(
-        url: asset.url,
-        fileName: asset.name,
-        expectedSha256: asset.sha256,
-        wifiOnly: wifiOnly,
-      );
-      if (downloadId == null) {
-        throw StateError('download did not start');
-      }
-      _ongoingUpdateDownloadId = downloadId;
-      // No dialog, no banner while it downloads: the download runs in
-      // the background through the system download manager, the app
-      // stays fully usable, and only the installer opens at the end.
-      // The manager's own notification is the progress view, and it
-      // remains the fallback if the app is gone when the download ends.
-      //
-      // The tag is what the About row reads instead of offering the
-      // release again: a package on its way is not a new find.
+      final directory = Directory(join(await appPath.homeDirPath, 'app-updates'));
+      await directory.create(recursive: true);
+      final safeTag = tag?.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_') ?? 'update';
+      final target = File(join(directory.path, 'update-$safeTag.apk'));
+      final size = _apkAssetSize(release, asset.name);
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
-      await _waitForAndroidDownload(downloader, downloadId, asset.name);
+      final error = await request.downloadUpdateFile(
+        Uri.parse(asset.url),
+        target.path,
+        cancelToken: cancelToken,
+        onProgress: (received, total) {},
+        expectedSha256: asset.sha256!,
+        expectedSize: size,
+      );
+      if (error == '') return; // canceled
+      if (error != null) throw StateError(error);
+      await _installDownloadedApk(
+        target.path,
+        version: version,
+        sha256: asset.sha256!,
+        automatic: automatic,
+      );
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
@@ -244,63 +266,68 @@ class CommonAction extends _$CommonAction {
       );
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
-      _ongoingUpdateDownloadId = null;
+      _ongoingUpdateDownload = false;
+      _updateCancelToken = null;
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
     }
   }
 
-  /// Whether an update package is on its way right now. The row that started
-  /// it can be rebuilt by navigation while the download runs, and a second tap
-  /// there must not set off another check over the top of it.
-  bool get isDownloadingUpdate => _ongoingUpdateDownloadId != null;
-
-  /// Polls the system download manager every half second in the
-  /// background, with no dialog and no banner while it runs, so the user
-  /// can keep using the app throughout the download. The only things
-  /// that ever surface are the system installer's own window on success
-  /// (opened by the download-complete receiver, with the install call
-  /// below as backup) and a non-modal error banner on failure, which
-  /// does not block the app either. Cancelling happens from the system
-  /// download notification, since there is no dialog left to cancel from:
-  /// a download that disappears from the manager is reported as failed.
-  Future<void> _waitForAndroidDownload(
-    SystemDownloader downloader,
-    int downloadId,
-    String fileName,
-  ) async {
-    var failed = false;
-    try {
-      while (true) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        final status = await downloader.status(downloadId);
-        if (status == null || status.isFailed) {
-          failed = true;
-          break;
-        }
-        if (status.isSuccessful) {
-          break;
-        }
-      }
-    } catch (error) {
-      commonPrint.log(
-        'download progress poll failed: ${compactError(error)}',
-        logLevel: LogLevel.warning,
-      );
-      failed = true;
-    }
-    if (failed) {
-      dialogs.showNotifier(
-        '${currentAppLocalizations.download}: $fileName',
-        level: MessageLevel.error,
-      );
+  /// Hands a verified APK to the native PackageInstaller. Only the ROM's own
+  /// confirmation fallback needs a navigator; the silent path does not.
+  Future<void> _installDownloadedApk(
+    String path, {
+    required String version,
+    required String sha256,
+    required bool automatic,
+  }) async {
+    final installer = app;
+    if (installer == null) {
+      await launchUrl(Uri.parse('https://github.com/$repository/releases'));
       return;
     }
-    // The download-complete receiver normally opens the installer the
-    // moment the download finishes; this is only the backup for when it
-    // did not, and the native side makes it a no-op when it already did.
-    await downloader.install(downloadId);
+    installer.onUpdateInstallStatus = (status) {
+      if (status == ApkInstallStatus.awaitingConfirmation && !automatic) {
+        unawaited(installer.continueUpdateInstall());
+      }
+    };
+    final started = await installer.installApk(
+      path,
+      expectedVersion: version,
+      expectedSha256: sha256,
+      automatic: automatic,
+    );
+    final zh = _isZh();
+    switch (started) {
+      case ApkInstallResult.permissionRequired:
+        dialogs.showNotifier(
+          zh ? '需要授予安装未知应用权限后才能自动更新' : 'Allow installing unknown apps to update',
+          level: MessageLevel.warning,
+        );
+      case ApkInstallResult.vpnActive:
+        dialogs.showNotifier(
+          zh ? 'VPN 运行时无法安装更新，请先断开' : 'Disconnect the VPN before installing an update',
+          level: MessageLevel.warning,
+        );
+      case ApkInstallResult.started:
+        break;
+    }
+  }
+
+  /// Whether an update package is on its way right now.
+  bool get isDownloadingUpdate => _ongoingUpdateDownload;
+
+  int? _apkAssetSize(Map<String, dynamic> release, String name) {
+    final assets = release['assets'];
+    if (assets is! List) return null;
+    for (final asset in assets) {
+      if (asset is! Map) continue;
+      if (asset['name'] == name && asset['size'] is int) {
+        return asset['size'] as int;
+      }
+    }
+    return null;
   }
 
   ({String url, String name, String? sha256})? _apkAssetOf(
@@ -355,7 +382,7 @@ class CommonAction extends _$CommonAction {
       final wifiOnly = preloadWifi;
       if (autoInstall || (preloadWifi && await _isOnWifi())) {
         // No dialog and no navigator needed: the download is the answer.
-        await _downloadRelease(data, wifiOnly: wifiOnly);
+        await _downloadRelease(data, wifiOnly: wifiOnly, automatic: autoInstall);
         return;
       }
       final context = globalState.navigatorKey.currentContext;
