@@ -196,32 +196,30 @@ class CommonAction extends _$CommonAction {
     return null;
   }
 
-  /// Downloads the matching APK into the app-private `app-updates` directory,
-  /// verifies it, then hands it to the native PackageInstaller for a silent
-  /// self-update. The native verifier only accepts APKs from that directory
-  /// with a matching name and certificate. On desktop the release page opens.
+  /// Downloads the APK through the system download manager and lets its
+  /// completion receiver open the system installer. No VPN guard, no private
+  /// PackageInstaller session: the installer window is the confirmation.
   Future<void> _downloadRelease(
     Map<String, dynamic> release, {
     bool wifiOnly = false,
     bool automatic = false,
   }) async {
     if (_ongoingUpdateDownload) return;
-    if (systemDownloader == null) {
+    final downloader = systemDownloader;
+    if (downloader == null) {
       // Desktop: replace this installation in place when it is an installer
       // build we can write; otherwise fall back to the release page.
       await _downloadDesktopUpdate(release, automatic: automatic);
       return;
     }
-    final abi = await systemDownloader!.supportedAbi();
+    final abi = await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
-    // Preview releases list only a generic arm64 APK and publish their hash
-    // in a SHA256SUMS asset instead of a comment in the notes. Resolve both
-    // before deciding there is no installable package for this device.
+    // Preview releases list one generic arm64 APK and publish its hash in a
+    // SHA256SUMS asset instead of a comment in the notes.
     final sha256 =
         asset?.sha256 ??
         (asset == null ? null : await _sha256FromSums(release, asset.name));
     if (asset == null || sha256 == null) {
-      // No installable package for this device: let the reader download by hand.
       final page = release['html_url'];
       final tag = release['tag_name'];
       await launchUrl(
@@ -235,48 +233,33 @@ class CommonAction extends _$CommonAction {
       );
       return;
     }
-    // A hands-free download must not spend mobile data. The user-confirmed
-    // path keeps the old permissive behaviour.
     if (wifiOnly && !await _isOnWifi()) {
       commonPrint.log('Skipping automatic update download on mobile data');
       return;
     }
-    final tag = release['tag_name'] as String?;
-    final version = releaseVersionOf(tag ?? '', release['name'] as String?);
     _ongoingUpdateDownload = true;
-    final cancelToken = CancelToken();
-    _updateCancelToken = cancelToken;
+    ref.read(updateDownloadProgressProvider.notifier).set(0);
     try {
-      final directory = Directory(
-        join(await appPath.homeDirPath, 'app-updates'),
-      );
-      await directory.create(recursive: true);
-      final safeTag =
-          tag?.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_') ?? 'update';
-      final target = File(join(directory.path, 'update-$safeTag.apk'));
-      final size = _apkAssetSize(release, asset.name);
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
-      ref.read(updateDownloadProgressProvider.notifier).set(0);
-      final error = await request.downloadUpdateFile(
-        Uri.parse(asset.url),
-        target.path,
-        cancelToken: cancelToken,
-        onProgress: (received, total) {
-          if (total <= 0) return;
-          final fraction = (received / total).clamp(0.0, 1.0);
-          ref.read(updateDownloadProgressProvider.notifier).set(fraction);
-        },
+      final id = await downloader.download(
+        url: asset.url,
+        fileName: asset.name,
         expectedSha256: sha256,
-        expectedSize: size,
+        wifiOnly: wifiOnly,
       );
-      if (error == '') return; // canceled
-      if (error != null) throw StateError(error);
-      await _installDownloadedApk(
-        target.path,
-        version: version,
-        sha256: sha256,
-        automatic: automatic,
-      );
+      if (id == null) throw StateError('download did not start');
+      while (true) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        final status = await downloader.status(id);
+        if (status == null || status.isFailed) {
+          throw StateError('download failed: ${asset.name}');
+        }
+        ref.read(updateDownloadProgressProvider.notifier).set(status.progress);
+        if (status.isSuccessful) break;
+      }
+      // The download-complete receiver normally opens the installer already;
+      // this call is a no-op then, and the fallback when it did not run.
+      await downloader.install(id);
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
@@ -285,7 +268,7 @@ class CommonAction extends _$CommonAction {
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
       _ongoingUpdateDownload = false;
-      _updateCancelToken = null;
+      ref.read(updateDownloadProgressProvider.notifier).set(null);
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
@@ -365,108 +348,8 @@ class CommonAction extends _$CommonAction {
     }
   }
 
-  /// Hands a verified APK to the native PackageInstaller. Only the ROM's own
-  /// confirmation fallback needs a navigator; the silent path does not.
-  Future<void> _installDownloadedApk(
-    String path, {
-    required String version,
-    required String sha256,
-    required bool automatic,
-  }) async {
-    final installer = app;
-    if (installer == null) {
-      await launchUrl(Uri.parse('https://github.com/$repository/releases'));
-      return;
-    }
-    installer.onUpdateInstallStatus = (status) {
-      if (status == ApkInstallStatus.awaitingConfirmation && !automatic) {
-        unawaited(installer.continueUpdateInstall());
-      }
-    };
-    final zh = _isZh();
-    Future<ApkInstallResult> attempt() => installer.installApk(
-      path,
-      expectedVersion: version,
-      expectedSha256: sha256,
-      automatic: automatic,
-    );
-
-    var result = await attempt();
-    if (result == ApkInstallResult.vpnActive) {
-      // Android refuses an install while a VPN is active. Offer to stop the
-      // core for the install instead of leaving the reader to do it by hand.
-      final allowed = await dialogs.showMessage(
-        title: zh ? '断开 VPN 后安装' : 'Disconnect VPN and install',
-        message: TextSpan(
-          text: zh
-              ? '安装更新需要暂时停止 VPN。确定要停止并安装吗？'
-              : 'Installing the update requires stopping the VPN temporarily. Continue?',
-        ),
-        confirmText: zh ? '停止并安装' : 'Stop and install',
-      );
-      if (allowed != true) return;
-      dialogs.showNotifier(
-        zh ? '正在停止 VPN 以安装更新…' : 'Stopping the VPN to install the update…',
-      );
-      // Do not await the run request: a core that is slow to answer would
-      // hold the install here with no feedback. The native state below is
-      // the authority on whether the VPN is really gone.
-      unawaited(
-        ref
-            .read(setupActionProvider.notifier)
-            .setRunning(false)
-            .catchError((_) => false),
-      );
-      final deadline = DateTime.now().add(const Duration(seconds: 8));
-      while (await installer.updateInstallBlockedByVpn()) {
-        if (DateTime.now().isAfter(deadline)) break;
-        await Future<void>.delayed(const Duration(milliseconds: 120));
-      }
-      result = await attempt();
-    }
-
-    switch (result) {
-      case ApkInstallResult.permissionRequired:
-        unawaited(
-          dialogs.showMessage(
-            title: zh ? '无法安装更新' : 'Cannot install update',
-            message: TextSpan(
-              text: zh
-                  ? '需要授予安装未知应用权限后才能自动更新'
-                  : 'Allow installing unknown apps to update',
-            ),
-          ),
-        );
-      case ApkInstallResult.vpnActive:
-        unawaited(
-          dialogs.showMessage(
-            title: zh ? '仍无法安装更新' : 'Still cannot install update',
-            message: TextSpan(
-              text: zh
-                  ? 'VPN 仍未断开，请在系统设置中手动关闭后重试'
-                  : 'The VPN is still active; turn it off in system settings and retry',
-            ),
-          ),
-        );
-      case ApkInstallResult.started:
-        break;
-    }
-  }
-
   /// Whether an update package is on its way right now.
   bool get isDownloadingUpdate => _ongoingUpdateDownload;
-
-  int? _apkAssetSize(Map<String, dynamic> release, String name) {
-    final assets = release['assets'];
-    if (assets is! List) return null;
-    for (final asset in assets) {
-      if (asset is! Map) continue;
-      if (asset['name'] == name && asset['size'] is int) {
-        return asset['size'] as int;
-      }
-    }
-    return null;
-  }
 
   ({String url, String name, String? sha256})? _apkAssetOf(
     Map<String, dynamic> release,
