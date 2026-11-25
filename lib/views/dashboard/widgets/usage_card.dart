@@ -6,15 +6,19 @@ import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/views/dashboard/widgets/card.dart';
+import 'package:skyward/views/dashboard/widgets/ad_block_hits_sheet.dart';
 import 'package:skyward/views/dashboard/widgets/app_usage_sheet.dart';
 import 'package:skyward/views/traffic_statistics/traffic_statistics.dart';
+import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-enum _UsageTab { traffic, app }
+enum _UsageTab { traffic, app, blocked }
 
-/// One card for both traffic and per-app usage, with a segmented switch. The
-/// figure belongs to the selected tab and opens that tab's full view.
+/// One card for traffic, per-app usage and ad-block hits, with a segmented
+/// switch. The figure belongs to the selected tab and opens that tab's full
+/// view. Ad-block hits live here rather than in a card of their own: adding a
+/// fourth stats card would only recreate the duplicate-card problem.
 class UsageCard extends ConsumerStatefulWidget {
   const UsageCard({super.key});
 
@@ -26,45 +30,70 @@ class _UsageCardState extends ConsumerState<UsageCard> {
   _UsageTab _tab = _UsageTab.traffic;
 
   String _figureFor(_UsageTab tab) {
-    if (tab == _UsageTab.traffic) {
-      final stats = ref.watch(
-        trafficStatisticsProvider(TrafficPeriod.day, TrafficRankKind.domain),
-      );
-      final total = stats.value;
-      return total == null
-          ? '—'
-          : (total.totalUpload + total.totalDownload).traffic.show;
+    switch (tab) {
+      case _UsageTab.traffic:
+        final stats = ref.watch(
+          trafficStatisticsProvider(TrafficPeriod.day, TrafficRankKind.domain),
+        );
+        final total = stats.value;
+        return total == null
+            ? '—'
+            : (total.totalUpload + total.totalDownload).traffic.show;
+      case _UsageTab.app:
+        final stats = ref.watch(appUsageProvider(AppUsagePeriod.today));
+        final total = stats.value;
+        return total == null
+            ? '—'
+            : (total.totalUpload + total.totalDownload).traffic.show;
+      case _UsageTab.blocked:
+        final blocked = ref.watch(adBlockHitsProvider).value;
+        if (blocked == null) return '—';
+        return '${blocked.fold<int>(0, (sum, hit) => sum + hit.hits)}';
     }
-    final stats = ref.watch(appUsageProvider(AppUsagePeriod.today));
-    final total = stats.value;
-    return total == null
-        ? '—'
-        : (total.totalUpload + total.totalDownload).traffic.show;
   }
 
   void _open() {
-    if (_tab == _UsageTab.traffic) {
-      BaseNavigator.push(context, const TrafficStatisticsView());
-    } else {
-      showSheet(context: context, builder: (_) => const AppUsageSheet());
+    switch (_tab) {
+      case _UsageTab.traffic:
+        BaseNavigator.push(context, const TrafficStatisticsView());
+      case _UsageTab.app:
+        showSheet(context: context, builder: (_) => const AppUsageSheet());
+      case _UsageTab.blocked:
+        showSheet(context: context, builder: (_) => const AdBlockHitsSheet());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final figure = _figureFor(_tab);
-    final label = _tab == _UsageTab.traffic
-        ? context.appLocalizations.trafficUsage
-        : context.appLocalizations.usageStats;
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    final label = switch (_tab) {
+      _UsageTab.traffic => context.appLocalizations.trafficUsage,
+      _UsageTab.app => context.appLocalizations.usageStats,
+      _UsageTab.blocked => zh ? '广告拦截' : 'Ads blocked',
+    };
+    final caption = switch (_tab) {
+      _UsageTab.traffic || _UsageTab.app => context.appLocalizations.today,
+      _UsageTab.blocked => () {
+        final blocked = ref.watch(adBlockHitsProvider).value;
+        return blocked == null
+            ? (zh ? '近 7 天' : 'Last 7 days')
+            : (zh
+                ? '近 7 天 · ${blocked.length} 个域名'
+                : 'Last 7 days · ${blocked.length} domains');
+      }(),
+    };
     return DashboardCard(
       semanticLabel: label,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: _tab == _UsageTab.traffic
-                ? AppGlyphs.connections
-                : AppGlyphs.dataUsage,
+            glyph: switch (_tab) {
+              _UsageTab.traffic => AppGlyphs.connections,
+              _UsageTab.app => AppGlyphs.dataUsage,
+              _UsageTab.blocked => AppGlyphs.block,
+            },
             title: label,
           ),
           const SizedBox(height: 10),
@@ -72,6 +101,7 @@ class _UsageCardState extends ConsumerState<UsageCard> {
             segments: [
               (_UsageTab.traffic, context.appLocalizations.trafficUsage),
               (_UsageTab.app, context.appLocalizations.usageStats),
+              (_UsageTab.blocked, zh ? '广告拦截' : 'Ads blocked'),
             ],
             value: _tab,
             onChanged: (v) => setState(() => _tab = v),
@@ -100,7 +130,7 @@ class _UsageCardState extends ConsumerState<UsageCard> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  context.appLocalizations.today,
+                  caption,
                   style: DashboardText.label(context),
                 ),
               ],

@@ -252,9 +252,12 @@ class _DashboardEditorState extends ConsumerState<DashboardEditor>
   Widget build(BuildContext context) {
     final stacks = _stacks;
     final shown = _shown;
+    // speedTest is off-home while it is being polished; appUsage is a tab of
+    // the traffic-stats card, not a second card that can be added again.
+    const hidden = {DashboardWidget.speedTest, DashboardWidget.appUsage};
     final addable = [
       for (final card in DashboardWidget.values)
-        if (card != DashboardWidget.speedTest &&
+        if (!hidden.contains(card) &&
             card.platforms.contains(widget.platform) &&
             !shown.contains(card))
           card,

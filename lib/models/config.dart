@@ -253,21 +253,19 @@ const _retiredDashboardWidgets = {
   'overrideNtpButton',
 };
 
-/// Legacy configs could carry both stats cards; they are one switchable card
-/// now, so keep only one and drop the redundant legacy value.
+/// The speed-test card is off-home while it is being polished, and app usage
+/// is now a tab of the traffic-stats card rather than a card of its own. Both
+/// are dropped here so saved boards cannot bring them back.
 List<DashboardWidget> dashboardWidgetsFromJson(List<dynamic>? dashboardWidgets) {
   final parsed = _dashboardWidgetsFromJson(dashboardWidgets);
-  // The speed-test card is being polished off-home; drop it from saved boards
-  // so upgrading devices do not keep showing it until it ships again.
-  final withoutSpeedTest =
-      parsed.where((c) => c != DashboardWidget.speedTest).toList();
-  if (withoutSpeedTest.contains(DashboardWidget.trafficStats) &&
-      withoutSpeedTest.contains(DashboardWidget.appUsage)) {
-    return withoutSpeedTest
-        .where((c) => c != DashboardWidget.appUsage)
-        .toList();
-  }
-  return withoutSpeedTest;
+  // Canonicalise the legacy second stats card before de-duplicating: checking
+  // for trafficStats first made the old de-dup depend on save order, so a board
+  // that listed appUsage first kept two identical cards.
+  final canonical = parsed
+      .where((c) => c != DashboardWidget.speedTest)
+      .map((c) => c == DashboardWidget.appUsage ? DashboardWidget.trafficStats : c);
+  final seen = <DashboardWidget>{};
+  return canonical.where(seen.add).toList();
 }
 
 /// The current outbound card cannot be removed: a list without it predates it.
@@ -336,17 +334,18 @@ List<List<DashboardWidget>>? dashboardStacksFromJson(
     }
     final pile = <DashboardWidget>[];
     for (final name in raw) {
-      final card = _legacyDashboardWidgets[name] ?? byName[name];
+      final parsed = _legacyDashboardWidgets[name] ?? byName[name];
       // The speed-test card is being polished off-home; drop saved piles.
-      if (card == null || card == DashboardWidget.speedTest) {
+      if (parsed == null || parsed == DashboardWidget.speedTest) {
         continue;
       }
+      // appUsage is a tab inside the traffic-stats card now. Canonicalising it
+      // to trafficStats makes de-duplication independent of save order -- the
+      // old check only caught appUsage that came after trafficStats.
+      final card = parsed == DashboardWidget.appUsage
+          ? DashboardWidget.trafficStats
+          : parsed;
       if (!seen.add(card)) {
-        continue;
-      }
-      // The two legacy stats cards are one switchable card now.
-      if (card == DashboardWidget.appUsage &&
-          seen.contains(DashboardWidget.trafficStats)) {
         continue;
       }
       pile.add(card);
