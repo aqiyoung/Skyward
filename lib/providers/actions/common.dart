@@ -100,6 +100,7 @@ class CommonAction extends _$CommonAction {
         data: res,
         autoInstall: prefs.autoInstall,
         preloadWifi: prefs.preloadWifi,
+        notifyOnUpdate: prefs.notifyOnUpdate,
       );
     } catch (error) {
       commonPrint.log(
@@ -182,6 +183,17 @@ class CommonAction extends _$CommonAction {
   Future<bool> _isOnWifi() async {
     final results = await Connectivity().checkConnectivity();
     return results.contains(ConnectivityResult.wifi);
+  }
+
+  /// Startup checks can finish before the first frame mounts the navigator.
+  /// Wait briefly for it so an announced update is not silently dropped.
+  Future<BuildContext?> _readyNavigatorContext() async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final context = globalState.navigatorKey.currentContext;
+      if (context != null && context.mounted) return context;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    return null;
   }
 
   /// Downloads the matching APK into the app-private `app-updates` directory,
@@ -489,25 +501,17 @@ class CommonAction extends _$CommonAction {
     // download (the system installer still opens at the end -- Android does
     // not let a normal app install silently).
     bool autoInstall = false,
-    // With Wi-Fi pre-download on, an automatic check pulls the package over
-    // Wi-Fi without asking; on mobile data it still asks first.
+    // With Wi-Fi pre-download on, a confirmed download stays on Wi-Fi.
     bool preloadWifi = false,
+    // The switch in Update preferences: off means an automatic check stays
+    // quiet and does not download anything until the reader checks by hand.
+    bool notifyOnUpdate = true,
   }) async {
     if (data != null) {
-      // Only the Wi-Fi pre-download preference restricts the download
-      // manager to unmetered networks. Auto-install merely skips the
-      // confirmation; the manual path keeps the old permissive behaviour.
-      final wifiOnly = preloadWifi;
-      if (autoInstall || (preloadWifi && await _isOnWifi())) {
-        // No dialog and no navigator needed: the download is the answer.
-        await _downloadRelease(
-          data,
-          wifiOnly: wifiOnly,
-          automatic: autoInstall,
-        );
-        return;
-      }
-      final context = globalState.navigatorKey.currentContext;
+      if (!notifyOnUpdate) return;
+      // The popup is the announcement; auto-install and pre-download decide
+      // what happens after it is confirmed, not whether it appears.
+      final context = await _readyNavigatorContext();
       if (context == null) {
         return;
       }
@@ -528,7 +532,9 @@ class CommonAction extends _$CommonAction {
         confirmText: currentAppLocalizations.update,
       );
       if (res == true) {
-        unawaited(_downloadRelease(data));
+        unawaited(
+          _downloadRelease(data, wifiOnly: preloadWifi, automatic: autoInstall),
+        );
       }
     } else if (isUser && !silent) {
       unawaited(

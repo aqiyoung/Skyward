@@ -15,8 +15,7 @@ UpdateChannel defaultUpdateChannel({required bool isPreBuild}) =>
 UpdateChannel effectiveUpdateChannel({
   required UpdateChannel? configured,
   required bool isPreBuild,
-}) =>
-    configured ?? defaultUpdateChannel(isPreBuild: isPreBuild);
+}) => configured ?? defaultUpdateChannel(isPreBuild: isPreBuild);
 
 /// The three extra update preferences that do not need a full config field.
 /// `autoCheckUpdate` itself lives in AppSettingProps and is read from there.
@@ -24,11 +23,16 @@ class UpdatePreferencesData {
   const UpdatePreferencesData({
     required this.preloadWifi,
     required this.autoInstall,
+    this.notifyOnUpdate = true,
     this.channel,
   });
 
   final bool preloadWifi;
   final bool autoInstall;
+
+  /// Whether a detected update is announced at once. Off means the app stays
+  /// quiet until the reader checks for updates themselves.
+  final bool notifyOnUpdate;
   final UpdateChannel? channel;
 
   static const defaults = UpdatePreferencesData(
@@ -39,6 +43,7 @@ class UpdatePreferencesData {
   Map<String, dynamic> toJson() => {
     'preloadWifi': preloadWifi,
     'autoInstall': autoInstall,
+    'notifyOnUpdate': notifyOnUpdate,
     if (channel != null) 'channel': channel!.name,
   };
 
@@ -46,6 +51,7 @@ class UpdatePreferencesData {
       UpdatePreferencesData(
         preloadWifi: json['preloadWifi'] == true,
         autoInstall: json['autoInstall'] == true,
+        notifyOnUpdate: json['notifyOnUpdate'] != false,
         channel: json['channel'] == null
             ? null
             : UpdateChannel.values.asNameMap()[json['channel'] as String],

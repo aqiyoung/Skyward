@@ -252,6 +252,7 @@ class _UpdatePreferencesSheetState
   late bool _check;
   late bool _preloadWifi;
   late bool _autoInstall;
+  late bool _notifyOnUpdate;
   late UpdateChannel _channel;
   bool _saving = false;
 
@@ -265,6 +266,7 @@ class _UpdatePreferencesSheetState
       setState(() {
         _preloadWifi = loaded.preloadWifi;
         _autoInstall = loaded.autoInstall;
+        _notifyOnUpdate = loaded.notifyOnUpdate;
         _channel = effectiveUpdateChannel(
           configured: loaded.channel,
           isPreBuild: globalState.isPre,
@@ -274,6 +276,7 @@ class _UpdatePreferencesSheetState
     // Defaults until the async load lands.
     _preloadWifi = extra.preloadWifi;
     _autoInstall = extra.autoInstall;
+    _notifyOnUpdate = extra.notifyOnUpdate;
     _channel = effectiveUpdateChannel(
       configured: extra.channel,
       isPreBuild: globalState.isPre,
@@ -322,6 +325,7 @@ class _UpdatePreferencesSheetState
       UpdatePreferencesData(
         preloadWifi: _preloadWifi,
         autoInstall: _autoInstall,
+        notifyOnUpdate: _notifyOnUpdate,
         channel: configured,
       ),
     );
@@ -357,6 +361,11 @@ class _UpdatePreferencesSheetState
                 zh ? '通过 Wi-Fi 预下载' : 'Pre-download over Wi-Fi',
                 _preloadWifi,
                 (value) => setState(() => _preloadWifi = value),
+              ),
+              _toggle(
+                zh ? '发现更新时弹窗' : 'Pop up on new version',
+                _notifyOnUpdate,
+                (value) => setState(() => _notifyOnUpdate = value),
               ),
               _toggle(
                 zh ? '自动安装' : 'Auto install',
