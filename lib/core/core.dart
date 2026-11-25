@@ -2,6 +2,7 @@ export 'chains_state.dart';
 export 'controller.dart';
 export 'core.dart';
 export 'desktop/model.dart';
+export 'desktop/desktop_updater.dart';
 export 'event.dart';
 export 'lib.dart';
 export 'method.dart';

@@ -195,18 +195,9 @@ class CommonAction extends _$CommonAction {
   }) async {
     if (_ongoingUpdateDownload) return;
     if (systemDownloader == null) {
-      // No PackageInstaller on desktop: open the release the check found.
-      final page = release['html_url'];
-      final tag = release['tag_name'];
-      await launchUrl(
-        Uri.parse(
-          page is String
-              ? page
-              : tag is String
-              ? 'https://github.com/$repository/releases/tag/$tag'
-              : 'https://github.com/$repository/releases/latest',
-        ),
-      );
+      // Desktop: replace this installation in place when it is an installer
+      // build we can write; otherwise fall back to the release page.
+      await _downloadDesktopUpdate(release, automatic: automatic);
       return;
     }
     final abi = await systemDownloader!.supportedAbi();
@@ -263,6 +254,70 @@ class CommonAction extends _$CommonAction {
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      dialogs.showNotifier(error.toString(), level: MessageLevel.error);
+    } finally {
+      _ongoingUpdateDownload = false;
+      _updateCancelToken = null;
+      unawaited(
+        ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
+      );
+    }
+  }
+
+  /// Downloads the desktop installer/AppImage/DMG for this release and starts
+  /// the detached replacement. Portable and package-manager installs cannot
+  /// replace themselves, so those fall back to the release page.
+  Future<void> _downloadDesktopUpdate(
+    Map<String, dynamic> release, {
+    required bool automatic,
+  }) async {
+    final updater = detectDesktopUpdater();
+    final tag = release['tag_name'] as String?;
+    final asset = updater?.selectAsset(release['assets'], tag ?? '');
+    if (updater == null || asset == null || asset.sha256 == null) {
+      final page = release['html_url'];
+      await launchUrl(
+        Uri.parse(
+          page is String
+              ? page
+              : tag is String
+              ? 'https://github.com/$repository/releases/tag/$tag'
+              : 'https://github.com/$repository/releases/latest',
+        ),
+      );
+      return;
+    }
+    _ongoingUpdateDownload = true;
+    final cancelToken = CancelToken();
+    _updateCancelToken = cancelToken;
+    try {
+      final directory = Directory(join(await appPath.homeDirPath, 'app-updates'));
+      await directory.create(recursive: true);
+      final target = File(join(directory.path, asset.name));
+      ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
+      final error = await request.downloadUpdateFile(
+        Uri.parse(asset.url),
+        target.path,
+        cancelToken: cancelToken,
+        onProgress: (received, total) {},
+        expectedSha256: asset.sha256!,
+        expectedSize: asset.size,
+      );
+      if (error == '') return;
+      if (error != null) throw StateError(error);
+      final logPath = join(directory.path, 'desktop-update.log');
+      await updater.launch(
+        target.path,
+        relaunch: automatic,
+        logPath: logPath,
+      );
+      // The replacement waits for this process to exit before swapping files.
+      exit(0);
+    } catch (error) {
+      commonPrint.log(
+        'desktop update failed: ${compactError(error)}',
         logLevel: LogLevel.warning,
       );
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);

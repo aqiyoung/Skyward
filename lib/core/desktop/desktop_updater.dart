@@ -171,6 +171,13 @@ UpdateAsset? _selectSetupAsset(Object? assets, String tag, String arch) {
 String _versionOf(String tag) =>
     tag.startsWith('v') || tag.startsWith('V') ? tag.substring(1) : tag;
 
+/// GitHub's asset `digest` field is `sha256:<64 hex>`. Return the bare hex.
+String? parseAssetSha256(Object? digest) {
+  if (digest is! String) return null;
+  final match = RegExp(r'^sha256:([0-9a-fA-F]{64})$').firstMatch(digest.trim());
+  return match?.group(1)?.toLowerCase();
+}
+
 class _WindowsUpdater implements DesktopUpdater {
   _WindowsUpdater(this._arch, this._start);
 
