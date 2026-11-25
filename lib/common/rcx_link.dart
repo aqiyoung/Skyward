@@ -15,7 +15,7 @@ String encodeRcxLink(String yaml) {
     level: 9,
   ).convert(Uint8List.fromList(utf8.encode(yaml)));
   return Uri(
-    scheme: 'reclash',
+    scheme: 'skyward',
     host: 'routing',
     queryParameters: {'p': base64Url.encode(raw).replaceAll('=', '')},
   ).toString();
