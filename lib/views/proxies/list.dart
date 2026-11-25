@@ -15,6 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
+import 'routing.dart';
+import 'routing_strategy.dart';
 
 const _pinnedHeaderGap = 8.0;
 const _headerInset = 10.0;
@@ -571,10 +573,9 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
                 Expanded(
                   child: Text(
                     zh ? '链路' : 'Chains',
-                    style: AppTextStyle.footnote.of(
-                      context,
-                      emphasized: true,
-                    ).copyWith(color: scheme.onSurfaceVariant),
+                    style: AppTextStyle.footnote
+                        .of(context, emphasized: true)
+                        .copyWith(color: scheme.onSurfaceVariant),
                   ),
                 ),
                 TextButton(
@@ -726,6 +727,16 @@ class ListHeader extends ConsumerWidget {
     final isDelayTesting = ref.watch(
       delayTestingGroupsProvider.select((state) => state.contains(groupName)),
     );
+    final (scripted, profile) = ref.watch(
+      rcxGroupProvider(groupName).select(
+        (state) => switch (state) {
+          null => (false, null),
+          final group => (true, group.control.isManual ? null : group.profile),
+        },
+      ),
+    );
+    final behaviour = watchGroupBehaviour(ref, group);
+    final showRouting = behaviour || scripted;
     final colorScheme = context.colorScheme;
     final level = floating > 0
         ? SurfaceLevel.floatingOf(colorScheme)
@@ -753,6 +764,19 @@ class ListHeader extends ConsumerWidget {
               isExpand: isExpand,
               isDelayTesting: isDelayTesting,
               groupType: group.type,
+              routingLabel: profile == null
+                  ? null
+                  : rcxProfileTitle(context, ref, profile),
+              routingTooltip: behaviour
+                  ? context.appLocalizations.rcxBehaviour
+                  : null,
+              onRouting: showRouting
+                  ? () => unawaited(
+                      behaviour
+                          ? showGroupBehaviour(context, groupName)
+                          : showRoutingSheet(context, groupName),
+                    )
+                  : null,
               onScrollToSelected: () {
                 onScrollToSelected(groupName);
               },
@@ -918,8 +942,18 @@ class _SelectedProxyName extends ConsumerWidget {
     if (proxyName.isEmpty) {
       return const SizedBox.shrink();
     }
+    final control = ref.watch(
+      rcxGroupProvider(groupName).select((state) => state?.control),
+    );
+    final l = context.appLocalizations;
+    final mode = switch (control) {
+      null => null,
+      RcxControl(isManual: true) => null,
+      RcxControl(isPinned: true) => l.rcxPinnedLabel,
+      _ => l.rcxModeAuto,
+    };
     return EmojiText(
-      proxyName,
+      mode == null ? proxyName : '$mode · $proxyName',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: AppTextStyle.caption1.of(context, emphasized: true).toLight,
@@ -932,6 +966,9 @@ class _GroupActions extends StatelessWidget {
     required this.isExpand,
     required this.isDelayTesting,
     required this.groupType,
+    this.routingLabel,
+    this.routingTooltip,
+    this.onRouting,
     required this.onScrollToSelected,
     required this.onDelayTest,
     required this.onToggle,
@@ -940,6 +977,9 @@ class _GroupActions extends StatelessWidget {
   final bool isExpand;
   final bool isDelayTesting;
   final GroupType groupType;
+  final String? routingLabel;
+  final String? routingTooltip;
+  final VoidCallback? onRouting;
   final VoidCallback onScrollToSelected;
   final VoidCallback onDelayTest;
   final VoidCallback onToggle;
@@ -967,12 +1007,29 @@ class _GroupActions extends StatelessWidget {
                       ? CommonCircleLoading(size: TonalButtonSize.compact.icon)
                       : const GlyphIcon(AppGlyphs.bolt),
                 ),
+                if (onRouting != null)
+                  IconButton(
+                    tooltip:
+                        routingTooltip ?? context.appLocalizations.rcxTitle,
+                    onPressed: onRouting,
+                    iconSize: 19,
+                    icon: const GlyphIcon(AppGlyphs.shuffle),
+                  ),
               ],
             )
           // Selector is the default group and the expand arrow already
           // says a choice can be made, so its name is noise on every row;
           // a computed group keeps its name, because it is the reason the
           // row cannot be picked from directly.
+          else if (routingLabel != null)
+            Text(
+              routingLabel!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.caption1
+                  .of(context, emphasized: true)
+                  .toLight,
+            )
           else if (groupType != GroupType.Selector)
             Text(
               groupType.name,
@@ -1021,7 +1078,9 @@ class _ChainChip extends ConsumerWidget {
     final exit = chain.hops.last;
     final selected =
         ref.watch(selectedProxyNameProvider(groupName)) == chain.name;
-    final delay = ref.watch(delayProvider(proxyName: chain.name, testUrl: null));
+    final delay = ref.watch(
+      delayProvider(proxyName: chain.name, testUrl: null),
+    );
     final broken = report?.status == 'broken';
     final warned = broken || (report?.issues.isNotEmpty ?? false);
     return ConstrainedBox(
@@ -1101,7 +1160,8 @@ class _ChainChip extends ConsumerWidget {
                       padding: const EdgeInsets.only(left: 6),
                       child: Text(
                         '$delay ms',
-                        style: AppTextStyle.caption2.of(context, emphasized: true)
+                        style: AppTextStyle.caption2
+                            .of(context, emphasized: true)
                             .copyWith(color: scheme.delayColor(delay)),
                       ),
                     ),
