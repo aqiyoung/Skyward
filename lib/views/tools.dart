@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
@@ -14,6 +12,7 @@ import 'package:skyward/views/config/diagnostics.dart';
 import 'package:skyward/views/config/general.dart';
 import 'package:skyward/views/hotkey.dart';
 import 'package:skyward/views/page_large_title.dart';
+import 'package:skyward/views/update_sheet.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -136,101 +135,28 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   }
 }
 
-enum _VersionCheck { checking, latest, found, failed }
-
-/// The build a reader is running, and the way to ask for the next one: the
-/// version sits on the right where a value belongs, and the chevron after it
-/// says the row does something. While a check runs -- or a found package
-/// downloads -- the version is what is no longer the news, so the row carries
-/// the check's own word there instead, and goes back to naming the build once
-/// that word has been read.
-class _VersionItem extends ConsumerStatefulWidget {
+/// The build a reader is running. Tapping it opens the animated update sheet,
+/// where the check, result and next action all live.
+class _VersionItem extends ConsumerWidget {
   const _VersionItem();
 
   @override
-  ConsumerState<_VersionItem> createState() => _VersionItemState();
-}
-
-class _VersionItemState extends ConsumerState<_VersionItem> {
-  /// How long a finished check keeps the right-hand side: long enough to be
-  /// read once, not so long that the version stays hidden behind it.
-  static const _hold = Duration(seconds: 4);
-
-  _VersionCheck? _check;
-  Timer? _holdTimer;
-
-  @override
-  void dispose() {
-    _holdTimer?.cancel();
-    super.dispose();
-  }
-
-  /// Puts [check] on the row. A finished check is left there for [_hold] and
-  /// then gives the row back to the version; "checking" stays until it lands.
-  void _show(_VersionCheck check) {
-    _holdTimer?.cancel();
-    if (check != _VersionCheck.checking) {
-      _holdTimer = Timer(_hold, () {
-        if (!mounted) return;
-        setState(() => _check = null);
-      });
-    }
-    setState(() => _check = check);
-  }
-
-  /// The check runs in place, the way it did on the about page it was moved
-  /// from: no dialog, no banner over the page. A release found starts its
-  /// download in the background, and the row says so for as long as it lasts.
-  Future<void> _checkUpdate() async {
-    // One check at a time, and none over the top of a download already
-    // running: the row would go back to naming a release it is fetching.
-    if (_check == _VersionCheck.checking ||
-        ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
-      return;
-    }
-    _show(_VersionCheck.checking);
-    final Map<String, dynamic>? release;
-    try {
-      release = await request.checkForUpdate();
-    } catch (_) {
-      if (!mounted) return;
-      _show(_VersionCheck.failed);
-      return;
-    }
-    if (!mounted) return;
-    if (release == null) {
-      _show(_VersionCheck.latest);
-      return;
-    }
-    _show(_VersionCheck.found);
-    unawaited(
-      ref
-          .read(commonActionProvider.notifier)
-          .checkUpdateResultHandle(data: release, silent: true),
-    );
-  }
-
-  String? _checkText(AppLocalizations appLocalizations) => switch (_check) {
-    _VersionCheck.checking => appLocalizations.versionUpdateChecking,
-    _VersionCheck.latest => appLocalizations.versionUpdateLatest,
-    _VersionCheck.found => appLocalizations.versionUpdateFound,
-    _VersionCheck.failed => appLocalizations.versionUpdateFailed,
-    null => null,
-  };
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    // A package on its way is not a find to announce: once the release has
-    // been handed to the download, the row says what is happening instead of
-    // naming the version for the minutes that takes.
     final downloading = ref.watch(loadingProvider(LoadingTag.updateDownload));
     final version = globalState.hasPackageInfo
         ? globalState.packageInfo.labeledVersion
         : null;
     final text = downloading
         ? appLocalizations.versionUpdateDownloading
-        : _checkText(appLocalizations) ?? version;
+        : version;
+    Future<void> checkUpdate() async {
+      if (ref.read(commonActionProvider.notifier).isDownloadingUpdate) {
+        return;
+      }
+      await showUpdateSheet(context, check: request.checkForUpdate);
+    }
+
     return ListItem(
       title: Text(appLocalizations.currentVersion),
       trailing: Row(
@@ -248,7 +174,7 @@ class _VersionItemState extends ConsumerState<_VersionItem> {
           const GlyphIcon(AppGlyphs.chevronForward),
         ],
       ),
-      onTap: _checkUpdate,
+      onTap: checkUpdate,
     );
   }
 }
