@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:skyward/common/common.dart';
-import 'package:skyward/core/core.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
@@ -571,7 +570,7 @@ class _IssueCard extends StatelessWidget {
       'nameClash',
     }.contains(issue.code);
     final fill = error ? scheme.errorContainer : scheme.warningContainer;
-    final ink = error ? scheme.onErrorContainer : scheme.onWarnContainer;
+    final ink = error ? scheme.onErrorContainer : scheme.onWarningContainer;
     final glyph = error ? AppGlyphs.error : AppGlyphs.warning;
     final String title;
     final String body;
@@ -831,8 +830,9 @@ class _NodeView extends StatelessWidget {
               height: 48,
               decoration: node.active
                   ? ShapeDecoration(
-                      shape: AppShape.circle,
-                      side: BorderSide(color: scheme.primary, width: 2.5),
+                      shape: CircleBorder(
+                        side: BorderSide(color: scheme.primary, width: 2.5),
+                      ),
                     )
                   : null,
               child: Center(child: content),
@@ -861,6 +861,7 @@ class _NodeView extends StatelessWidget {
 
 class _HopPicker extends ConsumerStatefulWidget {
   const _HopPicker({
+    super.key,
     required this.slot,
     required this.current,
     required this.onPicked,

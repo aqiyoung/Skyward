@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:skyward/common/common.dart';
@@ -331,6 +332,22 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     return chains.where((c) => c.enabled && names.contains(c.name)).toList();
   }
 
+  /// Core reports carry the chain's status and issues; refresh them whenever
+  /// the band is read so the warning mark follows the applied config.
+  List<ChainReport> _reports = const [];
+
+  Future<void> _loadReports() async {
+    final reports = await ref.read(coreHandlerProvider).getChainReport();
+    if (mounted) setState(() => _reports = reports);
+  }
+
+  ChainReport? _reportOf(int id) {
+    for (final report in _reports) {
+      if (report.id == id) return report;
+    }
+    return null;
+  }
+
   List<Proxy> get _serverProxies {
     final chains = _chainsInGroup.map((c) => c.name).toSet();
     if (chains.isEmpty) return widget.group.all;
@@ -340,6 +357,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   @override
   void initState() {
     super.initState();
+    unawaited(_loadReports());
     _controller.addStatusListener((_) => setState(() {}));
     ref.listenManual(
       unfoldSetProvider.select((state) => state.contains(widget.group.name)),
@@ -579,7 +597,13 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
                   runSpacing: 4,
                   children: [
                     for (final chain in chains)
-                      _ChainChip(chain: chain, zh: zh),
+                      _ChainChip(
+                        chain: chain,
+                        zh: zh,
+                        groupName: widget.group.name,
+                        groupType: widget.group.type,
+                        report: _reportOf(chain.id),
+                      ),
                   ],
                 ),
               ),
@@ -967,52 +991,119 @@ class _GroupActions extends StatelessWidget {
   }
 }
 
-/// One enabled chain in the band: paired flags, its name and a status hint.
+/// One enabled chain in the band. It reads like a server: flags, name, the
+/// route as its detail line, a warning mark when the core reported problems,
+/// and the check badge when it is the group's current selection.
 class _ChainChip extends ConsumerWidget {
-  const _ChainChip({required this.chain, required this.zh});
+  const _ChainChip({
+    required this.chain,
+    required this.zh,
+    required this.groupName,
+    required this.groupType,
+    required this.report,
+  });
 
   final SavedChain chain;
   final bool zh;
+  final String groupName;
+  final GroupType groupType;
+  final ChainReport? report;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.colorScheme;
     final entry = chain.hops.first;
     final exit = chain.hops.last;
+    final selected =
+        ref.watch(selectedProxyNameProvider(groupName)) == chain.name;
+    final delay = ref.watch(delayProvider(proxyName: chain.name, testUrl: null));
+    final broken = report?.status == 'broken';
+    final warned = broken || (report?.issues.isNotEmpty ?? false);
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 260),
+      constraints: const BoxConstraints(maxWidth: 300),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: ShapeDecoration(
           color: context.raisedSurfaceLevel.colorOf(scheme),
           shape: AppShape.all(16),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PairedFlags(entry, exit, size: 24),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: AppRadius.all(16),
+            onTap: () => selectGroupProxy(
+              ref,
+              groupName: groupName,
+              groupType: groupType,
+              proxyName: chain.name,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    chain.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.footnote.of(context),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      PairedFlags(entry, exit, size: 24),
+                      if (selected)
+                        Positioned(
+                          right: -6,
+                          bottom: -4,
+                          child: CircleAvatar(
+                            radius: 9,
+                            backgroundColor: scheme.primary,
+                            child: GlyphIcon(
+                              AppGlyphs.check,
+                              size: 12,
+                              color: scheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  Text(
-                    '${chain.hops.first} → ${chain.hops.last}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption2.of(context),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          chain.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.footnote.of(context),
+                        ),
+                        Text(
+                          '$entry → $exit',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.caption2.of(context),
+                        ),
+                      ],
+                    ),
                   ),
+                  if (warned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: GlyphIcon(
+                        broken ? AppGlyphs.error : AppGlyphs.warning,
+                        size: 14,
+                        color: broken ? scheme.error : scheme.warning,
+                      ),
+                    ),
+                  if (delay != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        '$delay ms',
+                        style: AppTextStyle.caption2.of(context, emphasized: true)
+                            .copyWith(color: scheme.delayColor(delay)),
+                      ),
+                    ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

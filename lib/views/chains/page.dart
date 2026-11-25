@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart' show Localizations;
 import 'package:material_ui/material_ui.dart';
 
 import 'editor.dart';
@@ -22,30 +26,46 @@ class ChainsView extends ConsumerStatefulWidget {
 }
 
 class _ChainsViewState extends ConsumerState<ChainsView> {
+  List<ChainReport> _reports = const [];
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(chainsProvider.notifier).load());
+    Future.microtask(() async {
+      await ref.read(chainsProvider.notifier).load();
+      final reports = await ref.read(coreHandlerProvider).getChainReport();
+      if (mounted) setState(() => _reports = reports);
+    });
+  }
+
+  ChainReport? _reportOf(int id) {
+    for (final report in _reports) {
+      if (report.id == id) return report;
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final chains = ref.watch(chainsProvider);
     final zh = Localizations.localeOf(context).languageCode == 'zh';
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(zh ? '链路' : 'Chains'),
-        actions: [
-          IconButton(
-            icon: const GlyphIcon(AppGlyphs.add),
-            onPressed: () => showChainEditor(context),
-          ),
-        ],
+    void create() => showChainEditor(context);
+    return CommonScaffold(
+      title: zh ? '链路' : 'Chains',
+      primaryAction: IconButtonData(
+        glyph: AppGlyphs.add,
+        tooltip: zh ? '新建链路' : 'New chain',
+        onPressed: create,
       ),
       body: chains.isEmpty
-          ? _Empty(onCreate: () => showChainEditor(context), zh: zh)
+          ? _Empty(onCreate: create, zh: zh)
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                16 + context.bottomInset,
+              ),
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8, left: 4),
@@ -54,7 +74,12 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
                     style: AppTextStyle.subheadline.of(context, emphasized: true),
                   ),
                 ),
-                for (final chain in chains) _ChainCard(chain: chain, zh: zh),
+                for (final chain in chains)
+                  _ChainCard(
+                    chain: chain,
+                    report: _reportOf(chain.id),
+                    zh: zh,
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
                   child: Text(
@@ -199,20 +224,33 @@ class _Connector extends StatelessWidget {
 }
 
 class _ChainCard extends ConsumerWidget {
-  const _ChainCard({required this.chain, required this.zh});
+  const _ChainCard({
+    required this.chain,
+    required this.report,
+    required this.zh,
+  });
 
   final SavedChain chain;
+  final ChainReport? report;
   final bool zh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.colorScheme;
-    final entry = chain.hops.first;
-    final exit = chain.hops.last;
+    final route = chain.hops.join(' → ');
+    final broken = report?.status == 'broken';
+    final warned = broken || (report?.issues.isNotEmpty ?? false);
+    final subtitle = !chain.enabled
+        ? (zh ? '已关闭' : 'Off')
+        : broken
+            ? (zh ? '无法工作 · $route' : 'Not working · $route')
+            : warned
+                ? (zh ? '需注意 · $route' : 'Warning · $route')
+                : route;
     Future<void> confirmDelete() async {
       final confirmed = await dialogs.showMessage(
         message: TextSpan(
-          text: zh ? '删除链路“${chain.name}”？' : 'Delete chain "${chain.name}"?',
+          text: zh ? '删除链路“${chain.name}”？' : 'Delete chain “${chain.name}”?',
         ),
         title: zh ? '删除链路' : 'Delete chain',
         confirmText: zh ? '删除' : 'Delete',
@@ -225,32 +263,57 @@ class _ChainCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: ListTile(
-          leading: PairedFlags(entry, exit, size: 28),
-          title: Text(chain.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(
-            zh
-                ? '入口 — · 路径 —'
-                : 'Entry — · Path —',
+      child: generateSection(
+        leadingGap: false,
+        items: [
+          ListItem(
+            leading: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                PairedFlags(chain.hops.first, chain.hops.last, size: 28),
+                if (warned && chain.enabled)
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: GlyphIcon(
+                      broken ? AppGlyphs.error : AppGlyphs.warning,
+                      size: 14,
+                      color: broken ? scheme.error : scheme.warning,
+                    ),
+                  ),
+              ],
+            ),
+            title: Text(
+              chain.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: !chain.enabled
+                  ? TextStyle(color: scheme.onSurfaceVariant)
+                  : null,
+            ),
+            subtitle: Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Switch(
+              value: chain.enabled,
+              onChanged: (value) async {
+                final updated = SavedChain(
+                  id: chain.id,
+                  name: chain.name,
+                  hops: chain.hops,
+                  targetGroup: chain.targetGroup,
+                  enabled: value,
+                  offered: chain.offered,
+                );
+                await ref.read(chainsProvider.notifier).upsert(updated);
+              },
+            ),
+            onTap: () => showChainEditor(context, chain: chain),
+            onLongPress: confirmDelete,
           ),
-          trailing: Switch(
-            value: chain.enabled,
-            onChanged: (value) async {
-              final updated = SavedChain(
-                id: chain.id,
-                name: chain.name,
-                hops: chain.hops,
-                targetGroup: chain.targetGroup,
-                enabled: value,
-                offered: chain.offered,
-              );
-              await ref.read(chainsProvider.notifier).upsert(updated);
-            },
-          ),
-          onTap: () => showChainEditor(context, chain: chain),
-          onLongPress: confirmDelete,
-        ),
+        ],
       ),
     );
   }

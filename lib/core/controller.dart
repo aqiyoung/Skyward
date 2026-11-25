@@ -41,6 +41,14 @@ class CoreController {
     return _instance!;
   }
 
+  /// Chain reports and live inspections live on the platform interface, not
+  /// on the controller's lifecycle surface. Delegate them so callers can use
+  /// the same provider they use for every other core method.
+  Future<List<ChainReport>> getChainReport() => _interface.getChainReport();
+
+  Future<ChainInspection> inspectChain(InspectChainParams params) =>
+      _interface.inspectChain(params);
+
   Future<CoreLifecycleResult> start() => _interface.start();
 
   Future<CoreLifecycleResult> restart() => _interface.restart();
