@@ -332,6 +332,11 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
               final slot? => _HopPicker(
                   key: ValueKey(slot),
                   slot: slot,
+                  hops: [
+                    _entry ?? '',
+                    if (_hasMiddle) _middle ?? '',
+                    _exit ?? '',
+                  ],
                   current: _valueOf(slot),
                   onPicked: (name) => _fill(slot, name),
                 ),
@@ -701,7 +706,7 @@ class _Strip extends ConsumerWidget {
         filled: false,
       ),
       _Node(
-        label: zh ? '入口' : 'Entry',
+        label: entry ?? (zh ? '入口' : 'Entry'),
         caption: entry == null
             ? (zh ? '选择' : 'Choose')
             : entryDelay == null
@@ -714,7 +719,7 @@ class _Strip extends ConsumerWidget {
       ),
       if (hasMiddle)
         _Node(
-          label: zh ? '中转' : 'Middle',
+          label: middle ?? (zh ? '中转' : 'Middle'),
           caption: middle == null
               ? (zh ? '选择' : 'Choose')
               : (zh ? '中转' : 'Middle'),
@@ -724,7 +729,7 @@ class _Strip extends ConsumerWidget {
           onTap: () => onTap(_Slot.middle),
         ),
       _Node(
-        label: zh ? '出口' : 'Exit',
+        label: exit ?? (zh ? '出口' : 'Exit'),
         caption: exit == null
             ? (zh ? '选择' : 'Choose')
             : (zh ? '出口' : 'Exit'),
@@ -885,11 +890,16 @@ class _HopPicker extends ConsumerStatefulWidget {
   const _HopPicker({
     super.key,
     required this.slot,
+    required this.hops,
     required this.current,
     required this.onPicked,
   });
 
   final _Slot slot;
+
+  /// The chain's hops with the current slot left empty, used to ask the core
+  /// which candidates can legally fill it.
+  final List<String> hops;
   final String? current;
   final ValueChanged<String> onPicked;
 
@@ -900,6 +910,30 @@ class _HopPicker extends ConsumerStatefulWidget {
 class _HopPickerState extends ConsumerState<_HopPicker> {
   String _query = '';
   String? _country;
+  Map<String, String> _blocked = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_inspectSlot());
+  }
+
+  @override
+  void didUpdateWidget(covariant _HopPicker old) {
+    super.didUpdateWidget(old);
+    if (old.slot != widget.slot || old.hops.join() != widget.hops.join()) {
+      unawaited(_inspectSlot());
+    }
+  }
+
+  /// Ask the core to check each candidate in this slot. Blocked ones are
+  /// marked with a reason instead of looking like plain, tappable servers.
+  Future<void> _inspectSlot() async {
+    final result = await ref.read(coreHandlerProvider).inspectChain(
+      InspectChainParams(hops: widget.hops, slot: widget.slot.index),
+    );
+    if (mounted) setState(() => _blocked = result.blocked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1002,6 +1036,7 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
                 _CandidateRow(
                   candidate: c,
                   current: widget.current,
+                  reason: _blocked[c.name],
                   onTap: () => widget.onPicked(c.name),
                 ),
               if (shownLeaves.isNotEmpty)
@@ -1016,6 +1051,7 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
                 _CandidateRow(
                   candidate: c,
                   current: widget.current,
+                  reason: _blocked[c.name],
                   onTap: () => widget.onPicked(c.name),
                 ),
             ],
@@ -1039,33 +1075,58 @@ class _CandidateRow extends ConsumerWidget {
     required this.candidate,
     required this.current,
     required this.onTap,
+    this.reason,
   });
 
   final _Candidate candidate;
   final String? current;
   final VoidCallback onTap;
 
+  /// The core's issue code for why this candidate cannot fill the slot, e.g.
+  /// `loop` for a server list itself. Null means it is a legal choice.
+  final String? reason;
+
+  String _reasonText(BuildContext context, String code) {
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return switch (code) {
+      'loop' => zh ? '不可用：这就是服务器列表本身' : 'Unavailable: it is the server list itself',
+      'udpTransportMissing' => zh
+          ? '不可用：需要 UDP，而入口不转发'
+          : 'Unavailable: needs UDP, which the entry does not carry',
+      'emptyExit' => zh ? '不可用：组中没有服务器' : 'Unavailable: no servers in the group',
+      'providerPending' => zh
+          ? '不可用：其列表尚不支持链路'
+          : 'Unavailable: its list does not support chains yet',
+      _ => zh ? '不可用：链路无法经过它' : 'Unavailable: a chain cannot pass through it',
+    };
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final delay = candidate.isGroup
         ? null
         : ref.watch(delayProvider(proxyName: candidate.name, testUrl: null));
-    final subtitle = candidate.isGroup
-        ? switch (candidate.type) {
-            GroupType.URLTest => context.cFastest(candidate.count),
-            GroupType.Fallback => context.cFallback(candidate.count),
-            GroupType.LoadBalance => context.cBalance(candidate.count),
-            _ => context.cManual(candidate.count),
-          }
-        : (delay == null ? context.cGroup : '$delay ms');
-    return ListTile(
-      leading: candidate.isGroup
-          ? CircleAvatar(child: GlyphIcon(AppGlyphs.globe, size: 18))
-          : RoundFlag(candidate.name, size: 32),
-      title: Text(candidate.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(subtitle),
-      selected: candidate.name == current,
-      onTap: onTap,
+    final subtitle = reason != null
+        ? _reasonText(context, reason!)
+        : candidate.isGroup
+            ? switch (candidate.type) {
+                GroupType.URLTest => context.cFastest(candidate.count),
+                GroupType.Fallback => context.cFallback(candidate.count),
+                GroupType.LoadBalance => context.cBalance(candidate.count),
+                _ => context.cManual(candidate.count),
+              }
+            : (delay == null ? context.cGroup : '$delay ms');
+    return Opacity(
+      opacity: reason == null ? 1 : 0.5,
+      child: ListTile(
+        leading: candidate.isGroup
+            ? CircleAvatar(child: GlyphIcon(AppGlyphs.globe, size: 18))
+            : RoundFlag(candidate.name, size: 32),
+        title: Text(candidate.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(subtitle),
+        selected: candidate.name == current,
+        onTap: reason == null ? onTap : null,
+      ),
     );
   }
 }

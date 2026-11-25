@@ -78,6 +78,7 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
                   _ChainCard(
                     chain: chain,
                     report: _reportOf(chain.id),
+                    groups: ref.watch(groupsProvider),
                     zh: zh,
                   ),
                 Padding(
@@ -227,12 +228,84 @@ class _ChainCard extends ConsumerWidget {
   const _ChainCard({
     required this.chain,
     required this.report,
+    required this.groups,
     required this.zh,
   });
 
   final SavedChain chain;
   final ChainReport? report;
+  final List<Group> groups;
   final bool zh;
+
+  /// ReClash's row menu: edit, test, duplicate and delete. A long press on
+  /// touch, the menu key on desktop, all handled by ContextMenuRegion.
+  List<CommonPopupMenuItem> _menuItems(BuildContext context, WidgetRef ref) {
+    final proxy = <Proxy>[];
+    for (final group in groups) {
+      for (final candidate in group.all) {
+        if (candidate.name == chain.name) {
+          proxy.add(candidate);
+          break;
+        }
+      }
+      if (proxy.isNotEmpty) break;
+    }
+    return [
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.edit,
+        label: zh ? '编辑' : 'Edit',
+        onPressed: () => showChainEditor(context, chain: chain),
+      ),
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.speed,
+        label: zh ? '测试' : 'Test',
+        onPressed: proxy.isEmpty
+            ? null
+            : () {
+                for (final p in proxy) {
+                  ref
+                      .read(proxiesActionProvider.notifier)
+                      .proxyDelayTest(p, null);
+                }
+              },
+      ),
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.copy,
+        label: zh ? '复制' : 'Duplicate',
+        onPressed: () async {
+          final copy = SavedChain(
+            id: DateTime.now().millisecondsSinceEpoch,
+            name: '${chain.name} ${zh ? '副本' : 'copy'}',
+            hops: List<String>.from(chain.hops),
+            targetGroup: chain.targetGroup,
+            enabled: false,
+            offered: chain.offered,
+          );
+          await ref.read(chainsProvider.notifier).upsert(copy);
+        },
+      ),
+      CommonPopupMenuItem(
+        danger: true,
+        glyph: AppGlyphs.delete,
+        label: zh ? '删除' : 'Delete',
+        onPressed: () => _confirmDelete(context, ref),
+      ),
+    ];
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await dialogs.showMessage(
+      message: TextSpan(
+        text: zh ? '删除链路“${chain.name}”？' : 'Delete chain “${chain.name}”?',
+      ),
+      title: zh ? '删除链路' : 'Delete chain',
+      confirmText: zh ? '删除' : 'Delete',
+      destructive: true,
+    );
+    if (confirmed == true) {
+      await ref.read(chainsProvider.notifier).remove(chain.id);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -247,27 +320,13 @@ class _ChainCard extends ConsumerWidget {
             : warned
                 ? (zh ? '需注意 · $route' : 'Warning · $route')
                 : route;
-    Future<void> confirmDelete() async {
-      final confirmed = await dialogs.showMessage(
-        message: TextSpan(
-          text: zh ? '删除链路“${chain.name}”？' : 'Delete chain “${chain.name}”?',
-        ),
-        title: zh ? '删除链路' : 'Delete chain',
-        confirmText: zh ? '删除' : 'Delete',
-        destructive: true,
-      );
-      if (confirmed == true) {
-        await ref.read(chainsProvider.notifier).remove(chain.id);
-      }
-    }
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: generateSection(
         leadingGap: false,
         items: [
-          GestureDetector(
-            onLongPress: confirmDelete,
+          ContextMenuRegion(
+            menuItems: _menuItems(context, ref),
             child: ListItem(
               leading: Stack(
                 clipBehavior: Clip.none,
