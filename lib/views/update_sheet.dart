@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/features/features.dart';
+import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
-import 'package:flutter/material.dart' show Localizations;
+import 'package:flutter/material.dart'
+    show Localizations, Padding, Text, TextSpan;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -70,10 +72,12 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
       // dialog and let the download start, using the auto-install preference
       // to decide whether the system install is hands-free.
       final prefs = await loadUpdatePreferences();
-      await ref.read(commonActionProvider.notifier).checkUpdateResultHandle(
-        data: _release,
-        autoInstall: prefs.autoInstall,
-      );
+      await ref
+          .read(commonActionProvider.notifier)
+          .checkUpdateResultHandle(
+            data: _release,
+            autoInstall: prefs.autoInstall,
+          );
     }
     if (mounted) Navigator.of(context).pop();
   }
@@ -85,6 +89,51 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
     );
   }
 
+  /// The release notes, preferring the structured changelog the stable
+  /// releases carry and falling back to the bullet lines in preview notes.
+  TextSpan _releaseNotes(BuildContext context, String? body) {
+    final spans = <TextSpan>[];
+    final version = parseReleaseChangelog(
+      body,
+      languageCode: Localizations.localeOf(context).languageCode,
+    );
+    if (version == null) {
+      for (final line in parseReleaseBody(body)) {
+        spans.add(
+          TextSpan(
+            text: '- $line\n',
+            style: AppTextStyle.subheadline.of(context),
+          ),
+        );
+      }
+    } else {
+      for (final group in version.visibleGroups) {
+        spans.add(
+          TextSpan(
+            text:
+                '\n${changelogGroupTitle(context.appLocalizations, group.type)}\n',
+            style: AppTextStyle.subheadline
+                .of(context, emphasized: true)
+                .copyWith(
+                  color: group.type == ChangelogType.breaking
+                      ? context.colorScheme.error
+                      : context.colorScheme.primary,
+                ),
+          ),
+        );
+        for (final entry in group.entries) {
+          spans.add(
+            TextSpan(
+              text: '• ${entry.text}\n',
+              style: AppTextStyle.subheadline.of(context),
+            ),
+          );
+        }
+      }
+    }
+    return TextSpan(children: spans);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
@@ -94,32 +143,37 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
         ? globalState.packageInfo.labeledVersion
         : '';
     final installed = zh ? '已安装版本：$version' : 'Installed version: $version';
-    final (Glyph glyph, Color color, double? value, String title, String detail) =
-        switch (_phase) {
+    final (
+      Glyph glyph,
+      Color color,
+      double? value,
+      String title,
+      String detail,
+    ) = switch (_phase) {
       _UpdatePhase.checking => (
-          AppGlyphs.cloudSync,
-          scheme.primary,
-          null,
-          l.versionUpdateChecking,
-          installed,
-        ),
+        AppGlyphs.cloudSync,
+        scheme.primary,
+        null,
+        l.versionUpdateChecking,
+        installed,
+      ),
       _UpdatePhase.latest => (
-          AppGlyphs.check,
-          scheme.success,
-          1,
-          zh ? '已是最新版本' : "You're up to date",
-          installed,
-        ),
+        AppGlyphs.check,
+        scheme.success,
+        1,
+        zh ? '已是最新版本' : "You're up to date",
+        installed,
+      ),
       _UpdatePhase.found => (
-          AppGlyphs.cloudDownload,
-          scheme.primary,
-          1,
-          l.versionUpdateFound,
-          releaseVersionOf(
-            (_release?['tag_name'] as String?) ?? '',
-            _release?['name'] as String?,
-          ),
+        AppGlyphs.cloudDownload,
+        scheme.primary,
+        1,
+        l.versionUpdateFound,
+        releaseVersionOf(
+          (_release?['tag_name'] as String?) ?? '',
+          _release?['name'] as String?,
         ),
+      ),
     };
     final primaryLabel = _phase == _UpdatePhase.found
         ? l.update
@@ -156,6 +210,16 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
             child: Text(detail),
           ),
         ),
+        body: [
+          if (_phase == _UpdatePhase.found &&
+              (_release?['body'] as String?)?.trim().isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Text.rich(
+                _releaseNotes(context, _release?['body'] as String?),
+              ),
+            ),
+        ],
         primary: FilledButton(
           onPressed: () => unawaited(_accept()),
           child: Text(primaryLabel, textAlign: TextAlign.center),
@@ -183,7 +247,8 @@ class UpdatePreferencesSheet extends ConsumerStatefulWidget {
       _UpdatePreferencesSheetState();
 }
 
-class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet> {
+class _UpdatePreferencesSheetState
+    extends ConsumerState<UpdatePreferencesSheet> {
   late bool _check;
   late bool _preloadWifi;
   late bool _autoInstall;
@@ -246,10 +311,11 @@ class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet>
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
-    ref.read(appSettingProvider.notifier).update(
-      (state) => state.copyWith(autoCheckUpdate: _check),
-    );
-    final configured = _channel == defaultUpdateChannel(isPreBuild: globalState.isPre)
+    ref
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(autoCheckUpdate: _check));
+    final configured =
+        _channel == defaultUpdateChannel(isPreBuild: globalState.isPre)
         ? null
         : _channel;
     await storeUpdatePreferences(
