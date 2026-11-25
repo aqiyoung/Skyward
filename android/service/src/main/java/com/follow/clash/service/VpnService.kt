@@ -15,6 +15,7 @@ import com.follow.clash.common.R as CommonR
 import com.follow.clash.core.Core
 import com.follow.clash.service.models.CIDR
 import com.follow.clash.service.models.VpnOptions
+import com.follow.clash.service.models.fakeIpRouteAddress
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
 import com.follow.clash.service.models.shouldAllowBypass
@@ -197,6 +198,11 @@ class VpnService : SystemVpnService(), ManagedService {
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {
         val ipv4Address = IPV4_ADDRESS.toCIDR()
         addAddress(ipv4Address.address, ipv4Address.prefixLength)
+        val fakeIpRoute = options.fakeIpRouteAddress
+        runCatching { addRoute(fakeIpRoute.address, fakeIpRoute.prefixLength) }
+            .onFailure { error ->
+                GlobalState.log("Unable to add required fake-IP VPN route: $error")
+            }
         addRoutes(
             routes = options::getIpv4RouteAddress,
             fallbackAddress = NET_ANY,

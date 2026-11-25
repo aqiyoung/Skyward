@@ -64,6 +64,15 @@ fun VpnOptions.getIpv6RouteAddress(): List<CIDR> = routeAddress
     .map(String::toCIDR)
     .filter { it.address is Inet6Address }
 
+// The Rust core synthesizes its IPv4 fake-IP answers from 198.18.0.0/16.
+// Android must route that range into the TUN even when a profile narrows its
+// configured route-address list, or DNS succeeds but every fake-IP flow misses
+// the tunnel.
+private const val ANDROID_FAKE_IP_ROUTE = "198.18.0.0/16"
+
+val VpnOptions.fakeIpRouteAddress: CIDR
+    get() = ANDROID_FAKE_IP_ROUTE.toCIDR()
+
 fun String.toCIDR(): CIDR {
     val parts = split("/")
     require(parts.size == 2) { "Invalid CIDR format: $this" }

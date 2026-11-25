@@ -142,6 +142,15 @@ class RouteAddressTest {
             options.getIpv4RouteAddress()
         }
     }
+
+    @Test
+    fun `routes Rust fake IP answers through the Android VPN`() {
+        val route = optionsWithRoutes(listOf("10.0.0.0/8")).fakeIpRouteAddress
+
+        assertTrue(route.address is Inet4Address)
+        assertEquals("198.18.0.0", route.address.hostAddress)
+        assertEquals(16, route.prefixLength)
+    }
 }
 
 class TunOptionsTest {
