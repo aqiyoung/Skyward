@@ -45,7 +45,7 @@
 /* On phones the nav keeps the logo, a GitHub link and the burger; the Download
    CTA, theme and language controls move into the full-screen menu. */
 @media (max-width: 960px) {
-  .nav .dd, .nav .lang, .nav-bar > a.btn.btn-primary.btn-s { display: none !important; }
+  .nav .dd, .nav .lang { display: none !important; }
   .nav-bar { gap: 6px; padding: 6px 6px 6px 10px; }
   .logo { gap: 7px; margin-right: auto; }
   .logo-mark { height: 22px; }
