@@ -19,9 +19,13 @@ on:
   workflow_dispatch:
     inputs:
       so_url:
-        description: 'URL of skyward-core-android-arm64.zip (default: rolling Release)'
+        description: 'Optional prebuilt skyward-core package URL; empty builds the pinned source'
         required: false
-        default: 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip'
+        default: ''
+      core_ref:
+        description: 'Full skyward-core commit SHA to build when so_url is empty'
+        required: false
+        default: '3ec7a09e1721a4965265ef1a06f0db34293f56a7'
       version:
         description: 'Version shown in the app (test/artifact channels append -test.<run>)'
         required: false
@@ -54,7 +58,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +67,26 @@ jobs:
           # pubspec.yaml bundles the Go submodule's CA cert as a Flutter asset;
           # that file must exist even though the core itself is now Rust.
           submodules: recursive
+
+      - name: Checkout pinned Rust core source
+        if: ${{ inputs.so_url == '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: aqiyoung/skyward-core
+          ref: ${{ inputs.core_ref || '3ec7a09e1721a4965265ef1a06f0db34293f56a7' }}
+          path: skyward-core
+
+      - name: Install Rust Android target
+        if: ${{ inputs.so_url == '' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Cache Rust core build
+        if: ${{ inputs.so_url == '' }}
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: skyward-core -> skyward-core/target
 
       - name: Resolve version for this channel
         env:
@@ -81,8 +105,9 @@ jobs:
           echo "channel=$CHANNEL version=$resolved"
 
       - name: Download Rust core .so package
+        if: ${{ inputs.so_url != '' }}
         env:
-          SO_URL: ${{ inputs.so_url || 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip' }}
+          SO_URL: ${{ inputs.so_url }}
         run: |
           set -euo pipefail
           curl -fsSL "$SO_URL" -o /tmp/core.zip
@@ -125,6 +150,32 @@ jobs:
           ndk-version: ${{ env.NDK_VERSION }}
           add-to-path: true
           link-to-sdk: true
+
+      - name: Build Rust core from pinned source
+        if: ${{ inputs.so_url == '' }}
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          CORE_REF: ${{ inputs.core_ref || '3ec7a09e1721a4965265ef1a06f0db34293f56a7' }}
+        run: |
+          set -euo pipefail
+          NDK="$ANDROID_NDK_HOME"
+          LLVM="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$LLVM/aarch64-linux-android26-clang"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$LLVM/llvm-ar"
+          export CC_aarch64_linux_android="$LLVM/aarch64-linux-android26-clang"
+          export AR_aarch64_linux_android="$LLVM/llvm-ar"
+          actual_ref=$(git -C skyward-core rev-parse HEAD)
+          test "$actual_ref" = "$CORE_REF"
+          cargo build --locked --release --manifest-path skyward-core/Cargo.toml \
+            --target aarch64-linux-android
+          SO=skyward-core/target/aarch64-linux-android/release/libskyward_core.so
+          test -f "$SO"
+          "$LLVM/llvm-nm" -D --defined-only "$SO" \
+            | grep -q Java_com_follow_clash_core_mobile_Mobile_invokeMethod
+          mkdir -p android/core/src/main/jniLibs/arm64-v8a
+          cp "$SO" android/core/src/main/jniLibs/arm64-v8a/
+          echo "Built skyward-core $actual_ref ($(stat -c%s "$SO") bytes)"
+          echo "Rust core: $actual_ref" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install fixed test keystore (stable signature)
         env:
