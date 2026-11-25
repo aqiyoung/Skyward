@@ -10,10 +10,10 @@ name: android-rust
 # one; its signature differs from the Go release and applicationId is
 # `com.threely.skyward.rust`, so both can be installed side by side.
 #
-# Two distribution channels, chosen at dispatch time: `release` publishes a
+# Three distribution channels, chosen at dispatch time: `release` publishes a
 # GitHub Release and pushes the APK to the Telegram subscription channel;
-# `test` skips both and sends the APK only to the Bot private chat, with a
-# -test.<run> version that never touches the formal version sequence.
+# `test` sends the APK to the Bot private chat; `artifact` uploads only the
+# Actions artifact. Test and artifact builds use a -test.<run> version.
 
 on:
   workflow_dispatch:
@@ -23,16 +23,17 @@ on:
         required: false
         default: 'https://github.com/aqiyoung/skyward-core/releases/download/rust-core-so/skyward-core-android-arm64.zip'
       version:
-        description: 'Version shown in the app (test channel: base version, -test.<run> is appended)'
+        description: 'Version shown in the app (test/artifact channels append -test.<run>)'
         required: false
         default: '1.0.0.99-rust'
       channel:
-        description: 'release = GitHub Release + subscription channel; test = Bot private chat only'
+        description: 'release = release + subscription channel; test = Bot private chat; artifact = Actions artifact only'
         required: false
         type: choice
         options:
           - release
           - test
+          - artifact
         default: release
       changelog:
         description: 'Update log sent with the Telegram message'
@@ -69,7 +70,7 @@ jobs:
           RAW_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [ "$CHANNEL" = "test" ]; then
+          if [ "$CHANNEL" = "test" ] || [ "$CHANNEL" = "artifact" ]; then
             base="${RAW_VERSION:-1.0.0.99-rust}"
             base="${base%-rust}"
             resolved="${base}-test.${{ github.run_number }}"
@@ -188,7 +189,7 @@ jobs:
           fi
 
       - name: Publish GitHub Release
-        if: inputs.channel != 'test'
+        if: inputs.channel == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ env.VERSION }}
@@ -208,7 +209,7 @@ jobs:
           fi
           echo "release published: $tag"
       - name: Push APK to Telegram (subscription channel)
-        if: inputs.channel != 'test'
+        if: inputs.channel == 'release'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

@@ -33,11 +33,20 @@ class VpnService : SystemVpnService(), ManagedService {
     private var tunRunning = false
     private var tunInterface: ParcelFileDescriptor? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        ServiceLifecycle.notifyCreated(this)
+    }
+
     override fun onDestroy() {
         try {
             cleanup()
         } finally {
-            super.onDestroy()
+            try {
+                super.onDestroy()
+            } finally {
+                ServiceLifecycle.notifyDestroyed(this)
+            }
         }
     }
 

@@ -11,11 +11,20 @@ class ProxyService : Service(), ManagedService {
     private val modules = ServiceModules(this)
     private val binder = LocalBinder()
 
+    override fun onCreate() {
+        super.onCreate()
+        ServiceLifecycle.notifyCreated(this)
+    }
+
     override fun onDestroy() {
         try {
             cleanup()
         } finally {
-            super.onDestroy()
+            try {
+                super.onDestroy()
+            } finally {
+                ServiceLifecycle.notifyDestroyed(this)
+            }
         }
     }
 

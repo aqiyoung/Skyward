@@ -14,9 +14,11 @@ import com.follow.clash.service.ManagedService
 import com.follow.clash.service.NetworkObserver
 import com.follow.clash.service.ProxyService
 import com.follow.clash.service.ServiceConfig
+import com.follow.clash.service.ServiceLifecycle
 import com.follow.clash.service.VpnService
 import com.follow.clash.service.models.VpnOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -80,7 +82,10 @@ object ServiceController {
 
         if (binding?.component != nextIntent.component) {
             if (binding != null) {
-                tearDownServices()
+                withContext(NonCancellable) {
+                    tearDownServices()
+                    release()
+                }
             }
             lateinit var nextBinding: ManagedServiceBinding
             nextBinding = ManagedServiceBinding(nextIntent) { message ->
@@ -98,11 +103,10 @@ object ServiceController {
         val result = currentBinding.useService { service -> service.start() }
         if (result.isFailure) {
             GlobalState.log("Unable to start background service: ${result.exceptionOrNull()}")
-            currentBinding.stopIfConnected()
-                .onFailure { error ->
-                    GlobalState.log("Unable to clean up failed background service start: $error")
-                }
-            release()
+            withContext(NonCancellable) {
+                tearDownServices()
+                release()
+            }
             return@withLock false
         }
 
@@ -110,22 +114,27 @@ object ServiceController {
         runtime = ServiceRuntime(
             vpn = options.enable,
             startedAtMillis = runtime?.startedAtMillis ?: System.currentTimeMillis(),
+            options = options,
         )
         true
     }
 
     suspend fun stop() = lock.withLock {
-        tearDownServices()
-        release()
+        withContext(NonCancellable) {
+            tearDownServices()
+            release()
+        }
     }
 
     private suspend fun tearDownServices() {
+        val stopping = ServiceLifecycle.activeServices()
         binding?.useService { service -> service.stop() }
             ?.onFailure { error ->
                 GlobalState.log("Unable to stop background service: $error")
             }
         clearBinding()
         stopServices()
+        ServiceLifecycle.awaitDestroyed(stopping)
     }
 
     // A service the system started itself — always-on VPN, or the sticky restart
@@ -194,13 +203,6 @@ private class ManagedServiceBinding(
         }
         withContext(Dispatchers.Default) {
             block(service)
-        }
-    }
-
-    suspend fun stopIfConnected(): Result<Unit> = runCatching {
-        val service = serviceState.value?.getOrNull() ?: return@runCatching
-        withContext(Dispatchers.Default) {
-            service.stop()
         }
     }
 

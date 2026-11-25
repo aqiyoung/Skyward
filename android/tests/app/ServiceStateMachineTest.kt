@@ -156,7 +156,11 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
         if (!startSucceeds) {
             return false
         }
-        runtime = ServiceRuntime(vpn = runsAsVpn ?: options.enable, startedAtMillis = STARTED_AT)
+        runtime = ServiceRuntime(
+            vpn = runsAsVpn ?: options.enable,
+            startedAtMillis = STARTED_AT,
+            options = options,
+        )
         return true
     }
 
@@ -291,6 +295,32 @@ class ServiceStateMachineTest {
         assertEquals(1, host.startCalls)
         assertEquals(0, host.stopCalls)
         assertEquals(RunState.STARTED, machine.runState.value)
+    }
+
+    @Test
+    fun `a changed whitelist restarts vpn with the newly selected applications`() = runTest {
+        val host = FakeHost(backgroundScope)
+        val machine = ServiceStateMachine(host)
+        val initialState = configuredState()
+        machine.syncSharedState(initialState)
+        assertTrue(machine.requestStart().await())
+
+        val whitelist = requireNotNull(initialState.vpnOptions).copy(
+            accessControlProps = AccessControlProps(
+                enable = true,
+                mode = AccessControlMode.ACCEPT_SELECTED,
+                acceptList = listOf("com.example.selected"),
+                rejectList = emptyList(),
+            ),
+        )
+        machine.syncSharedState(initialState.copy(vpnOptions = whitelist))
+
+        assertTrue(machine.requestStart().await())
+
+        assertEquals(1, host.stopCalls)
+        assertEquals(2, host.startCalls)
+        assertEquals(whitelist, host.lastStartOptions)
+        assertEquals(whitelist, host.runtime?.options)
     }
 
     @Test

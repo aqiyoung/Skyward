@@ -141,7 +141,9 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
 
     // No new request for a settled run: one refused at a prompt would take the service down.
     private fun isStartedAs(options: VpnOptions?): Boolean =
-        runState.value == RunState.STARTED && host.runtime?.vpn == options?.enable
+        options != null && runState.value == RunState.STARTED && host.runtime?.let {
+            it.vpn == options.enable && it.options == effectiveOptions(options)
+        } == true
 
     // The intent is claimed before the Core is set up, so a second action that lands meanwhile
     // toggles this start off instead of racing a second setup against it.
@@ -247,27 +249,42 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             }
             return false
         }
+        val serviceOptions = effectiveOptions(options)
         return transitionLock.withLock {
+            val runtime = host.runtime
             when {
                 !isCurrent(request) -> false
-                host.runtime?.vpn == options.enable -> true
-                else -> transitioning(RunState.STARTING) {
-                    host.startService(withLocalNetworkFallback(options)) && isCurrent(request)
+                runtime?.let {
+                    it.vpn == serviceOptions.enable && it.options == serviceOptions
+                } == true -> true
+                else -> {
+                    if (runtime != null) {
+                        transitioning(RunState.STOPPING) { stopService() }
+                    }
+                    if (!isCurrent(request) || host.runtime != null) {
+                        false
+                    } else {
+                        transitioning(RunState.STARTING) {
+                            if (serviceOptions != options) {
+                                host.showToast(sharedState.localNetworkTip)
+                            }
+                            host.startService(serviceOptions) && isCurrent(request)
+                        }
+                    }
                 }
             }
         }
     }
 
     // system/mixed hand TCP to the kernel via the tun subnet, which Android 17 gates as local network.
-    private fun withLocalNetworkFallback(options: VpnOptions): VpnOptions {
-        if (!options.enable || options.stack !in KERNEL_TCP_STACKS ||
-            host.isLocalNetworkPermissionGranted()
+    private fun effectiveOptions(options: VpnOptions): VpnOptions =
+        if (options.enable && options.stack in KERNEL_TCP_STACKS &&
+            !host.isLocalNetworkPermissionGranted()
         ) {
-            return options
+            options.copy(stack = FALLBACK_STACK)
+        } else {
+            options
         }
-        host.showToast(sharedState.localNetworkTip)
-        return options.copy(stack = FALLBACK_STACK)
-    }
 
     // Flutter's startListener and the native quickSetup both open the Core's listeners before any
     // service exists to answer for them, and Flutter may be gone before it hears of the failure.
