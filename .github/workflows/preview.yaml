@@ -674,6 +674,8 @@ jobs:
           # A caption is capped at 1024 characters. The entries are already
           # short and in Chinese, so they are shown whole -- cutting by byte
           # (`cut -c`) would split a multi-byte character in half.
+          # Caption for the file message: no links here, so Telegram does not
+          # try (and fail) to attach a link preview to a document message.
           {
             echo "🧪 Skyward ${VERSION}（预览版）"
             echo
@@ -686,11 +688,6 @@ jobs:
             fi
             echo
             echo "（预览版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
-            echo
-            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-            apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
-            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
 
@@ -717,24 +714,17 @@ jobs:
             fi
           done
 
-          if [ "$sent" = 0 ]; then
-            {
-              echo "🧪 Skyward ${VERSION}（预览版）构建完成"
-              if [ -n "${CHANGELOG}" ]; then
-                echo
-                echo "📝 本次更新"
-                printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
-              fi
-              echo
-              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-              apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-              echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
-              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            } > /tmp/text.txt
-            curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
-              --data-urlencode "chat_id=${chat_id}" \
-              --data-urlencode "text@/tmp/text.txt" \
-              || echo "::warning::Telegram 文本兜底也失败"
-          fi
+          # A separate plain-text message: Telegram renders the first link as a
+          # rich preview (GitHub card), which it cannot do inside a file caption.
+          apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+          {
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/preview-${BASE_NUMBER}/${apk_name}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
+          } > /tmp/links.txt
+          curl -fsS --max-time 60 -X POST "${api}/sendMessage" \
+            --data-urlencode "chat_id=${chat_id}" \
+            --data-urlencode "text@/tmp/links.txt" \
+            || echo "::warning::链接消息推送失败"
 
 

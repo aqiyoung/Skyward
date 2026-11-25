@@ -702,11 +702,6 @@ jobs:
             fi
             echo
             echo "（Dev 版，不是正式发布：签名与正式版相同，可直接覆盖安装）"
-            echo
-            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-            apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-${BASE_NUMBER}/${apk_name}"
-            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } > /tmp/caption.txt
           cat /tmp/caption.txt
 
@@ -733,24 +728,16 @@ jobs:
             fi
           done
 
-          if [ "$sent" = 0 ]; then
-            {
-              echo "🧪 Skyward ${VERSION}（Dev 版）构建完成"
-              if [ -n "${CHANGELOG}" ]; then
-                echo
-                echo "📝 本次更新"
-                printf '%s\n' "${CHANGELOG}" | awk 'NF' | head -8
-              fi
-              echo
-              echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
-              apk_name="$(basename "$(ls dist/*.apk | head -1)")"
-              echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-${BASE_NUMBER}/${apk_name}"
-              echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            } > /tmp/text.txt
-            curl -fsS --max-time 60 -X POST "${cloud_api}/sendMessage" \
-              --data-urlencode "chat_id=${chat_id}" \
-              --data-urlencode "text@/tmp/text.txt" \
-              || echo "::warning::Telegram 文本兜底也失败"
-          fi
+          # Separate plain-text message so Telegram renders the GitHub link as a card.
+          apk_name="$(basename "$(ls dist/*.apk | head -1)")"
+          {
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "📦 安装包直链 https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-${BASE_NUMBER}/${apk_name}"
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/$(git rev-parse --short HEAD)"
+          } > /tmp/links.txt
+          curl -fsS --max-time 60 -X POST "${api}/sendMessage" \
+            --data-urlencode "chat_id=${chat_id}" \
+            --data-urlencode "text@/tmp/links.txt" \
+            || echo "::warning::链接消息推送失败"
 
 
