@@ -383,14 +383,34 @@ class CommonAction extends _$CommonAction {
         unawaited(installer.continueUpdateInstall());
       }
     };
-    final started = await installer.installApk(
+    final zh = _isZh();
+    Future<ApkInstallResult> attempt() => installer.installApk(
       path,
       expectedVersion: version,
       expectedSha256: sha256,
       automatic: automatic,
     );
-    final zh = _isZh();
-    switch (started) {
+
+    var result = await attempt();
+    if (result == ApkInstallResult.vpnActive) {
+      // Android refuses an install while a VPN is active. Offer to stop the
+      // core for the install instead of leaving the reader to do it by hand.
+      final allowed = await dialogs.showMessage(
+        title: zh ? '断开 VPN 后安装' : 'Disconnect VPN and install',
+        message: TextSpan(
+          text: zh
+              ? '安装更新需要暂时停止 VPN。确定要停止并安装吗？'
+              : 'Installing the update requires stopping the VPN temporarily. Continue?',
+        ),
+        confirmText: zh ? '停止并安装' : 'Stop and install',
+      );
+      if (allowed != true) return;
+      await ref.read(setupActionProvider.notifier).setRunning(false);
+      await Future<void>.delayed(const Duration(seconds: 1));
+      result = await attempt();
+    }
+
+    switch (result) {
       case ApkInstallResult.permissionRequired:
         unawaited(
           dialogs.showMessage(
@@ -405,11 +425,11 @@ class CommonAction extends _$CommonAction {
       case ApkInstallResult.vpnActive:
         unawaited(
           dialogs.showMessage(
-            title: zh ? '无法安装更新' : 'Cannot install update',
+            title: zh ? '仍无法安装更新' : 'Still cannot install update',
             message: TextSpan(
               text: zh
-                  ? 'VPN 运行时无法安装更新，请先断开 VPN 再点安装'
-                  : 'Disconnect the VPN before installing an update',
+                  ? 'VPN 仍未断开，请在系统设置中手动关闭后重试'
+                  : 'The VPN is still active; turn it off in system settings and retry',
             ),
           ),
         );
