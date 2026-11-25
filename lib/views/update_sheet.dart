@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:skyward/common/common.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
@@ -75,30 +76,9 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
   }
 
   void _preferences() {
-    final enabled = ref.read(appSettingProvider).autoCheckUpdate;
     showSheet<void>(
       context: context,
-      builder: (_) => CommonScaffold(
-        title: context.appLocalizations.autoCheckUpdate,
-        body: ListView(
-          children: [
-            generateSection(
-              leadingGap: false,
-              items: [
-                ListItem.toggle(
-                  title: Text(context.appLocalizations.autoCheckUpdate),
-                  value: enabled,
-                  onChanged: (value) {
-                    ref
-                        .read(appSettingProvider.notifier)
-                        .update((state) => state.copyWith(autoCheckUpdate: value));
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => const UpdatePreferencesSheet(),
     );
   }
 
@@ -180,6 +160,139 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
                 child: Text(zh ? '暂不' : 'Not now', textAlign: TextAlign.center),
               )
             : null,
+      ),
+    );
+  }
+}
+
+/// ReClash's update preferences sheet: a form draft with a checkmark to save,
+/// so flipping a switch does not write through until the reader confirms.
+/// `autoCheckUpdate` lives in the main settings model and takes effect right
+/// away; the other three are remembered locally for when their flows land.
+class UpdatePreferencesSheet extends ConsumerStatefulWidget {
+  const UpdatePreferencesSheet({super.key});
+
+  @override
+  ConsumerState<UpdatePreferencesSheet> createState() =>
+      _UpdatePreferencesSheetState();
+}
+
+class _UpdatePreferencesSheetState extends ConsumerState<UpdatePreferencesSheet> {
+  late bool _check;
+  late bool _preloadWifi;
+  late bool _autoInstall;
+  late UpdateChannel _channel;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check = ref.read(appSettingProvider).autoCheckUpdate;
+    final extra = UpdatePreferencesData.defaults;
+    loadUpdatePreferences().then((loaded) {
+      if (!mounted) return;
+      setState(() {
+        _preloadWifi = loaded.preloadWifi;
+        _autoInstall = loaded.autoInstall;
+        _channel = effectiveUpdateChannel(
+          configured: loaded.channel,
+          isPreBuild: globalState.isPre,
+        );
+      });
+    });
+    // Defaults until the async load lands.
+    _preloadWifi = extra.preloadWifi;
+    _autoInstall = extra.autoInstall;
+    _channel = effectiveUpdateChannel(
+      configured: extra.channel,
+      isPreBuild: globalState.isPre,
+    );
+  }
+
+  Widget _toggle(String title, bool value, ValueChanged<bool> onChanged) =>
+      ListItem.toggle(
+        title: Text(title),
+        value: value,
+        onChanged: _saving ? null : onChanged,
+      );
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    await ref.read(appSettingProvider.notifier).update(
+          (state) => state.copyWith(autoCheckUpdate: _check),
+        );
+    final configured = _channel == defaultUpdateChannel(isPreBuild: globalState.isPre)
+        ? null
+        : _channel;
+    await storeUpdatePreferences(
+      UpdatePreferencesData(
+        preloadWifi: _preloadWifi,
+        autoInstall: _autoInstall,
+        channel: configured,
+      ),
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return CommonScaffold(
+      title: zh ? '更新偏好' : 'Update preferences',
+      isLoading: _saving,
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
+        tooltip: zh ? '保存' : 'Save',
+        onPressed: _saving ? null : _save,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 20 + context.bottomInset,
+        ),
+        children: [
+          generateSection(
+            leadingGap: false,
+            items: [
+              _toggle(
+                zh ? '自动检查' : 'Check automatically',
+                _check,
+                (value) => setState(() => _check = value),
+              ),
+              _toggle(
+                zh ? '通过 Wi-Fi 预下载' : 'Pre-download over Wi-Fi',
+                _preloadWifi,
+                (value) => setState(() => _preloadWifi = value),
+              ),
+              _toggle(
+                zh ? '自动安装' : 'Auto install',
+                _autoInstall,
+                (value) => setState(() => _autoInstall = value),
+              ),
+            ],
+          ),
+          generateSection(
+            items: [
+              IgnorePointer(
+                ignoring: _saving,
+                child: ListItem<UpdateChannel>.options(
+                  title: Text(zh ? '更新通道' : 'Update channel'),
+                  options: UpdateChannel.values,
+                  value: _channel,
+                  textBuilder: (channel) => channel == UpdateChannel.release
+                      ? (zh ? '正式版' : 'Stable')
+                      : (zh ? '预发布版' : 'Pre-release'),
+                  onChanged: (channel) {
+                    if (mounted && !_saving) {
+                      setState(() => _channel = channel);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
