@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
@@ -6,6 +8,7 @@ import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/chains/page.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
+import 'package:skyward/views/proxies/routing_strategy.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,6 +115,13 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               state.copyWith(hideTimeoutProxies: !state.hideTimeoutProxies),
         ),
       ),
+      if (ref.watch(canScriptGroupsProvider))
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.layers,
+          label: appLocalizations.rcxAddGroup,
+          section: const CommonPopupMenuSection(),
+          onPressed: () => unawaited(showNewStrategyGroup(context)),
+        ),
       CommonPopupMenuItem(
         glyph: AppGlyphs.proxies,
         label: Localizations.localeOf(context).languageCode == 'zh'

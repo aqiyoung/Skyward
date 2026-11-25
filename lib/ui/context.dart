@@ -32,6 +32,13 @@ extension BuildContextExtension on BuildContext {
           : MediaQuery.paddingOf(this).top + pageToolbarHeight);
 
   /// A compact sheet's header already trails its own gap.
+  /// Horizontal padding for a scrolling body that runs edge to edge.
+  EdgeInsets get bodyInsets => EdgeInsets.symmetric(horizontal: 16.mAp(this));
+
+  /// The variant of [sectionTopPadding] for pages whose first block is a
+  /// section header (its own gap would otherwise stack with the bar's).
+  double get sectionsTopPadding => sectionTopPadding;
+
   double get contentTopPadding =>
       TopInsetScope.of(this) ??
       (isInCompactSheet ? sheetAppBarHeight : appBarInset + 12);

@@ -2,6 +2,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/config/dns.dart';
+import 'package:skyward/views/config/routing.dart';
 import 'package:skyward/views/config/scripts.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -24,6 +25,7 @@ class AdvancedConfigView extends StatelessWidget {
         leading: const IconWell(AppGlyphs.dns),
         widget: const DnsView(),
       ),
+
       ListItem.open(
         title: Text(appLocalizations.rulePresetAdBlock),
         leading: const IconWell(AppGlyphs.block),
@@ -69,7 +71,24 @@ class AdvancedConfigView extends StatelessWidget {
           top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
-        children: [generateSection(leadingGap: false, items: items)],
+        children: [
+          generateSection(leadingGap: false, items: items),
+          generateSection(
+            title: appLocalizations.rcxTitle,
+            items: [
+              ListItem.open(
+                title: Text(appLocalizations.rcxScenarios),
+                leading: const IconWell(AppGlyphs.shuffle),
+                widget: const RoutingScenariosView(),
+              ),
+              ListItem.open(
+                title: Text(appLocalizations.rcxSmartGroups),
+                leading: const IconWell(AppGlyphs.layers),
+                widget: const ScriptedGroupsView(),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
