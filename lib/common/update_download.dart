@@ -367,9 +367,15 @@ Future<void> _safeDelete(File file) async {
 }
 
 Future<String> _fileSha256(File file) async {
-  final digest = sha256;
+  // Stream the file through a chunked SHA-256 so a large APK never sits in
+  // memory all at once. The callback fires once when the sink is closed.
+  final digest = Completer<List<int>>();
+  final sink = sha256.startChunkedConversion(
+    ByteConversionSink.withCallback(digest.complete),
+  );
   await for (final chunk in file.openRead()) {
-    digest.add(chunk);
+    sink.add(chunk);
   }
-  return digest.close().toString();
+  sink.close();
+  return Digest(await digest.future).toString();
 }

@@ -171,10 +171,11 @@ class CommonAction extends _$CommonAction {
   bool _ongoingUpdateDownload = false;
   CancelToken? _updateCancelToken;
 
-  bool _isZh() =>
-      Localizations.maybeLocaleOf(globalState.navigatorKey.currentContext)
-          ?.languageCode ==
-      'zh';
+  bool _isZh() {
+    final context = globalState.navigatorKey.currentContext;
+    return context != null &&
+        Localizations.maybeLocaleOf(context)?.languageCode == 'zh';
+  }
 
   /// One-shot query for the Wi-Fi gate. A VPN can be reported alongside
   /// Wi-Fi, so membership is the test, not an exact list length.
