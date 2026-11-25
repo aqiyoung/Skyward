@@ -77,14 +77,9 @@ class AdvancedConfigView extends StatelessWidget {
             title: appLocalizations.rcxTitle,
             items: [
               ListItem.open(
-                title: Text(appLocalizations.rcxScenarios),
+                title: Text(appLocalizations.rcxTitle),
                 leading: const IconWell(AppGlyphs.shuffle),
-                widget: const RoutingScenariosView(),
-              ),
-              ListItem.open(
-                title: Text(appLocalizations.rcxSmartGroups),
-                leading: const IconWell(AppGlyphs.layers),
-                widget: const ScriptedGroupsView(),
+                widget: const RoutingHubView(),
               ),
             ],
           ),

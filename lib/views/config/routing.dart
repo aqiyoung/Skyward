@@ -15,6 +15,67 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+enum _RoutingTab { scenarios, groups }
+
+/// One place for both halves of automatic routing: the running scenario and
+/// the groups it drives. Keeping them together makes the relationship clear
+/// and avoids a second settings entry for what is one feature.
+class RoutingHubView extends ConsumerStatefulWidget {
+  const RoutingHubView({super.key, this.route});
+
+  /// A scenario route to open, when arriving from a deep link.
+  final String? route;
+
+  @override
+  ConsumerState<RoutingHubView> createState() => _RoutingHubViewState();
+}
+
+class _RoutingHubViewState extends ConsumerState<RoutingHubView> {
+  _RoutingTab _tab = _RoutingTab.scenarios;
+  String? _route;
+
+  @override
+  void initState() {
+    super.initState();
+    _route = widget.route;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    return CommonScaffold(
+      title: l.rcxTitle,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, context.contentTopPadding, 16, 8),
+            child: SegmentedControl<_RoutingTab>(
+              segments: [
+                (_RoutingTab.scenarios, l.rcxScenarios),
+                (_RoutingTab.groups, l.rcxSmartGroups),
+              ],
+              value: _tab,
+              onChanged: (tab) => setState(() => _tab = tab),
+            ),
+          ),
+          Expanded(
+            child: switch (_tab) {
+              _RoutingTab.scenarios => routingScenarioBody(
+                context,
+                ref,
+                _route,
+                (route) => setState(() => _route = route),
+              ),
+              _RoutingTab.groups => scriptedGroupsBody(context, ref),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// The running scenario, its routes, and the switch that turns it on.
 class RoutingScenariosView extends ConsumerStatefulWidget {
   const RoutingScenariosView({super.key, this.route});
@@ -42,58 +103,69 @@ class RoutingScenariosView extends ConsumerStatefulWidget {
 class _RoutingScenariosViewState extends ConsumerState<RoutingScenariosView> {
   late String? _route = widget.route;
 
-  void _showRoute(String route) => setState(() => _route = route);
+  void _showRoute(String? route) => setState(() => _route = route);
 
   @override
   Widget build(BuildContext context) {
-    final l = context.appLocalizations;
-    final hasProfile = ref.watch(
-      currentProfileProvider.select((profile) => profile != null),
-    );
-    final status = ref.watch(rcxStatusStateProvider);
     return CommonScaffold(
-      title: l.rcxScenarios,
-      body: switch (status) {
-        _ when !hasProfile => NullStatus(
-          label: l.rcxHubNoProfile,
-          description: l.rcxHubNoProfileHint,
-          illustration: NullStatusIllustration.profile,
-        ),
-        null => NullStatus(
-          label: l.rcxHubNeedsCore,
-          illustration: NullStatusIllustration.proxies,
-        ),
-        final status => RunningScenarioList(
-          leading: const [_ScenarioControls()],
-          trailing: [
-            generateSection(
-              items: [
-                ListItem(
-                  title: Text(l.rcxHubLibrary),
-                  leading: const GlyphIcon(AppGlyphs.layers),
-                  trailing: const DisclosureIndicator(),
-                  onTap: () => unawaited(
-                    BaseNavigator.push<void>(
-                      context,
-                      const RoutingLibraryView(scenarios: true),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          route: _route,
-          onRouteShown: () => setState(() => _route = null),
-          routeLine: (name) => switch (status.groups
-              .where((group) => group.name == name)
-              .firstOrNull) {
-            final group? => _groupLine(l, group, ''),
-            null => null,
-          },
-        ),
-      },
+      title: context.appLocalizations.rcxScenarios,
+      body: routingScenarioBody(context, ref, _route, _showRoute),
     );
   }
+}
+
+/// The scenarios page body, shared by the standalone page and the combined
+/// routing hub. [onRoute] clears a route opened from a deep link once shown.
+Widget routingScenarioBody(
+  BuildContext context,
+  WidgetRef ref,
+  String? route,
+  void Function(String?) onRoute,
+) {
+  final l = context.appLocalizations;
+  final hasProfile = ref.watch(
+    currentProfileProvider.select((profile) => profile != null),
+  );
+  final status = ref.watch(rcxStatusStateProvider);
+  return switch (status) {
+    _ when !hasProfile => NullStatus(
+      label: l.rcxHubNoProfile,
+      description: l.rcxHubNoProfileHint,
+      illustration: NullStatusIllustration.profile,
+    ),
+    null => NullStatus(
+      label: l.rcxHubNeedsCore,
+      illustration: NullStatusIllustration.proxies,
+    ),
+    final status => RunningScenarioList(
+      leading: const [_ScenarioControls()],
+      trailing: [
+        generateSection(
+          items: [
+            ListItem(
+              title: Text(l.rcxHubLibrary),
+              leading: const GlyphIcon(AppGlyphs.layers),
+              trailing: const DisclosureIndicator(),
+              onTap: () => unawaited(
+                BaseNavigator.push<void>(
+                  context,
+                  const RoutingLibraryView(scenarios: true),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      route: route,
+      onRouteShown: () => onRoute(null),
+      routeLine: (name) => switch (status.groups
+          .where((group) => group.name == name)
+          .firstOrNull) {
+        final group? => _groupLine(l, group, ''),
+        null => null,
+      },
+    ),
+  };
 }
 
 /// A hub page's scroll view, under the app bar and above the floating bar.
@@ -309,109 +381,132 @@ class ScriptedGroupsView extends ConsumerWidget {
   const ScriptedGroupsView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = context.appLocalizations;
-    final status = ref.watch(rcxStatusStateProvider);
-    return CommonScaffold(
-      title: l.rcxSmartGroups,
-      body: _HubList(
-        id: 'scripted-groups',
-        children: [
-          if (status == null)
-            ListFooter(text: l.rcxHubNeedsCore)
-          else ...[
-            generateSection(
-              items: [
-                if (ref.watch(canScriptGroupsProvider))
-                  ListItem(
-                    title: Text(l.rcxAddGroup),
-                    leading: const GlyphIcon(AppGlyphs.add),
-                    trailing: const DisclosureIndicator(),
-                    onTap: () => unawaited(showNewStrategyGroup(context)),
-                  ),
-                ListItem(
-                  title: Text(l.rcxGroupProfiles),
-                  leading: const GlyphIcon(AppGlyphs.layers),
-                  trailing: const DisclosureIndicator(),
-                  onTap: () => unawaited(
-                    BaseNavigator.push<void>(
-                      context,
-                      const RoutingLibraryView(scenarios: false),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            _active(context, status),
-          ],
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => CommonScaffold(
+    title: context.appLocalizations.rcxSmartGroups,
+    body: scriptedGroupsBody(context, ref),
+  );
+}
 
-  /// Every group the app selects for: a connected strategy or an engine
-  /// binding. One group can carry either, never both in this list.
-  Widget _active(BuildContext context, RcxStatus status) {
-    final l = context.appLocalizations;
-    final routeNames = {
-      for (final route in status.scenario?.routes ?? const <RcxRouteStatus>[])
-        route.name,
-    };
-    final groups = {
-      for (final group in status.groups)
-        if (!group.route && !routeNames.contains(group.name)) group.name: group,
-    };
-    final names = {...status.strategies.keys, ...groups.keys}.toList()..sort();
-    if (names.isEmpty) return ListFooter(text: l.rcxHubGroupsEmpty);
-    Widget row(String name) {
-      if (status.strategies[name] case final report?) {
-        final fault = report.issue.isNotEmpty
-            ? l.rcxProblemProfileInvalid(report.issue)
-            : report.empty
-            ? l.rcxProblemGroupEmpty
-            : null;
-        return DecorationListItem(
-          invalid: fault != null,
-          title: EmojiText(name),
-          subtitle: EmojiText(
-            fault ??
-                [
-                  rcxSourceLabel(l, report.source),
-                  if (report.selected.isNotEmpty) report.selected,
-                ].join(' · '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onPressed: () => unawaited(showGroupBehaviour(context, name)),
-          trailing: const DisclosureIndicator(),
-        );
-      }
-      final group = groups[name]!;
+/// The scripted-groups page body, shared with the combined routing hub.
+Widget scriptedGroupsBody(BuildContext context, WidgetRef ref) {
+  final l = context.appLocalizations;
+  final status = ref.watch(rcxStatusStateProvider);
+  return _HubList(
+    id: 'scripted-groups',
+    children: [
+      if (status == null)
+        ListFooter(text: l.rcxHubNeedsCore)
+      else ...[
+        generateSection(
+          items: [
+            if (ref.watch(canScriptGroupsProvider))
+              ListItem(
+                title: Text(l.rcxAddGroup),
+                leading: const GlyphIcon(AppGlyphs.add),
+                trailing: const DisclosureIndicator(),
+                onTap: () => unawaited(showNewStrategyGroup(context)),
+              ),
+            ListItem(
+              title: Text(l.rcxGroupProfiles),
+              leading: const GlyphIcon(AppGlyphs.layers),
+              trailing: const DisclosureIndicator(),
+              onTap: () => unawaited(
+                BaseNavigator.push<void>(
+                  context,
+                  const RoutingLibraryView(scenarios: false),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _activeGroups(context, status),
+      ],
+    ],
+  );
+}
+
+/// A stable glyph for a group, so the long list reads as distinct entries
+/// instead of a wall of identical text rows.
+const _groupGlyphs = [
+  AppGlyphs.layers,
+  AppGlyphs.globe,
+  AppGlyphs.bolt,
+  AppGlyphs.star,
+  AppGlyphs.sparkle,
+  AppGlyphs.rules,
+  AppGlyphs.code,
+  AppGlyphs.filter,
+  AppGlyphs.palette,
+  AppGlyphs.puzzle,
+];
+
+Glyph _groupGlyph(String name) =>
+    _groupGlyphs[name.hashCode.abs() % _groupGlyphs.length];
+
+/// Every group the app selects for: a connected strategy or an engine
+/// binding. One group can carry either, never both in this list.
+Widget _activeGroups(BuildContext context, RcxStatus status) {
+  final l = context.appLocalizations;
+  final routeNames = {
+    for (final route in status.scenario?.routes ?? const <RcxRouteStatus>[])
+      route.name,
+  };
+  final groups = {
+    for (final group in status.groups)
+      if (!group.route && !routeNames.contains(group.name)) group.name: group,
+  };
+  final names = {...status.strategies.keys, ...groups.keys}.toList()..sort();
+  if (names.isEmpty) return ListFooter(text: l.rcxHubGroupsEmpty);
+  Widget row(String name) {
+    if (status.strategies[name] case final report?) {
+      final fault = report.issue.isNotEmpty
+          ? l.rcxProblemProfileInvalid(report.issue)
+          : report.empty
+          ? l.rcxProblemGroupEmpty
+          : null;
       return DecorationListItem(
-        invalid: _isFault(group.problem),
+        invalid: fault != null,
+        leading: GlyphIcon(_groupGlyph(name)),
         title: EmojiText(name),
         subtitle: EmojiText(
-          _groupLine(l, group, status.tunnelMode),
+          fault ??
+              [
+                rcxSourceLabel(l, report.source),
+                if (report.selected.isNotEmpty) report.selected,
+              ].join(' · '),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        onPressed: () => unawaited(showRoutingSheet(context, name)),
+        onPressed: () => unawaited(showGroupBehaviour(context, name)),
         trailing: const DisclosureIndicator(),
       );
     }
-
-    return generateSection(
-      title: l.rcxActiveScriptedGroups,
-      footer: status.energy.requests > 0
-          ? l.rcxEnergyToday(
-              status.energy.requests,
-              status.energy.bytes.traffic.show,
-              status.energy.capBytes.traffic.show,
-            )
-          : null,
-      items: [for (final name in names) row(name)],
+    final group = groups[name]!;
+    return DecorationListItem(
+      invalid: _isFault(group.problem),
+      leading: GlyphIcon(_groupGlyph(name)),
+      title: EmojiText(name),
+      subtitle: EmojiText(
+        _groupLine(l, group, status.tunnelMode),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onPressed: () => unawaited(showRoutingSheet(context, name)),
+      trailing: const DisclosureIndicator(),
     );
   }
+
+  return generateSection(
+    title: l.rcxActiveScriptedGroups,
+    footer: status.energy.requests > 0
+        ? l.rcxEnergyToday(
+            status.energy.requests,
+            status.energy.bytes.traffic.show,
+            status.energy.capBytes.traffic.show,
+          )
+        : null,
+    items: [for (final name in names) row(name)],
+  );
 }
 
 /// Scenarios or behaviours from every source; the user's own entries edit in
