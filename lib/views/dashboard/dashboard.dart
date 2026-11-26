@@ -83,10 +83,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           density: layout,
           scale: scale,
           child: layout.isDesktop
-              ? _DesktopDashboard(
-                  platform: platform,
-                  gap: gap,
-                )
+              ? _DesktopDashboard(platform: platform, gap: gap)
               : _MobileDashboard(
                   platform: platform,
                   gap: gap,
@@ -100,7 +97,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       },
     );
     return CommonScaffold(
-      backgroundColor: DashboardColors.of(context).page,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
@@ -140,10 +136,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 /// The desktop board follows the product render: a status and speed row above
 /// two equal columns, with the tall Route card on the right.
 class _DesktopDashboard extends StatelessWidget {
-  const _DesktopDashboard({
-    required this.platform,
-    required this.gap,
-  });
+  const _DesktopDashboard({required this.platform, required this.gap});
 
   final SupportPlatform platform;
   final double gap;
@@ -197,9 +190,7 @@ class _DesktopDashboard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: gap,
           children: [
-            Expanded(
-              child: RepaintBoundary(child: CurrentOutboundCard()),
-            ),
+            Expanded(child: RepaintBoundary(child: CurrentOutboundCard())),
             Expanded(
               child: halfRow(const <Widget>[
                 SpeedCard(direction: TrafficDirection.upload),
@@ -220,7 +211,10 @@ class _DesktopDashboard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: gap,
                 children: [
-                  sized(controlHeight, const RepaintBoundary(child: NetworkControlCard())),
+                  sized(
+                    controlHeight,
+                    const RepaintBoundary(child: NetworkControlCard()),
+                  ),
                   sized(
                     middleHeight,
                     halfRow(const <Widget>[ProfilesCard(), MemoryInfo()]),
@@ -240,9 +234,10 @@ class _DesktopDashboard extends StatelessWidget {
         // each taking half the board's width so they read as one pair.
         final bottom = sized(
           middleHeight,
-          halfRow(
-            const <Widget>[ServiceStatusCard(), ProxyGroupsSummaryCard()],
-          ),
+          halfRow(const <Widget>[
+            ServiceStatusCard(),
+            ProxyGroupsSummaryCard(),
+          ]),
         );
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -250,11 +245,7 @@ class _DesktopDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: gap,
-            children: [
-              sized(topHeight, top),
-              middle,
-              bottom,
-            ],
+            children: [sized(topHeight, top), middle, bottom],
           ),
         );
       },
