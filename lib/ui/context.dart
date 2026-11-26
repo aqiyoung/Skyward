@@ -31,6 +31,16 @@ extension BuildContextExtension on BuildContext {
           ? sheetAppBarHeight
           : MediaQuery.paddingOf(this).top + pageToolbarHeight);
 
+  /// Extra horizontal padding for a scrolling body. Routing pages already
+  /// supply the regular 16dp gutter themselves; this fork has no inset scope,
+  /// so the extra is zero rather than a second gutter that narrows every
+  /// card and makes the page inconsistent with the rest of the app.
+  EdgeInsets get bodyInsets => EdgeInsets.zero;
+
+  /// The variant of [sectionTopPadding] for pages whose first block is a
+  /// section header (its own gap would otherwise stack with the bar's).
+  double get sectionsTopPadding => sectionTopPadding;
+
   /// A compact sheet's header already trails its own gap.
   double get contentTopPadding =>
       TopInsetScope.of(this) ??

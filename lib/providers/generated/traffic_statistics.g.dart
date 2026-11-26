@@ -102,6 +102,51 @@ final class TrafficHistoryRetentionProvider
 String _$trafficHistoryRetentionHash() =>
     r'7da4a34132b90abcad9afb5078846436d9f187ef';
 
+@ProviderFor(adBlockHitList)
+final adBlockHitListProvider = AdBlockHitListProvider._();
+
+final class AdBlockHitListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AdBlockHit>>,
+          List<AdBlockHit>,
+          FutureOr<List<AdBlockHit>>
+        >
+    with
+        $FutureModifier<List<AdBlockHit>>,
+        $FutureProvider<List<AdBlockHit>> {
+  /// Domains blocked by the ad-block module in the last seven days, read from
+  /// the same native history the traffic card uses. The sampler below keeps it
+  /// fresh, so the dashboard card never shows a stale count.
+  AdBlockHitListProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'adBlockHitListProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$adBlockHitListHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AdBlockHit>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AdBlockHit>> create(Ref ref) {
+    return adBlockHitList(ref);
+  }
+}
+
+String _$adBlockHitListHash() =>
+    r'4de1ad9c6f3a58eb071c9d46bf2a97d3e58ca10b';
+
 @ProviderFor(nativeTrafficHistoryEnabled)
 final nativeTrafficHistoryEnabledProvider =
     NativeTrafficHistoryEnabledProvider._();

@@ -7,6 +7,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -556,6 +557,16 @@ class Query extends _$Query with AutoDisposeNotifierMixin {
   String build(QueryTag tag) {
     return '';
   }
+}
+
+/// Fraction (0..1) of the update APK already downloaded; null when idle.
+/// The version row reads it while `loadingProvider(updateDownload)` is on.
+@Riverpod(keepAlive: true)
+class UpdateDownloadProgress extends _$UpdateDownloadProgress {
+  @override
+  double? build() => null;
+
+  void set(double? value) => state = value;
 }
 
 @Riverpod(keepAlive: true)

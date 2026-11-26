@@ -39,6 +39,9 @@ class AppUiLocalizations implements UiLocalizations {
   String get noSearchResults => _localizations.noSearchResults;
 
   @override
+  String get noData => _localizations.noData;
+
+  @override
   String get reset => _localizations.reset;
 
   @override

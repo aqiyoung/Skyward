@@ -1,17 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Skyward mark as a flat silhouette: Android tints the notification
+     small icon, so it has to be a single-colour shape with no interior. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:width="240dp"
-        android:height="240dp"
-        android:viewportWidth="240"
-        android:viewportHeight="240"
-        tools:ignore="VectorRaster">
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
   <path
-      android:pathData="M330,150 C316,106 244,96 198,126 C150,156 168,214 232,238 C296,262 330,302 300,344 C270,386 194,384 158,340"
-      android:strokeColor="#FFFFFF"
-      android:strokeWidth="40.560"
-      android:strokeLineCap="round"
-      android:scaleX="0.52000"
-      android:scaleY="0.52000"
-      android:translateX="-6.880"
-      android:translateY="-4.800" />
+      android:fillColor="#FFFFFF"
+      android:fillType="evenOdd"
+      android:pathData="M85.54 20.32L78.96 24.13L73.43 26.21L67.20 27.59L64.43 27.59L64.09 27.94L54.40 27.94L54.05 28.28L47.14 28.63L43.68 29.32L39.87 30.70L34.68 33.82L27.24 41.25L21.71 49.56L21.02 50.94L21.19 51.46L24.99 48.00L30.53 44.89L37.10 43.16L44.02 43.16L49.90 44.54L55.09 46.96L60.11 51.29L60.80 52.67L60.80 54.05L59.94 54.92L58.21 55.61L54.40 55.61L42.29 53.19L40.56 52.50L36.06 52.15L35.72 51.81L29.15 51.81L23.26 53.19L19.81 54.92L17.04 56.99L13.06 61.66L11.33 65.12L9.95 69.97L9.60 75.16L10.12 75.68L16.69 70.49L20.15 68.76L24.30 67.37L28.45 67.03L28.80 66.68L35.03 66.68L35.37 67.03L39.18 67.03L39.52 67.37L42.98 67.37L43.33 67.72L52.32 67.72L58.21 66.34L63.39 63.57L67.72 59.59L70.49 55.78L73.25 49.90L74.98 43.68L76.89 41.77L78.27 41.08L80.86 38.49L82.25 36.41L85.02 29.84L86.05 24.65L86.05 22.57L86.40 22.23L86.40 20.50L85.88 20.32L85.54 20.32Z" />
 </vector>

@@ -7,6 +7,7 @@ import 'package:skyward/plugins/app.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
@@ -113,6 +114,20 @@ class CommonTargetIcon extends StatelessWidget {
     }
 
     if (src.isBundleAsset) {
+      // Packaged SVGs (service logos) need the same vector decoder as the
+      // downloaded ones; Image.asset cannot paint them.
+      if (src.isSvg) {
+        return FutureBuilder<ByteData>(
+          future: rootBundle.load(src),
+          builder: (context, snapshot) => snapshot.hasData
+              ? _BytesImage(
+                  bytes: snapshot.data!.buffer.asUint8List(),
+                  isSvg: true,
+                  fallback: _defaultIcon(),
+                )
+              : _defaultIcon(),
+        );
+      }
       final size = IconTheme.of(context).size ?? 24;
       return Image.asset(
         src,
@@ -284,6 +299,12 @@ abstract final class GroupIconSource {
     'PikPak': 'pikpak.png',
     'Crypto': 'crypto.png',
     'AdBlock': 'adblock.png',
+    'ClaudeCode': 'assets/images/services/claude.svg',
+    'Gemini': 'assets/images/services/gemini.svg',
+    'Copilot': 'github.png',
+    'AI工具': 'spark.png',
+    'AgentTools': 'assets/images/services/openai.svg',
+    'Cursor': 'spark.png',
   };
 
   /// The entry a group wears, or empty for a [GroupBadge] to stand in.
@@ -307,7 +328,7 @@ abstract final class GroupIconSource {
     }
     final service = _services[name];
     if (service != null) {
-      return '$_dir$service';
+      return service.startsWith('assets/') ? service : '$_dir$service';
     }
     final guessed = _guess(name, _serviceKeywords);
     if (guessed != null) {

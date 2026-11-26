@@ -1,0 +1,8 @@
+rcx: 1
+title: Every group automatically
+description: "Automatically manages every proxy group in your profile with the selected profile. Handy when you want the same behavior everywhere."
+groups:
+  '*': {}
+l10n:
+  ru: { Every group automatically: Все группы автоматически, "Automatically manages every proxy group in your profile with the selected profile. Handy when you want the same behavior everywhere.": "Автоматически управляет всеми группами прокси в вашем профиле с помощью выбранного профиля. Удобно, если везде нужно одинаковое поведение." }
+  zh-CN: { Every group automatically: 所有分组自动管理, "Automatically manages every proxy group in your profile with the selected profile. Handy when you want the same behavior everywhere.": "使用所选配置自动管理当前订阅中的每一个代理分组。希望各处行为一致时很方便。" }

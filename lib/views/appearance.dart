@@ -177,6 +177,25 @@ class _ThemeModeItem extends ConsumerWidget {
   }
 }
 
+class _WarmLightItem extends ConsumerWidget {
+  const _WarmLightItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final warm = ref.watch(
+      themeSettingProvider.select((state) => state.warmLight),
+    );
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return ListItem.toggle(
+      title: Text(zh ? '暖色浅色背景' : 'Warm light surfaces'),
+      value: warm,
+      onChanged: (value) => ref
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(warmLight: value)),
+    );
+  }
+}
+
 class _PureBlackItem extends ConsumerWidget {
   const _PureBlackItem();
 

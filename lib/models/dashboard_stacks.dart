@@ -16,7 +16,10 @@ List<List<DashboardWidget>> dashboardStacksOf(List<DashboardWidget> cards) {
   final stacks = <List<DashboardWidget>>[];
   final bySize = <DashboardCardSize, List<DashboardWidget>>{};
   for (final card in cards) {
-    final stack = card.size == DashboardCardSize.hero
+    // The hero and the speed test get a place of their own: the test is too
+    // distinctive to bury in a pile where its start button needs a swipe.
+    final stack = card.size == DashboardCardSize.hero ||
+            card.size == DashboardCardSize.speedTest
         ? null
         : bySize.putIfAbsent(card.size, () {
             final pile = <DashboardWidget>[];

@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/chains/page.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/views/proxies/list.dart';
+import 'package:skyward/views/proxies/routing_strategy.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -111,7 +115,35 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
               state.copyWith(hideTimeoutProxies: !state.hideTimeoutProxies),
         ),
       ),
+      if (ref.watch(canScriptGroupsProvider))
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.layers,
+          label: appLocalizations.rcxAddGroup,
+          section: const CommonPopupMenuSection(),
+          onPressed: () => unawaited(showNewStrategyGroup(context)),
+        ),
     ];
+  }
+
+  /// Expands every group, or folds them all when they are already open.
+  IconButtonData _foldAction(BuildContext context) {
+    final groups = ref.watch(groupsProvider);
+    final unfolded = ref.watch(unfoldSetProvider);
+    final allOpen =
+        groups.isNotEmpty &&
+        groups.every((group) => unfolded.contains(group.name));
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return IconButtonData(
+      glyph: AppGlyphs.unfold,
+      tooltip: allOpen
+          ? (zh ? '收起全部' : 'Collapse all')
+          : (zh ? '展开全部' : 'Expand all'),
+      onPressed: () => ref
+          .read(proxiesActionProvider.notifier)
+          .updateCurrentUnfoldSet(
+            allOpen ? const <String>{} : groups.map((g) => g.name).toSet(),
+          ),
+    );
   }
 
   IconButtonData? _buildPrimaryAction() {
@@ -169,6 +201,15 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           },
           tooltip: context.appLocalizations.scrollToSelected,
         ),
+      if (!picker)
+        IconButtonData(
+          glyph: AppGlyphs.link,
+          tooltip: Localizations.localeOf(context).languageCode == 'zh'
+              ? '链路'
+              : 'Chains',
+          onPressed: () => openChainsPage(context),
+        ),
+      if (!picker) _foldAction(context),
     ];
     // On a phone the heading and its buttons move into the page and the bar
     // is left completely empty, matching the dashboard and the global-search

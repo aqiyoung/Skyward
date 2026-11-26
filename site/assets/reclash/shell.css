@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Shared shell pieces used across inner pages: hero eyebrow, developer tabs,
+   code blocks and a preview-only brand scope.
+   ========================================================================== */
+
+.ph-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; color: var(--fg-2);
+  font: 500 0.82rem var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
+.ph-eyebrow::before { content: ''; width: 18px; height: 2px; border-radius: 2px; background: var(--brand); }
+
+/* grid items may shrink below their content, so wide hero content never widens the grid */
+.ph-grid > * { min-width: 0; }
+
+/* code block with a copy button */
+.codeblock { display: grid; gap: 8px; min-width: 0; }
+.codeblock-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; }
+.codeblock-label { color: var(--fg-3); font: 500 0.8rem var(--mono); letter-spacing: 0.02em; }
+.codeblock pre { margin: 0; padding: 16px 18px; border-radius: 16px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line);
+  font: 0.84rem/1.7 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--fg); }
+.codeblock pre code { font-size: inherit; }
+
+/* syntax tokens (shared/site/highlight.ts): names follow the brand, values keep fixed readable hues */
+.syn .tk-key { color: oklch(0.86 0.09 calc(var(--bh) + 52)); }
+.syn .tk-brand { color: var(--brand); font-weight: 600; }
+.syn .tk-str { color: oklch(0.83 0.12 148); }
+.syn .tk-num { color: oklch(0.8 0.11 300); }
+.syn .tk-kw { color: oklch(0.79 0.13 352); }
+.syn .tk-fn { color: oklch(0.86 0.1 200); }
+.syn .tk-var { color: oklch(0.88 0.05 calc(var(--bh) + 20)); }
+.syn .tk-url { color: oklch(0.82 0.1 245); text-decoration: underline; text-decoration-color: oklch(0.82 0.1 245 / 0.35); text-underline-offset: 0.2em; }
+.syn .tk-com { color: var(--fg-3); font-style: italic; }
+.syn .tk-punc { color: var(--fg-3); }
+
+/* Brand tokens recomputed locally, so a preview can carry its own --bl/--bc/--bh without recoloring the site. */
+.theme-scope {
+  --brand:   oklch(var(--bl) var(--bc) var(--bh));
+  --brand-2: oklch(min(0.9, calc(var(--bl) + 0.07)) calc(var(--bc) * 0.85) calc(var(--bh) + 52));
+  --brand-3: oklch(calc(var(--bl) - 0.05) var(--bc) calc(var(--bh) - 64));
+  --brand-soft: oklch(var(--bl) var(--bc) var(--bh) / 0.14);
+  --brand-line: oklch(var(--bl) var(--bc) var(--bh) / 0.42);
+  --glow: oklch(0.55 calc(var(--bc) * 0.9) var(--bh) / 0.42);
+  --on-brand: oklch(0.17 0.03 var(--bh));
+}
+
+/* root language gate: visible only without JavaScript, otherwise the loader covers the redirect */
+.lang-gate { min-height: 100svh; display: grid; place-content: center; gap: 18px; text-align: center; padding: var(--pad); }
+.lang-gate h1 { font-size: clamp(2.4rem, 6vw, 4.5rem); letter-spacing: -0.03em; }
+.lang-gate a { color: var(--fg); text-underline-offset: 0.22em; }
+
+/* ==========================================================================
+   Route transitions (app/plugins/page-transition.client.ts). The nav keeps its own
+   layer and stays put; the old page sinks back while the new one opens as a soft
+   circle from the pointer. History navigation opens from the top edge instead.
+   ========================================================================== */
+@property --vt-open { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+.nav { view-transition-name: site-nav; }
+/* the nav swaps its state at once: cross-fading two label rows would double the text */
+::view-transition-group(site-nav) { animation: none; z-index: 2; }
+::view-transition-old(site-nav) { display: none; }
+::view-transition-new(site-nav) { animation: none; }
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
+::view-transition-old(root) { animation: vt-sink 0.7s cubic-bezier(0.55, 0, 0.2, 1) both; transform-origin: var(--vt-x) var(--vt-y); }
+::view-transition-new(root) {
+  -webkit-mask: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-open) - 70px), transparent var(--vt-open));
+  mask: radial-gradient(circle at var(--vt-x) var(--vt-y), #000 calc(var(--vt-open) - 70px), transparent var(--vt-open));
+  animation: vt-open 0.8s cubic-bezier(0.65, 0, 0.15, 1) both;
+}
+::view-transition-image-pair(root) { isolation: isolate; }
+html[data-vt='back']::view-transition-old(root) { animation-name: vt-sink-back; }
+
+@keyframes vt-open { from { --vt-open: 0px; } to { --vt-open: var(--vt-r, 150vmax); } }
+@keyframes vt-sink { to { transform: scale(0.93); opacity: 0.25; filter: brightness(0.6); } }
+@keyframes vt-sink-back { to { transform: translateY(6vh) scale(0.96); opacity: 0.25; filter: brightness(0.6); } }
+

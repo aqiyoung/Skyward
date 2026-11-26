@@ -47,6 +47,18 @@ class Preferences {
     await preferences?.setInt('version', version);
   }
 
+  /// Generic string access for lightweight features (e.g. link chains) that
+  /// do not need their own typed field here.
+  Future<String?> getString(String key) async {
+    final preferences = await _store.value;
+    return preferences?.getString(key);
+  }
+
+  Future<void> setString(String key, String value) async {
+    final preferences = await _store.value;
+    await preferences?.setString(key, value);
+  }
+
   Future<int> getUpgradeVersion() async {
     final preferences = await _store.value;
     return preferences?.getInt('upgradeVersion') ?? 0;

@@ -203,14 +203,31 @@ void main() {
       );
     });
 
-    test('a release is withheld from a preview that already outranks it', () {
-      // Android refuses a downgrade, so offering this one would be a promise
-      // the install cannot keep.
+    test('a higher version is offered even when the build numbers drift', () {
+      // A preview's injected build number and a release's notes marker come
+      // from different ledgers and can be two million apart. The shared
+      // revision counter in the version name is the reliable comparison, so a
+      // higher stable is offered to a lower preview regardless of the numbers.
+      expect(
+        shouldOfferUpdate(
+          remoteVersion: '1.2.0.15',
+          remoteBuildNumber: releaseBuild,
+          installedVersion: '1.1.1.523',
+          installedBuildNumber: 2090034523,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a release is withheld at the same version with a newer build', () {
+      // Once the names match, the build counter breaks the tie: an older
+      // rebuild cannot replace a newer one.
       expect(
         shouldOfferUpdate(
           remoteVersion: release,
           remoteBuildNumber: releaseBuild,
-          installedVersion: '1.0.0.2090029704',
+          installedVersion: release,
+          installedBuildNumber: 2090029704,
         ),
         isFalse,
       );
@@ -246,9 +263,9 @@ void main() {
       );
     });
 
-    test('a snapshot is compared by the number the build carries', () {
-      // The version cannot say it any more -- its fourth component is today's
-      // count -- so the number Android installs by decides.
+    test('a stable release outranks an older snapshot by name', () {
+      // Version names are compared first; a snapshot of an earlier line is
+      // older whatever build number it carries.
       expect(
         shouldOfferUpdate(
           remoteVersion: '1.0.1.6',
@@ -256,7 +273,7 @@ void main() {
           installedVersion: '1.0.1.07-pre',
           installedBuildNumber: 2090031333,
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         shouldOfferUpdate(
@@ -269,18 +286,17 @@ void main() {
       );
     });
 
-    test('withholds a release it cannot place on the build counter', () {
+    test('compares by version when the notes carry no build number', () {
       // The release page redirect the API falls back to once its quota is
-      // spent carries the tag alone. Without the number there is no way to say
-      // whether this release outranks the preview that is installed, and
-      // reading the names instead would always answer that it does.
+      // spent carries the tag alone. With no number to tie on, the version
+      // name still decides -- a higher version is a real update.
       expect(
         shouldOfferUpdate(
           remoteVersion: release,
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         shouldOfferUpdate(
@@ -288,7 +304,7 @@ void main() {
           remoteBuildNumber: null,
           installedVersion: '1.0.0.2090029702',
         ),
-        isFalse,
+        isTrue,
       );
     });
   });
@@ -307,6 +323,13 @@ void main() {
         '1.0.0.2090029901',
       );
       expect(releaseVersionOf('preview-2090029901'), '1.0.0.2090029901');
+    });
+
+    test('rebuilds a dev version from its name', () {
+      expect(
+        releaseVersionOf('dev-win-32701', 'Skyward 1.0.1.01（Windows Dev 版）'),
+        '1.0.1.01',
+      );
     });
   });
 
@@ -341,7 +364,7 @@ void main() {
           beta24,
           stable23,
         ], installedVersion: '1.2.0.23'),
-        beta24,
+        isNull,
       );
     });
 
@@ -356,7 +379,7 @@ void main() {
           preview9905,
           stable23,
         ], installedVersion: '1.2.0.23'),
-        preview9905,
+        isNull,
       );
     });
 
@@ -377,7 +400,7 @@ void main() {
           preview9901,
           beta24,
           stable23,
-        ], installedVersion: '1.1.0.24'),
+        ], installedVersion: '1.2.0.23'),
         isNull,
       );
     });
@@ -411,6 +434,54 @@ void main() {
           nextStable,
         ], installedVersion: '1.2.0.23'),
         nextStable,
+      );
+    });
+
+    test(
+      'a newer Android preview wins even when dev releases share the list',
+      () {
+        // The releases endpoint is one list for every platform. A dev tag is
+        // not a version; it used to make int.parse throw here and silence the
+        // whole check before the newer preview was ever compared.
+        final dev = release(
+          'dev-win-32701',
+          'Skyward 1.0.1.01（Windows Dev 版）',
+          'notes',
+        );
+        final preview526 = release(
+          'preview-2090032526',
+          'Skyward 1.1.1.526（预览版）',
+          'notes',
+        );
+        final preview530 = release(
+          'preview-2090032530',
+          'Skyward 1.1.1.530（预览版）',
+          'notes',
+        );
+        expect(
+          newestOfferableRelease([
+            preview530,
+            preview526,
+            dev,
+          ], installedVersion: '1.1.1.526'),
+          preview530,
+        );
+      },
+    );
+
+    test('a tag with no version at all does not abort the check', () {
+      final unnamedDev = release('dev-win-32701', '', 'notes');
+      final preview530 = release(
+        'preview-2090032530',
+        'Skyward 1.1.1.530（预览版）',
+        'notes',
+      );
+      expect(
+        newestOfferableRelease([
+          preview530,
+          unnamedDev,
+        ], installedVersion: '1.1.1.526'),
+        preview530,
       );
     });
   });

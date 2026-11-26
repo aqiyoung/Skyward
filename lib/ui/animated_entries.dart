@@ -249,3 +249,62 @@ Widget generateAnimatedSection({
     ],
   );
 }
+
+/// Unfolds [child] in place while [visible] and folds it away otherwise, with
+/// the motion of [AnimatedEntries]; it leaves showing the last visible child.
+class AnimatedReveal extends StatefulWidget {
+  final bool visible;
+
+  final Widget child;
+
+  const AnimatedReveal({super.key, required this.visible, required this.child});
+
+  @override
+  State<AnimatedReveal> createState() => _AnimatedRevealState();
+}
+
+class _AnimatedRevealState extends State<AnimatedReveal>
+    with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    value: widget.visible ? 1 : 0,
+  )..addStatusListener(_handleStatus);
+  late var _child = widget.child;
+
+  void _handleStatus(AnimationStatus status) {
+    if (status.isDismissed && mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedReveal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible) {
+      _child = widget.child;
+    }
+    if (widget.visible == oldWidget.visible) {
+      return;
+    }
+    _controller.duration = context.motionDuration(commonDuration);
+    widget.visible ? _controller.forward() : _controller.reverse();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.visible && _controller.isDismissed) {
+      return const SizedBox.shrink();
+    }
+    return EntryTransition(
+      animation: _controller,
+      leaving: !widget.visible,
+      child: _child,
+    );
+  }
+}

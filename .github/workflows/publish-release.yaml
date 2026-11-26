@@ -45,7 +45,7 @@ jobs:
     # TELEGRAM_API_HASH secrets.
     services:
       telegram-bot-api:
-        image: aiogram/telegram-bot-api:latest
+        image: aiogram/telegram-bot-api:latest@sha256:e71b78c32ac7d6a56a127f8bb432aaa9cb0055fda37c3ef79d2b1b0723eadf70
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
@@ -53,7 +53,7 @@ jobs:
           - 8081:8081
     steps:
       - name: Checkout our source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.branch }}
           # Full history (defense in depth): release_changelog.mjs now pulls the
@@ -103,9 +103,9 @@ jobs:
               echo "::notice::the compare API carried no Changelog-Zh trailer; trying the local range"
               git fetch --tags --quiet || true
               entries=$(git log --no-merges --reverse \
-                --format='%h%x00%(trailers:key=Changelog-Zh,valueonly)' \
+                --format='%h%x09%(trailers:key=Changelog-Zh,valueonly,separator=%x09)' \
                 "$previous..$commit" 2>/dev/null \
-                | awk -F'\0' 'NF > 1 && $2 != "" { print "- " $2 }' \
+                | awk -F'\t' 'NF > 1 { for (i = 2; i <= NF; i++) if ($i != "") print "- " $i }' \
                 | tac | awk 'NR<=40' || true)
             fi
           else

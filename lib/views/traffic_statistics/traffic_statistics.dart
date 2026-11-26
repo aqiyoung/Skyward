@@ -2,26 +2,13 @@ import 'dart:math' as math;
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-ShapeDecoration panelDecoration(BuildContext context, double radius) {
-  final cs = context.colorScheme;
-  final isLight = cs.brightness == Brightness.light;
-  final card = isLight
-      ? const Color(0xFFFFFFFF)
-      : SurfaceLevel.block.colorOf(cs);
-  return ShapeDecoration(
-    color: card,
-    shape: AppShape.all(radius),
-    shadows: DashboardShadows.e1(context),
-  );
-}
 
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
 /// rule-hit distribution, a traffic ranking and running time. Opened from
@@ -62,7 +49,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
       iconActions: [
         IconButtonData(
           glyph: AppGlyphs.refresh,
-          tooltip: '刷新',
+          tooltip: context.appLocalizations.refresh,
           onPressed: _refresh,
         ),
       ],
@@ -71,13 +58,16 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             SegmentedControl<TrafficPeriod>(
-              segments: const [
-                (TrafficPeriod.day, '日'),
-                (TrafficPeriod.week, '周'),
-                (TrafficPeriod.month, '月'),
+              segments: [
+                (TrafficPeriod.day, context.appLocalizations.day),
+                (TrafficPeriod.week, context.appLocalizations.week),
+                (TrafficPeriod.month, context.appLocalizations.month),
               ],
               value: _period,
-              onChanged: (v) => setState(() => _period = v),
+              onChanged: (v) {
+                ref.read(trafficRangeProvider.notifier).setPeriod(v);
+                setState(() => _period = v);
+              },
             ),
             const SizedBox(height: 12),
             _DateStrip(period: _period, range: range),
@@ -94,18 +84,21 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                     uploadColor: cs.tertiary,
                   ),
                   const SizedBox(height: 16),
-                  const _SectionLabel('规则命中'),
+                  _SectionLabel(context.appLocalizations.ruleHits),
                   const SizedBox(height: 8),
                   _RuleHits(hits: data.ruleHits),
                   const SizedBox(height: 16),
-                  const _SectionLabel('流量排行'),
+                  _SectionLabel(context.appLocalizations.trafficRanking),
                   const SizedBox(height: 8),
                   SegmentedControl<TrafficRankKind>(
-                    segments: const [
-                      (TrafficRankKind.domain, '域名'),
-                      (TrafficRankKind.rule, '规则'),
-                      (TrafficRankKind.node, '节点'),
-                      (TrafficRankKind.config, '配置'),
+                    segments: [
+                      (TrafficRankKind.domain, context.appLocalizations.domain),
+                      (TrafficRankKind.rule, context.appLocalizations.rule),
+                      (TrafficRankKind.node, context.appLocalizations.nodes),
+                      (
+                        TrafficRankKind.config,
+                        context.appLocalizations.configuration,
+                      ),
                     ],
                     value: _kind,
                     onChanged: (v) => setState(() => _kind = v),
@@ -160,12 +153,15 @@ class _DateStrip extends ConsumerWidget {
   final TrafficPeriod period;
   final DateTime range;
 
-  String _label() => switch (period) {
-    TrafficPeriod.day =>
-      '${range.year}-${range.month.toString().padLeft(2, '0')}-${range.day.toString().padLeft(2, '0')}',
-    TrafficPeriod.week => '${range.month}/${range.day} 起',
-    TrafficPeriod.month => '${range.year}/${range.month}',
-  };
+  String _label(AppLocalizations l) {
+    final start = startOfTrafficPeriod(period, range);
+    return switch (period) {
+      TrafficPeriod.day =>
+        '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
+      TrafficPeriod.week => l.weeklyRange(start.month, start.day),
+      TrafficPeriod.month => '${start.year}/${start.month}',
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -174,14 +170,17 @@ class _DateStrip extends ConsumerWidget {
       children: [
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronBack),
-          tooltip: '上一段',
+          tooltip: context.appLocalizations.previousPeriod,
           onPressed: () =>
               ref.read(trafficRangeProvider.notifier).shift(period, -1),
         ),
-        Text(_label(), style: AppTextStyle.body.of(context)),
+        Text(
+          _label(context.appLocalizations),
+          style: AppTextStyle.body.of(context),
+        ),
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronForward),
-          tooltip: '下一段',
+          tooltip: context.appLocalizations.nextPeriod,
           onPressed: () =>
               ref.read(trafficRangeProvider.notifier).shift(period, 1),
         ),
@@ -195,13 +194,14 @@ class _OverviewCard extends ConsumerWidget {
 
   final TrafficStatistics data;
 
-  String _duration(int? elapsedMs) {
+  // runTimeProvider is the already-elapsed milliseconds, not a timestamp.
+  String _duration(AppLocalizations l, int? elapsedMs) {
     if (elapsedMs == null || elapsedMs <= 0) return '—';
     final minutes = Duration(milliseconds: elapsedMs).inMinutes;
-    if (minutes < 60) return '$minutes 分钟';
+    if (minutes < 60) return l.durationMinutes(minutes);
     final hours = minutes ~/ 60;
-    if (hours < 24) return '$hours 小时 ${minutes % 60} 分';
-    return '${hours ~/ 24} 天 ${hours % 24} 小时';
+    if (hours < 24) return l.durationHours(hours, minutes % 60);
+    return l.durationDays(hours ~/ 24, hours % 24);
   }
 
   @override
@@ -209,9 +209,13 @@ class _OverviewCard extends ConsumerWidget {
     final cs = context.colorScheme;
     final splitTotal = data.proxyBytes + data.directBytes;
     final proxyPct = splitTotal == 0 ? 0.0 : data.proxyBytes / splitTotal;
+    final runMs = ref.watch(runTimeProvider);
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -220,12 +224,12 @@ class _OverviewCard extends ConsumerWidget {
               GlyphIcon(AppGlyphs.connections, size: 16, color: cs.primary),
               const SizedBox(width: 6),
               Text(
-                '流量概览',
+                context.appLocalizations.trafficOverview,
                 style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const Spacer(),
               Text(
-                '${data.connectionCount} 条连接',
+                context.appLocalizations.connectionCount(data.connectionCount),
                 style: AppTextStyle.caption1
                     .of(context)
                     .copyWith(color: cs.onSurfaceVariant),
@@ -233,7 +237,10 @@ class _OverviewCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text('本时段流量', style: AppTextStyle.caption1.of(context)),
+          Text(
+            context.appLocalizations.totalTraffic,
+            style: AppTextStyle.caption1.of(context),
+          ),
           Text(
             (data.totalUpload + data.totalDownload).traffic.show,
             style: AppTextStyle.title1.of(context),
@@ -243,13 +250,13 @@ class _OverviewCard extends ConsumerWidget {
             children: [
               _FlowStat(
                 dotColor: cs.primary,
-                label: '下载',
+                label: context.appLocalizations.download,
                 bytes: data.totalDownload,
               ),
               const SizedBox(width: 28),
               _FlowStat(
                 dotColor: cs.tertiary,
-                label: '上传',
+                label: context.appLocalizations.upload,
                 bytes: data.totalUpload,
               ),
             ],
@@ -264,12 +271,18 @@ class _OverviewCard extends ConsumerWidget {
           Row(
             children: [
               Text(
-                '代理 ${data.proxyBytes.traffic.show} · ${_pct(proxyPct)}',
+                context.appLocalizations.proxyShare(
+                  data.proxyBytes.traffic.show,
+                  _pct(proxyPct),
+                ),
                 style: AppTextStyle.caption1.of(context),
               ),
               const Spacer(),
               Text(
-                '直连 ${data.directBytes.traffic.show} · ${_pct(1 - proxyPct)}',
+                context.appLocalizations.directShare(
+                  data.directBytes.traffic.show,
+                  _pct(1 - proxyPct),
+                ),
                 style: AppTextStyle.caption1
                     .of(context)
                     .copyWith(color: cs.onSurfaceVariant),
@@ -283,10 +296,13 @@ class _OverviewCard extends ConsumerWidget {
             children: [
               GlyphIcon(AppGlyphs.clock, size: 14, color: cs.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text('时段运行时长', style: AppTextStyle.caption1.of(context)),
+              Text(
+                context.appLocalizations.totalUptime,
+                style: AppTextStyle.caption1.of(context),
+              ),
               const SizedBox(width: 8),
               Text(
-                _duration(data.runtimeMs),
+                _duration(context.appLocalizations, runMs),
                 style: AppTextStyle.body.of(context, emphasized: true),
               ),
             ],
@@ -381,7 +397,10 @@ class _TrendCard extends StatelessWidget {
     final hasData = peak != null && (peak.download + peak.upload) > 0;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -390,20 +409,28 @@ class _TrendCard extends StatelessWidget {
               GlyphIcon(AppGlyphs.speed, size: 16, color: cs.primary),
               const SizedBox(width: 6),
               Text(
-                '流量趋势',
+                context.appLocalizations.trafficTrend,
                 style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const Spacer(),
-              _LegendDot(color: downloadColor, label: '下载'),
+              _LegendDot(
+                color: downloadColor,
+                label: context.appLocalizations.download,
+              ),
               const SizedBox(width: 10),
-              _LegendDot(color: uploadColor, label: '上传'),
+              _LegendDot(
+                color: uploadColor,
+                label: context.appLocalizations.upload,
+              ),
             ],
           ),
           if (hasData) ...[
             const SizedBox(height: 4),
             Text(
-              '峰值 ${peak.hour.hour}:00 · '
-              '${(peak.download + peak.upload).traffic.show}',
+              context.appLocalizations.trafficPeakLine(
+                peak.hour.hour,
+                (peak.download + peak.upload).traffic.show,
+              ),
               style: AppTextStyle.caption2
                   .of(context)
                   .copyWith(color: cs.onSurfaceVariant),
@@ -418,12 +445,15 @@ class _TrendCard extends StatelessWidget {
               ],
               downloadColor: downloadColor,
               uploadColor: uploadColor,
-              labelColor: context.colorScheme.onSurface,
-              gridColor: cs.onSurface.withValues(alpha: 0.24),
+              gridColor: cs.onSurfaceVariant.withValues(alpha: 0.16),
+              labelColor: cs.onSurfaceVariant.withValues(alpha: 0.85),
               height: 150,
             )
           else
-            const SizedBox(height: 150, child: Center(child: Text('暂无数据'))),
+            SizedBox(
+              height: 150,
+              child: Center(child: Text(context.appLocalizations.noData)),
+            ),
         ],
       ),
     );
@@ -469,14 +499,17 @@ class _RuleHits extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (hits.isEmpty) {
-      return const Text('暂无数据');
+      return Text(context.appLocalizations.noData);
     }
     final cs = context.colorScheme;
     final shown = hits.take(8).toList();
     final totalHits = hits.fold<int>(0, (sum, h) => sum + h.hits);
     final top = hits.first;
     return Container(
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -487,7 +520,7 @@ class _RuleHits extends StatelessWidget {
                 RingChart(
                   segments: [for (final h in hits.take(5)) h.percent],
                   center: '$totalHits',
-                  subtitle: '次命中',
+                  subtitle: context.appLocalizations.hitsUnit,
                   size: 76,
                   strokeWidth: 7,
                   trackColor: cs.surfaceContainerHighest,
@@ -505,14 +538,17 @@ class _RuleHits extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '占命中流量 ${_pct(top.percent)} · ${top.hits} 次',
+                        context.appLocalizations.ruleHitShare(
+                          _pct(top.percent),
+                          top.hits,
+                        ),
                         style: AppTextStyle.caption1
                             .of(context)
                             .copyWith(color: cs.onSurfaceVariant),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '共 ${hits.length} 条规则有命中',
+                        context.appLocalizations.ruleHitCount(hits.length),
                         style: AppTextStyle.caption2
                             .of(context)
                             .copyWith(color: cs.onSurfaceVariant),
@@ -567,8 +603,11 @@ class _RuleRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${hit.hits} 次 · ↑ ${hit.upload.traffic.show} '
-            '↓ ${hit.download.traffic.show}',
+            context.appLocalizations.ruleHitDetail(
+              hit.hits,
+              hit.upload.traffic.show,
+              hit.download.traffic.show,
+            ),
             style: AppTextStyle.caption2
                 .of(context)
                 .copyWith(color: cs.onSurfaceVariant),
@@ -635,9 +674,9 @@ class _Ranking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: Text('暂无数据')),
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(child: Text(context.appLocalizations.noData)),
       );
     }
     final cs = context.colorScheme;
@@ -647,7 +686,10 @@ class _Ranking extends StatelessWidget {
       (m, e) => math.max(m, e.upload + e.download),
     );
     return Container(
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -733,7 +775,9 @@ class _RankRow extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item.key.isEmpty ? '未知' : item.key,
+                  item.key.isEmpty
+                      ? context.appLocalizations.unknown
+                      : item.key,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.body.of(context, emphasized: true),
@@ -757,8 +801,11 @@ class _RankRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '占 ${item.percent.toStringAsFixed(1)}% · '
-            '↑ ${item.upload.traffic.show} ↓ ${item.download.traffic.show}',
+            context.appLocalizations.rankDetail(
+              '${item.percent.toStringAsFixed(1)}%',
+              item.upload.traffic.show,
+              item.download.traffic.show,
+            ),
             style: AppTextStyle.caption2
                 .of(context)
                 .copyWith(color: cs.onSurfaceVariant),

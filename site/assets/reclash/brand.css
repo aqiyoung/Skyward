@@ -1,0 +1,110 @@
+/* ==========================================================================
+   Brand: the three-capsule glyph (app/components/BrandMark.vue) and the loader.
+   The glyph's palette is the app icon's violet / blue / cyan spread, re-anchored on
+   the brand hue: the middle capsule is the brand, its neighbours keep the icon's hue
+   offsets, lightness and chroma ratios. With ReClash-Hex 5C9DFF it is the app icon
+   exactly; any recolor sweeps the glyph with the rest of the site.
+   Keep in sync with markColors() in shared/site/brand.ts (the live favicon).
+   ========================================================================== */
+:root, .theme-scope {
+  --mk-1a: oklch(min(0.94, calc(var(--bl) + 0.014)) calc(var(--bc) * 1.04) calc(var(--bh) + 34));
+  --mk-1b: oklch(calc(var(--bl) - 0.128) calc(var(--bc) * 1.43) calc(var(--bh) + 25));
+  --mk-2a: oklch(var(--bl) var(--bc) var(--bh));
+  --mk-2b: oklch(calc(var(--bl) - 0.121) calc(var(--bc) * 1.29) calc(var(--bh) + 4));
+  --mk-3a: oklch(min(0.95, calc(var(--bl) + 0.127)) calc(var(--bc) * 0.75) calc(var(--bh) - 34));
+  --mk-3b: oklch(min(0.9, calc(var(--bl) + 0.025)) calc(var(--bc) * 0.9) calc(var(--bh) - 25));
+}
+
+/* A bar is a dash on a normalised path: 0 is a dot, 0.8 the glyph, 1 the longest stretch. */
+.bm { display: block; overflow: visible; }
+.bm-bar { fill: none; stroke-width: 62.1; stroke-linecap: round; stroke-dasharray: 0.8 2; stroke-dashoffset: -0.1;
+  transform-box: fill-box; transform-origin: 50% 50%; }
+
+/* "No signal": the glyph collapses into three dots and tries to come back on hover. */
+.bm.is-off .bm-bar { stroke-dasharray: 0.0001 2; stroke-dashoffset: -0.5;
+  transition: stroke-dasharray var(--dur-jelly) var(--ease-jelly), stroke-dashoffset var(--dur-jelly) var(--ease-jelly);
+  transition-delay: calc(var(--n) * 60ms); }
+:hover > .bm.is-off .bm-bar { stroke-dasharray: 0.3 2; stroke-dashoffset: -0.35; }
+
+/* ==========================================================================
+   Loader. Shown only when the head script marked the document with .js.
+   Intro: three dots pop in, stretch into the glyph and keep pulsing like a signal
+   meter while the page gets ready; the wordmark rises under them.
+   Exit (.is-ready): the glyph turns into a window. A mask cut in its exact shape
+   grows past the screen, so the page is revealed through the logo while the gaps
+   between the capsules sweep outwards and fade. The cover is a shade lighter than
+   the page, so the window reads even before the page content arrives.
+   ========================================================================== */
+@property --k { syntax: '<number>'; inherits: true; initial-value: 1; }
+
+.loader { display: none; }
+.js .loader { --ls: 112px; position: fixed; inset: 0; z-index: 200; display: block; background: color-mix(in oklab, var(--bg-2) 70%, var(--bg)); pointer-events: auto; }
+.js.is-loaded .loader { display: none; }
+.loader::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(48vmax 48vmax at 50% 50%, color-mix(in oklab, var(--mk-2a) 13%, transparent), transparent 62%); }
+.loader-core { position: absolute; left: 50%; top: 50%; width: var(--ls); height: var(--ls); translate: -50% -50%; }
+.loader-core::before { content: ''; position: absolute; inset: -30%; border-radius: 50%; pointer-events: none; opacity: 0.55;
+  background: conic-gradient(from 200deg, var(--mk-1a), var(--mk-2a), var(--mk-3a), var(--mk-1a)); filter: blur(42px); }
+.loader-mark { position: relative; width: 100%; height: 100%; }
+.loader-word { position: absolute; left: 50%; top: calc(100% + 30px); translate: -50% 0; display: flex; overflow: clip;
+  font: 700 1.1rem/1.2 var(--display); letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
+.loader-word span { display: inline-block; }
+
+/* first visit in this tab: dots, stretch, signal */
+.js:not(.intro-short):not(.rm) .loader-core::before { animation: ld-halo 1.2s ease-out both, ld-breathe 2.6s ease-in-out 1.2s infinite alternate; }
+.js:not(.intro-short):not(.rm) .loader .bm-1 { animation: ld-bar 1s 80ms both, ld-eq-1 1.25s ease-in-out 1.3s infinite; }
+.js:not(.intro-short):not(.rm) .loader .bm-2 { animation: ld-bar 1s 190ms both, ld-eq-2 1.05s ease-in-out 1.3s infinite; }
+.js:not(.intro-short):not(.rm) .loader .bm-3 { animation: ld-bar 1s 300ms both, ld-eq-3 1.45s ease-in-out 1.3s infinite; }
+.js:not(.intro-short):not(.rm) .loader-word span { animation: ld-rise 0.8s cubic-bezier(0.2, 0.9, 0.25, 1) calc(0.5s + var(--i) * 40ms) both; }
+/* later loads in the same tab: the glyph is already there and only twitches */
+.js.intro-short:not(.rm) .loader-core { animation: ld-settle 0.35s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.js.intro-short:not(.rm) .loader .bm-1 { animation: ld-twitch 0.6s ease-out both, ld-eq-1 1.25s ease-in-out 0.6s infinite; }
+.js.intro-short:not(.rm) .loader .bm-2 { animation: ld-twitch 0.6s 60ms ease-out both, ld-eq-2 1.05s ease-in-out 0.66s infinite; }
+.js.intro-short:not(.rm) .loader .bm-3 { animation: ld-twitch 0.6s 120ms ease-out both, ld-eq-3 1.45s ease-in-out 0.72s infinite; }
+
+@keyframes ld-bar {
+  0% { scale: 0; stroke-dasharray: 0.0001 2; stroke-dashoffset: -0.5; animation-timing-function: cubic-bezier(0.34, 1.7, 0.6, 1); }
+  30% { scale: 1; stroke-dasharray: 0.0001 2; stroke-dashoffset: -0.5; animation-timing-function: cubic-bezier(0.6, 0, 0.2, 1); }
+  72% { stroke-dasharray: 0.92 2; stroke-dashoffset: -0.04; animation-timing-function: ease-in-out; }
+  100% { stroke-dasharray: 0.8 2; stroke-dashoffset: -0.1; }
+}
+@keyframes ld-twitch { 40% { stroke-dasharray: 0.55 2; stroke-dashoffset: -0.225; } 75% { stroke-dasharray: 0.88 2; stroke-dashoffset: -0.06; } }
+/* three meters at different tempos never line up into a visible loop */
+@keyframes ld-eq-1 { 35% { stroke-dasharray: 1 2; stroke-dashoffset: 0; } 70% { stroke-dasharray: 0.5 2; stroke-dashoffset: -0.25; } }
+@keyframes ld-eq-2 { 40% { stroke-dasharray: 0.42 2; stroke-dashoffset: -0.29; } 75% { stroke-dasharray: 0.98 2; stroke-dashoffset: -0.01; } }
+@keyframes ld-eq-3 { 30% { stroke-dasharray: 0.55 2; stroke-dashoffset: -0.225; } 65% { stroke-dasharray: 1 2; stroke-dashoffset: 0; } }
+@keyframes ld-halo { from { opacity: 0; scale: 0.4; } }
+@keyframes ld-breathe { to { opacity: 0.85; scale: 1.15; rotate: 40deg; } }
+@keyframes ld-rise { from { transform: translateY(110%); opacity: 0; } }
+@keyframes ld-settle { from { opacity: 0; scale: 0.9; } }
+
+/* exit: the window in the glyph's shape; the mask image is the glyph at its nominal size */
+.js.is-ready:not(.rm) .loader { pointer-events: none;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-166 -166 332 332'%3E%3Cg transform='translate(4 0) rotate(-20)' fill='none' stroke='%23000' stroke-width='62.1' stroke-linecap='round'%3E%3Cpath d='M-101.2 69V-69M0 138V-138M101.2 46V-46'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(#000 0 0);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-166 -166 332 332'%3E%3Cg transform='translate(4 0) rotate(-20)' fill='none' stroke='%23000' stroke-width='62.1' stroke-linecap='round'%3E%3Cpath d='M-101.2 69V-69M0 138V-138M101.2 46V-46'/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(#000 0 0);
+  -webkit-mask-position: 50% 50%, 0 0; mask-position: 50% 50%, 0 0;
+  -webkit-mask-size: calc(var(--k) * var(--ls)) calc(var(--k) * var(--ls)), 100% 100%; mask-size: calc(var(--k) * var(--ls)) calc(var(--k) * var(--ls)), 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: ld-open 1.05s both, ld-vanish 1.05s linear both; }
+.js.is-ready:not(.rm) .loader-mark { animation: ld-mark-out 0.4s cubic-bezier(0.5, 0, 0.9, 0.5) both; }
+.js.is-ready:not(.rm) .loader-core::before { animation: ld-out 0.35s ease-in both; }
+.js.is-ready:not(.rm) .loader-word span { animation: ld-drop 0.36s cubic-bezier(0.5, 0, 0.9, 0.4) calc(var(--i) * 22ms) both; }
+.js.is-ready.rm .loader { animation: ld-fade 0.2s linear both; }
+
+@keyframes ld-open {
+  0% { --k: 1; animation-timing-function: cubic-bezier(0.45, 0, 0.9, 0.5); }
+  100% { --k: 34; }
+}
+@keyframes ld-vanish { 0%, 58% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ld-mark-out { to { opacity: 0; scale: 1.25; } }
+@keyframes ld-out { to { opacity: 0; scale: 0.4; } }
+@keyframes ld-drop { to { transform: translateY(70%); opacity: 0; } }
+@keyframes ld-fade { to { opacity: 0; } }
+
+/* the nav and footer glyphs */
+.logo-mark { width: 30px; height: 30px; flex: none; }
+.foot .logo-mark { width: 26px; height: 26px; }
+
+/* error page: the glyph without signal */
+.gate-mark { width: 96px; height: 96px; justify-self: center; }

@@ -43,7 +43,10 @@ class TrafficUsageCard extends ConsumerWidget {
             style: DashboardText.figure(context, AppTextStyle.title1),
           ),
           const SizedBox(height: 4),
-          Text('今日', style: DashboardText.label(context)),
+          Text(
+            context.appLocalizations.today,
+            style: DashboardText.label(context),
+          ),
         ],
       ),
     );

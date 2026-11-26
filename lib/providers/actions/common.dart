@@ -84,14 +84,24 @@ class CommonAction extends _$CommonAction {
 
   Future<bool> autoCheckUpdate() async {
     if (!ref.read(appSettingProvider).autoCheckUpdate) return false;
+    final prefs = await loadUpdatePreferences();
+    final channel = effectiveUpdateChannel(
+      configured: prefs.channel,
+      isPreBuild: globalState.isPre,
+    );
     final Map<String, dynamic>? res;
     try {
-      res = await request.checkForUpdate();
+      res = await request.checkForUpdate(channel);
       // Announcing it needs a mounted navigator, and startup does not always
       // have one yet. The handler steps aside in that case; the check itself
       // is best effort, so a failed announcement must not travel out of an
       // unawaited future.
-      await checkUpdateResultHandle(data: res);
+      await checkUpdateResultHandle(
+        data: res,
+        autoInstall: prefs.autoInstall,
+        preloadWifi: prefs.preloadWifi,
+        notifyOnUpdate: prefs.notifyOnUpdate,
+      );
     } catch (error) {
       commonPrint.log(
         'checkForUpdate failed: ${compactError(error)}',
@@ -157,27 +167,65 @@ class CommonAction extends _$CommonAction {
     ];
   }
 
-  /// The download id of an update that is already running in the
-  /// background, if any: a second tap while one runs must not start a
-  /// duplicate download, and there is no dialog to tell the user apart.
-  int? _ongoingUpdateDownloadId;
+  /// Whether an update package is on its way right now: a second tap while one
+  /// runs must not set off another check over the top of it.
+  bool _ongoingUpdateDownload = false;
+  CancelToken? _updateCancelToken;
 
-  /// The package that fits the device goes to the system download manager,
-  /// which keeps it in the Downloads folder, while the app itself polls
-  /// that manager in the background and opens the system installer once
-  /// the download completes -- the browser is never involved on Android.
-  /// Nothing modal is shown while it downloads, so the app stays usable
-  /// throughout. The desktop has no such manager, so the release page
-  /// opens there.
-  Future<void> _downloadRelease(Map<String, dynamic> release) async {
+  bool _isZh() {
+    final context = globalState.navigatorKey.currentContext;
+    return context != null &&
+        Localizations.maybeLocaleOf(context)?.languageCode == 'zh';
+  }
+
+  /// One-shot query for the Wi-Fi gate. A VPN can be reported alongside
+  /// Wi-Fi, so membership is the test, not an exact list length.
+  Future<bool> _isOnWifi() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.contains(ConnectivityResult.wifi);
+  }
+
+  /// Startup checks can finish before the first frame mounts the navigator.
+  /// Wait briefly for it so an announced update is not silently dropped.
+  Future<BuildContext?> _readyNavigatorContext() async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final context = globalState.navigatorKey.currentContext;
+      if (context != null && context.mounted) return context;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    return null;
+  }
+
+  /// Downloads the APK through the system download manager and lets its
+  /// completion receiver open the system installer. No VPN guard, no private
+  /// PackageInstaller session: the installer window is the confirmation.
+  Future<void> _downloadRelease(
+    Map<String, dynamic> release, {
+    bool wifiOnly = false,
+    bool automatic = false,
+  }) async {
+    if (_ongoingUpdateDownload) return;
     final downloader = systemDownloader;
-    final abi = downloader == null ? null : await downloader.supportedAbi();
+    if (downloader == null) {
+      // Desktop: replace this installation in place when it is an installer
+      // build we can write; otherwise fall back to the release page.
+      await _downloadDesktopUpdate(release, automatic: automatic);
+      return;
+    }
+    final abi = await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
-    if (downloader == null || asset == null) {
-      // The offered release may be a beta or a preview, which the
-      // /releases/latest page never points at -- open this release's own
-      // page, falling back to the tag page, so the download offered is the
-      // one that was actually found.
+    // Preview releases list one generic arm64 APK and publish its hash in a
+    // SHA256SUMS asset instead of a comment in the notes.
+    final sha256 =
+        asset?.sha256 ??
+        (asset == null ? null : await _sha256FromSums(release, asset.name));
+    if (sha256 == null && asset != null) {
+      commonPrint.log(
+        'No published SHA-256 for ${asset.name}; downloading without the hash check',
+        logLevel: LogLevel.warning,
+      );
+    }
+    if (asset == null) {
       final page = release['html_url'];
       final tag = release['tag_name'];
       await launchUrl(
@@ -191,32 +239,33 @@ class CommonAction extends _$CommonAction {
       );
       return;
     }
-    if (_ongoingUpdateDownloadId != null) {
-      // A background download is already running: starting another one
-      // would download the same file twice, and with no dialog there is
-      // no place to ask which one to keep.
+    if (wifiOnly && !await _isOnWifi()) {
+      commonPrint.log('Skipping automatic update download on mobile data');
       return;
     }
+    _ongoingUpdateDownload = true;
+    ref.read(updateDownloadProgressProvider.notifier).set(0);
     try {
-      final downloadId = await downloader.download(
+      ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
+      final id = await downloader.download(
         url: asset.url,
         fileName: asset.name,
-        expectedSha256: asset.sha256,
+        expectedSha256: sha256,
+        wifiOnly: wifiOnly,
       );
-      if (downloadId == null) {
-        throw StateError('download did not start');
+      if (id == null) throw StateError('download did not start');
+      while (true) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        final status = await downloader.status(id);
+        if (status == null || status.isFailed) {
+          throw StateError('download failed: ${asset.name}');
+        }
+        ref.read(updateDownloadProgressProvider.notifier).set(status.progress);
+        if (status.isSuccessful) break;
       }
-      _ongoingUpdateDownloadId = downloadId;
-      // No dialog, no banner while it downloads: the download runs in
-      // the background through the system download manager, the app
-      // stays fully usable, and only the installer opens at the end.
-      // The manager's own notification is the progress view, and it
-      // remains the fallback if the app is gone when the download ends.
-      //
-      // The tag is what the About row reads instead of offering the
-      // release again: a package on its way is not a new find.
-      ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
-      await _waitForAndroidDownload(downloader, downloadId, asset.name);
+      // The download-complete receiver normally opens the installer already;
+      // this call is a no-op then, and the fallback when it did not run.
+      await downloader.install(id);
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
@@ -224,64 +273,89 @@ class CommonAction extends _$CommonAction {
       );
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
-      _ongoingUpdateDownloadId = null;
+      _ongoingUpdateDownload = false;
+      ref.read(updateDownloadProgressProvider.notifier).set(null);
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
     }
   }
 
-  /// Whether an update package is on its way right now. The row that started
-  /// it can be rebuilt by navigation while the download runs, and a second tap
-  /// there must not set off another check over the top of it.
-  bool get isDownloadingUpdate => _ongoingUpdateDownloadId != null;
-
-  /// Polls the system download manager every half second in the
-  /// background, with no dialog and no banner while it runs, so the user
-  /// can keep using the app throughout the download. The only things
-  /// that ever surface are the system installer's own window on success
-  /// (opened by the download-complete receiver, with the install call
-  /// below as backup) and a non-modal error banner on failure, which
-  /// does not block the app either. Cancelling happens from the system
-  /// download notification, since there is no dialog left to cancel from:
-  /// a download that disappears from the manager is reported as failed.
-  Future<void> _waitForAndroidDownload(
-    SystemDownloader downloader,
-    int downloadId,
-    String fileName,
-  ) async {
-    var failed = false;
-    try {
-      while (true) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        final status = await downloader.status(downloadId);
-        if (status == null || status.isFailed) {
-          failed = true;
-          break;
-        }
-        if (status.isSuccessful) {
-          break;
-        }
+  /// Downloads the desktop installer/AppImage/DMG for this release and starts
+  /// the detached replacement. Portable and package-manager installs cannot
+  /// replace themselves, so those fall back to the release page.
+  Future<void> _downloadDesktopUpdate(
+    Map<String, dynamic> release, {
+    required bool automatic,
+  }) async {
+    final updater = detectDesktopUpdater();
+    // A hands-free desktop replacement exits the app, so only do it while the
+    // reader has been away. The manual path happens on their explicit tap.
+    if (automatic) {
+      final idle = updater?.systemIdle();
+      if (updater == null ||
+          idle == null ||
+          idle < const Duration(minutes: 15)) {
+        return;
       }
-    } catch (error) {
-      commonPrint.log(
-        'download progress poll failed: ${compactError(error)}',
-        logLevel: LogLevel.warning,
-      );
-      failed = true;
     }
-    if (failed) {
-      dialogs.showNotifier(
-        '${currentAppLocalizations.download}: $fileName',
-        level: MessageLevel.error,
+    final tag = release['tag_name'] as String?;
+    final asset = updater?.selectAsset(release['assets'], tag ?? '');
+    if (updater == null || asset == null || asset.sha256 == null) {
+      final page = release['html_url'];
+      await launchUrl(
+        Uri.parse(
+          page is String
+              ? page
+              : tag is String
+              ? 'https://github.com/$repository/releases/tag/$tag'
+              : 'https://github.com/$repository/releases/latest',
+        ),
       );
       return;
     }
-    // The download-complete receiver normally opens the installer the
-    // moment the download finishes; this is only the backup for when it
-    // did not, and the native side makes it a no-op when it already did.
-    await downloader.install(downloadId);
+    _ongoingUpdateDownload = true;
+    final cancelToken = CancelToken();
+    _updateCancelToken = cancelToken;
+    try {
+      final directory = Directory(
+        join(await appPath.homeDirPath, 'app-updates'),
+      );
+      await directory.create(recursive: true);
+      final target = File(join(directory.path, asset.name));
+      ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
+      final error = await request.downloadUpdateFile(
+        Uri.parse(asset.url),
+        target.path,
+        cancelToken: cancelToken,
+        onProgress: (received, total) {},
+        expectedSha256: asset.sha256!,
+        expectedSize: asset.size,
+      );
+      if (error == '') return;
+      if (error != null) throw StateError(error);
+      final logPath = join(directory.path, 'desktop-update.log');
+      await updater.launch(target.path, relaunch: automatic, logPath: logPath);
+      // The replacement waits for this process to exit before swapping files.
+      exit(0);
+    } catch (error) {
+      commonPrint.log(
+        'desktop update failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      dialogs.showNotifier(error.toString(), level: MessageLevel.error);
+    } finally {
+      _ongoingUpdateDownload = false;
+      _updateCancelToken = null;
+      ref.read(updateDownloadProgressProvider.notifier).set(null);
+      unawaited(
+        ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
+      );
+    }
   }
+
+  /// Whether an update package is on its way right now.
+  bool get isDownloadingUpdate => _ongoingUpdateDownload;
 
   ({String url, String name, String? sha256})? _apkAssetOf(
     Map<String, dynamic> release,
@@ -291,23 +365,68 @@ class CommonAction extends _$CommonAction {
     if (assets is! List) {
       return null;
     }
+    ({String url, String name, String? sha256})? generic;
+    final apks = <({String url, String name, String? sha256})>[];
     for (final asset in assets) {
       if (asset is! Map) {
         continue;
       }
       final name = asset['name'];
       final url = asset['browser_download_url'];
-      if (name is! String || url is! String) {
+      if (name is! String || url is! String || !name.endsWith('.apk')) {
         continue;
       }
-      if (!name.endsWith('.apk') || !name.contains(abi)) {
-        continue;
-      }
-      return (
+      final entry = (
         url: url,
         name: name,
         sha256: releaseApkSha256(release['body'], name),
       );
+      apks.add(entry);
+      if (name.contains(abi)) return entry;
+      // A preview only ships one arm64 APK, named `...-android.apk` rather
+      // than after its ABI. Keep it as a fallback, never ahead of an exact
+      // ABI build when a release carries both.
+      if (name.endsWith('-android.apk')) {
+        generic ??= entry;
+      }
+    }
+    // Some devices report an ABI string the asset never spells out. When a
+    // release carries exactly one APK it can only be that device's package.
+    return generic ?? (apks.length == 1 ? apks.single : null);
+  }
+
+  /// Reads the hash a release publishes in its SHA256SUMS asset. Releases
+  /// from this repository do not put an inline `skyward:apk-sha256:` comment
+  /// in the notes, so the body-only lookup would send the reader to GitHub
+  /// instead of installing the verified package.
+  Future<String?> _sha256FromSums(
+    Map<String, dynamic> release,
+    String apkName,
+  ) async {
+    final assets = release['assets'];
+    if (assets is! List) return null;
+    for (final asset in assets) {
+      if (asset is! Map || asset['name'] != 'SHA256SUMS') continue;
+      final url = asset['browser_download_url'];
+      if (url is! String) return null;
+      try {
+        final response = await request.getUpdateTextResponseForUrl(url);
+        for (final line in (response.data ?? '').split('\n')) {
+          final parts = line.trim().split(RegExp(r'\s+'));
+          if (parts.length < 2) continue;
+          final name = parts.last.replaceFirst(RegExp(r'^\./'), '');
+          if (name == apkName &&
+              RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(parts.first)) {
+            return parts.first.toLowerCase();
+          }
+        }
+      } catch (error) {
+        commonPrint.log(
+          'read SHA256SUMS failed: ${compactError(error)}',
+          logLevel: LogLevel.warning,
+        );
+      }
+      return null;
     }
     return null;
   }
@@ -320,9 +439,20 @@ class CommonAction extends _$CommonAction {
     // before its background download starts, so a stray tap never pulls
     // an APK on its own. Startup auto-check is unaffected.
     bool silent = false,
+    // Desktop only: a confirmed update replaces the running install without
+    // asking again. Android always hands the APK to the system installer.
+    bool autoInstall = false,
+    // With Wi-Fi pre-download on, a confirmed download stays on Wi-Fi.
+    bool preloadWifi = false,
+    // The switch in Update preferences: off means an automatic check stays
+    // quiet and does not download anything until the reader checks by hand.
+    bool notifyOnUpdate = true,
   }) async {
     if (data != null) {
-      final context = globalState.navigatorKey.currentContext;
+      if (!notifyOnUpdate) return;
+      // The popup is the announcement; auto-install and pre-download decide
+      // what happens after it is confirmed, not whether it appears.
+      final context = await _readyNavigatorContext();
       if (context == null) {
         return;
       }
@@ -343,7 +473,9 @@ class CommonAction extends _$CommonAction {
         confirmText: currentAppLocalizations.update,
       );
       if (res == true) {
-        unawaited(_downloadRelease(data));
+        unawaited(
+          _downloadRelease(data, wifiOnly: preloadWifi, automatic: autoInstall),
+        );
       }
     } else if (isUser && !silent) {
       unawaited(

@@ -19,6 +19,10 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 
 </div>
 
+<p align="center">
+  <img alt="Skyward dashboard on a MacBook and a phone" src="snapshots/preview.png" width="92%">
+</p>
+
 ## Features
 
 - **One app for Android, Windows, macOS and Linux**, with x64 and ARM64 builds on the desktop.
@@ -103,7 +107,7 @@ adb shell am start -a com.threely.skyward.action.TOGGLE
 
 ## Build from source
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.6),
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release builds use 3.50.1),
 [Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
 host, except Android, which builds anywhere.
 

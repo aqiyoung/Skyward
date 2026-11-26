@@ -4,6 +4,7 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 
+import 'chains_state.dart';
 import 'desktop/model.dart';
 import 'method.dart';
 
@@ -71,6 +72,37 @@ mixin CoreInterface {
   Future<ChangeProxyResult> changeProxy(ChangeProxyParams changeProxyParams);
 
   Future<RouteSnapshot?> watchRoute(bool watch);
+
+  /// Reports for the chains currently materialized into the running config.
+  Future<List<ChainReport>> getChainReport();
+
+  /// Inspect a candidate chain without applying it.
+  Future<ChainInspection> inspectChain(InspectChainParams params);
+
+  Future<RcxStatus> rcxSetPolicy(RcxUserLayer layer);
+
+  Future<RcxStatus> rcxStatus();
+
+  Future<RcxExplanation> rcxExplain(String group);
+
+  Future<List<RcxJournalEntry>> rcxJournal({
+    int cursor = 0,
+    String? group,
+    int limit = 0,
+  });
+
+  Future<RcxDecision> rcxAction({
+    required String group,
+    required RcxAction action,
+    String? node,
+    bool here = false,
+  });
+
+  Future<bool> rcxHints(Map<String, Object?> hints);
+
+  Future<List<RcxProfileInfo>> rcxProfiles();
+
+  Future<RcxStudioResult> rcxStudio(Map<String, Object?> request);
 
   Future<bool> startListener();
 
@@ -371,10 +403,16 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> setupConfig(SetupParams setupParams) async {
-    return _invokeMessage(
-      method: CoreMethod.setupConfig,
-      arguments: setupParams.toJson(),
-    );
+    final arguments = setupParams.toJson();
+    // Fold the active link chains into the setup call without changing the
+    // freezed SetupParams model.
+    final chains = activeChains;
+    if (chains != null) {
+      arguments['chains'] = chains.map((e) => e.toJson()).toList();
+      final hint = activeMainGroupHint;
+      if (hint != null) arguments['main-group-hint'] = hint;
+    }
+    return _invokeMessage(method: CoreMethod.setupConfig, arguments: arguments);
   }
 
   @override
@@ -432,6 +470,107 @@ abstract class CoreHandlerInterface with CoreInterface {
     return ChangeProxyResult.fromJson(data);
   }
 
+  Future<Map<String, dynamic>> _invokeRcx(
+    CoreMethod method, [
+    Object? arguments,
+  ]) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: method,
+      arguments: arguments,
+    );
+    if (data == null) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${method.name}',
+      );
+    }
+    return data;
+  }
+
+  @override
+  Future<RcxStatus> rcxSetPolicy(RcxUserLayer layer) async {
+    return RcxStatus.fromJson(
+      await _invokeRcx(CoreMethod.rcxSetPolicy, layer.toJson()),
+    );
+  }
+
+  @override
+  Future<RcxStatus> rcxStatus() async {
+    return RcxStatus.fromJson(await _invokeRcx(CoreMethod.rcxStatus));
+  }
+
+  @override
+  Future<RcxExplanation> rcxExplain(String group) async {
+    return RcxExplanation.fromJson(
+      await _invokeRcx(CoreMethod.rcxExplain, group),
+    );
+  }
+
+  @override
+  Future<List<RcxJournalEntry>> rcxJournal({
+    int cursor = 0,
+    String? group,
+    int limit = 0,
+  }) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.rcxJournal,
+      arguments: {
+        'cursor': cursor,
+        if (group != null) 'group': group,
+        'limit': limit,
+      },
+    );
+    return [
+      for (final item in data ?? const [])
+        RcxJournalEntry.fromJson(Map<String, Object?>.from(item as Map)),
+    ];
+  }
+
+  @override
+  Future<RcxDecision> rcxAction({
+    required String group,
+    required RcxAction action,
+    String? node,
+    bool here = false,
+  }) async {
+    final data = await _invokeRcx(CoreMethod.rcxAction, {
+      'group': group,
+      'action': action.name,
+      if (node != null) 'node': node,
+      'here': here,
+    });
+    return RcxDecision.fromJson(
+      Map<String, Object?>.from(data['decision'] as Map),
+    );
+  }
+
+  @override
+  Future<bool> rcxHints(Map<String, Object?> hints) async {
+    return await _invokeMethod<bool>(
+          method: CoreMethod.rcxHints,
+          arguments: hints,
+        ) ??
+        false;
+  }
+
+  @override
+  Future<List<RcxProfileInfo>> rcxProfiles() async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.rcxProfiles,
+    );
+    return [
+      for (final item in data ?? const [])
+        RcxProfileInfo.fromJson(Map<String, Object?>.from(item as Map)),
+    ];
+  }
+
+  @override
+  Future<RcxStudioResult> rcxStudio(Map<String, Object?> request) async {
+    return RcxStudioResult.fromJson(
+      await _invokeRcx(CoreMethod.rcxStudio, request),
+    );
+  }
+
   @override
   Future<RouteSnapshot?> watchRoute(bool watch) async {
     final data = await _invokeMethod<Map<String, dynamic>>(
@@ -439,6 +578,31 @@ abstract class CoreHandlerInterface with CoreInterface {
       arguments: watch,
     );
     return data == null ? null : RouteSnapshot.fromJson(data);
+  }
+
+  @override
+  Future<List<ChainReport>> getChainReport() async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.getChainReport,
+    );
+    return data
+            ?.whereType<Map>()
+            .map(
+              (item) => ChainReport.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList() ??
+        [];
+  }
+
+  @override
+  Future<ChainInspection> inspectChain(InspectChainParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.inspectChain,
+      arguments: params.toJson(),
+    );
+    return data != null
+        ? ChainInspection.fromJson(data)
+        : const ChainInspection(issues: [], leaves: [], udp: [], blocked: {});
   }
 
   @override

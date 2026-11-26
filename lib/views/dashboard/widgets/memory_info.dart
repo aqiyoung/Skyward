@@ -243,21 +243,21 @@ class _MemorySummary extends StatelessWidget {
           ),
           maxLines: 1,
         ),
-        if (mobile) const SizedBox(height: 14) else const Spacer(),
+        if (mobile) const SizedBox(height: 8) else const Spacer(),
         _MemoryBar(
           segments: [
             for (final part in parts) (bytes: part.bytes, color: part.color),
           ],
         ),
-        SizedBox(height: compact ? 8 : 10),
+        SizedBox(height: compact ? 4 : 6),
         Wrap(
-          spacing: 16,
-          runSpacing: 4,
+          spacing: 2,
+          runSpacing: 1,
           children: [
             for (final part in parts)
               Row(
                 mainAxisSize: MainAxisSize.min,
-                spacing: 6,
+                spacing: 2,
                 children: [
                   DecoratedBox(
                     decoration: ShapeDecoration(
@@ -266,10 +266,24 @@ class _MemorySummary extends StatelessWidget {
                     ),
                     child: const SizedBox.square(dimension: 8),
                   ),
-                  Text(part.label, style: DashboardText.label(context)),
-                  Text(
-                    '${part.bytes.traffic.value} ${part.bytes.traffic.unit}',
-                    style: DashboardText.value(context, AppTextStyle.footnote),
+                  Flexible(
+                    child: Text(
+                      part.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DashboardText.label(context),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      '${part.bytes.traffic.value} ${part.bytes.traffic.unit}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DashboardText.value(
+                        context,
+                        AppTextStyle.footnote,
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/core.dart';
+import 'package:skyward/models/rcx.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:yaml/yaml.dart';
 
@@ -1705,6 +1706,9 @@ abstract class ProfileOverrides with _$ProfileOverrides {
     @Default({})
     @JsonKey(name: 'proxy-providers')
     Map<String, ProxyProviderOptions> proxyProviders,
+    @Default(RcxUserLayer())
+    @JsonKey(fromJson: RcxUserLayer.safeFromJson)
+    RcxUserLayer routing,
   }) = _ProfileOverrides;
 
   factory ProfileOverrides.fromJson(Map<String, Object?> json) =>

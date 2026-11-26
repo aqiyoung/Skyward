@@ -79,3 +79,9 @@ devtools_options.yaml
 .fvm/
 .fvmrc
 /coverage/lcov.info
+.vercel
+.env.local
+
+# Cloudflare Pages / wrangler local cache
+.wrangler/
+.env*

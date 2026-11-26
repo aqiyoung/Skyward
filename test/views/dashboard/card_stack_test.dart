@@ -9,6 +9,15 @@ import 'package:material_ui/material_ui.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
+/// The stack runs a short spring; a few explicit frames advance it without
+/// waiting for a perfectly idle frame, which a decorative loop can prevent.
+Future<void> settlePile(WidgetTester tester) async {
+  for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 80));
+  }
+  await tester.pump();
+}
+
 void main() {
   late ProviderContainer container;
   final keys = <DashboardWidget, GlobalKey>{};
@@ -91,7 +100,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settlePile(tester);
   }
 
   double topOf(WidgetTester tester, DashboardWidget card) =>
@@ -130,7 +139,7 @@ void main() {
     for (var step = 0; step < 16; step++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    await tester.pumpAndSettle();
+    await settlePile(tester);
   }
 
   Future<void> dragFrom(WidgetTester tester, Offset start, double dy) async {
@@ -190,14 +199,14 @@ void main() {
     );
     // Touch alone opens it. Drive the open animation to its end: a single pump
     // only sees the frame the press lands on, before the controller has ticked.
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     expect(
       find.byWidgetPredicate((w) => w is Opacity && w.opacity > 0),
       findsWidgets,
     );
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
   });
 
   testWidgets('lifting the finger folds the pile back to one card', (
@@ -212,11 +221,11 @@ void main() {
     );
     // Let the pile actually open before lifting, so the fold-back is a real
     // transition from an opened pile and not a no-op on a resting one.
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     await gesture.up();
     // The fold-back is a fraction of a second, not a slow settle.
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
     expect(
@@ -239,7 +248,7 @@ void main() {
     // it, with no card left peeking out.
     await tester.pump(const Duration(milliseconds: 50));
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(peek(tester, DashboardWidget.networkControl), closeTo(0, 1.0));
     expect(topOf(tester, DashboardWidget.memoryInfo), pileTop(tester));
   });
@@ -257,7 +266,7 @@ void main() {
     // Past the hold confirm, but no slide: the card's own tap must win.
     await tester.pump(const Duration(milliseconds: 200));
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(find.byType(MemoryDetailSheet), findsOneWidget);
   });
 
@@ -275,7 +284,7 @@ void main() {
     await gesture.moveBy(const Offset(0, 4));
     await tester.pump();
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(find.byType(MemoryDetailSheet), findsOneWidget);
   });
 
@@ -382,13 +391,13 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.byType(CardStack)),
     );
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     // Contact opens the pile, and the short hold is detected as "switch":
     // the dot rail is the visible proof, with no long press and no slide.
     expect(peek(tester, DashboardWidget.networkControl), greaterThan(10));
     expect(find.byKey(const ValueKey('card-stack-switchable')), findsOneWidget);
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
     expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);
   });
 
@@ -412,7 +421,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settlePile(tester);
 
     expect(scroll.offset, greaterThan(0));
     expect(find.byKey(const ValueKey('card-stack-switchable')), findsNothing);

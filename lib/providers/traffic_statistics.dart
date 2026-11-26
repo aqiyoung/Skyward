@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
 import 'package:skyward/providers/core.dart';
@@ -17,6 +18,20 @@ Duration trafficSampleInterval(Ref ref) => const Duration(seconds: 5);
 /// How long history rows are kept before being pruned.
 @Riverpod(keepAlive: true)
 Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
+
+/// Domains blocked by the ad-block module in the last seven days, read from
+/// the same native history the traffic card uses. The sampler below keeps it
+/// fresh, so the dashboard card never shows a stale count.
+@Riverpod(keepAlive: true)
+Future<List<AdBlockHit>> adBlockHitList(Ref ref) async {
+  ref.watch(trafficSamplerProvider);
+  final now = DateTime.now();
+  final rows = await database.nativeTrafficDao.between(
+    now.subtract(const Duration(days: 7)),
+    now,
+  );
+  return adBlockHits(rows);
+}
 
 @Riverpod(keepAlive: true)
 bool nativeTrafficHistoryEnabled(Ref ref) => system.isAndroid;
@@ -147,6 +162,9 @@ class TrafficSampler extends _$TrafficSampler {
     if (changed && ref.mounted) {
       ref.invalidate(trafficStatisticsProvider);
       ref.invalidate(appUsageProvider);
+      // adBlockHitListProvider reads nativeTrafficDao, which only _importNative
+      // writes. Invalidating it here re-queries seven days of history every
+      // five seconds for no new data -- a visible stutter on the UI isolate.
     }
   }
 
@@ -167,6 +185,7 @@ class TrafficSampler extends _$TrafficSampler {
       if (rows.isNotEmpty && ref.mounted) {
         ref.invalidate(trafficStatisticsProvider);
         ref.invalidate(appUsageProvider);
+        ref.invalidate(adBlockHitListProvider);
       }
     } catch (error) {
       commonPrint.log(
@@ -177,23 +196,44 @@ class TrafficSampler extends _$TrafficSampler {
   }
 }
 
+/// The first instant of the period that contains [date]: the day itself, the
+/// Monday of its calendar week, or the first of its month.
+///
+/// The week is a calendar week, not a rolling seven days from the selected
+/// day — the two drift apart the moment the reader looks at any day but
+/// Monday.
+DateTime startOfTrafficPeriod(TrafficPeriod period, DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  return switch (period) {
+    TrafficPeriod.day => day,
+    TrafficPeriod.week => day.subtract(
+      Duration(days: day.weekday - DateTime.monday),
+    ),
+    TrafficPeriod.month => DateTime(date.year, date.month, 1),
+  };
+}
+
 /// The range a statistics view currently shows: the start of the period.
 @Riverpod(keepAlive: true)
 class TrafficRange extends _$TrafficRange {
   @override
-  DateTime build() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime build() => startOfTrafficPeriod(TrafficPeriod.day, DateTime.now());
 
   void set(DateTime value) => state = value;
 
+  /// Re-anchor on a period change so the reader sees that period's own first
+  /// day rather than the previous period's boundary.
+  void setPeriod(TrafficPeriod period) {
+    state = startOfTrafficPeriod(period, state);
+  }
+
   void shift(TrafficPeriod period, int amount) {
-    state = switch (period) {
+    final next = switch (period) {
       TrafficPeriod.day => state.add(Duration(days: amount)),
       TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
       TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
     };
+    state = startOfTrafficPeriod(period, next);
   }
 }
 
@@ -206,7 +246,7 @@ Future<TrafficStatistics> trafficStatistics(
 ) async {
   // Keep the sampler alive for as long as statistics are being read.
   ref.watch(trafficSamplerProvider);
-  final start0 = ref.watch(trafficRangeProvider);
+  final start0 = startOfTrafficPeriod(period, ref.watch(trafficRangeProvider));
   final (start, end) = switch (period) {
     TrafficPeriod.day => (start0, start0.add(const Duration(days: 1))),
     TrafficPeriod.week => (start0, start0.add(const Duration(days: 7))),

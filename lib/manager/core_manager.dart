@@ -9,6 +9,7 @@ import 'package:skyward/providers/app.dart';
 import 'package:skyward/providers/config.dart';
 import 'package:skyward/providers/core.dart';
 import 'package:skyward/providers/route_state.dart';
+import 'package:skyward/providers/routing.dart';
 import 'package:skyward/providers/state.dart';
 import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:material_ui/material_ui.dart';
@@ -199,6 +200,12 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void onRouteChanged(RouteSnapshot snapshot) {
     ref.read(routeTrackerProvider.notifier).applySnapshot(snapshot);
     super.onRouteChanged(snapshot);
+  }
+
+  @override
+  void onRcxStatus(RcxStatus status) {
+    ref.read(rcxStatusStateProvider.notifier).apply(status);
+    super.onRcxStatus(status);
   }
 }
 

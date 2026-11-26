@@ -117,6 +117,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.routingBoard,
   DashboardWidget.profiles,
   DashboardWidget.proxyGroups,
+  // trafficStats and appUsage are now one switchable UsageCard.
   DashboardWidget.trafficStats,
   DashboardWidget.appUsage,
 ];
@@ -254,8 +255,27 @@ const _retiredDashboardWidgets = {
   'overrideNtpButton',
 };
 
-/// The current outbound card cannot be removed: a list without it predates it.
+/// The speed-test card is off-home while it is being polished, and app usage
+/// is now a tab of the traffic-stats card rather than a card of its own. Both
+/// are dropped here so saved boards cannot bring them back.
 List<DashboardWidget> dashboardWidgetsFromJson(
+  List<dynamic>? dashboardWidgets,
+) {
+  final parsed = _dashboardWidgetsFromJson(dashboardWidgets);
+  // Canonicalise the legacy second stats card before de-duplicating: checking
+  // for trafficStats first made the old de-dup depend on save order, so a board
+  // that listed appUsage first kept two identical cards.
+  final canonical = parsed
+      .where((c) => c != DashboardWidget.speedTest)
+      .map(
+        (c) => c == DashboardWidget.appUsage ? DashboardWidget.trafficStats : c,
+      );
+  final seen = <DashboardWidget>{};
+  return canonical.where(seen.add).toList();
+}
+
+/// The current outbound card cannot be removed: a list without it predates it.
+List<DashboardWidget> _dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
   if (dashboardWidgets == null) {
@@ -320,8 +340,18 @@ List<List<DashboardWidget>>? dashboardStacksFromJson(
     }
     final pile = <DashboardWidget>[];
     for (final name in raw) {
-      final card = _legacyDashboardWidgets[name] ?? byName[name];
-      if (card == null || !seen.add(card)) {
+      final parsed = _legacyDashboardWidgets[name] ?? byName[name];
+      // The speed-test card is being polished off-home; drop saved piles.
+      if (parsed == null || parsed == DashboardWidget.speedTest) {
+        continue;
+      }
+      // appUsage is a tab inside the traffic-stats card now. Canonicalising it
+      // to trafficStats makes de-duplication independent of save order -- the
+      // old check only caught appUsage that came after trafficStats.
+      final card = parsed == DashboardWidget.appUsage
+          ? DashboardWidget.trafficStats
+          : parsed;
+      if (!seen.add(card)) {
         continue;
       }
       pile.add(card);
@@ -661,6 +691,9 @@ abstract class ThemeProps with _$ThemeProps {
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,
     @Default(false) bool pureBlack,
+    /// Keep the warm, seed-tinted light surfaces. Off means a clean white
+    /// light theme, matching the neutral look of the cards.
+    @Default(false) bool warmLight,
     @Default(false) bool sidebarBlur,
     @Default(LiquidGlassMode.none)
     @JsonKey(readValue: _readLiquidGlass)
@@ -703,6 +736,9 @@ abstract class Config with _$Config {
     WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default([]) List<String> excludeSSIDs,
+
+    /// The user's own routing profiles, shared by every subscription.
+    @Default({}) Map<String, RcxUserProfile> rcxProfiles,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) =>

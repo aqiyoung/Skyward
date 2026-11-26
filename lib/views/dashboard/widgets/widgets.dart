@@ -1,3 +1,4 @@
+export 'ad_block_hits_sheet.dart';
 export 'card_stack.dart';
 export 'connection_stats.dart';
 export 'connections_table.dart';
@@ -14,5 +15,7 @@ export 'routing_board.dart';
 export 'service_status.dart';
 export 'traffic.dart';
 export 'traffic_usage.dart';
+export 'usage_card.dart';
 export 'app_usage_card.dart';
 export 'app_usage_sheet.dart';
+export 'speed_test.dart';
