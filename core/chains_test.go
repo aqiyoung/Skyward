@@ -199,8 +199,6 @@ func TestMaterializeChainsHealsARenamedTargetGroup(t *testing.T) {
   - {name: hk1, type: ss, server: 10.0.1.1, port: 8388, cipher: aes-128-gcm, password: p, udp: true}
 proxy-groups:
   - {name: "🚀 main", type: select, proxies: [entry, hk1]}
-rules:
-  - MATCH,"🚀 main"
 `
 	target := "main"
 	spec := chainSpec("c", "entry", "hk1")
