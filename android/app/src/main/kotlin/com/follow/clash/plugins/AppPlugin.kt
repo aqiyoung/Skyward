@@ -252,6 +252,11 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 } else {
                     replyUpdate(result) {
                         if (call.method == "verifyUpdateApk") {
+                            // The verifier still needs the exact version and hash;
+                            // the install path below does not.
+                            if (version.isNullOrEmpty() || sha256.isNullOrEmpty()) {
+                                throw InvalidUpdateApkException("APK version and SHA-256 are required for verification")
+                            }
                             UpdateInstaller.verify(GlobalState.application, path, version, sha256)
                             null
                         } else {
