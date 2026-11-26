@@ -94,7 +94,7 @@ class PageLargeTitle extends StatelessWidget {
                               targetBuilder: (open) => IconButton(
                                 tooltip: UiLocalizations.of(context).more,
                                 onPressed: open,
-                                icon: const GlyphIcon(AppGlyphs.moreCircle),
+                                icon: const GlyphIcon(AppGlyphs.more),
                               ),
                               popupBuilder: (_) =>
                                   CommonPopupMenu(items: menuItems),

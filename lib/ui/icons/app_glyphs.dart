@@ -146,14 +146,14 @@ abstract final class AppGlyphs {
   /// Two opposed chevrons: one control for expanding or folding a list.
   static const unfold = Glyph([
     GlyphPolyline([
-      GlyphVertex(6, 10.5),
-      GlyphVertex(12, 5, 0.4),
-      GlyphVertex(18, 10.5),
+      GlyphVertex(6, 10),
+      GlyphVertex(12, 4, 0.4),
+      GlyphVertex(18, 10),
     ], role: GlyphRole.line),
     GlyphPolyline([
-      GlyphVertex(6, 13.5),
-      GlyphVertex(12, 19, 0.4),
-      GlyphVertex(18, 13.5),
+      GlyphVertex(6, 14),
+      GlyphVertex(12, 20, 0.4),
+      GlyphVertex(18, 14),
     ], role: GlyphRole.line),
   ]);
 
