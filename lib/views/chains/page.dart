@@ -55,7 +55,11 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
       appBar: AppBar(
         title: Text(zh ? '链路' : 'Chains'),
         actions: [
-          IconButton(icon: const GlyphIcon(AppGlyphs.add), onPressed: create),
+          IconButton(
+            tooltip: zh ? '创建链路' : 'Create chain',
+            icon: const GlyphIcon(AppGlyphs.add),
+            onPressed: create,
+          ),
         ],
       ),
       body: chains.isEmpty
