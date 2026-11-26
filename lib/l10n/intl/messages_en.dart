@@ -411,12 +411,14 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m163(label) => "${label} must be a URL";
 
-  static String m164(month, day) => "Week of ${month}/${day}";
+  static String m164(week, year) => "Week ${week} of ${year}";
 
-  static String m165(count) =>
+  static String m165(month, day) => "Week of ${month}/${day}";
+
+  static String m166(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
-  static String m166(count) => "${Intl.plural(count, other: '${count}y ago')}";
+  static String m167(count) => "${Intl.plural(count, other: '${count}y ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2942,14 +2944,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "No STUN host could be resolved; the network is unavailable",
     ),
     "week": MessageLookupByLibrary.simpleMessage("Week"),
-    "weeklyRange": m164,
+    "weekOfYear": m164,
+    "weeklyRange": m165,
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("Write to system"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Write to system also sets the system clock; Android ignores it.",
     ),
-    "yearsAgo": m165,
-    "yearsAgoShort": m166,
+    "yearsAgo": m166,
+    "yearsAgoShort": m167,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

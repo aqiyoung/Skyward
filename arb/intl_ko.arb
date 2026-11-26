@@ -1108,6 +1108,7 @@
   "trafficRanking": "트래픽 순위",
   "hitsUnit": "히트",
   "weeklyRange": "{month}/{day} 주간",
+  "weekOfYear": "{year}년 {week}주차",
   "connectionCount": "{count}개 연결",
   "proxyShare": "프록시 {value} · {percent}",
   "directShare": "직접 {value} · {percent}",

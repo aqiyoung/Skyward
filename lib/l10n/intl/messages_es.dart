@@ -422,12 +422,14 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m163(label) => "${label} debe ser una URL";
 
-  static String m164(month, day) => "Semana del ${month}/${day}";
+  static String m164(week, year) => "Semana ${week} de ${year}";
 
-  static String m165(count) =>
-      "${Intl.plural(count, one: 'hace 1 año', other: 'hace ${count} años')}";
+  static String m165(month, day) => "Semana del ${month}/${day}";
 
   static String m166(count) =>
+      "${Intl.plural(count, one: 'hace 1 año', other: 'hace ${count} años')}";
+
+  static String m167(count) =>
       "${Intl.plural(count, other: 'hace ${count} a')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -3192,7 +3194,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "No se pudo resolver el host STUN: red no disponible",
     ),
     "week": MessageLookupByLibrary.simpleMessage("Semana"),
-    "weeklyRange": m164,
+    "weekOfYear": m164,
+    "weeklyRange": m165,
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Modo lista blanca"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage(
       "Escribir en el sistema",
@@ -3200,8 +3203,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "Escribir en el sistema también ajusta el reloj del sistema; Android lo ignora.",
     ),
-    "yearsAgo": m165,
-    "yearsAgoShort": m166,
+    "yearsAgo": m166,
+    "yearsAgoShort": m167,
     "yes": MessageLookupByLibrary.simpleMessage("Sí"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Chino simplificado"),
   };

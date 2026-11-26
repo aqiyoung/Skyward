@@ -5,6 +5,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -166,7 +167,10 @@ class _DateStrip extends ConsumerWidget {
     return switch (period) {
       TrafficPeriod.day =>
         '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
-      TrafficPeriod.week => l.weeklyRange(start.month, start.day),
+      TrafficPeriod.week => l.weekOfYear(
+        isoWeekNumber(start),
+        isoWeekYear(start),
+      ),
       TrafficPeriod.month => '${start.year}/${start.month}',
     };
   }

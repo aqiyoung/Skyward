@@ -9257,6 +9257,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Week {week} of {year}`
+  String weekOfYear(Object week, Object year) {
+    return Intl.message(
+      'Week $week of $year',
+      name: 'weekOfYear',
+      desc: '',
+      args: [week, year],
+    );
+  }
+
   /// `{count} connections`
   String connectionCount(Object count) {
     return Intl.message(

@@ -1108,6 +1108,7 @@
   "trafficRanking": "トラフィックランキング",
   "hitsUnit": "ヒット",
   "weeklyRange": "{month}/{day} の週",
+  "weekOfYear": "{year}年 第{week}週",
   "connectionCount": "{count} 件の接続",
   "proxyShare": "プロキシ {value} · {percent}",
   "directShare": "直結 {value} · {percent}",

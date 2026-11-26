@@ -213,6 +213,30 @@ DateTime startOfTrafficPeriod(TrafficPeriod period, DateTime date) {
   };
 }
 
+/// The ISO-8601 week number (1..53) of [date] within its week-numbering year.
+///
+/// ISO weeks start on Monday and week 1 is the one holding the year's first
+/// Thursday, so a day near New Year can belong to the week-numbering year
+/// before or after its calendar year. Callers pair this with [isoWeekYear] so
+/// the label never shows a week number under the wrong year.
+int isoWeekNumber(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  // Three days forward lands on Thursday, which decides the ISO year.
+  final thursday = day.add(Duration(days: DateTime.thursday - day.weekday));
+  final jan4 = DateTime(thursday.year, 1, 4);
+  final firstThursday = jan4.add(
+    Duration(days: DateTime.thursday - jan4.weekday),
+  );
+  return ((thursday.difference(firstThursday).inDays) ~/ 7) + 1;
+}
+
+/// The ISO-8601 week-numbering year for the week containing [date].
+int isoWeekYear(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  final thursday = day.add(Duration(days: DateTime.thursday - day.weekday));
+  return thursday.year;
+}
+
 /// The range a statistics view currently shows: the start of the period.
 @Riverpod(keepAlive: true)
 class TrafficRange extends _$TrafficRange {

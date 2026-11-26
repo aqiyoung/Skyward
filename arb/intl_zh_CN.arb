@@ -1108,6 +1108,7 @@
   "trafficRanking": "流量排行",
   "hitsUnit": "次命中",
   "weeklyRange": "{month}/{day} 当周",
+  "weekOfYear": "{year}年 第{week}周",
   "connectionCount": "{count} 条连接",
   "proxyShare": "代理 {value} · {percent}",
   "directShare": "直连 {value} · {percent}",

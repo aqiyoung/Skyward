@@ -1108,6 +1108,7 @@
   "trafficRanking": "Рейтинг трафика",
   "hitsUnit": "срабатываний",
   "weeklyRange": "Неделя с {month}/{day}",
+  "weekOfYear": "{year} год, неделя {week}",
   "connectionCount": "{count} подключений",
   "proxyShare": "Прокси {value} · {percent}",
   "directShare": "Напрямую {value} · {percent}",

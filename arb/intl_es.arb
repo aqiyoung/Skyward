@@ -1108,6 +1108,7 @@
   "trafficRanking": "Clasificación de tráfico",
   "hitsUnit": "aciertos",
   "weeklyRange": "Semana del {month}/{day}",
+  "weekOfYear": "Semana {week} de {year}",
   "connectionCount": "{count} conexiones",
   "proxyShare": "Proxy {value} · {percent}",
   "directShare": "Directo {value} · {percent}",

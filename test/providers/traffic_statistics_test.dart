@@ -16,6 +16,21 @@ import 'package:mocktail/mocktail.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('ISO week number and week-numbering year handle the year boundary', () {
+    // 2021-01-01 is a Friday in week 53 of 2020.
+    expect(isoWeekNumber(DateTime(2021, 1, 1)), 53);
+    expect(isoWeekYear(DateTime(2021, 1, 1)), 2020);
+    // 2021-01-04 is the Monday starting week 1 of 2021.
+    expect(isoWeekNumber(DateTime(2021, 1, 4)), 1);
+    expect(isoWeekYear(DateTime(2021, 1, 4)), 2021);
+    // 2019-12-30 is the Monday starting week 1 of 2020.
+    expect(isoWeekNumber(DateTime(2019, 12, 30)), 1);
+    expect(isoWeekYear(DateTime(2019, 12, 30)), 2020);
+    // A mid-year date keeps its calendar year.
+    expect(isoWeekNumber(DateTime(2026, 11, 23)), 48);
+    expect(isoWeekYear(DateTime(2026, 11, 23)), 2026);
+  });
+
   test('a period cannot advance past the period containing today', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
