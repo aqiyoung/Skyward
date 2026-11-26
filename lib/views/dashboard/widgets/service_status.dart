@@ -248,40 +248,42 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
     return DashboardCard(
       semanticLabel: title,
       onTap: mobile ? _openSheet : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
-        children: [
-          DashboardCardHeader(
-            glyph: AppGlyphs.verified,
-            title: title,
-            chevron: mobile,
-            trailing: [
-              ?verdict,
-              if (!mobile)
-                Transform.translate(
-                  offset: const Offset(8, 0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _CheckAllButton(
-                        loading: shown.any(state.isLoading),
-                        onPressed: () => _services.refresh(shown),
-                      ),
-                      DashboardIconButton(
-                        glyph: AppGlyphs.chevronForward,
-                        tooltip: title,
-                        onPressed: _openSheet,
-                      ),
-                    ],
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
+          children: [
+            DashboardCardHeader(
+              glyph: AppGlyphs.verified,
+              title: title,
+              chevron: mobile,
+              trailing: [
+                ?verdict,
+                if (!mobile)
+                  Transform.translate(
+                    offset: const Offset(8, 0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _CheckAllButton(
+                          loading: shown.any(state.isLoading),
+                          onPressed: () => _services.refresh(shown),
+                        ),
+                        DashboardIconButton(
+                          glyph: AppGlyphs.chevronForward,
+                          tooltip: title,
+                          onPressed: _openSheet,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-            ],
-          ),
-          if (mobile) const SizedBox(height: 12) else const Spacer(),
-          grid,
-          if (footer != null) ...[const SizedBox(height: 10), footer],
-        ],
+              ],
+            ),
+            if (mobile) const SizedBox(height: 12) else const Spacer(),
+            grid,
+            if (footer != null) ...[const SizedBox(height: 10), footer],
+          ],
+        ),
       ),
     );
   }
