@@ -79,7 +79,22 @@ class PageLargeTitle extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  for (final data in actions) AppBarActionButton(data: data),
+                  if (actions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsetsDirectional.only(start: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: ShapeDecoration(
+                        color: context.raisedSurfaceLevel.colorOf(colorScheme),
+                        shape: AppShape.full,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final data in actions)
+                            AppBarActionButton(data: data),
+                        ],
+                      ),
+                    ),
                   if (menuItems.isNotEmpty)
                     CommonPopupBox(
                       targetBuilder: (open) => IconButton(

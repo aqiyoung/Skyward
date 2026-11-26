@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/core/core.dart';
 import 'package:skyward/models/models.dart';
+import 'package:skyward/providers/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _chainsKey = 'link-chains';
@@ -46,17 +47,28 @@ class _ChainsState extends Notifier<List<SavedChain>> {
   }
 
   Future<void> remove(int id) async {
-    state = [for (final chain in state) if (chain.id != id) chain];
+    state = [
+      for (final chain in state)
+        if (chain.id != id) chain,
+    ];
     await _commit();
   }
 
   Future<void> _commit() async {
     await storeSavedChains(state);
     // Make the enabled chains take effect on the next config apply.
-    final enabled = [for (final chain in state) if (chain.enabled) chain];
+    final enabled = [
+      for (final chain in state)
+        if (chain.enabled) chain,
+    ];
     setActiveChains(
       enabled.isEmpty ? null : enabled.map((e) => e.toSpec()).toList(),
     );
+    // A toggle should show up in the proxy group now, not after the reader
+    // discovers they must apply the profile again by hand.
+    ref
+        .read(setupActionProvider.notifier)
+        .applyProfileDebounce(silence: true, force: true);
   }
 }
 
