@@ -408,6 +408,8 @@ Widget scriptedGroupsBody(
 }) {
   final l = context.appLocalizations;
   final status = ref.watch(rcxStatusStateProvider);
+  final groups = ref.watch(groupsProvider);
+  final icons = {for (final group in groups) group.name: group.icon};
   return _HubList(
     id: 'scripted-groups',
     embedded: embedded,
@@ -437,7 +439,7 @@ Widget scriptedGroupsBody(
             ),
           ],
         ),
-        _activeGroups(context, status),
+        _activeGroups(context, status, icons),
       ],
     ],
   );
@@ -463,14 +465,40 @@ Glyph _groupGlyph(String name) =>
 
 /// A group without a known service logo gets the monochrome glyph, never the
 /// app's own mark: that would make every unknown group look identical.
-String _groupIconOf(String name) {
+const _groupIconKeywords = [
+  ('claude', 'assets/images/services/claude.svg'),
+  ('gemini', 'assets/images/services/gemini.svg'),
+  ('copilot', 'assets/images/groups/github.png'),
+  ('chatgpt', 'assets/images/groups/chatgpt.png'),
+  ('openai', 'assets/images/services/openai.svg'),
+  ('adblock', 'assets/images/groups/adblock.png'),
+  ('apple', 'assets/images/groups/apple.png'),
+  ('crypto', 'assets/images/groups/crypto.png'),
+  ('disney', 'assets/images/groups/disney.png'),
+  ('ai工具', 'assets/images/groups/spark.png'),
+  ('agent', 'assets/images/services/openai.svg'),
+  ('cursor', 'assets/images/groups/spark.png'),
+];
+
+String _groupIconOf(String name, String icon) {
+  // The script/profile's own icon is authoritative: skyward.js already gives
+  // every service group its branded logo URL.
+  if (icon.isNotEmpty) return icon;
+  final lower = name.toLowerCase();
+  for (final (keyword, asset) in _groupIconKeywords) {
+    if (lower.contains(keyword)) return asset;
+  }
   final src = GroupIconSource.of(name: name, icon: '');
   return src == GroupIconSource.logo ? '' : src;
 }
 
 /// Every group the app selects for: a connected strategy or an engine
 /// binding. One group can carry either, never both in this list.
-Widget _activeGroups(BuildContext context, RcxStatus status) {
+Widget _activeGroups(
+  BuildContext context,
+  RcxStatus status,
+  Map<String, String> icons,
+) {
   final l = context.appLocalizations;
   final routeNames = {
     for (final route in status.scenario?.routes ?? const <RcxRouteStatus>[])
@@ -492,7 +520,7 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
       return DecorationListItem(
         invalid: fault != null,
         leading: CommonTargetIcon(
-          src: _groupIconOf(name),
+          src: _groupIconOf(name, icons[name] ?? ''),
           fallback: GlyphIcon(_groupGlyph(name)),
         ),
         title: EmojiText(name),
@@ -513,7 +541,7 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
     return DecorationListItem(
       invalid: _isFault(group.problem),
       leading: CommonTargetIcon(
-        src: _groupIconOf(name),
+        src: _groupIconOf(name, icons[name] ?? ''),
         fallback: GlyphIcon(_groupGlyph(name)),
       ),
       title: EmojiText(name),
