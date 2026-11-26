@@ -75,14 +75,11 @@ void main() {
       dashboardWidgets: cards,
       dashboardStacks: saved,
     );
-    expect(
-      automatic.stacks,
-      const [
-        [DashboardWidget.currentOutbound],
-        [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
-        [DashboardWidget.memoryInfo],
-      ],
-    );
+    expect(automatic.stacks, const [
+      [DashboardWidget.currentOutbound],
+      [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
+      [DashboardWidget.memoryInfo],
+    ]);
     expect(custom.stacks, saved);
   });
 
@@ -169,14 +166,14 @@ void main() {
 
     final current = rectOf(tester, CurrentOutboundCard);
     final upload = rectOf(tester, SpeedCard);
-    final mode = rectOf(tester, OutboundModeBar);
+    final mode = rectOf(tester, NetworkControlCard);
     final systemProxy = tester.getRect(find.byType(NetworkTakeoverTile).first);
     final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
     final intranet = rectOf(tester, IntranetIpCard);
     final profile = rectOf(tester, ProfilesCard);
     final service = rectOf(tester, ServiceStatusCard);
     final routing = rectOf(tester, RoutingBoardCard);
-    final stats = rectOf(tester, ConnectionStatsCard);
+    final stats = rectOf(tester, UsageCard);
     final groups = rectOf(tester, ProxyGroupsSummaryCard);
 
     expect(current.height, 208);
@@ -279,7 +276,7 @@ void main() {
     // The routing board's row leaves this window too short for the tables.
     expect(find.byType(RoutingBoardCard), findsOneWidget);
     expect(find.byType(ConnectionsTableCard), findsNothing);
-    expect(find.byType(ConnectionStatsCard), findsOneWidget);
+    expect(find.byType(UsageCard), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -291,7 +288,7 @@ void main() {
     await pumpDashboard(tester, const Size(1220, 720));
 
     expect(rectOf(tester, CurrentOutboundCard).height, 176);
-    expect(rectOf(tester, OutboundModeBar).height, 56);
+    expect(rectOf(tester, NetworkControlCard).height, 56);
     expect(rectOf(tester, IntranetIpCard).height, 152);
     expect(rectOf(tester, RoutingBoardCard).height, 290);
     expect(scrollExtentOf(tester), 226);
@@ -306,7 +303,7 @@ void main() {
     await pumpDashboard(tester, const Size(1000, 1000));
 
     final current = rectOf(tester, CurrentOutboundCard);
-    final stats = rectOf(tester, ConnectionStatsCard);
+    final stats = rectOf(tester, UsageCard);
     final groups = rectOf(tester, ProxyGroupsSummaryCard);
     expect(find.byType(ConnectionsTableCard), findsNothing);
     expect(find.byType(ProxyGroupsCard), findsNothing);
@@ -321,10 +318,10 @@ void main() {
 
     await pumpDashboard(tester, const Size(1220, 700));
     expect(find.byType(ConnectionsTableCard), findsNothing);
-    expect(find.byType(ConnectionStatsCard), findsOneWidget);
+    expect(find.byType(UsageCard), findsOneWidget);
 
     await pumpDashboard(tester, const Size(1000, 560));
-    expect(rectOf(tester, ConnectionStatsCard).height, 112);
+    expect(rectOf(tester, UsageCard).height, 112);
     expect(scrollExtentOf(tester), greaterThan(0));
     expect(find.byType(Scrollable), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -344,7 +341,7 @@ void main() {
         connectionsTableMinHeight(DashboardDensity.compact, 1),
       ),
     );
-    expect(find.byType(ConnectionStatsCard), findsNothing);
+    expect(find.byType(UsageCard), findsNothing);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -373,12 +370,12 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
     expect(find.byType(NetworkControlCard), findsOneWidget);
-    expect(find.byType(OutboundModeBar), findsNothing);
+    expect(find.byType(NetworkControlCard), findsNothing);
 
     tester.view.physicalSize = const Size(800, 900);
     await tester.pump();
     expect(tester.takeException(), isNull);
-    expect(rectOf(tester, OutboundModeBar).width, 800 - 16 - 24);
+    expect(rectOf(tester, NetworkControlCard).width, 800 - 16 - 24);
 
     tester.view.physicalSize = const Size(1440, 1200);
     await tester.pump();
@@ -469,7 +466,7 @@ void main() {
 
     final current = rectOf(tester, CurrentOutboundCard);
     final upload = rectOf(tester, SpeedCard);
-    final mode = rectOf(tester, OutboundModeBar);
+    final mode = rectOf(tester, NetworkControlCard);
     final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
     final intranet = rectOf(tester, IntranetIpCard);
     final profile = rectOf(tester, ProfilesCard);
@@ -492,7 +489,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    final stats = rectOf(tester, ConnectionStatsCard);
+    final stats = rectOf(tester, UsageCard);
     final groups = rectOf(tester, ProxyGroupsSummaryCard);
     expect(stats.width, closeTo(upload.width, 0.01));
     expect(groups.top, stats.top);
@@ -522,7 +519,7 @@ void main() {
 
     await pumpDashboard(tester, const Size(760, 1000), textScale: 1.2);
     expect(find.byType(ConnectionsTableCard), findsNothing);
-    expect(find.byType(OutboundModeBar), findsNothing);
+    expect(find.byType(NetworkControlCard), findsNothing);
     expect(rectOf(tester, CurrentOutboundCard).width, 560);
 
     await teardown(tester);
@@ -536,7 +533,7 @@ void main() {
     expect(card.width, 560);
     expect(card.center.dx, closeTo(310, 0.01));
     expect(find.byType(NetworkControlCard), findsOneWidget);
-    expect(find.byType(OutboundModeBar), findsNothing);
+    expect(find.byType(NetworkControlCard), findsNothing);
     expect(find.byType(NetworkOverviewCard), findsOneWidget);
 
     await teardown(tester);
@@ -562,7 +559,7 @@ void main() {
     for (final size in const [Size(1280, 800), Size(915, 412)]) {
       await pumpDashboard(tester, size, platform: SupportPlatform.Android);
 
-      final mode = rectOf(tester, OutboundModeBar);
+      final mode = rectOf(tester, NetworkControlCard);
       final vpn = rectOf(tester, VpnTile);
       expect(vpn.width, closeTo(mode.width, 0.01));
       expect(vpn.height, mode.height);
