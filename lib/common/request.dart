@@ -190,9 +190,26 @@ class Request {
         logLevel: LogLevel.warning,
       );
     }
-    // The list could not be read. Reuse the last list we cached while the API
-    // was reachable so a preview can still be offered a newer beta or stable by
-    // build number, instead of being told there is nothing.
+    // The API is rate limited. The Atom feed is served outside the API and
+    // still names every release, so try it before falling back to a cache
+    // that may predate the newest build.
+    try {
+      final feed = await releasesFromFeed();
+      if (feed.isNotEmpty) {
+        return newestOfferableRelease(
+          _platformCandidates(feed, channel),
+          installedVersion: globalState.packageInfo.displayVersion,
+        );
+      }
+    } catch (error) {
+      commonPrint.log(
+        'releases feed failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+    // The list and the feed could not be read. Reuse the last list we cached
+    // while the API was reachable so a preview can still be offered a newer
+    // beta or stable by build number, instead of being told there is nothing.
     final cached = await _readCachedReleases();
     if (cached.isNotEmpty) {
       final offer = newestOfferableRelease(
@@ -223,6 +240,72 @@ class Request {
       installedVersion: version,
     );
     return hasUpdate ? release : null;
+  }
+
+  /// Releases as an Atom feed. GitHub serves it outside the API, so it keeps
+  /// working after the anonymous hourly quota is spent. Each entry carries
+  /// the tag, the display name and the notes; asset URLs follow the tag's
+  /// well-known naming, which is all the updater needs.
+  Future<List<Map<String, dynamic>>> releasesFromFeed() async {
+    final response = await getUpdateTextResponseForUrl(
+      'https://github.com/$repository/releases.atom',
+    );
+    final xml = response.data ?? '';
+    final entries = <Map<String, dynamic>>[];
+    for (final match in RegExp(
+      r'<entry>(.*?)</entry>',
+      dotAll: true,
+    ).allMatches(xml)) {
+      final entry = match.group(1)!;
+      final link = RegExp(r'releases/tag/([^"<]+)').firstMatch(entry)?.group(1);
+      final title = RegExp(
+        r'<title>(.*?)</title>',
+        dotAll: true,
+      ).firstMatch(entry)?.group(1)?.trim();
+      if (link == null || title == null) continue;
+      final tag = link.replaceAll('&amp;', '&');
+      final name = title.replaceAll('&amp;', '&');
+      final content =
+          RegExp(
+            r'<content[^>]*>(.*?)</content>',
+            dotAll: true,
+          ).firstMatch(entry)?.group(1) ??
+          '';
+      final notes = content
+          .replaceAll('</li>', '\n')
+          .replaceAll(RegExp(r'<[^>]+>'), '')
+          .replaceAll('&lt;', '<')
+          .replaceAll('&gt;', '>')
+          .replaceAll('&quot;', '"')
+          .replaceAll('&#39;', "'")
+          .replaceAll('&amp;', '&')
+          .replaceAll(RegExp(r'^\s*-\s*', multiLine: true), '- ')
+          .replaceAllMapped(
+            RegExp(r'^\s*(?!-)(\S.*)$', multiLine: true),
+            (m) => '- ${m.group(1)}',
+          );
+      final version =
+          RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0) ??
+          '1.0.0.${RegExp(r'\d+').firstMatch(tag)?.group(0) ?? '0'}';
+      final apk = 'Skyward-$version-android.apk';
+      final base = 'https://github.com/$repository/releases/download/$tag';
+      entries.add({
+        'tag_name': tag,
+        'name': name,
+        'body': notes,
+        'html_url': 'https://github.com/$repository/releases/tag/$tag',
+        'prerelease':
+            tag.startsWith('preview-') ||
+            tag.startsWith('dev-') ||
+            name.contains('预览版'),
+        'draft': false,
+        'assets': [
+          {'name': apk, 'browser_download_url': '$base/$apk'},
+          {'name': 'SHA256SUMS', 'browser_download_url': '$base/SHA256SUMS'},
+        ],
+      });
+    }
+    return entries;
   }
 
   /// The release page redirect still answers once the hourly API quota is spent.
