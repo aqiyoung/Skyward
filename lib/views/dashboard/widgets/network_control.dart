@@ -82,7 +82,7 @@ class NetworkControlCard extends ConsumerWidget {
           );
           // A short desktop row cannot fit the folded-in intranet section;
           // let the card scroll instead of overflowing its neighbours.
-          if (constraints.maxHeight.isFinite && constraints.maxHeight < 320) {
+          if (constraints.maxHeight.isFinite) {
             return SingleChildScrollView(child: column);
           }
           return column;
