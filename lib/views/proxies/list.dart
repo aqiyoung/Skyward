@@ -52,6 +52,10 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   }
 
   Future<void> _loadChainReports() async {
+    // A page can be built before the Core is reachable (tests, startup, a
+    // restart). Asking then only starts a reconnect timer that outlives the
+    // widget; the reports are loaded on the next build once it is connected.
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) return;
     final reports = await ref.read(coreHandlerProvider).getChainReport();
     if (mounted) setState(() => _chainReports = reports);
   }
@@ -1093,7 +1097,7 @@ class _ChainChip extends ConsumerWidget {
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
-            borderRadius: AppRadius.all(16),
+            customBorder: AppShape.all(16),
             onTap: () => selectGroupProxy(
               ref,
               groupName: groupName,

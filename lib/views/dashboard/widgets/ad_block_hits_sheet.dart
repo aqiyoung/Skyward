@@ -2,7 +2,6 @@ import 'package:skyward/common/common.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

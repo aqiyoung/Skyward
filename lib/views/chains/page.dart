@@ -7,7 +7,6 @@ import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:material_ui/material_ui.dart';
 
 import 'editor.dart';
@@ -56,10 +55,7 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
       appBar: AppBar(
         title: Text(zh ? '链路' : 'Chains'),
         actions: [
-          IconButton(
-            icon: const GlyphIcon(AppGlyphs.add),
-            onPressed: create,
-          ),
+          IconButton(icon: const GlyphIcon(AppGlyphs.add), onPressed: create),
         ],
       ),
       body: chains.isEmpty
@@ -71,7 +67,10 @@ class _ChainsViewState extends ConsumerState<ChainsView> {
                   padding: const EdgeInsets.only(bottom: 8, left: 4),
                   child: Text(
                     zh ? '配置 当前订阅' : 'Profile current',
-                    style: AppTextStyle.subheadline.of(context, emphasized: true),
+                    style: AppTextStyle.subheadline.of(
+                      context,
+                      emphasized: true,
+                    ),
                   ),
                 ),
                 for (final chain in chains)
@@ -148,7 +147,7 @@ class _Empty extends StatelessWidget {
               zh
                   ? '连接一台服务器，再通过另一台访问互联网 —— 网站只能看到第二台。'
                   : 'Connect to one server, then reach the internet through '
-                      'another — the website only sees the second one.',
+                        'another — the website only sees the second one.',
               textAlign: TextAlign.center,
               style: AppTextStyle.body.of(context),
             ),
@@ -203,8 +202,7 @@ class _Node extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(label, style: AppTextStyle.footnote.of(context)),
-        if (sub.isNotEmpty)
-          Text(sub, style: AppTextStyle.caption2.of(context)),
+        if (sub.isNotEmpty) Text(sub, style: AppTextStyle.caption2.of(context)),
       ],
     );
   }
@@ -316,10 +314,10 @@ class _ChainCard extends ConsumerWidget {
     final subtitle = !chain.enabled
         ? (zh ? '已关闭' : 'Off')
         : broken
-            ? (zh ? '无法工作 · $route' : 'Not working · $route')
-            : warned
-                ? (zh ? '需注意 · $route' : 'Warning · $route')
-                : route;
+        ? (zh ? '无法工作 · $route' : 'Not working · $route')
+        : warned
+        ? (zh ? '需注意 · $route' : 'Warning · $route')
+        : route;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: generateSection(

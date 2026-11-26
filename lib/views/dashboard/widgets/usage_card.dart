@@ -9,7 +9,6 @@ import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/views/dashboard/widgets/ad_block_hits_sheet.dart';
 import 'package:skyward/views/dashboard/widgets/app_usage_sheet.dart';
 import 'package:skyward/views/traffic_statistics/traffic_statistics.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -79,8 +78,8 @@ class _UsageCardState extends ConsumerState<UsageCard> {
         return blocked == null
             ? (zh ? '近 7 天' : 'Last 7 days')
             : (zh
-                ? '近 7 天 · ${blocked.length} 个域名'
-                : 'Last 7 days · ${blocked.length} domains');
+                  ? '近 7 天 · ${blocked.length} 个域名'
+                  : 'Last 7 days · ${blocked.length} domains');
       }(),
     };
     return DashboardCard(
@@ -129,10 +128,7 @@ class _UsageCardState extends ConsumerState<UsageCard> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  caption,
-                  style: DashboardText.label(context),
-                ),
+                Text(caption, style: DashboardText.label(context)),
               ],
             ),
           ),

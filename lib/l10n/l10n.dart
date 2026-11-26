@@ -9583,7 +9583,7 @@ class AppLocalizations {
   }
 
   /// `Pinned: {node}`
-  String rcxPinned(Object node) {
+  String rcxPinned(String node) {
     return Intl.message(
       'Pinned: $node',
       name: 'rcxPinned',
@@ -9658,7 +9658,7 @@ class AppLocalizations {
   }
 
   /// `{count} of {total} match`
-  String rcxServersMatch(Object count, Object total) {
+  String rcxServersMatch(int count, int total) {
     return Intl.message(
       '$count of $total match',
       name: 'rcxServersMatch',
@@ -9723,7 +9723,7 @@ class AppLocalizations {
   }
 
   /// `Checks today: {requests} · {used} of {cap}`
-  String rcxEnergyToday(Object requests, Object used, Object cap) {
+  String rcxEnergyToday(int requests, String used, String cap) {
     return Intl.message(
       'Checks today: $requests · $used of $cap',
       name: 'rcxEnergyToday',
@@ -9798,7 +9798,7 @@ class AppLocalizations {
   }
 
   /// `Switched to the pinned server {node}`
-  String rcxReasonSwitchPinned(Object node) {
+  String rcxReasonSwitchPinned(String node) {
     return Intl.message(
       'Switched to the pinned server $node',
       name: 'rcxReasonSwitchPinned',
@@ -9818,7 +9818,7 @@ class AppLocalizations {
   }
 
   /// `No working server; fell back to {node}`
-  String rcxReasonSwitchStranded(Object node) {
+  String rcxReasonSwitchStranded(String node) {
     return Intl.message(
       'No working server; fell back to $node',
       name: 'rcxReasonSwitchStranded',
@@ -9838,7 +9838,7 @@ class AppLocalizations {
   }
 
   /// `Changed server; {from} is skipped for 15 minutes`
-  String rcxReasonChangeServer(Object from) {
+  String rcxReasonChangeServer(String from) {
     return Intl.message(
       'Changed server; $from is skipped for 15 minutes',
       name: 'rcxReasonChangeServer',
@@ -9848,7 +9848,7 @@ class AppLocalizations {
   }
 
   /// `{from} stopped working; switched to the best standby`
-  String rcxReasonFailover(Object from) {
+  String rcxReasonFailover(String from) {
     return Intl.message(
       '$from stopped working; switched to the best standby',
       name: 'rcxReasonFailover',
@@ -9858,7 +9858,7 @@ class AppLocalizations {
   }
 
   /// `{from} is no longer in the pool`
-  String rcxReasonOutOfPool(Object from) {
+  String rcxReasonOutOfPool(String from) {
     return Intl.message(
       '$from is no longer in the pool',
       name: 'rcxReasonOutOfPool',
@@ -9918,7 +9918,7 @@ class AppLocalizations {
   }
 
   /// `Switch limit reached ({limit} per hour)`
-  String rcxReasonFlapLimit(Object limit) {
+  String rcxReasonFlapLimit(int limit) {
     return Intl.message(
       'Switch limit reached ($limit per hour)',
       name: 'rcxReasonFlapLimit',
@@ -9938,7 +9938,7 @@ class AppLocalizations {
   }
 
   /// `Moved to a server in “{tier}”`
-  String rcxReasonBetterTier(Object tier) {
+  String rcxReasonBetterTier(String tier) {
     return Intl.message(
       'Moved to a server in “$tier”',
       name: 'rcxReasonBetterTier',
@@ -9948,7 +9948,7 @@ class AppLocalizations {
   }
 
   /// `Switched from {from}: {gain} ms faster`
-  String rcxReasonFaster(Object from, Object gain) {
+  String rcxReasonFaster(String from, int gain) {
     return Intl.message(
       'Switched from $from: $gain ms faster',
       name: 'rcxReasonFaster',
@@ -9968,7 +9968,7 @@ class AppLocalizations {
   }
 
   /// `Will switch to {node} once a check confirms it`
-  String rcxUntilCheck(Object node) {
+  String rcxUntilCheck(String node) {
     return Intl.message(
       'Will switch to $node once a check confirms it',
       name: 'rcxUntilCheck',
@@ -9978,7 +9978,7 @@ class AppLocalizations {
   }
 
   /// `May switch to {node} in {minutes} min`
-  String rcxUntilDwell(Object node, Object minutes) {
+  String rcxUntilDwell(String node, int minutes) {
     return Intl.message(
       'May switch to $node in $minutes min',
       name: 'rcxUntilDwell',
@@ -9988,7 +9988,7 @@ class AppLocalizations {
   }
 
   /// `Will switch to {node} if it stays {gain} ms faster`
-  String rcxUntilConfirm(Object node, Object gain) {
+  String rcxUntilConfirm(String node, int gain) {
     return Intl.message(
       'Will switch to $node if it stays $gain ms faster',
       name: 'rcxUntilConfirm',
@@ -10048,7 +10048,7 @@ class AppLocalizations {
   }
 
   /// `Behaviour {profile} was not found; the default is used`
-  String rcxProblemProfileMissing(Object profile) {
+  String rcxProblemProfileMissing(String profile) {
     return Intl.message(
       'Behaviour $profile was not found; the default is used',
       name: 'rcxProblemProfileMissing',
@@ -10058,7 +10058,7 @@ class AppLocalizations {
   }
 
   /// `Behaviour error: {error}`
-  String rcxProblemProfileInvalid(Object error) {
+  String rcxProblemProfileInvalid(String error) {
     return Intl.message(
       'Behaviour error: $error',
       name: 'rcxProblemProfileInvalid',
@@ -10108,7 +10108,7 @@ class AppLocalizations {
   }
 
   /// `{node} stopped working`
-  String rcxJournalFailure(Object node) {
+  String rcxJournalFailure(String node) {
     return Intl.message(
       '$node stopped working',
       name: 'rcxJournalFailure',
@@ -10118,7 +10118,7 @@ class AppLocalizations {
   }
 
   /// `Routing state could not be saved: {error}`
-  String rcxProblemStoreFailed(Object error) {
+  String rcxProblemStoreFailed(String error) {
     return Intl.message(
       'Routing state could not be saved: $error',
       name: 'rcxProblemStoreFailed',
@@ -10138,7 +10138,7 @@ class AppLocalizations {
   }
 
   /// `Network: {kind}`
-  String rcxNetwork(Object kind) {
+  String rcxNetwork(String kind) {
     return Intl.message(
       'Network: $kind',
       name: 'rcxNetwork',
@@ -10188,7 +10188,7 @@ class AppLocalizations {
   }
 
   /// `Paused while the network is “{kind}”: nothing is checked or switched`
-  String rcxReasonPaused(Object kind) {
+  String rcxReasonPaused(String kind) {
     return Intl.message(
       'Paused while the network is “$kind”: nothing is checked or switched',
       name: 'rcxReasonPaused',
@@ -10208,7 +10208,7 @@ class AppLocalizations {
   }
 
   /// `may reach “{tier}” after a check`
-  String rcxPendingTier(Object tier) {
+  String rcxPendingTier(String tier) {
     return Intl.message(
       'may reach “$tier” after a check',
       name: 'rcxPendingTier',
@@ -10228,7 +10228,7 @@ class AppLocalizations {
   }
 
   /// `exit {country}`
-  String rcxExit(Object country) {
+  String rcxExit(String country) {
     return Intl.message(
       'exit $country',
       name: 'rcxExit',
@@ -10299,22 +10299,42 @@ class AppLocalizations {
 
   /// `Add tag`
   String get rcxAddTag {
-    return Intl.message('Add tag', name: 'rcxAddTag', desc: '', args: []);
+    return Intl.message(
+      'Add tag',
+      name: 'rcxAddTag',
+      desc: 'Row: add a named server filter (tag) to a routing profile',
+      args: [],
+    );
   }
 
   /// `Advanced`
   String get rcxAdvanced {
-    return Intl.message('Advanced', name: 'rcxAdvanced', desc: '', args: []);
+    return Intl.message(
+      'Advanced',
+      name: 'rcxAdvanced',
+      desc: 'Section title for advanced profile parts edited as YAML',
+      args: [],
+    );
   }
 
   /// `Based on`
   String get rcxBasedOn {
-    return Intl.message('Based on', name: 'rcxBasedOn', desc: '', args: []);
+    return Intl.message(
+      'Based on',
+      name: 'rcxBasedOn',
+      desc: 'Row: the profile this one extends',
+      args: [],
+    );
   }
 
   /// `Behaviour`
   String get rcxBehaviour {
-    return Intl.message('Behaviour', name: 'rcxBehaviour', desc: '', args: []);
+    return Intl.message(
+      'Behaviour',
+      name: 'rcxBehaviour',
+      desc: 'Section title: switching, checks, no-candidate behaviour',
+      args: [],
+    );
   }
 
   /// `Bring changes over`
@@ -10322,7 +10342,7 @@ class AppLocalizations {
     return Intl.message(
       'Bring changes over',
       name: 'rcxBringChanges',
-      desc: '',
+      desc: 'Action: merge changes of the source profile into the user\'s copy',
       args: [],
     );
   }
@@ -10332,17 +10352,17 @@ class AppLocalizations {
     return Intl.message(
       'Your own edits stay as they are',
       name: 'rcxBringChangesHint',
-      desc: '',
+      desc: 'Subtitle of bring changes over',
       args: [],
     );
   }
 
   /// `Would pick {pick} instead of {now}`
-  String rcxCheckDifferent(Object pick, Object now) {
+  String rcxCheckDifferent(String pick, String now) {
     return Intl.message(
       'Would pick $pick instead of $now',
       name: 'rcxCheckDifferent',
-      desc: '',
+      desc: 'Simulation result',
       args: [pick, now],
     );
   }
@@ -10352,27 +10372,27 @@ class AppLocalizations {
     return Intl.message(
       'Would find no server',
       name: 'rcxCheckNone',
-      desc: '',
+      desc: 'Simulation result',
       args: [],
     );
   }
 
   /// `What it picks in {group}`
-  String rcxCheckOn(Object group) {
+  String rcxCheckOn(String group) {
     return Intl.message(
       'What it picks in $group',
       name: 'rcxCheckOn',
-      desc: '',
+      desc: 'Section title: simulation of the profile on a proxy group',
       args: [group],
     );
   }
 
   /// `Would keep {pick}`
-  String rcxCheckSame(Object pick) {
+  String rcxCheckSame(String pick) {
     return Intl.message(
       'Would keep $pick',
       name: 'rcxCheckSame',
-      desc: '',
+      desc: 'Simulation result',
       args: [pick],
     );
   }
@@ -10382,7 +10402,7 @@ class AppLocalizations {
     return Intl.message(
       'Add condition',
       name: 'rcxCondAdd',
-      desc: '',
+      desc: 'Row/title',
       args: [],
     );
   }
@@ -10392,14 +10412,19 @@ class AppLocalizations {
     return Intl.message(
       'All conditions',
       name: 'rcxCondAll',
-      desc: '',
+      desc: 'Join choice: all clauses must hold',
       args: [],
     );
   }
 
   /// `Always`
   String get rcxCondAlways {
-    return Intl.message('Always', name: 'rcxCondAlways', desc: '', args: []);
+    return Intl.message(
+      'Always',
+      name: 'rcxCondAlways',
+      desc: 'Empty network condition means always',
+      args: [],
+    );
   }
 
   /// `Any condition`
@@ -10407,7 +10432,7 @@ class AppLocalizations {
     return Intl.message(
       'Any condition',
       name: 'rcxCondAny',
-      desc: '',
+      desc: 'Join choice: one clause is enough',
       args: [],
     );
   }
@@ -10417,14 +10442,19 @@ class AppLocalizations {
     return Intl.message(
       'Any server',
       name: 'rcxCondAnyServer',
-      desc: '',
+      desc: 'Empty server condition means any server',
       args: [],
     );
   }
 
   /// `Field`
   String get rcxCondField {
-    return Intl.message('Field', name: 'rcxCondField', desc: '', args: []);
+    return Intl.message(
+      'Field',
+      name: 'rcxCondField',
+      desc: 'Row: which attribute a clause tests',
+      args: [],
+    );
   }
 
   /// `Ignore case`
@@ -10432,14 +10462,19 @@ class AppLocalizations {
     return Intl.message(
       'Ignore case',
       name: 'rcxCondIgnoreCase',
-      desc: '',
+      desc: 'Switch for pattern matching',
       args: [],
     );
   }
 
   /// `Match`
   String get rcxCondMatch {
-    return Intl.message('Match', name: 'rcxCondMatch', desc: '', args: []);
+    return Intl.message(
+      'Match',
+      name: 'rcxCondMatch',
+      desc: 'Section title: how clauses combine',
+      args: [],
+    );
   }
 
   /// `None declared`
@@ -10447,29 +10482,49 @@ class AppLocalizations {
     return Intl.message(
       'None declared',
       name: 'rcxCondNoNames',
-      desc: '',
+      desc: 'Value when the profile declares no tags/checks/diagnostics',
       args: [],
     );
   }
 
   /// `not`
   String get rcxCondNotPrefix {
-    return Intl.message('not', name: 'rcxCondNotPrefix', desc: '', args: []);
+    return Intl.message(
+      'not',
+      name: 'rcxCondNotPrefix',
+      desc: 'Lowercase word placed before a negated clause, e.g. \'not Exit country is RU\'',
+      args: [],
+    );
   }
 
   /// `Operator`
   String get rcxCondOp {
-    return Intl.message('Operator', name: 'rcxCondOp', desc: '', args: []);
+    return Intl.message(
+      'Operator',
+      name: 'rcxCondOp',
+      desc: 'Row: comparison operator',
+      args: [],
+    );
   }
 
   /// `Pattern`
   String get rcxCondPattern {
-    return Intl.message('Pattern', name: 'rcxCondPattern', desc: '', args: []);
+    return Intl.message(
+      'Pattern',
+      name: 'rcxCondPattern',
+      desc: 'Row: regular expression',
+      args: [],
+    );
   }
 
   /// `As text`
   String get rcxCondText {
-    return Intl.message('As text', name: 'rcxCondText', desc: '', args: []);
+    return Intl.message(
+      'As text',
+      name: 'rcxCondText',
+      desc: 'Section title: the condition in the profile language',
+      args: [],
+    );
   }
 
   /// `This condition nests groups, so it is edited as text.`
@@ -10477,14 +10532,14 @@ class AppLocalizations {
     return Intl.message(
       'This condition nests groups, so it is edited as text.',
       name: 'rcxCondTooComplex',
-      desc: '',
+      desc: 'Shown instead of the clause list',
       args: [],
     );
   }
 
   /// `Value`
   String get rcxCondValue {
-    return Intl.message('Value', name: 'rcxCondValue', desc: '', args: []);
+    return Intl.message('Value', name: 'rcxCondValue', desc: 'Row', args: []);
   }
 
   /// `Values, comma-separated`
@@ -10492,22 +10547,27 @@ class AppLocalizations {
     return Intl.message(
       'Values, comma-separated',
       name: 'rcxCondValues',
-      desc: '',
+      desc: 'Row',
       args: [],
     );
   }
 
   /// `Allow`
   String get rcxConsentAllow {
-    return Intl.message('Allow', name: 'rcxConsentAllow', desc: '', args: []);
+    return Intl.message(
+      'Allow',
+      name: 'rcxConsentAllow',
+      desc: 'Button: allow the profile to contact the listed hosts',
+      args: [],
+    );
   }
 
   /// `“{profile}” wants to check these sites`
-  String rcxConsentAsk(Object profile) {
+  String rcxConsentAsk(String profile) {
     return Intl.message(
       '“$profile” wants to check these sites',
       name: 'rcxConsentAsk',
-      desc: '',
+      desc: 'Consent prompt',
       args: [profile],
     );
   }
@@ -10517,7 +10577,7 @@ class AppLocalizations {
     return Intl.message(
       'Until you allow it, the group runs the Simple behaviour. The sites are contacted only through your servers or to test the network.',
       name: 'rcxConsentHint',
-      desc: '',
+      desc: 'Footer of consent section',
       args: [],
     );
   }
@@ -10527,7 +10587,7 @@ class AppLocalizations {
     return Intl.message(
       'Permission needed',
       name: 'rcxConsentTitle',
-      desc: '',
+      desc: 'Section title',
       args: [],
     );
   }
@@ -10537,7 +10597,7 @@ class AppLocalizations {
     return Intl.message(
       'Sites contacted',
       name: 'rcxContacts',
-      desc: '',
+      desc: 'Section title: hosts the profile makes the app contact',
       args: [],
     );
   }
@@ -10547,17 +10607,17 @@ class AppLocalizations {
     return Intl.message(
       'Third-party sites belong neither to your provider nor to the built-in behaviours.',
       name: 'rcxContactsHint',
-      desc: '',
+      desc: 'Footer',
       args: [],
     );
   }
 
   /// `Delete “{profile}”?`
-  String rcxDeleteProfile(Object profile) {
+  String rcxDeleteProfile(String profile) {
     return Intl.message(
       'Delete “$profile”?',
       name: 'rcxDeleteProfile',
-      desc: '',
+      desc: 'Confirmation',
       args: [profile],
     );
   }
@@ -10567,24 +10627,39 @@ class AppLocalizations {
     return Intl.message(
       'Edit a copy',
       name: 'rcxDuplicate',
-      desc: '',
+      desc: 'Menu item',
       args: [],
     );
   }
 
   /// `Export`
   String get rcxExport {
-    return Intl.message('Export', name: 'rcxExport', desc: '', args: []);
+    return Intl.message(
+      'Export',
+      name: 'rcxExport',
+      desc: 'Menu item / sheet title',
+      args: [],
+    );
   }
 
   /// `Working`
   String get rcxFieldAlive {
-    return Intl.message('Working', name: 'rcxFieldAlive', desc: '', args: []);
+    return Intl.message(
+      'Working',
+      name: 'rcxFieldAlive',
+      desc: 'Condition field: server is alive',
+      args: [],
+    );
   }
 
   /// `In use`
   String get rcxFieldCurrent {
-    return Intl.message('In use', name: 'rcxFieldCurrent', desc: '', args: []);
+    return Intl.message(
+      'In use',
+      name: 'rcxFieldCurrent',
+      desc: 'Condition field: the server in use now',
+      args: [],
+    );
   }
 
   /// `Not working`
@@ -10592,7 +10667,7 @@ class AppLocalizations {
     return Intl.message(
       'Not working',
       name: 'rcxFieldDead',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10602,7 +10677,7 @@ class AppLocalizations {
     return Intl.message(
       'Network diagnostic',
       name: 'rcxFieldDiag',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10612,7 +10687,7 @@ class AppLocalizations {
     return Intl.message(
       'Entry country',
       name: 'rcxFieldEntry',
-      desc: '',
+      desc: 'Condition field: country of the server address',
       args: [],
     );
   }
@@ -10622,7 +10697,7 @@ class AppLocalizations {
     return Intl.message(
       'Exit country',
       name: 'rcxFieldExit',
-      desc: '',
+      desc: 'Condition field: verified country traffic exits in',
       args: [],
     );
   }
@@ -10632,7 +10707,7 @@ class AppLocalizations {
     return Intl.message(
       'Fails check',
       name: 'rcxFieldFails',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10642,7 +10717,7 @@ class AppLocalizations {
     return Intl.message(
       'Network kind',
       name: 'rcxFieldKind',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10652,7 +10727,7 @@ class AppLocalizations {
     return Intl.message(
       'Latency, ms',
       name: 'rcxFieldLatency',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10662,7 +10737,7 @@ class AppLocalizations {
     return Intl.message(
       'Measured',
       name: 'rcxFieldMeasured',
-      desc: '',
+      desc: 'Condition field: has a latency sample',
       args: [],
     );
   }
@@ -10672,14 +10747,19 @@ class AppLocalizations {
     return Intl.message(
       'Metered network',
       name: 'rcxFieldMetered',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
 
   /// `Name`
   String get rcxFieldName {
-    return Intl.message('Name', name: 'rcxFieldName', desc: '', args: []);
+    return Intl.message(
+      'Name',
+      name: 'rcxFieldName',
+      desc: 'Condition field: server name',
+      args: [],
+    );
   }
 
   /// `Passes check`
@@ -10687,7 +10767,7 @@ class AppLocalizations {
     return Intl.message(
       'Passes check',
       name: 'rcxFieldPasses',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10697,7 +10777,7 @@ class AppLocalizations {
     return Intl.message(
       'Sign-in page',
       name: 'rcxFieldPortal',
-      desc: '',
+      desc: 'Condition field: captive portal network',
       args: [],
     );
   }
@@ -10707,7 +10787,7 @@ class AppLocalizations {
     return Intl.message(
       'Provider',
       name: 'rcxFieldProvider',
-      desc: '',
+      desc: 'Condition field: proxy provider name',
       args: [],
     );
   }
@@ -10717,14 +10797,19 @@ class AppLocalizations {
     return Intl.message(
       'Server address',
       name: 'rcxFieldServer',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
 
   /// `Tag`
   String get rcxFieldTag {
-    return Intl.message('Tag', name: 'rcxFieldTag', desc: '', args: []);
+    return Intl.message(
+      'Tag',
+      name: 'rcxFieldTag',
+      desc: 'Condition field',
+      args: [],
+    );
   }
 
   /// `Connection type`
@@ -10732,14 +10817,19 @@ class AppLocalizations {
     return Intl.message(
       'Connection type',
       name: 'rcxFieldTransport',
-      desc: '',
+      desc: 'Condition field: wifi, cellular, ethernet',
       args: [],
     );
   }
 
   /// `Protocol`
   String get rcxFieldType {
-    return Intl.message('Protocol', name: 'rcxFieldType', desc: '', args: []);
+    return Intl.message(
+      'Protocol',
+      name: 'rcxFieldType',
+      desc: 'Condition field: proxy type',
+      args: [],
+    );
   }
 
   /// `Supports UDP`
@@ -10747,7 +10837,7 @@ class AppLocalizations {
     return Intl.message(
       'Supports UDP',
       name: 'rcxFieldUdp',
-      desc: '',
+      desc: 'Condition field',
       args: [],
     );
   }
@@ -10757,7 +10847,7 @@ class AppLocalizations {
     return Intl.message(
       'Earlier versions',
       name: 'rcxHistoryVersions',
-      desc: '',
+      desc: 'Menu item / sheet title',
       args: [],
     );
   }
@@ -10767,7 +10857,7 @@ class AppLocalizations {
     return Intl.message(
       'Add to my library',
       name: 'rcxImportAdd',
-      desc: '',
+      desc: 'Confirm button',
       args: [],
     );
   }
@@ -10777,7 +10867,7 @@ class AppLocalizations {
     return Intl.message(
       'Start the app\'s core to check this file.',
       name: 'rcxImportNeedsCore',
-      desc: '',
+      desc: 'Error',
       args: [],
     );
   }
@@ -10787,97 +10877,107 @@ class AppLocalizations {
     return Intl.message(
       'Import auto routing',
       name: 'rcxImportTitle',
-      desc: '',
+      desc: 'Page title',
       args: [],
     );
   }
 
   /// `Added “{profile}”`
-  String rcxImported(Object profile) {
+  String rcxImported(String profile) {
     return Intl.message(
       'Added “$profile”',
       name: 'rcxImported',
-      desc: '',
+      desc: 'Toast',
       args: [profile],
     );
   }
 
   /// `Fallback`
   String get rcxLastResort {
-    return Intl.message('Fallback', name: 'rcxLastResort', desc: '', args: []);
+    return Intl.message(
+      'Fallback',
+      name: 'rcxLastResort',
+      desc: 'Switch/label: tier used only when better tiers are empty',
+      args: [],
+    );
   }
 
   /// `Complexity`
   String get rcxLevel {
-    return Intl.message('Complexity', name: 'rcxLevel', desc: '', args: []);
+    return Intl.message(
+      'Complexity',
+      name: 'rcxLevel',
+      desc: 'Row: simple or advanced',
+      args: [],
+    );
   }
 
   /// `Line {line}: {text}`
-  String rcxLine(Object line, Object text) {
+  String rcxLine(int line, String text) {
     return Intl.message(
       'Line $line: $text',
       name: 'rcxLine',
-      desc: '',
+      desc: 'Error with line number',
       args: [line, text],
     );
   }
 
   /// `Check {check} is never used, so it never runs`
-  String rcxLintCheckUnused(Object check) {
+  String rcxLintCheckUnused(String check) {
     return Intl.message(
       'Check $check is never used, so it never runs',
       name: 'rcxLintCheckUnused',
-      desc: '',
+      desc: 'Lint warning',
       args: [check],
     );
   }
 
   /// `Contacts third-party sites: {hosts}`
-  String rcxLintConsent(Object hosts) {
+  String rcxLintConsent(String hosts) {
     return Intl.message(
       'Contacts third-party sites: $hosts',
       name: 'rcxLintConsent',
-      desc: '',
+      desc: 'Lint warning',
       args: [hosts],
     );
   }
 
   /// `No server of {group} passes the filter`
-  String rcxLintPoolEmpty(Object group) {
+  String rcxLintPoolEmpty(String group) {
     return Intl.message(
       'No server of $group passes the filter',
       name: 'rcxLintPoolEmpty',
-      desc: '',
+      desc: 'Lint warning',
       args: [group],
     );
   }
 
   /// `Tag {tag} is never used`
-  String rcxLintTagUnused(Object tag) {
+  String rcxLintTagUnused(String tag) {
     return Intl.message(
       'Tag $tag is never used',
       name: 'rcxLintTagUnused',
-      desc: '',
+      desc: 'Lint warning',
       args: [tag],
     );
   }
 
   /// `No server of {group} is in “{tier}” right now`
-  String rcxLintTierEmpty(Object group, Object tier) {
+  String rcxLintTierEmpty(String tier, String group) {
     return Intl.message(
       'No server of $group is in “$tier” right now',
       name: 'rcxLintTierEmpty',
-      desc: '',
-      args: [group, tier],
+      desc: 'Lint warning',
+      args: [tier, group],
     );
   }
 
   /// `“{tier}” repeats the condition of “{after}”, so nothing lands in it`
-  String rcxLintTierUnreachable(Object tier, Object after) {
+  String rcxLintTierUnreachable(String tier, String after) {
     return Intl.message(
       '“$tier” repeats the condition of “$after”, so nothing lands in it',
       name: 'rcxLintTierUnreachable',
-      desc: '',
+      desc: 'Lint warning',
       args: [tier, after],
     );
   }
@@ -10887,7 +10987,7 @@ class AppLocalizations {
     return Intl.message(
       'Couldn\'t bring the changes over',
       name: 'rcxMergeFailed',
-      desc: '',
+      desc: 'Toast',
       args: [],
     );
   }
@@ -10897,17 +10997,17 @@ class AppLocalizations {
     return Intl.message(
       'Changes brought over',
       name: 'rcxMerged',
-      desc: '',
+      desc: 'Toast',
       args: [],
     );
   }
 
   /// `Brought over; you changed these too, so yours were kept: {keys}`
-  String rcxMergedConflicts(Object keys) {
+  String rcxMergedConflicts(String keys) {
     return Intl.message(
       'Brought over; you changed these too, so yours were kept: $keys',
       name: 'rcxMergedConflicts',
-      desc: '',
+      desc: 'Toast',
       args: [keys],
     );
   }
@@ -10917,7 +11017,7 @@ class AppLocalizations {
     return Intl.message(
       'Needs your permission',
       name: 'rcxNeedsConsent',
-      desc: '',
+      desc: 'Subtitle/reason',
       args: [],
     );
   }
@@ -10927,39 +11027,64 @@ class AppLocalizations {
     return Intl.message(
       'New behaviour',
       name: 'rcxNewProfile',
-      desc: '',
+      desc: 'Row / default title',
       args: [],
     );
   }
 
   /// `fails`
   String get rcxOpFail {
-    return Intl.message('fails', name: 'rcxOpFail', desc: '', args: []);
+    return Intl.message(
+      'fails',
+      name: 'rcxOpFail',
+      desc: 'Operator: diagnostic fails',
+      args: [],
+    );
   }
 
   /// `is one of`
   String get rcxOpIn {
-    return Intl.message('is one of', name: 'rcxOpIn', desc: '', args: []);
+    return Intl.message(
+      'is one of',
+      name: 'rcxOpIn',
+      desc: 'Operator',
+      args: [],
+    );
   }
 
   /// `is`
   String get rcxOpIs {
-    return Intl.message('is', name: 'rcxOpIs', desc: '', args: []);
+    return Intl.message('is', name: 'rcxOpIs', desc: 'Operator', args: []);
   }
 
   /// `is not`
   String get rcxOpIsNot {
-    return Intl.message('is not', name: 'rcxOpIsNot', desc: '', args: []);
+    return Intl.message(
+      'is not',
+      name: 'rcxOpIsNot',
+      desc: 'Operator',
+      args: [],
+    );
   }
 
   /// `matches`
   String get rcxOpMatches {
-    return Intl.message('matches', name: 'rcxOpMatches', desc: '', args: []);
+    return Intl.message(
+      'matches',
+      name: 'rcxOpMatches',
+      desc: 'Operator: regex',
+      args: [],
+    );
   }
 
   /// `succeeds`
   String get rcxOpOk {
-    return Intl.message('succeeds', name: 'rcxOpOk', desc: '', args: []);
+    return Intl.message(
+      'succeeds',
+      name: 'rcxOpOk',
+      desc: 'Operator: diagnostic succeeds',
+      args: [],
+    );
   }
 
   /// `Leave out servers`
@@ -10967,7 +11092,7 @@ class AppLocalizations {
     return Intl.message(
       'Leave out servers',
       name: 'rcxPoolExclude',
-      desc: '',
+      desc: 'Row: servers excluded from the pool',
       args: [],
     );
   }
@@ -10977,14 +11102,19 @@ class AppLocalizations {
     return Intl.message(
       'Use only servers',
       name: 'rcxPoolInclude',
-      desc: '',
+      desc: 'Row: servers included in the pool',
       args: [],
     );
   }
 
   /// `Name`
   String get rcxProfileName {
-    return Intl.message('Name', name: 'rcxProfileName', desc: '', args: []);
+    return Intl.message(
+      'Name',
+      name: 'rcxProfileName',
+      desc: 'Row: profile title',
+      args: [],
+    );
   }
 
   /// `The original changed`
@@ -10992,7 +11122,7 @@ class AppLocalizations {
     return Intl.message(
       'The original changed',
       name: 'rcxSourceChanged',
-      desc: '',
+      desc: 'Section title',
       args: [],
     );
   }
@@ -11002,7 +11132,7 @@ class AppLocalizations {
     return Intl.message(
       'What changed',
       name: 'rcxSourceChanges',
-      desc: '',
+      desc: 'Row/page title: diff of the source',
       args: [],
     );
   }
@@ -11012,7 +11142,7 @@ class AppLocalizations {
     return Intl.message(
       'When no server works',
       name: 'rcxStranded',
-      desc: '',
+      desc: 'Row',
       args: [],
     );
   }
@@ -11022,7 +11152,7 @@ class AppLocalizations {
     return Intl.message(
       'Direct',
       name: 'rcxStrandedDirect',
-      desc: '',
+      desc: 'Choice',
       args: [],
     );
   }
@@ -11032,14 +11162,19 @@ class AppLocalizations {
     return Intl.message(
       'Keep current',
       name: 'rcxStrandedHold',
-      desc: '',
+      desc: 'Choice',
       args: [],
     );
   }
 
   /// `Tag name`
   String get rcxTagName {
-    return Intl.message('Tag name', name: 'rcxTagName', desc: '', args: []);
+    return Intl.message(
+      'Tag name',
+      name: 'rcxTagName',
+      desc: 'Input label',
+      args: [],
+    );
   }
 
   /// `Latin letters, digits, - and _ only, up to 24`
@@ -11047,14 +11182,19 @@ class AppLocalizations {
     return Intl.message(
       'Latin letters, digits, - and _ only, up to 24',
       name: 'rcxTagNameInvalid',
-      desc: '',
+      desc: 'Validation',
       args: [],
     );
   }
 
   /// `Tags`
   String get rcxTags {
-    return Intl.message('Tags', name: 'rcxTags', desc: '', args: []);
+    return Intl.message(
+      'Tags',
+      name: 'rcxTags',
+      desc: 'Section title',
+      args: [],
+    );
   }
 
   /// `A tag names a set of servers once, for use in tiers as tag(name).`
@@ -11062,7 +11202,7 @@ class AppLocalizations {
     return Intl.message(
       'A tag names a set of servers once, for use in tiers as tag(name).',
       name: 'rcxTagsHint',
-      desc: '',
+      desc: 'Footer',
       args: [],
     );
   }
@@ -11072,32 +11212,32 @@ class AppLocalizations {
     return Intl.message(
       'third party',
       name: 'rcxThirdParty',
-      desc: '',
+      desc: 'Lowercase marker on a host',
       args: [],
     );
   }
 
   /// `Label`
   String get rcxTierLabel {
-    return Intl.message('Label', name: 'rcxTierLabel', desc: '', args: []);
+    return Intl.message('Label', name: 'rcxTierLabel', desc: 'Row', args: []);
   }
 
   /// `check {name}`
-  String rcxUseCheck(Object name) {
+  String rcxUseCheck(String name) {
     return Intl.message(
       'check $name',
       name: 'rcxUseCheck',
-      desc: '',
+      desc: 'Lowercase: endpoint used by a check',
       args: [name],
     );
   }
 
   /// `network diagnostic {name}`
-  String rcxUseDiagnostic(Object name) {
+  String rcxUseDiagnostic(String name) {
     return Intl.message(
       'network diagnostic $name',
       name: 'rcxUseDiagnostic',
-      desc: '',
+      desc: 'Lowercase',
       args: [name],
     );
   }
@@ -11107,19 +11247,29 @@ class AppLocalizations {
     return Intl.message(
       'exit-country check',
       name: 'rcxUseEcho',
-      desc: '',
+      desc: 'Lowercase',
       args: [],
     );
   }
 
   /// `Warnings`
   String get rcxWarnings {
-    return Intl.message('Warnings', name: 'rcxWarnings', desc: '', args: []);
+    return Intl.message(
+      'Warnings',
+      name: 'rcxWarnings',
+      desc: 'Section title',
+      args: [],
+    );
   }
 
   /// `YAML`
   String get rcxYaml {
-    return Intl.message('YAML', name: 'rcxYaml', desc: '', args: []);
+    return Intl.message(
+      'YAML',
+      name: 'rcxYaml',
+      desc: 'Action / page title',
+      args: [],
+    );
   }
 
   /// `Add group`
@@ -11163,7 +11313,7 @@ class AppLocalizations {
   }
 
   /// `Condition {number}`
-  String rcxCondClause(Object number) {
+  String rcxCondClause(int number) {
     return Intl.message(
       'Condition $number',
       name: 'rcxCondClause',
@@ -11173,7 +11323,7 @@ class AppLocalizations {
   }
 
   /// `except {condition}`
-  String rcxExcept(Object condition) {
+  String rcxExcept(String condition) {
     return Intl.message(
       'except $condition',
       name: 'rcxExcept',
@@ -11193,7 +11343,7 @@ class AppLocalizations {
   }
 
   /// `Through {member}`
-  String rcxFixedOn(Object member) {
+  String rcxFixedOn(String member) {
     return Intl.message(
       'Through $member',
       name: 'rcxFixedOn',
@@ -11223,7 +11373,7 @@ class AppLocalizations {
   }
 
   /// `Mode {from} → {to}`
-  String rcxJournalMode(Object from, Object to) {
+  String rcxJournalMode(String from, String to) {
     return Intl.message(
       'Mode $from → $to',
       name: 'rcxJournalMode',
@@ -11278,7 +11428,7 @@ class AppLocalizations {
   }
 
   /// `This config has no group {group}`
-  String rcxLintGroupMissing(Object group) {
+  String rcxLintGroupMissing(String group) {
     return Intl.message(
       'This config has no group $group',
       name: 'rcxLintGroupMissing',
@@ -11318,7 +11468,7 @@ class AppLocalizations {
   }
 
   /// `Mode: {mode}`
-  String rcxModeIs(Object mode) {
+  String rcxModeIs(String mode) {
     return Intl.message(
       'Mode: $mode',
       name: 'rcxModeIs',
@@ -11393,7 +11543,7 @@ class AppLocalizations {
   }
 
   /// `The scenario holds {node}`
-  String rcxReasonFixed(Object node) {
+  String rcxReasonFixed(String node) {
     return Intl.message(
       'The scenario holds $node',
       name: 'rcxReasonFixed',
@@ -11403,7 +11553,7 @@ class AppLocalizations {
   }
 
   /// `{node} is not in this group`
-  String rcxReasonFixedMissing(Object node) {
+  String rcxReasonFixedMissing(String node) {
     return Intl.message(
       '$node is not in this group',
       name: 'rcxReasonFixedMissing',
@@ -11413,7 +11563,7 @@ class AppLocalizations {
   }
 
   /// `Not in use: mode {mode}`
-  String rcxReasonIdle(Object mode) {
+  String rcxReasonIdle(String mode) {
     return Intl.message(
       'Not in use: mode $mode',
       name: 'rcxReasonIdle',
@@ -11423,7 +11573,7 @@ class AppLocalizations {
   }
 
   /// `The scenario moves to {node}`
-  String rcxReasonSwitchFixed(Object node) {
+  String rcxReasonSwitchFixed(String node) {
     return Intl.message(
       'The scenario moves to $node',
       name: 'rcxReasonSwitchFixed',
@@ -11438,7 +11588,7 @@ class AppLocalizations {
   }
 
   /// `The scenario «{scenario}» drives this group now.`
-  String rcxScenarioDrives(Object scenario) {
+  String rcxScenarioDrives(String scenario) {
     return Intl.message(
       'The scenario «$scenario» drives this group now.',
       name: 'rcxScenarioDrives',
@@ -11598,7 +11748,7 @@ class AppLocalizations {
   }
 
   /// `“{title}” is not yours to change. Your edits go to a copy, and the copy becomes the running scenario.`
-  String rcxHubCopyMessage(Object title) {
+  String rcxHubCopyMessage(String title) {
     return Intl.message(
       '“$title” is not yours to change. Your edits go to a copy, and the copy becomes the running scenario.',
       name: 'rcxHubCopyMessage',
@@ -11648,7 +11798,7 @@ class AppLocalizations {
   }
 
   /// `Routes apply in rule mode; the connection is in {mode} mode now.`
-  String rcxHubRoutesRuleOnly(Object mode) {
+  String rcxHubRoutesRuleOnly(String mode) {
     return Intl.message(
       'Routes apply in rule mode; the connection is in $mode mode now.',
       name: 'rcxHubRoutesRuleOnly',
@@ -11833,7 +11983,7 @@ class AppLocalizations {
   }
 
   /// `{name} and {count} more`
-  String rcxMatchMore(Object name, Object count) {
+  String rcxMatchMore(String name, int count) {
     return Intl.message(
       '$name and $count more',
       name: 'rcxMatchMore',
@@ -11968,7 +12118,7 @@ class AppLocalizations {
   }
 
   /// `{count, plural, one{{count} server} other{{count} servers}}`
-  String rcxCountryServers(num count) {
+  String rcxCountryServers(int count) {
     return Intl.plural(
       count,
       one: '$count server',
@@ -12025,7 +12175,7 @@ class AppLocalizations {
   }
 
   /// `Step {number}`
-  String rcxLadderStep(Object number) {
+  String rcxLadderStep(int number) {
     return Intl.message(
       'Step $number',
       name: 'rcxLadderStep',
@@ -12065,7 +12215,7 @@ class AppLocalizations {
   }
 
   /// `{text} in name`
-  String rcxLadderNameHas(Object text) {
+  String rcxLadderNameHas(String text) {
     return Intl.message(
       '$text in name',
       name: 'rcxLadderNameHas',
@@ -12075,7 +12225,7 @@ class AppLocalizations {
   }
 
   /// `not {what}`
-  String rcxLadderNot(Object what) {
+  String rcxLadderNot(String what) {
     return Intl.message(
       'not $what',
       name: 'rcxLadderNot',
@@ -12085,7 +12235,7 @@ class AppLocalizations {
   }
 
   /// `from {provider}`
-  String rcxLadderProvider(Object provider) {
+  String rcxLadderProvider(String provider) {
     return Intl.message(
       'from $provider',
       name: 'rcxLadderProvider',
@@ -12095,7 +12245,7 @@ class AppLocalizations {
   }
 
   /// `tag {tag}`
-  String rcxLadderTag(Object tag) {
+  String rcxLadderTag(String tag) {
     return Intl.message(
       'tag $tag',
       name: 'rcxLadderTag',
@@ -12110,7 +12260,7 @@ class AppLocalizations {
   }
 
   /// `under {ms} ms`
-  String rcxLadderLatency(Object ms) {
+  String rcxLadderLatency(int ms) {
     return Intl.message(
       'under $ms ms',
       name: 'rcxLadderLatency',
@@ -12200,7 +12350,7 @@ class AppLocalizations {
   }
 
   /// `{count, plural, one{{count} server fits now} other{{count} servers fit now}}`
-  String rcxLadderFits(num count) {
+  String rcxLadderFits(int count) {
     return Intl.plural(
       count,
       one: '$count server fits now',
@@ -12257,7 +12407,7 @@ class AppLocalizations {
   }
 
   /// `Stays on {node}; leaves it only when it fails and comes back when it recovers.`
-  String rcxModePinnedHint(Object node) {
+  String rcxModePinnedHint(String node) {
     return Intl.message(
       'Stays on $node; leaves it only when it fails and comes back when it recovers.',
       name: 'rcxModePinnedHint',
@@ -12277,7 +12427,7 @@ class AppLocalizations {
   }
 
   /// `{count, plural, one{It chooses from the {count} server of this group.} other{It chooses among the {count} servers of this group.}}`
-  String rcxWouldServers(num count) {
+  String rcxWouldServers(int count) {
     return Intl.plural(
       count,
       one: 'It chooses from the $count server of this group.',
@@ -12299,7 +12449,7 @@ class AppLocalizations {
   }
 
   /// `A route in the scenario «{scenario}» created this group. Edit or remove it there.`
-  String rcxRouteGroupHint(Object scenario) {
+  String rcxRouteGroupHint(String scenario) {
     return Intl.message(
       'A route in the scenario «$scenario» created this group. Edit or remove it there.',
       name: 'rcxRouteGroupHint',
@@ -12319,7 +12469,7 @@ class AppLocalizations {
   }
 
   /// `The route «{route}» was skipped: a group with its name already exists.`
-  String rcxReasonRouteNameTaken(Object route) {
+  String rcxReasonRouteNameTaken(String route) {
     return Intl.message(
       'The route «$route» was skipped: a group with its name already exists.',
       name: 'rcxReasonRouteNameTaken',
@@ -12329,7 +12479,7 @@ class AppLocalizations {
   }
 
   /// `The route «{route}» sends traffic to «{to}», which is not in the profile.`
-  String rcxReasonRouteToMissing(Object route, Object to) {
+  String rcxReasonRouteToMissing(String route, String to) {
     return Intl.message(
       'The route «$route» sends traffic to «$to», which is not in the profile.',
       name: 'rcxReasonRouteToMissing',
@@ -12339,7 +12489,7 @@ class AppLocalizations {
   }
 
   /// `The route «{route}» could not be applied: {error}`
-  String rcxReasonRouteInvalid(Object route, Object error) {
+  String rcxReasonRouteInvalid(String route, String error) {
     return Intl.message(
       'The route «$route» could not be applied: $error',
       name: 'rcxReasonRouteInvalid',
@@ -12363,7 +12513,7 @@ class AppLocalizations {
     return Intl.message(
       'All services',
       name: 'rcxMatchAllServices',
-      desc: '',
+      desc: 'Route editor chip: expands the service list to show every service',
       args: [],
     );
   }
@@ -12373,14 +12523,19 @@ class AppLocalizations {
     return Intl.message(
       'Where it goes',
       name: 'rcxRouteWhere',
-      desc: '',
+      desc: 'Route editor section title above the three destination options (best server, one server, direct)',
       args: [],
     );
   }
 
   /// `Best server`
   String get rcxSendBest {
-    return Intl.message('Best server', name: 'rcxSendBest', desc: '', args: []);
+    return Intl.message(
+      'Best server',
+      name: 'rcxSendBest',
+      desc: 'Destination option: the app picks the best working server automatically',
+      args: [],
+    );
   }
 
   /// `How to pick the server`
@@ -12388,24 +12543,29 @@ class AppLocalizations {
     return Intl.message(
       'How to pick the server',
       name: 'rcxHowToChoose',
-      desc: '',
+      desc: 'Row and page title: behaviour, server order and server filters used to pick the best server',
       args: [],
     );
   }
 
   /// `only {condition}`
-  String rcxOnly(Object condition) {
+  String rcxOnly(String condition) {
     return Intl.message(
       'only $condition',
       name: 'rcxOnly',
-      desc: '',
+      desc: 'Summary fragment: only servers matching the condition are used. Lowercase, joined with \' · \'',
       args: [condition],
     );
   }
 
   /// `Direct`
   String get rcxSendDirect {
-    return Intl.message('Direct', name: 'rcxSendDirect', desc: '', args: []);
+    return Intl.message(
+      'Direct',
+      name: 'rcxSendDirect',
+      desc: 'Destination option in the route editor: this traffic bypasses the proxy. An adverb in Russian, next to «Лучший сервер» and «Один сервер»',
+      args: [],
+    );
   }
 
   /// `What it would pick now`
@@ -12413,7 +12573,8 @@ class AppLocalizations {
     return Intl.message(
       'What it would pick now',
       name: 'rcxStudioPreview',
-      desc: '',
+      desc:
+          'Section title: live simulation of which server the behaviour picks',
       args: [],
     );
   }
@@ -12423,7 +12584,7 @@ class AppLocalizations {
     return Intl.message(
       'Choose a group to see which server this behaviour would pick in it.',
       name: 'rcxStudioPreviewHint',
-      desc: '',
+      desc: 'Footer when no group is chosen for the simulation',
       args: [],
     );
   }
@@ -12433,7 +12594,7 @@ class AppLocalizations {
     return Intl.message(
       'All candidates',
       name: 'rcxStudioRanking',
-      desc: '',
+      desc: 'Page title: every server of the simulation in rank order',
       args: [],
     );
   }
@@ -12443,7 +12604,7 @@ class AppLocalizations {
     return Intl.message(
       'Character',
       name: 'rcxStudioCharacter',
-      desc: '',
+      desc: 'Section title: switching, checks and no-server behaviour',
       args: [],
     );
   }
@@ -12453,7 +12614,7 @@ class AppLocalizations {
     return Intl.message(
       'Switching is how readily it moves to a faster server; checks trade accuracy for battery.',
       name: 'rcxStudioCharacterHint',
-      desc: '',
+      desc: 'Footer under the character section',
       args: [],
     );
   }
@@ -12463,7 +12624,7 @@ class AppLocalizations {
     return Intl.message(
       'Servers outside these conditions are never picked.',
       name: 'rcxStudioServersHint',
-      desc: '',
+      desc: 'Footer under the server filter rows',
       args: [],
     );
   }
@@ -12473,13 +12634,13 @@ class AppLocalizations {
     return Intl.message(
       'By scenario',
       name: 'rcxModeScenario',
-      desc: '',
+      desc: 'Label of the tunnel-mode choice where the running scenario sets the mode (dashboard mode card and mode bar). Short, 1–2 words.',
       args: [],
     );
   }
 
   /// `From scenario «{scenario}»`
-  String rcxFromScenario(Object scenario) {
+  String rcxFromScenario(String scenario) {
     return Intl.message(
       'From scenario «$scenario»',
       name: 'rcxFromScenario',

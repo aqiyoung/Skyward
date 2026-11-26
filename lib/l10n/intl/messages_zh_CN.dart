@@ -252,7 +252,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m108(tag) => "标签 ${tag} 从未被使用";
 
-  static String m109(group, tier) => "当前 ${group} 中没有服务器属于“${tier}”";
+  static String m109(tier, group) => "当前 ${group} 中没有服务器属于“${tier}”";
 
   static String m110(tier, after) => "“${tier}”与“${after}”的条件相同，因此不会有任何服务器归入其中";
 

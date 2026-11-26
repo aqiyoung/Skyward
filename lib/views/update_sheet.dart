@@ -7,8 +7,6 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
-import 'package:flutter/material.dart'
-    show Localizations, Padding, Text, TextSpan;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -222,11 +220,11 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
           else
             Container(
               height: 3,
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: _phase == _UpdatePhase.latest
                     ? scheme.success
                     : scheme.primary,
-                borderRadius: BorderRadius.circular(2),
+                shape: AppShape.all(2),
               ),
             ),
         ],
