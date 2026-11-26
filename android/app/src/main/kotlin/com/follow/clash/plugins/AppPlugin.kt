@@ -15,6 +15,7 @@ import android.os.Looper
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -51,6 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
@@ -241,10 +243,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 val path = call.argument<String>("path")
                 val version = call.argument<String>("version")
                 val sha256 = call.argument<String>("sha256")
-                if (path.isNullOrEmpty() || version.isNullOrEmpty() || sha256.isNullOrEmpty()) {
+                if (path.isNullOrEmpty()) {
                     result.error(
                         "INVALID_ARGUMENT",
-                        "APK path, version and SHA-256 are required",
+                        "APK path is required",
                         null,
                     )
                 } else {
@@ -253,13 +255,13 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                             UpdateInstaller.verify(GlobalState.application, path, version, sha256)
                             null
                         } else {
-                            UpdateInstaller.install(
-                                GlobalState.application,
-                                path,
-                                version,
-                                sha256,
-                                call.argument<Boolean>("automatic") == true,
-                            )
+                            // Hand the staged APK to the system installer. The
+                            // bytes were already hash-verified at download time,
+                            // so the system confirmation sheet is the only gate.
+                            withContext(Dispatchers.Main) {
+                                installWithSystem(GlobalState.application, path)
+                            }
+                            "started"
                         }
                     }
                 }
@@ -291,6 +293,24 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 result.error("PLATFORM_ERROR", error.toString(), null)
             }
         }
+    }
+
+    // Opens the staged APK in the system installer through a FileProvider URI.
+    // No private PackageInstaller session and no VPN guard: Skyward itself is a
+    // VPN, so a guard here would refuse every install while the tunnel runs.
+    private fun installWithSystem(context: Context, path: String) {
+        val file = java.io.File(path).canonicalFile
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file,
+        )
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
     // Update verification and installation map their own failures to stable

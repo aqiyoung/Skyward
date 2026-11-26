@@ -184,6 +184,10 @@ jobs:
           mv pubspec.yaml.new pubspec.yaml
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "build_number=${build_number}" >> "$GITHUB_OUTPUT"
+          # The APK file name is built from the pubspec's three components,
+          # which stay at the original base when the revision counter carries
+          # into a new patch (1.0.1 -> 1.0.2.21).
+          echo "pubspec_base=${base}" >> "$GITHUB_OUTPUT"
           echo "building ${version} from ${base}, build number ${build_number}"
 
       # The counter above is only what previous runs wrote down, so this run has
@@ -450,10 +454,13 @@ jobs:
       - name: Name the artifact after our version
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          PUBSPEC_BASE: ${{ steps.version.outputs.pubspec_base }}
         run: |
           set -euo pipefail
           # The packaging names files after the pubspec's three components; the
-          # version users read adds today's count and the channel.
+          # version users read adds the channel and revision, which may carry
+          # into a new patch. Accept both the carried base and the original
+          # pubspec base the file was actually named with.
           stem="${VERSION%%-*}"
           base="${stem%.*}"
           shopt -s nullglob
@@ -464,8 +471,11 @@ jobs:
               *"-${base}-"*)
                 mv "$file" "dist/${name/-${base}-/-${VERSION}-}"
                 ;;
+              *"-${PUBSPEC_BASE}-"*)
+                mv "$file" "dist/${name/-${PUBSPEC_BASE}-/-${VERSION}-}"
+                ;;
               *)
-                echo "::error::${name} carries neither ${base} nor ${VERSION}"
+                echo "::error::${name} carries neither ${base}, ${PUBSPEC_BASE} nor ${VERSION}"
                 exit 1
                 ;;
             esac

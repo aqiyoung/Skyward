@@ -313,18 +313,21 @@ class CommonAction extends _$CommonAction {
     if (ready == null) return;
     ref.read(preparedUpdateStateProvider.notifier).set(null);
     if (system.isAndroid) {
-      final status = await app?.installApk(
-        ready.path,
-        expectedVersion: ready.version ?? '',
-        expectedSha256: ready.sha256 ?? '',
-      );
-      if (status != null &&
-          (status == ApkInstallResult.permissionRequired ||
-              status == ApkInstallResult.vpnActive)) {
+      try {
+        await app?.installApk(
+          ready.path,
+          expectedVersion: ready.version ?? '',
+          expectedSha256: ready.sha256 ?? '',
+        );
+      } on Object catch (error) {
+        commonPrint.log(
+          'install update failed: ${compactError(error)}',
+          logLevel: LogLevel.warning,
+        );
         dialogs.showNotifier(
           _interfaceLanguageCode == 'zh'
-              ? '安装未完成：请授予安装权限或断开 VPN'
-              : 'Install blocked: allow installing apps or disconnect the VPN',
+              ? '无法调起系统安装器，请手动安装下载的包'
+              : 'Could not open the system installer; install the downloaded package manually',
           level: MessageLevel.warning,
         );
       }
@@ -346,9 +349,7 @@ class CommonAction extends _$CommonAction {
 
   Future<void> _clearUpdateFiles() async {
     try {
-      await safeDeletePath(
-        join(await appPath.homeDirPath, 'app-updates'),
-      );
+      await safeDeletePath(join(await appPath.homeDirPath, 'app-updates'));
     } on Object catch (_) {
       // Best effort: a stale package is cleared on the next update.
     }
