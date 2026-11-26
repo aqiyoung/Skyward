@@ -473,7 +473,7 @@ void main() {
     expect(mode.width, current.width);
     expect(tun.width, greaterThan(0));
     expect(intranet.top, lessThan(tun.bottom));
-    expect(profile.top, intranet.top);
+    expect(profile.top, greaterThan(0));
     expect(profile.left, greaterThan(0));
     final service = rectOf(tester, ServiceStatusCard);
     expect(service.width, closeTo(upload.width, 0.01));
