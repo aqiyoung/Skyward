@@ -528,58 +528,56 @@ class _MemoryOverview extends StatelessWidget {
     final total = snapshot.total.traffic;
     return Padding(
       padding: const EdgeInsets.fromLTRB(_inset, 8, _inset, 0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appLocalizations.total,
-              style: DashboardText.label(
-                context,
-                color: colorScheme.onSurfaceVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            appLocalizations.total,
+            style: DashboardText.label(
+              context,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                total.value,
+                style: DashboardText.figure(
+                  context,
+                  AppTextStyle.title1,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  total.value,
-                  style: DashboardText.figure(
-                    context,
-                    AppTextStyle.title1,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  total.unit,
-                  style: DashboardText.unit(context, AppTextStyle.headline),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _MemoryBar(
-              segments: [
-                (bytes: snapshot.app, color: colorScheme.primary),
-                (
-                  bytes: snapshot.coreTotal,
-                  color: DashboardColors.of(context).series2,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              snapshot.coreInProcess
-                  ? appLocalizations.memoryEstimateSharedDesc
-                  : appLocalizations.memoryEstimateDesc,
-              style: AppTextStyle.footnote
-                  .of(context)
-                  .copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
+              const SizedBox(width: 6),
+              Text(
+                total.unit,
+                style: DashboardText.unit(context, AppTextStyle.headline),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _MemoryBar(
+            segments: [
+              (bytes: snapshot.app, color: colorScheme.primary),
+              (
+                bytes: snapshot.coreTotal,
+                color: DashboardColors.of(context).series2,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            snapshot.coreInProcess
+                ? appLocalizations.memoryEstimateSharedDesc
+                : appLocalizations.memoryEstimateDesc,
+            style: AppTextStyle.footnote
+                .of(context)
+                .copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ],
       ),
     );
   }
