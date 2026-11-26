@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
@@ -10,14 +13,40 @@ import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 
-Glyph _glyphOf(Mode mode) => switch (mode) {
+Glyph _glyphOf(Mode? mode) => switch (mode) {
+  null => AppGlyphs.sparkle,
   Mode.rule => AppGlyphs.rules,
   Mode.global => AppGlyphs.proxies,
   Mode.direct => AppGlyphs.target,
 };
 
-void _changeMode(WidgetRef ref, Mode mode) {
-  if (ref.read(patchClashConfigProvider).mode == mode) return;
+/// A scenario that holds the mode adds an Auto choice; while it is in force
+/// the selector shows Auto rather than the user's own mode.
+({List<Mode?> items, Mode? selected}) _watchChoices(WidgetRef ref) {
+  final own = ref.watch(patchClashConfigProvider.select((s) => s.mode));
+  final scenario = ref.watch(
+    rcxStatusStateProvider.select(
+      (s) => (
+        offered: s?.scenario?.holdsMode ?? false,
+        auto: s?.autoMode ?? false,
+      ),
+    ),
+  );
+  return (
+    items: [if (scenario.offered) null, ...Mode.values],
+    selected: scenario.auto ? null : own,
+  );
+}
+
+String _labelOf(BuildContext context, Mode? mode) =>
+    mode?.label ?? context.appLocalizations.rcxModeScenario;
+
+void _changeMode(WidgetRef ref, Mode? mode, Mode? selected) {
+  if (mode == selected) return;
+  if (mode == null) {
+    unawaited(ref.read(rcxRoutingActionProvider.notifier).setManualMode(false));
+    return;
+  }
   ref.read(setupActionProvider.notifier).changeMode(mode);
 }
 
@@ -29,9 +58,8 @@ class OutboundModeSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(
-      patchClashConfigProvider.select((state) => state.mode),
-    );
+    final choices = _watchChoices(ref);
+    final mode = choices.selected;
     final colors = DashboardColors.of(context);
     final colorScheme = context.colorScheme;
     final style = AppTextStyle.footnote
@@ -42,13 +70,13 @@ class OutboundModeSelector extends ConsumerWidget {
       decoration: ShapeDecoration(color: colors.tone, shape: AppShape.all(26)),
       child: Row(
         children: [
-          for (final item in Mode.values)
+          for (final item in choices.items)
             Expanded(
               child: Semantics(
                 button: true,
                 selected: item == mode,
                 inMutuallyExclusiveGroup: true,
-                label: item.label,
+                label: _labelOf(context, item),
                 excludeSemantics: true,
                 child: Container(
                   decoration: item == mode
@@ -63,7 +91,7 @@ class OutboundModeSelector extends ConsumerWidget {
                       customBorder: AppShape.all(22),
                       splashFactory: NoSplash.splashFactory,
                       highlightColor: Colors.transparent,
-                      onTap: () => _changeMode(ref, item),
+                      onTap: () => _changeMode(ref, item, mode),
                       child: SizedBox(
                         height: 46,
                         child: Row(
@@ -84,7 +112,7 @@ class OutboundModeSelector extends ConsumerWidget {
                               ),
                             Flexible(
                               child: Text(
-                                item.label,
+                                _labelOf(context, item),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: style.copyWith(
@@ -124,9 +152,8 @@ class OutboundModeBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final density = DashboardDensityScope.of(context);
-    final mode = ref.watch(
-      patchClashConfigProvider.select((state) => state.mode),
-    );
+    final choices = _watchChoices(ref);
+    final mode = choices.selected;
     final appLocalizations = context.appLocalizations;
     final outer = dashboardCardRadius(density) - _inset;
     final style = DashboardText.rowTitle(context);
@@ -160,17 +187,17 @@ class OutboundModeBar extends ConsumerWidget {
               child: DashboardConnectedGroup(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final (index, item) in Mode.values.indexed)
+                  for (final (index, item) in choices.items.indexed)
                     Expanded(
                       child: DashboardConnectedButton(
                         selected: item == mode,
                         first: index == 0,
-                        last: index == Mode.values.length - 1,
+                        last: index == choices.items.length - 1,
                         outer: outer,
                         inner: 10,
                         background: DashboardColors.of(context).tone,
-                        semanticLabel: item.label,
-                        onTap: () => _changeMode(ref, item),
+                        semanticLabel: _labelOf(context, item),
+                        onTap: () => _changeMode(ref, item, mode),
                         builder: (foreground) => Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           spacing: 6,
@@ -188,7 +215,7 @@ class OutboundModeBar extends ConsumerWidget {
                             ),
                             Flexible(
                               child: Text(
-                                item.label,
+                                _labelOf(context, item),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: style.copyWith(color: foreground),

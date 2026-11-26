@@ -104,18 +104,20 @@ int compareVersions(String version1, String version2) {
   // `int.parse('07-pre')` would throw and take the update check with it.
   final List<String> v1 = version1.split('+')[0].split('-')[0].split('.');
   final List<String> v2 = version2.split('+')[0].split('-')[0].split('.');
-  final int major1 = int.parse(v1[0]);
-  final int major2 = int.parse(v2[0]);
+  // A tag that is not a version (a dev tag read without a release name) must
+  // not abort the whole update check with a FormatException.
+  final int major1 = int.tryParse(v1[0]) ?? 0;
+  final int major2 = int.tryParse(v2[0]) ?? 0;
   if (major1 != major2) {
     return major1.compareTo(major2);
   }
-  final int minor1 = v1.length > 1 ? int.parse(v1[1]) : 0;
-  final int minor2 = v2.length > 1 ? int.parse(v2[1]) : 0;
+  final int minor1 = v1.length > 1 ? int.tryParse(v1[1]) ?? 0 : 0;
+  final int minor2 = v2.length > 1 ? int.tryParse(v2[1]) ?? 0 : 0;
   if (minor1 != minor2) {
     return minor1.compareTo(minor2);
   }
-  final int patch1 = v1.length > 2 ? int.parse(v1[2]) : 0;
-  final int patch2 = v2.length > 2 ? int.parse(v2[2]) : 0;
+  final int patch1 = v1.length > 2 ? int.tryParse(v1[2]) ?? 0 : 0;
+  final int patch2 = v2.length > 2 ? int.tryParse(v2[2]) ?? 0 : 0;
   if (patch1 != patch2) {
     return patch1.compareTo(patch2);
   }
@@ -150,10 +152,10 @@ int compareVersions(String version1, String version2) {
     return rank1.compareTo(rank2);
   }
   final int build1 = version1.contains('+')
-      ? int.parse(version1.split('+')[1])
+      ? int.tryParse(version1.split('+')[1]) ?? 0
       : 0;
   final int build2 = version2.contains('+')
-      ? int.parse(version2.split('+')[1])
+      ? int.tryParse(version2.split('+')[1]) ?? 0
       : 0;
   return build1.compareTo(build2);
 }
@@ -220,40 +222,37 @@ String? releaseApkSha256(Object? body, String assetName) {
 /// Whether [remoteVersion] should be offered to someone running
 /// [installedVersion].
 ///
-/// Every channel draws its build number from one counter, and Android orders
-/// installs by exactly that number -- so where both sides have one, the counter
-/// decides and the version name is decoration. Comparing names instead offers a
-/// build a release its own number already outranks, and Android refuses a
-/// downgrade: the app would promise an update it cannot install.
-///
-/// Without numbers on both sides the version names are all there is, and they
-/// are not comparable across the two conventions -- a snapshot's fourth
-/// component counts the day, a release's counts releases. A snapshot is
-/// therefore never offered anything by name; silence is the honest answer.
+/// The version name is the primary comparison because its fourth component is
+/// the one revision counter shared across every channel: a preview `1.1.1.523`
+/// and a stable `1.2.1.4` are comparable by name and the stable wins. A build
+/// number is only a tie-breaker when both sides come from the same counter --
+/// the injected `buildNumber` and a release's `build-number:` marker do, but a
+/// preview's injected number and an older release's marker can drift apart by
+/// two million, so trusting it alone would hide a higher-versioned stable from
+/// a preview. The marker is therefore checked only when the names are equal.
 bool shouldOfferUpdate({
   required String remoteVersion,
   required int? remoteBuildNumber,
   required String installedVersion,
   int? installedBuildNumber,
 }) {
-  // A build knows the versionCode it was made with, injected by the build; a
-  // caller that found this build's own release may also read it from the notes.
-  // Builds old enough to carry neither wrote it into the version instead.
   installedBuildNumber ??=
       int.tryParse(buildNumber) ?? _legacyBuildNumber(installedVersion);
+
+  // The version name carries the shared revision counter and channel rank, so
+  // it decides whenever the two names differ. This is what lets a preview see
+  // a higher stable, and a stable see a higher beta, regardless of how the two
+  // build-number ledgers happen to line up.
+  final byName = compareVersions(remoteVersion, installedVersion);
+  if (byName != 0) return byName > 0;
+
+  // Same name: fall back to the build counter to tell a rebuild from its
+  // original. Only compare when both numbers exist; a snapshot with no
+  // comparable number stays silent rather than guessing.
   if (installedBuildNumber != null && remoteBuildNumber != null) {
     return remoteBuildNumber > installedBuildNumber;
   }
-  if (_isSnapshot(installedVersion)) {
-    // A release that does not state its number cannot be placed on the
-    // counter, and the version names are not comparable across the two
-    // conventions -- the snapshot's fourth component always reads larger. That
-    // is every answer taken from the release page redirect, which carries the
-    // tag and nothing else: the fallback the API drops to once its quota is
-    // spent. (Both numbers present is already handled above.)
-    return false;
-  }
-  return compareVersions(remoteVersion, installedVersion) > 0;
+  return false;
 }
 
 /// The newest release in [releases] that should be offered to someone running
@@ -345,6 +344,15 @@ String releaseVersionOf(String tag, [String? name]) {
         ? null
         : RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0);
     return named ?? '1.0.0.${preview.group(1)}';
+  }
+  // Dev tags (`dev-win-32701`) are not versions either. The release name
+  // carries the real one; without it the raw tag still reaches
+  // compareVersions, which now tolerates non-numeric components.
+  if (tag.startsWith('dev-')) {
+    final named = name == null
+        ? null
+        : RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0);
+    return named ?? tag;
   }
   return tag;
 }

@@ -194,47 +194,193 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m78(percent, upload, download) =>
       "${percent} · ↑ ${upload} ↓ ${download}";
 
-  static String m79(count) => "${count}개 규칙에 히트";
+  static String m79(pick, now) => "${now} 대신 ${pick}을(를) 선택합니다";
 
-  static String m80(count, upload, download) =>
+  static String m80(group) => "${group}에서 선택될 서버";
+
+  static String m81(pick) => "${pick}을(를) 유지합니다";
+
+  static String m82(number) => "조건 ${number}";
+
+  static String m83(profile) => "“${profile}”이(가) 이 사이트들을 확인하려 합니다";
+
+  static String m84(count) => "${Intl.plural(count, other: '서버 ${count}개')}";
+
+  static String m85(profile) => "“${profile}”을(를) 삭제할까요?";
+
+  static String m86(requests, used, cap) =>
+      "오늘 확인: ${requests} · ${cap} 중 ${used}";
+
+  static String m87(condition) => "${condition} 제외";
+
+  static String m88(country) => "출구 ${country}";
+
+  static String m89(member) => "${member} 경유";
+
+  static String m90(scenario) => "시나리오 「${scenario}」에서";
+
+  static String m91(title) =>
+      "“${title}”은(는) 변경할 수 없습니다. 수정 내용은 사본에 저장되고, 사본이 실행 중인 시나리오가 됩니다.";
+
+  static String m92(mode) => "경로는 규칙 모드에서 적용됩니다. 현재 연결은 ${mode} 모드입니다.";
+
+  static String m93(profile) => "“${profile}”을(를) 추가했습니다";
+
+  static String m94(node) => "${node}이(가) 작동을 멈췄습니다";
+
+  static String m95(from, to) => "모드 ${from} → ${to}";
+
+  static String m96(count) =>
+      "${Intl.plural(count, other: '현재 서버 ${count}개 해당')}";
+
+  static String m97(ms) => "${ms}ms 미만";
+
+  static String m98(text) => "이름에 ${text}";
+
+  static String m99(what) => "${what} 제외";
+
+  static String m100(provider) => "${provider} 제공";
+
+  static String m101(number) => "${number}단계";
+
+  static String m102(tag) => "태그 ${tag}";
+
+  static String m103(line, text) => "${line}행: ${text}";
+
+  static String m104(check) => "확인 ${check}은(는) 사용되지 않아 실행되지 않습니다";
+
+  static String m105(hosts) => "서드파티 사이트에 접속함: ${hosts}";
+
+  static String m106(group) => "이 구성에는 ${group} 그룹이 없습니다";
+
+  static String m107(group) => "${group}의 서버 중 필터를 통과하는 것이 없습니다";
+
+  static String m108(tag) => "태그 ${tag}은(는) 사용되지 않습니다";
+
+  static String m109(group, tier) =>
+      "현재 ${group}의 서버 중 “${tier}”에 해당하는 것이 없습니다";
+
+  static String m110(tier, after) =>
+      "“${tier}”은(는) “${after}”와 조건이 같아 아무것도 들어가지 않습니다";
+
+  static String m111(name, count) => "${name} 외 ${count}개";
+
+  static String m112(keys) => "가져왔습니다. 다음 항목은 직접 수정했으므로 내 값을 유지했습니다: ${keys}";
+
+  static String m113(mode) => "모드: ${mode}";
+
+  static String m114(node) => "${node}에 머뭅니다. 장애가 날 때만 벗어나고 복구되면 돌아옵니다.";
+
+  static String m115(kind) => "네트워크: ${kind}";
+
+  static String m116(condition) => "${condition}만";
+
+  static String m117(tier) => "확인 후 \'${tier}\'에 들 수 있음";
+
+  static String m118(node) => "고정됨: ${node}";
+
+  static String m119(error) => "동작 오류: ${error}";
+
+  static String m120(profile) => "${profile} 동작을 찾을 수 없어 기본값을 사용합니다";
+
+  static String m121(error) => "라우팅 상태를 저장할 수 없습니다: ${error}";
+
+  static String m122(tier) => "“${tier}” 서버로 이동";
+
+  static String m123(from) => "서버를 변경했습니다. ${from}은(는) 15분간 제외됩니다";
+
+  static String m124(from) => "${from}이(가) 작동을 멈춰 최적의 예비 서버로 전환";
+
+  static String m125(from, gain) => "${from}에서 전환: ${gain}ms 더 빠름";
+
+  static String m126(node) => "시나리오가 ${node}을(를) 유지 중";
+
+  static String m127(node) => "${node}이(가) 이 그룹에 없습니다";
+
+  static String m128(limit) => "전환 한도 도달 (시간당 ${limit}회)";
+
+  static String m129(mode) => "사용 안 함: ${mode} 모드";
+
+  static String m130(from) => "${from}은(는) 더 이상 후보가 아닙니다";
+
+  static String m131(kind) => "네트워크가 \'${kind}\'인 동안 일시 중지: 확인도 전환도 하지 않습니다";
+
+  static String m132(route, error) =>
+      "경로 \'${route}\'을(를) 적용하지 못했습니다: ${error}";
+
+  static String m133(route) =>
+      "경로 \'${route}\'을(를) 건너뛰었습니다. 같은 이름의 그룹이 이미 있습니다.";
+
+  static String m134(route, to) =>
+      "경로 \'${route}\'이(가) 트래픽을 보내는 \'${to}\'이(가) 프로필에 없습니다.";
+
+  static String m135(node) => "시나리오가 ${node}(으)로 전환합니다";
+
+  static String m136(node) => "고정된 서버 ${node}(으)로 전환";
+
+  static String m137(node) => "작동하는 서버가 없어 ${node}(으)로 대체";
+
+  static String m138(scenario) =>
+      "시나리오 \'${scenario}\'의 경로가 이 그룹을 만들었습니다. 수정이나 삭제는 그곳에서 하세요.";
+
+  static String m139(scenario) => "현재 이 그룹은 시나리오 \'${scenario}\'이(가) 제어합니다.";
+
+  static String m140(count, total) => "${total}개 중 ${count}개 일치";
+
+  static String m141(node) => "확인되면 ${node}(으)로 전환합니다";
+
+  static String m142(node, gain) => "${gain}ms 더 빠른 상태가 유지되면 ${node}(으)로 전환합니다";
+
+  static String m143(node, minutes) => "${minutes}분 후 ${node}(으)로 전환할 수 있습니다";
+
+  static String m144(name) => "확인 ${name}";
+
+  static String m145(name) => "네트워크 진단 ${name}";
+
+  static String m146(count) =>
+      "${Intl.plural(count, other: '이 그룹의 서버 ${count}개 중에서 고릅니다.')}";
+
+  static String m147(count) => "${count}개 규칙에 히트";
+
+  static String m148(count, upload, download) =>
       "${count} · ↑ ${upload} ↓ ${download}";
 
-  static String m81(percent, count) => "히트 트래픽의 ${percent} · ${count}";
+  static String m149(percent, count) => "히트 트래픽의 ${percent} · ${count}";
 
-  static String m82(count, label) =>
+  static String m150(count, label) =>
       "${Intl.plural(count, other: '규칙 ${label}개')}";
 
-  static String m83(appName) => "${appName} (안전 모드)";
+  static String m151(appName) => "${appName} (안전 모드)";
 
-  static String m84(count) => "${Intl.plural(count, other: '${count}초')}";
+  static String m152(count) => "${Intl.plural(count, other: '${count}초')}";
 
-  static String m85(count) => "${count}개 적용 중";
+  static String m153(count) => "${count}개 적용 중";
 
-  static String m86(count) => "${Intl.plural(count, other: '문제 ${count}건')}";
+  static String m154(count) => "${Intl.plural(count, other: '문제 ${count}건')}";
 
-  static String m87(time) => "확인 시각: ${time}";
+  static String m155(time) => "확인 시각: ${time}";
 
-  static String m88(count) => "${Intl.plural(count, other: '설정 ${count}개')}";
+  static String m156(count) => "${Intl.plural(count, other: '설정 ${count}개')}";
 
-  static String m89(link) => "읽을 수 있는 프록시가 없습니다: ${link}";
+  static String m157(link) => "읽을 수 있는 프록시가 없습니다: ${link}";
 
-  static String m90(label) => "${label}은(는) 하나만 입력해야 합니다";
+  static String m158(label) => "${label}은(는) 하나만 입력해야 합니다";
 
-  static String m91(value) => "최고 ${value}";
+  static String m159(value) => "최고 ${value}";
 
-  static String m92(hour, value) => "피크 ${hour}:00 · ${value}";
+  static String m160(hour, value) => "피크 ${hour}:00 · ${value}";
 
-  static String m93(value) => "합계 ${value}";
+  static String m161(value) => "합계 ${value}";
 
-  static String m94(transport) => "${transport} 요청 헤더";
+  static String m162(transport) => "${transport} 요청 헤더";
 
-  static String m95(label) => "${label}은(는) URL이어야 합니다";
+  static String m163(label) => "${label}은(는) URL이어야 합니다";
 
-  static String m96(month, day) => "${month}/${day} 주간";
+  static String m164(month, day) => "${month}/${day} 주간";
 
-  static String m97(count) => "${Intl.plural(count, other: '${count}년 전')}";
+  static String m165(count) => "${Intl.plural(count, other: '${count}년 전')}";
 
-  static String m98(count) => "${Intl.plural(count, other: '${count}년 전')}";
+  static String m166(count) => "${Intl.plural(count, other: '${count}년 전')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1350,6 +1496,492 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickActions": MessageLookupByLibrary.simpleMessage("빠른 작업"),
     "quickEdit": MessageLookupByLibrary.simpleMessage("빠른 편집"),
     "rankDetail": m78,
+    "rcxActiveScriptedGroups": MessageLookupByLibrary.simpleMessage(
+      "활성 스크립트 그룹",
+    ),
+    "rcxAddGroup": MessageLookupByLibrary.simpleMessage("그룹 추가"),
+    "rcxAddKind": MessageLookupByLibrary.simpleMessage("네트워크 종류 추가"),
+    "rcxAddTag": MessageLookupByLibrary.simpleMessage("태그 추가"),
+    "rcxAdvanced": MessageLookupByLibrary.simpleMessage("고급"),
+    "rcxAllGroups": MessageLookupByLibrary.simpleMessage("모든 그룹"),
+    "rcxAnyServer": MessageLookupByLibrary.simpleMessage("전체"),
+    "rcxBackToAuto": MessageLookupByLibrary.simpleMessage("자동으로 돌아가기"),
+    "rcxBalanced": MessageLookupByLibrary.simpleMessage("균형"),
+    "rcxBasedOn": MessageLookupByLibrary.simpleMessage("기반"),
+    "rcxBehaviour": MessageLookupByLibrary.simpleMessage("동작"),
+    "rcxBringChanges": MessageLookupByLibrary.simpleMessage("변경 사항 가져오기"),
+    "rcxBringChangesHint": MessageLookupByLibrary.simpleMessage(
+      "내가 한 수정은 그대로 유지됩니다",
+    ),
+    "rcxChangeServer": MessageLookupByLibrary.simpleMessage("서버 변경"),
+    "rcxChangeTo": MessageLookupByLibrary.simpleMessage("선택 대상"),
+    "rcxCheckDifferent": m79,
+    "rcxCheckGroup": MessageLookupByLibrary.simpleMessage("그룹"),
+    "rcxCheckNone": MessageLookupByLibrary.simpleMessage("서버를 찾지 못합니다"),
+    "rcxCheckOn": m80,
+    "rcxCheckOpen": MessageLookupByLibrary.simpleMessage("차단된 사이트 열림"),
+    "rcxCheckSame": m81,
+    "rcxChecks": MessageLookupByLibrary.simpleMessage("확인 빈도"),
+    "rcxCondAdd": MessageLookupByLibrary.simpleMessage("조건 추가"),
+    "rcxCondAll": MessageLookupByLibrary.simpleMessage("모든 조건"),
+    "rcxCondAlways": MessageLookupByLibrary.simpleMessage("항상"),
+    "rcxCondAny": MessageLookupByLibrary.simpleMessage("조건 중 하나"),
+    "rcxCondAnyServer": MessageLookupByLibrary.simpleMessage("모든 서버"),
+    "rcxCondAtLeast": MessageLookupByLibrary.simpleMessage("이상"),
+    "rcxCondAtMost": MessageLookupByLibrary.simpleMessage("이하"),
+    "rcxCondClause": m82,
+    "rcxCondCountry": MessageLookupByLibrary.simpleMessage("국가"),
+    "rcxCondField": MessageLookupByLibrary.simpleMessage("항목"),
+    "rcxCondIgnoreCase": MessageLookupByLibrary.simpleMessage("대소문자 구분 안 함"),
+    "rcxCondLess": MessageLookupByLibrary.simpleMessage("미만"),
+    "rcxCondMatch": MessageLookupByLibrary.simpleMessage("일치 방식"),
+    "rcxCondMore": MessageLookupByLibrary.simpleMessage("초과"),
+    "rcxCondNoNames": MessageLookupByLibrary.simpleMessage("선언된 항목 없음"),
+    "rcxCondNotPrefix": MessageLookupByLibrary.simpleMessage("아님"),
+    "rcxCondOp": MessageLookupByLibrary.simpleMessage("연산자"),
+    "rcxCondPattern": MessageLookupByLibrary.simpleMessage("패턴"),
+    "rcxCondText": MessageLookupByLibrary.simpleMessage("텍스트로"),
+    "rcxCondTooComplex": MessageLookupByLibrary.simpleMessage(
+      "이 조건은 그룹이 중첩되어 있어 텍스트로 편집합니다.",
+    ),
+    "rcxCondValue": MessageLookupByLibrary.simpleMessage("값"),
+    "rcxCondValues": MessageLookupByLibrary.simpleMessage("값(쉼표로 구분)"),
+    "rcxConsentAllow": MessageLookupByLibrary.simpleMessage("허용"),
+    "rcxConsentAsk": m83,
+    "rcxConsentHint": MessageLookupByLibrary.simpleMessage(
+      "허용하기 전까지 그룹은 단순 동작을 사용합니다. 사이트에는 내 서버를 통해서만, 또는 네트워크 테스트 시에만 접속합니다.",
+    ),
+    "rcxConsentTitle": MessageLookupByLibrary.simpleMessage("권한 필요"),
+    "rcxContacts": MessageLookupByLibrary.simpleMessage("접속한 사이트"),
+    "rcxContactsHint": MessageLookupByLibrary.simpleMessage(
+      "서드파티 사이트는 제공업체나 기본 제공 동작에 속하지 않습니다.",
+    ),
+    "rcxControl": MessageLookupByLibrary.simpleMessage("제어"),
+    "rcxCountryAll": MessageLookupByLibrary.simpleMessage("모든 국가"),
+    "rcxCountryOnServers": MessageLookupByLibrary.simpleMessage("내 서버의 국가"),
+    "rcxCountryPickMany": MessageLookupByLibrary.simpleMessage("국가 선택"),
+    "rcxCountryPickOne": MessageLookupByLibrary.simpleMessage("국가 하나 선택"),
+    "rcxCountryServers": m84,
+    "rcxCountryVerified": MessageLookupByLibrary.simpleMessage("확인됨"),
+    "rcxDeleteProfile": m85,
+    "rcxDetails": MessageLookupByLibrary.simpleMessage("세부 정보"),
+    "rcxDirectSplit": MessageLookupByLibrary.simpleMessage("직접 연결 사이트를 이 그룹으로"),
+    "rcxDirectSplitActive": MessageLookupByLibrary.simpleMessage("지금 켜짐"),
+    "rcxDirectSplitHint": MessageLookupByLibrary.simpleMessage(
+      "규칙상 직접 연결하는 사이트가 열리지 않으면 이 그룹을 거치게 합니다. 로컬 주소는 항상 직접 연결됩니다.",
+    ),
+    "rcxDirectSplitStandby": MessageLookupByLibrary.simpleMessage(
+      "대기 중: 직접 연결 사이트가 아직 열림",
+    ),
+    "rcxDuplicate": MessageLookupByLibrary.simpleMessage("사본 편집"),
+    "rcxEnergyEco": MessageLookupByLibrary.simpleMessage("절약"),
+    "rcxEnergyPrecise": MessageLookupByLibrary.simpleMessage("정밀"),
+    "rcxEnergyToday": m86,
+    "rcxExcept": m87,
+    "rcxExcludedByProfile": MessageLookupByLibrary.simpleMessage("동작에서 제외됨"),
+    "rcxExcludedCooldown": MessageLookupByLibrary.simpleMessage(
+      "“서버 변경” 후 제외됨",
+    ),
+    "rcxExcludedNoMatch": MessageLookupByLibrary.simpleMessage("후보 아님"),
+    "rcxExcludedNoTier": MessageLookupByLibrary.simpleMessage(
+      "어떤 우선순위에도 해당하지 않음",
+    ),
+    "rcxExcludedPending": MessageLookupByLibrary.simpleMessage("아직 확인 안 됨"),
+    "rcxExcludedUnroutable": MessageLookupByLibrary.simpleMessage("서버가 아님"),
+    "rcxExit": m88,
+    "rcxExport": MessageLookupByLibrary.simpleMessage("내보내기"),
+    "rcxFeelCalm": MessageLookupByLibrary.simpleMessage("드물게"),
+    "rcxFeelEager": MessageLookupByLibrary.simpleMessage("자주"),
+    "rcxFieldAlive": MessageLookupByLibrary.simpleMessage("작동 중"),
+    "rcxFieldCurrent": MessageLookupByLibrary.simpleMessage("사용 중"),
+    "rcxFieldDead": MessageLookupByLibrary.simpleMessage("작동 안 함"),
+    "rcxFieldDiag": MessageLookupByLibrary.simpleMessage("네트워크 진단"),
+    "rcxFieldEntry": MessageLookupByLibrary.simpleMessage("입구 국가"),
+    "rcxFieldExit": MessageLookupByLibrary.simpleMessage("출구 국가"),
+    "rcxFieldFails": MessageLookupByLibrary.simpleMessage("확인 실패"),
+    "rcxFieldKind": MessageLookupByLibrary.simpleMessage("네트워크 종류"),
+    "rcxFieldLatency": MessageLookupByLibrary.simpleMessage("지연 시간(ms)"),
+    "rcxFieldMeasured": MessageLookupByLibrary.simpleMessage("측정됨"),
+    "rcxFieldMetered": MessageLookupByLibrary.simpleMessage("종량제 네트워크"),
+    "rcxFieldName": MessageLookupByLibrary.simpleMessage("이름"),
+    "rcxFieldPasses": MessageLookupByLibrary.simpleMessage("확인 통과"),
+    "rcxFieldPortal": MessageLookupByLibrary.simpleMessage("로그인 페이지"),
+    "rcxFieldProvider": MessageLookupByLibrary.simpleMessage("제공업체"),
+    "rcxFieldServer": MessageLookupByLibrary.simpleMessage("서버 주소"),
+    "rcxFieldTag": MessageLookupByLibrary.simpleMessage("태그"),
+    "rcxFieldTransport": MessageLookupByLibrary.simpleMessage("연결 유형"),
+    "rcxFieldType": MessageLookupByLibrary.simpleMessage("프로토콜"),
+    "rcxFieldUdp": MessageLookupByLibrary.simpleMessage("UDP 지원"),
+    "rcxFixedHint": MessageLookupByLibrary.simpleMessage(
+      "그룹 전체가 서버 탐색 없이 이 항목을 거칩니다. 로드 밸런서나 중첩 그룹을 선택하면 모든 트래픽을 맡길 수 있습니다.",
+    ),
+    "rcxFixedOn": m89,
+    "rcxFromScenario": m90,
+    "rcxFromYours": MessageLookupByLibrary.simpleMessage("이 그룹용 사용자 설정"),
+    "rcxGroupProfiles": MessageLookupByLibrary.simpleMessage("동작"),
+    "rcxGroupProfilesHint": MessageLookupByLibrary.simpleMessage(
+      "그룹이 서버를 고르는 방식입니다. 직접 만든 항목은 탭하여 편집하고, 그 외 항목은 복사본을 편집합니다.",
+    ),
+    "rcxHealthAlive": MessageLookupByLibrary.simpleMessage("작동 중"),
+    "rcxHealthDead": MessageLookupByLibrary.simpleMessage("작동 안 함"),
+    "rcxHealthStale": MessageLookupByLibrary.simpleMessage("이전에 작동"),
+    "rcxHealthUnknown": MessageLookupByLibrary.simpleMessage("확인 안 됨"),
+    "rcxHistory": MessageLookupByLibrary.simpleMessage("기록"),
+    "rcxHistoryVersions": MessageLookupByLibrary.simpleMessage("이전 버전"),
+    "rcxHowToChoose": MessageLookupByLibrary.simpleMessage("서버 선택 방법"),
+    "rcxHubAuto": MessageLookupByLibrary.simpleMessage("시나리오 사용"),
+    "rcxHubBundle": MessageLookupByLibrary.simpleMessage("이 파일의 내용"),
+    "rcxHubChange": MessageLookupByLibrary.simpleMessage("시나리오 선택"),
+    "rcxHubCopyConfirm": MessageLookupByLibrary.simpleMessage("사본 편집"),
+    "rcxHubCopyMessage": m91,
+    "rcxHubCopyTitle": MessageLookupByLibrary.simpleMessage("사본을 편집할까요?"),
+    "rcxHubDescriptionHint": MessageLookupByLibrary.simpleMessage(
+      "이 시나리오가 하는 일",
+    ),
+    "rcxHubEverythingElse": MessageLookupByLibrary.simpleMessage("나머지 트래픽"),
+    "rcxHubGroupsEmpty": MessageLookupByLibrary.simpleMessage(
+      "이 구독에는 활성 스크립트 그룹이 없습니다.",
+    ),
+    "rcxHubLibrary": MessageLookupByLibrary.simpleMessage("시나리오 라이브러리"),
+    "rcxHubNeedsCore": MessageLookupByLibrary.simpleMessage(
+      "자동 라우팅을 보려면 연결을 시작하세요",
+    ),
+    "rcxHubNetworks": MessageLookupByLibrary.simpleMessage("네트워크 종류"),
+    "rcxHubNoProfile": MessageLookupByLibrary.simpleMessage("구독 없음"),
+    "rcxHubNoProfileHint": MessageLookupByLibrary.simpleMessage(
+      "먼저 구독을 추가하세요. 자동 라우팅은 그 그룹을 사용합니다.",
+    ),
+    "rcxHubOffHint": MessageLookupByLibrary.simpleMessage(
+      "시나리오는 이 구독의 경로, 프록시 그룹, 터널 모드를 제어할 수 있습니다.",
+    ),
+    "rcxHubOtherGroups": MessageLookupByLibrary.simpleMessage("이 시나리오의 그룹"),
+    "rcxHubOtherGroupsHint": MessageLookupByLibrary.simpleMessage(
+      "이 시나리오가 개별 구독 그룹에 하는 작업입니다.",
+    ),
+    "rcxHubRoutes": MessageLookupByLibrary.simpleMessage("경로"),
+    "rcxHubRoutesHint": MessageLookupByLibrary.simpleMessage(
+      "트래픽은 위에서부터 처음 일치하는 경로를 따르고, 나머지는 \'나머지 트래픽\'을 따릅니다.",
+    ),
+    "rcxHubRoutesRuleOnly": m92,
+    "rcxImportAdd": MessageLookupByLibrary.simpleMessage("내 라이브러리에 추가"),
+    "rcxImportNeedsCore": MessageLookupByLibrary.simpleMessage(
+      "이 파일을 확인하려면 앱의 코어를 시작하세요.",
+    ),
+    "rcxImportTitle": MessageLookupByLibrary.simpleMessage("자동 라우팅 가져오기"),
+    "rcxImported": m93,
+    "rcxJournalFailure": m94,
+    "rcxJournalMode": m95,
+    "rcxKindChecking": MessageLookupByLibrary.simpleMessage("확인 중"),
+    "rcxKindGroupsHint": MessageLookupByLibrary.simpleMessage(
+      "이 네트워크에서는 시나리오의 같은 이름 그룹을 대체하고, 나머지는 다른 모든 네트워크와 동일하게 동작합니다.",
+    ),
+    "rcxKindName": MessageLookupByLibrary.simpleMessage("이름"),
+    "rcxKindNameInvalid": MessageLookupByLibrary.simpleMessage(
+      "영문 소문자, 숫자, 하이픈, 최대 24자",
+    ),
+    "rcxKindOpen": MessageLookupByLibrary.simpleMessage("제한 없는 인터넷"),
+    "rcxKindPortal": MessageLookupByLibrary.simpleMessage("로그인 페이지"),
+    "rcxKindWhen": MessageLookupByLibrary.simpleMessage("인식 조건"),
+    "rcxKindWhenHint": MessageLookupByLibrary.simpleMessage(
+      "종류는 위에서 아래로 검사하며, 처음 일치하는 종류가 네트워크에 적용됩니다.",
+    ),
+    "rcxKindWhitelist": MessageLookupByLibrary.simpleMessage("화이트리스트 전용"),
+    "rcxLadderAdd": MessageLookupByLibrary.simpleMessage("단계 추가"),
+    "rcxLadderAdvanced": MessageLookupByLibrary.simpleMessage("고급 조건…"),
+    "rcxLadderAnyWorking": MessageLookupByLibrary.simpleMessage("작동하는 아무 서버"),
+    "rcxLadderCountry": MessageLookupByLibrary.simpleMessage("국가"),
+    "rcxLadderEmptyHint": MessageLookupByLibrary.simpleMessage(
+      "단계를 추가하면 특정 서버를 우선할 수 있습니다",
+    ),
+    "rcxLadderExceptCountries": MessageLookupByLibrary.simpleMessage("이 국가 제외"),
+    "rcxLadderFallThrough": MessageLookupByLibrary.simpleMessage("모두 작동하지 않으면"),
+    "rcxLadderFits": m96,
+    "rcxLadderInherited": MessageLookupByLibrary.simpleMessage(
+      "동작의 설정입니다. 단계를 편집하면 나만의 순서가 됩니다",
+    ),
+    "rcxLadderLastResortHint": MessageLookupByLibrary.simpleMessage(
+      "최후의 수단 단계의 서버는 아래 단계를 포함해 다른 어느 단계에도 작동하는 서버가 없을 때만 사용됩니다.",
+    ),
+    "rcxLadderLatency": m97,
+    "rcxLadderLatencyUnder": MessageLookupByLibrary.simpleMessage("지연 상한(ms)"),
+    "rcxLadderNameContains": MessageLookupByLibrary.simpleMessage("이름에 포함"),
+    "rcxLadderNameHas": m98,
+    "rcxLadderNot": m99,
+    "rcxLadderOther": MessageLookupByLibrary.simpleMessage("기타 조건"),
+    "rcxLadderProvider": m100,
+    "rcxLadderServersIn": MessageLookupByLibrary.simpleMessage("이 단계의 서버"),
+    "rcxLadderStep": m101,
+    "rcxLadderTag": m102,
+    "rcxLadderTitle": MessageLookupByLibrary.simpleMessage("서버 순서"),
+    "rcxLadderUdp": MessageLookupByLibrary.simpleMessage("UDP"),
+    "rcxLastResort": MessageLookupByLibrary.simpleMessage("최후의 수단"),
+    "rcxLevel": MessageLookupByLibrary.simpleMessage("복잡도"),
+    "rcxLevelAdvanced": MessageLookupByLibrary.simpleMessage("고급"),
+    "rcxLevelSimple": MessageLookupByLibrary.simpleMessage("간단"),
+    "rcxLine": m103,
+    "rcxLintCheckUnused": m104,
+    "rcxLintConsent": m105,
+    "rcxLintGroupMissing": m106,
+    "rcxLintPoolEmpty": m107,
+    "rcxLintTagUnused": m108,
+    "rcxLintTierEmpty": m109,
+    "rcxLintTierUnreachable": m110,
+    "rcxMainGroup": MessageLookupByLibrary.simpleMessage("나머지 트래픽"),
+    "rcxMakeSmart": MessageLookupByLibrary.simpleMessage("스크립트로 선택"),
+    "rcxMakeSmartHint": MessageLookupByLibrary.simpleMessage(
+      "선택한 동작에 따라 이 그룹의 서버 선택 방식이 결정됩니다.",
+    ),
+    "rcxManageHint": MessageLookupByLibrary.simpleMessage(
+      "도구 → 고급 설정 → 스크립트로 제어하는 그룹에서 동작을 관리하세요.",
+    ),
+    "rcxMatchAdd": MessageLookupByLibrary.simpleMessage("항목 추가"),
+    "rcxMatchAllServices": MessageLookupByLibrary.simpleMessage("모든 서비스"),
+    "rcxMatchCidr": MessageLookupByLibrary.simpleMessage("IP 범위"),
+    "rcxMatchCustom": MessageLookupByLibrary.simpleMessage("사용자 지정"),
+    "rcxMatchDomain": MessageLookupByLibrary.simpleMessage("도메인"),
+    "rcxMatchGeoip": MessageLookupByLibrary.simpleMessage("IP 카테고리"),
+    "rcxMatchGeosite": MessageLookupByLibrary.simpleMessage("사이트 카테고리"),
+    "rcxMatchHint": MessageLookupByLibrary.simpleMessage(
+      "이 경로가 추가로 처리할 도메인, IP 범위, 앱 또는 규칙 세트입니다.",
+    ),
+    "rcxMatchInvalid": MessageLookupByLibrary.simpleMessage("잘못된 값"),
+    "rcxMatchKeyword": MessageLookupByLibrary.simpleMessage("도메인 키워드"),
+    "rcxMatchMore": m111,
+    "rcxMatchNoResolve": MessageLookupByLibrary.simpleMessage("도메인 확인 안 함"),
+    "rcxMatchNone": MessageLookupByLibrary.simpleMessage("선택한 트래픽 없음"),
+    "rcxMatchProcess": MessageLookupByLibrary.simpleMessage("앱"),
+    "rcxMatchRuleSet": MessageLookupByLibrary.simpleMessage("규칙 세트"),
+    "rcxMatchServices": MessageLookupByLibrary.simpleMessage("서비스"),
+    "rcxMatchSuffix": MessageLookupByLibrary.simpleMessage("도메인 및 하위 도메인"),
+    "rcxMatchType": MessageLookupByLibrary.simpleMessage("유형"),
+    "rcxMatchTypeHint": MessageLookupByLibrary.simpleMessage(
+      "도메인 접미사는 모든 하위 도메인도 포함합니다.",
+    ),
+    "rcxMatchValue": MessageLookupByLibrary.simpleMessage("값"),
+    "rcxMergeFailed": MessageLookupByLibrary.simpleMessage("변경 사항을 가져오지 못했습니다"),
+    "rcxMerged": MessageLookupByLibrary.simpleMessage("변경 사항을 가져왔습니다"),
+    "rcxMergedConflicts": m112,
+    "rcxModeAuto": MessageLookupByLibrary.simpleMessage("자동"),
+    "rcxModeAutoHint": MessageLookupByLibrary.simpleMessage(
+      "서버 순서에 따라 작동하는 가장 좋은 서버를 고르고, 장애가 나면 전환합니다.",
+    ),
+    "rcxModeBackToAuto": MessageLookupByLibrary.simpleMessage("모드를 시나리오에 돌려주기"),
+    "rcxModeByScenario": MessageLookupByLibrary.simpleMessage(
+      "이 네트워크의 모드는 시나리오가 정합니다",
+    ),
+    "rcxModeIs": m113,
+    "rcxModeKeep": MessageLookupByLibrary.simpleMessage("변경 안 함"),
+    "rcxModeManual": MessageLookupByLibrary.simpleMessage("수동"),
+    "rcxModeManualHint": MessageLookupByLibrary.simpleMessage(
+      "프록시에서 선택한 서버를 계속 사용합니다.",
+    ),
+    "rcxModeManualNow": MessageLookupByLibrary.simpleMessage(
+      "모드를 직접 선택했습니다. 시나리오 연동을(를) 선택할 때까지 시나리오는 대기합니다",
+    ),
+    "rcxModePinnedHint": m114,
+    "rcxModeScenario": MessageLookupByLibrary.simpleMessage("시나리오 연동"),
+    "rcxModeYours": MessageLookupByLibrary.simpleMessage(
+      "이 네트워크에서는 모드를 직접 관리합니다",
+    ),
+    "rcxNeedsConsent": MessageLookupByLibrary.simpleMessage("허용이 필요합니다"),
+    "rcxNetwork": m115,
+    "rcxNewProfile": MessageLookupByLibrary.simpleMessage("새 동작"),
+    "rcxNewScenario": MessageLookupByLibrary.simpleMessage("새 시나리오"),
+    "rcxOnThisNetwork": MessageLookupByLibrary.simpleMessage("이 네트워크에서"),
+    "rcxOnly": m116,
+    "rcxOpFail": MessageLookupByLibrary.simpleMessage("실패함"),
+    "rcxOpIn": MessageLookupByLibrary.simpleMessage("다음 중 하나"),
+    "rcxOpIs": MessageLookupByLibrary.simpleMessage("같음"),
+    "rcxOpIsNot": MessageLookupByLibrary.simpleMessage("같지 않음"),
+    "rcxOpMatches": MessageLookupByLibrary.simpleMessage("일치함"),
+    "rcxOpOk": MessageLookupByLibrary.simpleMessage("성공함"),
+    "rcxOwnProfile": MessageLookupByLibrary.simpleMessage("그룹에 설정된 대로"),
+    "rcxOwnProfileHint": MessageLookupByLibrary.simpleMessage(
+      "그룹은 자체 설정의 동작을 유지합니다.",
+    ),
+    "rcxPatternInvalid": MessageLookupByLibrary.simpleMessage(
+      "패턴이 올바른 정규식이 아닙니다",
+    ),
+    "rcxPendingTier": m117,
+    "rcxPinned": m118,
+    "rcxPinnedLabel": MessageLookupByLibrary.simpleMessage("고정"),
+    "rcxPoolExclude": MessageLookupByLibrary.simpleMessage("서버 제외"),
+    "rcxPoolInclude": MessageLookupByLibrary.simpleMessage("서버만"),
+    "rcxProblemGroupEmpty": MessageLookupByLibrary.simpleMessage(
+      "그룹에 서버가 없습니다",
+    ),
+    "rcxProblemGroupUnavailable": MessageLookupByLibrary.simpleMessage(
+      "현재 설정에서 이 그룹은 선택기 그룹이 아닙니다",
+    ),
+    "rcxProblemProfileInvalid": m119,
+    "rcxProblemProfileMissing": m120,
+    "rcxProblemStoreFailed": m121,
+    "rcxProfile": MessageLookupByLibrary.simpleMessage("동작"),
+    "rcxProfileDescriptionHint": MessageLookupByLibrary.simpleMessage(
+      "이 동작이 하는 일",
+    ),
+    "rcxProfileName": MessageLookupByLibrary.simpleMessage("이름"),
+    "rcxProgramMember": MessageLookupByLibrary.simpleMessage("항목"),
+    "rcxReasonBest": MessageLookupByLibrary.simpleMessage("최적의 서버입니다"),
+    "rcxReasonBetterTier": m122,
+    "rcxReasonChangeServer": m123,
+    "rcxReasonChecking": MessageLookupByLibrary.simpleMessage("더 나은 후보 확인 중"),
+    "rcxReasonConfirming": MessageLookupByLibrary.simpleMessage(
+      "더 빠른 서버의 추가 측정이 필요합니다",
+    ),
+    "rcxReasonDwell": MessageLookupByLibrary.simpleMessage(
+      "최근 전환하여 다음 변경 전 대기 중",
+    ),
+    "rcxReasonFailover": m124,
+    "rcxReasonFaster": m125,
+    "rcxReasonFixed": m126,
+    "rcxReasonFixedMissing": m127,
+    "rcxReasonFlapLimit": m128,
+    "rcxReasonHoldPinned": MessageLookupByLibrary.simpleMessage("고정된 서버 유지"),
+    "rcxReasonIdle": m129,
+    "rcxReasonInitial": MessageLookupByLibrary.simpleMessage(
+      "사용 가능한 최적의 서버 선택",
+    ),
+    "rcxReasonManual": MessageLookupByLibrary.simpleMessage("수동으로 제어 중"),
+    "rcxReasonNetworkChanged": MessageLookupByLibrary.simpleMessage(
+      "네트워크가 변경됨",
+    ),
+    "rcxReasonNetworkSuspect": MessageLookupByLibrary.simpleMessage(
+      "네트워크가 끊긴 것 같아 서버를 탓하지 않습니다",
+    ),
+    "rcxReasonNoAlternative": MessageLookupByLibrary.simpleMessage(
+      "전환할 다른 작동 서버가 없습니다",
+    ),
+    "rcxReasonOutOfPool": m130,
+    "rcxReasonPaused": m131,
+    "rcxReasonRouteInvalid": m132,
+    "rcxReasonRouteNameTaken": m133,
+    "rcxReasonRouteToMissing": m134,
+    "rcxReasonSelectFailed": MessageLookupByLibrary.simpleMessage(
+      "서버를 선택할 수 없습니다",
+    ),
+    "rcxReasonSplitOff": MessageLookupByLibrary.simpleMessage(
+      "직접 연결 사이트가 다시 직접 연결됩니다",
+    ),
+    "rcxReasonSplitOn": MessageLookupByLibrary.simpleMessage(
+      "직접 연결 사이트가 이제 이 그룹을 거칩니다",
+    ),
+    "rcxReasonStranded": MessageLookupByLibrary.simpleMessage(
+      "작동하는 서버가 없어 현재 서버를 유지합니다",
+    ),
+    "rcxReasonSwitchFixed": m135,
+    "rcxReasonSwitchPinned": m136,
+    "rcxReasonSwitchStranded": m137,
+    "rcxReasonWorking": MessageLookupByLibrary.simpleMessage(
+      "작동 중이며 장애 전까지 유지",
+    ),
+    "rcxRouteAdd": MessageLookupByLibrary.simpleMessage("경로 추가"),
+    "rcxRouteChoose": MessageLookupByLibrary.simpleMessage("선택"),
+    "rcxRouteEdit": MessageLookupByLibrary.simpleMessage("경로 수정"),
+    "rcxRouteGroup": MessageLookupByLibrary.simpleMessage("경로로 생성됨"),
+    "rcxRouteGroupHint": m138,
+    "rcxRouteName": MessageLookupByLibrary.simpleMessage("이름"),
+    "rcxRouteNameLong": MessageLookupByLibrary.simpleMessage("이름이 너무 깁니다"),
+    "rcxRouteNameReserved": MessageLookupByLibrary.simpleMessage("예약된 이름입니다"),
+    "rcxRouteNew": MessageLookupByLibrary.simpleMessage("새 경로"),
+    "rcxRouteSendAutoHint": MessageLookupByLibrary.simpleMessage(
+      "작동하는 가장 좋은 서버를 자동으로 선택합니다.",
+    ),
+    "rcxRouteSendDirectHint": MessageLookupByLibrary.simpleMessage(
+      "이 트래픽은 프록시를 거치지 않습니다.",
+    ),
+    "rcxRouteSendFixed": MessageLookupByLibrary.simpleMessage("서버 하나"),
+    "rcxRouteSendFixedHint": MessageLookupByLibrary.simpleMessage(
+      "이 트래픽은 항상 선택한 서버나 그룹을 거칩니다.",
+    ),
+    "rcxRouteTarget": MessageLookupByLibrary.simpleMessage("서버"),
+    "rcxRouteWhere": MessageLookupByLibrary.simpleMessage("보낼 곳"),
+    "rcxScenario": MessageLookupByLibrary.simpleMessage("시나리오"),
+    "rcxScenarioDrives": m139,
+    "rcxScenarioGroups": MessageLookupByLibrary.simpleMessage("그룹"),
+    "rcxScenarioKindsHint": MessageLookupByLibrary.simpleMessage(
+      "직접 진단으로 네트워크를 인식한 뒤 각 네트워크의 모드와 그룹을 변경하세요.",
+    ),
+    "rcxScenarioMode": MessageLookupByLibrary.simpleMessage("연결 모드"),
+    "rcxScenarios": MessageLookupByLibrary.simpleMessage("시나리오"),
+    "rcxScenariosHint": MessageLookupByLibrary.simpleMessage(
+      "시나리오를 눌러 편집하세요. 기본 및 제공업체 시나리오는 사본으로 열립니다.",
+    ),
+    "rcxSendBest": MessageLookupByLibrary.simpleMessage("최적의 서버"),
+    "rcxSendDirect": MessageLookupByLibrary.simpleMessage("직접 연결"),
+    "rcxServers": MessageLookupByLibrary.simpleMessage("서버"),
+    "rcxServersMatch": m140,
+    "rcxServersPattern": MessageLookupByLibrary.simpleMessage("이름 패턴"),
+    "rcxSmartGroups": MessageLookupByLibrary.simpleMessage("스크립트로 제어하는 그룹"),
+    "rcxSourceBuiltin": MessageLookupByLibrary.simpleMessage("기본 제공"),
+    "rcxSourceChanged": MessageLookupByLibrary.simpleMessage("원본이 변경되었습니다"),
+    "rcxSourceChanges": MessageLookupByLibrary.simpleMessage("변경된 내용"),
+    "rcxSourceProvider": MessageLookupByLibrary.simpleMessage("제공자 제공"),
+    "rcxSourceUser": MessageLookupByLibrary.simpleMessage("내 프로필"),
+    "rcxStranded": MessageLookupByLibrary.simpleMessage("작동하는 서버가 없을 때"),
+    "rcxStrandedDirect": MessageLookupByLibrary.simpleMessage("직접 연결"),
+    "rcxStrandedHold": MessageLookupByLibrary.simpleMessage("현재 유지"),
+    "rcxStrategyAllServers": MessageLookupByLibrary.simpleMessage(
+      "프로필의 모든 서버 사용",
+    ),
+    "rcxStrategyAuto": MessageLookupByLibrary.simpleMessage("서버 자동 선택"),
+    "rcxStrategyCoreUnavailable": MessageLookupByLibrary.simpleMessage(
+      "전략을 사용할 수 없습니다. 그룹의 기본 동작을 사용할 수 있습니다.",
+    ),
+    "rcxStrategyEdit": MessageLookupByLibrary.simpleMessage("전략 편집"),
+    "rcxStrategyHold": MessageLookupByLibrary.simpleMessage("작동 중인 서버 유지"),
+    "rcxStrategyLines": MessageLookupByLibrary.simpleMessage(
+      "해당 필드에 기존 서버, 그룹 또는 제공업체 이름을 한 줄에 하나씩 입력하세요.",
+    ),
+    "rcxStrategyLowestLatency": MessageLookupByLibrary.simpleMessage(
+      "측정된 지연 시간이 낮은 서버 우선",
+    ),
+    "rcxStrategyNotApplied": MessageLookupByLibrary.simpleMessage(
+      "전략을 적용하지 못했습니다",
+    ),
+    "rcxStrategyPreferNames": MessageLookupByLibrary.simpleMessage(
+      "이 문자가 포함된 이름 우선",
+    ),
+    "rcxStrategyProfileChanged": MessageLookupByLibrary.simpleMessage(
+      "활성 프로필이 변경되었습니다. 저장하려면 편집기를 다시 여세요.",
+    ),
+    "rcxStrategyYaml": MessageLookupByLibrary.simpleMessage("YAML 편집"),
+    "rcxStudioCharacter": MessageLookupByLibrary.simpleMessage("특성"),
+    "rcxStudioCharacterHint": MessageLookupByLibrary.simpleMessage(
+      "전환은 더 빠른 서버로 얼마나 쉽게 옮겨 가는지이고, 확인은 정확도와 배터리 소모를 맞바꿉니다.",
+    ),
+    "rcxStudioPreview": MessageLookupByLibrary.simpleMessage("지금 선택될 항목"),
+    "rcxStudioPreviewHint": MessageLookupByLibrary.simpleMessage(
+      "그룹을 선택하면 이 동작이 그 그룹에서 고를 서버를 볼 수 있습니다.",
+    ),
+    "rcxStudioRanking": MessageLookupByLibrary.simpleMessage("모든 후보"),
+    "rcxStudioServersHint": MessageLookupByLibrary.simpleMessage(
+      "이 조건 밖의 서버는 절대 선택되지 않습니다.",
+    ),
+    "rcxSwitching": MessageLookupByLibrary.simpleMessage("전환"),
+    "rcxTagName": MessageLookupByLibrary.simpleMessage("태그 이름"),
+    "rcxTagNameInvalid": MessageLookupByLibrary.simpleMessage(
+      "영문자, 숫자, -, _만 사용 가능, 최대 24자",
+    ),
+    "rcxTags": MessageLookupByLibrary.simpleMessage("태그"),
+    "rcxTagsHint": MessageLookupByLibrary.simpleMessage(
+      "태그는 서버 묶음에 한 번 이름을 붙여 두고, 우선순위에서 tag(name)으로 사용합니다.",
+    ),
+    "rcxThirdParty": MessageLookupByLibrary.simpleMessage("서드파티"),
+    "rcxTierLabel": MessageLookupByLibrary.simpleMessage("레이블"),
+    "rcxTitle": MessageLookupByLibrary.simpleMessage("자동 라우팅"),
+    "rcxTurnOff": MessageLookupByLibrary.simpleMessage("스크립트 선택 해제"),
+    "rcxUntilCheck": m141,
+    "rcxUntilConfirm": m142,
+    "rcxUntilDwell": m143,
+    "rcxUseCheck": m144,
+    "rcxUseDiagnostic": m145,
+    "rcxUseEcho": MessageLookupByLibrary.simpleMessage("출구 국가 확인"),
+    "rcxWarnings": MessageLookupByLibrary.simpleMessage("경고"),
+    "rcxWhy": MessageLookupByLibrary.simpleMessage("이 서버를 선택한 이유"),
+    "rcxWouldDo": MessageLookupByLibrary.simpleMessage("기본 동작"),
+    "rcxWouldServers": m146,
+    "rcxYaml": MessageLookupByLibrary.simpleMessage("YAML"),
     "recentRequests": MessageLookupByLibrary.simpleMessage("최근 요청"),
     "recommendedIcons": MessageLookupByLibrary.simpleMessage("추천"),
     "recordType": MessageLookupByLibrary.simpleMessage("레코드 유형"),
@@ -1508,9 +2140,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Linux 사용자 ID 일치",
     ),
     "ruleEmpty": MessageLookupByLibrary.simpleMessage("규칙이 비어 있습니다"),
-    "ruleHitCount": m79,
-    "ruleHitDetail": m80,
-    "ruleHitShare": m81,
+    "ruleHitCount": m147,
+    "ruleHitDetail": m148,
+    "ruleHitShare": m149,
     "ruleHits": MessageLookupByLibrary.simpleMessage("규칙 히트"),
     "ruleListInvalid": MessageLookupByLibrary.simpleMessage(
       "규칙은 항목마다 규칙 하나인 YAML 목록이어야 합니다. 예: - DOMAIN,example.com,DIRECT",
@@ -1547,12 +2179,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "규칙은 DOMAIN,example.com,DIRECT처럼 지원하는 유형으로 시작해야 합니다",
     ),
     "rules": MessageLookupByLibrary.simpleMessage("규칙"),
-    "rulesCount": m82,
+    "rulesCount": m150,
     "runTime": MessageLookupByLibrary.simpleMessage("실행 시간"),
     "running": MessageLookupByLibrary.simpleMessage("실행 중"),
     "runtimeConfig": MessageLookupByLibrary.simpleMessage("런타임 구성"),
     "safeMode": MessageLookupByLibrary.simpleMessage("안전 모드"),
-    "safeModeAppTitle": m83,
+    "safeModeAppTitle": m151,
     "saturation": MessageLookupByLibrary.simpleMessage("채도"),
     "save": MessageLookupByLibrary.simpleMessage("저장"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("변경 사항을 저장하시겠습니까?"),
@@ -1564,9 +2196,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "search": MessageLookupByLibrary.simpleMessage("검색"),
     "searchHint": MessageLookupByLibrary.simpleMessage("페이지, 노드, 도구, 설정 검색"),
     "seconds": MessageLookupByLibrary.simpleMessage("초"),
-    "secondsCount": m84,
+    "secondsCount": m152,
     "secretKey": MessageLookupByLibrary.simpleMessage("키"),
-    "sectionsInEffect": m85,
+    "sectionsInEffect": m153,
     "select": MessageLookupByLibrary.simpleMessage("선택"),
     "selectAll": MessageLookupByLibrary.simpleMessage("모두 선택"),
     "selectRuleSet": MessageLookupByLibrary.simpleMessage("규칙 세트를 선택하세요"),
@@ -1598,13 +2230,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "휴대폰 카메라로 코드를 스캔한 뒤 열린 페이지에 링크를 붙여 넣으세요. 두 기기가 같은 네트워크에 연결되어 있어야 합니다.",
     ),
     "server": MessageLookupByLibrary.simpleMessage("서버"),
-    "serviceAbnormalCount": m86,
+    "serviceAbnormalCount": m154,
     "serviceAllAvailable": MessageLookupByLibrary.simpleMessage("모두 사용 가능"),
     "serviceAvailable": MessageLookupByLibrary.simpleMessage("사용 가능"),
     "serviceBlocked": MessageLookupByLibrary.simpleMessage("차단됨"),
     "serviceCheck": MessageLookupByLibrary.simpleMessage("확인"),
     "serviceCheckAll": MessageLookupByLibrary.simpleMessage("모두 확인"),
-    "serviceCheckedAt": m87,
+    "serviceCheckedAt": m155,
     "serviceComingSoon": MessageLookupByLibrary.simpleMessage("출시 예정"),
     "serviceDisallowedIsp": MessageLookupByLibrary.simpleMessage("허용되지 않는 ISP"),
     "serviceFailed": MessageLookupByLibrary.simpleMessage("확인 실패"),
@@ -1622,8 +2254,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "settingEntries": MessageLookupByLibrary.simpleMessage("설정"),
     "settings": MessageLookupByLibrary.simpleMessage("설정"),
-    "settingsCount": m88,
-    "shareLinkUnreadable": m89,
+    "settingsCount": m156,
+    "shareLinkUnreadable": m157,
     "shareLinksInvalid": MessageLookupByLibrary.simpleMessage(
       "링크에서 읽을 수 있는 프록시가 없습니다",
     ),
@@ -1650,7 +2282,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "singleShareLinkOnly": MessageLookupByLibrary.simpleMessage(
       "여기에는 링크를 하나만 입력하세요. 여러 개는 목록의 빠른 편집에서 편집하세요",
     ),
-    "singleValueTip": m90,
+    "singleValueTip": m158,
     "size": MessageLookupByLibrary.simpleMessage("크기"),
     "skipCertVerify": MessageLookupByLibrary.simpleMessage("인증서 검증 건너뛰기"),
     "skipDomain": MessageLookupByLibrary.simpleMessage("건너뛸 도메인"),
@@ -1675,6 +2307,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "specialRules": MessageLookupByLibrary.simpleMessage("특수 규칙"),
     "spectrum": MessageLookupByLibrary.simpleMessage("스펙트럼"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("속도 통계"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("연결 테스트"),
+    "speedTestDownloading": MessageLookupByLibrary.simpleMessage(
+      "다운로드 속도 측정 중",
+    ),
+    "speedTestFailed": MessageLookupByLibrary.simpleMessage("테스트 실패"),
+    "speedTestMbps": MessageLookupByLibrary.simpleMessage("Mbps"),
+    "speedTestMs": MessageLookupByLibrary.simpleMessage("밀리초"),
+    "speedTestPinging": MessageLookupByLibrary.simpleMessage("지연 시간 측정 중"),
+    "speedTestProvider": MessageLookupByLibrary.simpleMessage("제공자"),
+    "speedTestReady": MessageLookupByLibrary.simpleMessage("준비됨"),
+    "speedTestResult": MessageLookupByLibrary.simpleMessage("결과"),
+    "speedTestRoute": MessageLookupByLibrary.simpleMessage("테스트 경로"),
+    "speedTestStart": MessageLookupByLibrary.simpleMessage("테스트 시작"),
+    "speedTestStop": MessageLookupByLibrary.simpleMessage("중지"),
+    "speedTestSystemRoute": MessageLookupByLibrary.simpleMessage("시스템 경로"),
+    "speedTestTesting": MessageLookupByLibrary.simpleMessage("테스트 중"),
+    "speedTestUploading": MessageLookupByLibrary.simpleMessage("업로드 속도 측정 중"),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("분할 전략"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "분할 전략을 입력하세요",
@@ -1769,14 +2418,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "tproxyPort": MessageLookupByLibrary.simpleMessage("TProxy 포트"),
     "traffic": MessageLookupByLibrary.simpleMessage("트래픽"),
     "trafficOverview": MessageLookupByLibrary.simpleMessage("트래픽 개요"),
-    "trafficPeak": m91,
-    "trafficPeakLine": m92,
+    "trafficPeak": m159,
+    "trafficPeakLine": m160,
     "trafficRanking": MessageLookupByLibrary.simpleMessage("트래픽 순위"),
-    "trafficTotal": m93,
+    "trafficTotal": m161,
     "trafficTrend": MessageLookupByLibrary.simpleMessage("트래픽 추이"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("트래픽 사용량"),
     "transport": MessageLookupByLibrary.simpleMessage("전송"),
-    "transportHeaders": m94,
+    "transportHeaders": m162,
     "tun": MessageLookupByLibrary.simpleMessage("TUN"),
     "tunAuthorizationFailed": MessageLookupByLibrary.simpleMessage(
       "TUN 권한을 얻지 못해 끄기로 되돌렸습니다.",
@@ -1814,7 +2463,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("업로드"),
     "uploadBandwidth": MessageLookupByLibrary.simpleMessage("업로드 대역폭"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
-    "urlTip": m95,
+    "urlTip": m163,
     "usageDetails": MessageLookupByLibrary.simpleMessage("사용 상세"),
     "usageStats": MessageLookupByLibrary.simpleMessage("사용 통계"),
     "useHosts": MessageLookupByLibrary.simpleMessage("hosts 사용"),
@@ -1877,14 +2526,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
     ),
     "week": MessageLookupByLibrary.simpleMessage("주"),
-    "weeklyRange": m96,
+    "weeklyRange": m164,
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "시스템에 기록하면 시스템 시계도 설정합니다. Android에서는 무시됩니다.",
     ),
-    "yearsAgo": m97,
-    "yearsAgoShort": m98,
+    "yearsAgo": m165,
+    "yearsAgoShort": m166,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
   };

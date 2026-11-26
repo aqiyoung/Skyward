@@ -22,7 +22,6 @@ import 'widgets/widgets.dart';
 
 // Narrower columns leave the service grid's cells too tight for a status, so
 // the grid takes the memory card's column instead.
-const _memoryColumnMin = 290.0;
 
 const _maxColumnWidth = 440.0;
 
@@ -84,11 +83,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           density: layout,
           scale: scale,
           child: layout.isDesktop
-              ? _DesktopDashboard(
-                  platform: platform,
-                  columns: dashboardColumnsOf(room.width),
-                  gap: gap,
-                )
+              ? _DesktopDashboard(platform: platform, gap: gap)
               : _MobileDashboard(
                   platform: platform,
                   gap: gap,
@@ -102,7 +97,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       },
     );
     return CommonScaffold(
-      backgroundColor: DashboardColors.of(context).page,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
@@ -139,18 +133,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 }
 
-/// Four columns fill the window, the tables taking what the rows above them
-/// leave. A window too short for the tables, and every two column one, gets
-/// the summary cards instead, so no list scrolls inside a page that scrolls.
+/// The desktop board follows the product render: a status and speed row above
+/// two equal columns, with the tall Route card on the right.
 class _DesktopDashboard extends StatelessWidget {
-  const _DesktopDashboard({
-    required this.platform,
-    required this.columns,
-    required this.gap,
-  });
+  const _DesktopDashboard({required this.platform, required this.gap});
 
   final SupportPlatform platform;
-  final int columns;
   final double gap;
 
   @override
@@ -165,162 +153,99 @@ class _DesktopDashboard extends StatelessWidget {
       24 + MediaQuery.paddingOf(context).bottom,
     );
     final topHeight = (compact ? 176 : 208) * scale;
-    final controlHeight = (compact ? 56 : 64) * scale;
-    final middleHeight = (compact ? 152 : 176) * scale;
-    final tablesHeight = connectionsTableMinHeight(density, scale);
-    final summaryHeight = (compact ? 112 : 120) * scale;
-    // A world map reads best wide: the board takes the full width, and the
-    // connections table below it keeps its row only when the window can spare
-    // it -- on shorter windows the board stays and the table steps down to the
-    // summary cards, which the Connections page still carries in full.
-    final routingHeight = (compact ? 290 : 300) * scale;
+    // The small cards carry more space than their content needs. Trim it, but
+    // keep the Route card at its old height so the two columns still end at
+    // the same line: the left column loses two rows here, the right only one.
+    final middleHeight = (compact ? 128 : 152) * scale;
+    // The control card plus the config/memory row stack to this height; the
+    // Route card on the right is given the same height so the two columns end
+    // on one line.
+    final controlHeight = (compact ? 200 : 236) * scale;
+    final routeHeight = controlHeight + gap + middleHeight;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final room =
-            constraints.maxWidth - base.horizontal - gap * (columns - 1);
-        final column = math.min(room / columns, _maxColumnWidth * scale);
-        final inset = (room - column * columns) / 2;
+        // Two equal columns, as in the render: the status card and the pair
+        // of speed cards share the top row, and the two columns below line up
+        // with them. `_maxColumnWidth` keeps the board from stretching.
+        const columnCount = 2;
+        final room = constraints.maxWidth - base.horizontal - gap;
+        final column = math.min(room / columnCount, _maxColumnWidth * scale);
+        final inset = (room - column * columnCount) / 2;
         final padding = base.copyWith(
           start: base.start + inset,
           end: base.end + inset,
         );
-        double span(int columns) => column * columns + gap * (columns - 1);
-        Widget row(List<(int, Widget)> cards) => Row(
+        Widget sized(double height, Widget child) =>
+            SizedBox(height: height, child: child);
+        Widget halfRow(List<Widget> cards) => Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: gap,
           children: [
-            for (final (columns, card) in cards)
-              SizedBox(
-                width: span(columns),
-                child: RepaintBoundary(child: card),
-              ),
+            for (final card in cards)
+              Expanded(child: RepaintBoundary(child: card)),
           ],
         );
-        Widget sized(double height, Widget child) =>
-            SizedBox(height: height, child: child);
-        final switches = desktopPlatforms.contains(platform)
-            ? const [
-                (1, NetworkTakeoverTile(TakeoverSwitch.systemProxy)),
-                (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
-              ]
-            : const [(2, VpnTile())];
-        final half = columns ~/ 2;
-        final summaries = row([
-          (half, const ConnectionStatsCard()),
-          (half, const ProxyGroupsSummaryCard()),
-        ]);
-        if (columns == 2) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: padding,
-            child: Column(
-              spacing: gap,
-              children: [
-                sized(
-                  topHeight,
-                  const RepaintBoundary(child: CurrentOutboundCard()),
-                ),
-                sized(
-                  topHeight,
-                  row(const [
-                    (1, SpeedCard(direction: TrafficDirection.upload)),
-                    (1, SpeedCard(direction: TrafficDirection.download)),
-                  ]),
-                ),
-                sized(
-                  controlHeight,
-                  const RepaintBoundary(child: OutboundModeBar()),
-                ),
-                sized(controlHeight, row(switches)),
-                sized(
-                  middleHeight,
-                  row(const [(1, IntranetIpCard()), (1, ProfilesCard())]),
-                ),
-                sized(
-                  middleHeight,
-                  row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
-                ),
-                sized(
-                  routingHeight,
-                  const RepaintBoundary(child: RoutingBoardCard()),
-                ),
-                sized(summaryHeight, summaries),
-              ],
+        // Top row: status on the left, the two speed cards on the right.
+        final top = Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: gap,
+          children: [
+            Expanded(child: RepaintBoundary(child: CurrentOutboundCard())),
+            Expanded(
+              child: halfRow(const <Widget>[
+                SpeedCard(direction: TrafficDirection.upload),
+                SpeedCard(direction: TrafficDirection.download),
+              ]),
             ),
-          );
-        }
-        final rows = [
-          sized(
-            topHeight,
-            row(const [
-              (2, CurrentOutboundCard()),
-              (1, SpeedCard(direction: TrafficDirection.upload)),
-              (1, SpeedCard(direction: TrafficDirection.download)),
-            ]),
-          ),
-          sized(
-            controlHeight,
-            row([(2, const OutboundModeBar()), ...switches]),
-          ),
-          sized(
-            middleHeight,
-            row([
-              (1, const IntranetIpCard()),
-              (1, const ProfilesCard()),
-              if (column >= _memoryColumnMin * scale) ...[
-                (1, const ServiceStatusCard()),
-                (1, const MemoryInfo()),
-              ] else
-                (2, const ServiceStatusCard()),
-            ]),
-          ),
-          sized(routingHeight, row(const [(4, RoutingBoardCard())])),
-        ];
-        final rowsHeight =
-            padding.vertical +
-            topHeight +
-            controlHeight +
-            middleHeight +
-            routingHeight +
-            gap * 4;
-        final tablesFit = constraints.maxHeight >= rowsHeight + tablesHeight;
-        final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: fills ? constraints.maxHeight : null,
-            child: Padding(
-              padding: padding,
+          ],
+        );
+        // The control card now holds the intranet address too. Below it the
+        // config and memory cards sit side by side on the left, and the Route
+        // map takes the right column at the same total height.
+        final middle = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: gap,
+          children: [
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: gap,
                 children: [
-                  ...rows,
-                  if (tablesFit)
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: gap,
-                        children: const [
-                          Expanded(
-                            flex: 3,
-                            child: RepaintBoundary(
-                              child: ConnectionsTableCard(),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: RepaintBoundary(child: ProxyGroupsCard()),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (fills)
-                    Expanded(child: summaries)
-                  else
-                    sized(summaryHeight, summaries),
+                  sized(
+                    controlHeight,
+                    const RepaintBoundary(child: NetworkControlCard()),
+                  ),
+                  sized(
+                    middleHeight,
+                    halfRow(const <Widget>[ProfilesCard(), MemoryInfo()]),
+                  ),
                 ],
               ),
             ),
+            Expanded(
+              child: sized(
+                routeHeight,
+                const RepaintBoundary(child: RoutingBoardCard()),
+              ),
+            ),
+          ],
+        );
+        // Service status and the proxy-group summary share the bottom row,
+        // each taking half the board's width so they read as one pair.
+        final bottom = sized(
+          middleHeight,
+          halfRow(const <Widget>[
+            ServiceStatusCard(),
+            ProxyGroupsSummaryCard(),
+          ]),
+        );
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: gap,
+            children: [sized(topHeight, top), middle, bottom],
           ),
         );
       },

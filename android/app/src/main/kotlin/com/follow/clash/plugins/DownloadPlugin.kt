@@ -50,11 +50,12 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 val url = call.argument<String>("url")
                 val fileName = call.argument<String>("fileName")
                 val sha256 = call.argument<String>("expectedSha256")
+                val wifiOnly = call.argument<Boolean>("wifiOnly") ?: false
                 if (url.isNullOrBlank() || fileName.isNullOrBlank()) {
                     result.error("bad_arguments", "url and fileName are required", null)
                 } else {
                     try {
-                        result.success(download(url, fileName, sha256))
+                        result.success(download(url, fileName, sha256, wifiOnly))
                     } catch (error: Exception) {
                         result.error("download_failed", error.message, null)
                     }
@@ -107,7 +108,7 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
     /// Hands the file to the system download manager, which keeps it in the
     /// Downloads folder and shows its own progress.
-    private fun download(url: String, fileName: String, sha256: String?): Long {
+    private fun download(url: String, fileName: String, sha256: String?, wifiOnly: Boolean): Long {
         val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle(fileName)
@@ -115,8 +116,11 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
+            // A hands-free download (auto-install / Wi-Fi pre-download) is
+            // restricted to unmetered Wi-Fi so it cannot spend mobile data;
+            // the manual, user-confirmed path keeps the old permissive rule.
+            .setAllowedOverMetered(!wifiOnly)
+            .setAllowedOverRoaming(!wifiOnly)
         val downloadId = manager.enqueue(request)
         if (!sha256.isNullOrBlank()) {
             expectedSha256[downloadId] = sha256

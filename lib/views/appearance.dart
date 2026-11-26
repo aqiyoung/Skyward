@@ -5,6 +5,7 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/theme.dart';
 import 'package:skyward/widgets/widgets.dart';
+import 'package:flutter/material.dart' show Localizations;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -173,6 +174,25 @@ class _ThemeModeItem extends ConsumerWidget {
         ThemeMode.dark => appLocalizations.dark,
       },
       value: themeMode,
+    );
+  }
+}
+
+class _WarmLightItem extends ConsumerWidget {
+  const _WarmLightItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final warm = ref.watch(
+      themeSettingProvider.select((state) => state.warmLight),
+    );
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return ListItem.toggle(
+      title: Text(zh ? '暖色浅色背景' : 'Warm light surfaces'),
+      value: warm,
+      onChanged: (value) => ref
+          .read(themeSettingProvider.notifier)
+          .update((state) => state.copyWith(warmLight: value)),
     );
   }
 }

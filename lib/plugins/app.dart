@@ -10,11 +10,26 @@ import 'package:flutter/services.dart';
 
 const _platformProbeTimeout = Duration(seconds: 2);
 
+/// Why a silent self-update could not start.
+enum ApkInstallResult { started, permissionRequired, vpnActive }
+
+/// The stages a PackageInstaller session moves through, reported by native.
+enum ApkInstallStatus {
+  none,
+  preparing,
+  awaitingConfirmation,
+  installing,
+  success,
+  failed,
+  cancelled,
+}
+
 class App {
   static App? _instance;
   late MethodChannel methodChannel;
   Function()? onExit;
   Function()? onPackagesChanged;
+  Function(ApkInstallStatus)? onUpdateInstallStatus;
   final floatingKeyboard = ValueNotifier(false);
 
   App._internal() {
@@ -29,6 +44,8 @@ class App {
           onPackagesChanged?.call();
         case 'floatingImeChanged':
           floatingKeyboard.value = call.arguments as bool;
+        case 'updateInstallChanged':
+          onUpdateInstallStatus?.call(_apkInstallStatus(call.arguments));
         default:
           throw MissingPluginException();
       }
@@ -165,6 +182,79 @@ class App {
     if (!Platform.isAndroid) return false;
     return methodChannel.invokeMethod<bool>('openAppSettings');
   }
+
+  /// Verified self-update via PackageInstaller. The APK must already sit in
+  /// the app-private `app-updates` directory with a matching name and hash;
+  /// native re-checks both plus the signing certificate.
+  Future<bool> canRequestPackageInstalls() async =>
+      await methodChannel.invokeMethod<bool>('canRequestPackageInstalls') ?? false;
+
+  Future<bool> updateInstallBlockedByVpn() async =>
+      await methodChannel.invokeMethod<bool>('updateInstallBlockedByVpn') ?? true;
+
+  Future<bool> openUpdateInstallPermission() async =>
+      await methodChannel.invokeMethod<bool>('openUpdateInstallPermission') ?? false;
+
+  Future<void> verifyUpdateApk(
+    String path, {
+    required String expectedVersion,
+    required String expectedSha256,
+  }) => methodChannel.invokeMethod<void>('verifyUpdateApk', {
+    'path': path,
+    'version': expectedVersion,
+    'sha256': expectedSha256,
+  });
+
+  Future<ApkInstallResult> installApk(
+    String path, {
+    required String expectedVersion,
+    required String expectedSha256,
+    bool automatic = false,
+  }) async {
+    final result = await methodChannel.invokeMethod<String>('installApk', {
+      'path': path,
+      'version': expectedVersion,
+      'sha256': expectedSha256,
+      'automatic': automatic,
+    });
+    return switch (result) {
+      'started' => ApkInstallResult.started,
+      'permissionRequired' => ApkInstallResult.permissionRequired,
+      'vpnActive' => ApkInstallResult.vpnActive,
+      _ => throw PlatformException(
+          code: 'INVALID_INSTALL_RESULT',
+          message: 'Android returned an invalid APK install result',
+        ),
+    };
+  }
+
+  Future<String> updateInstalledVersion() async {
+    final version = await methodChannel.invokeMethod<String>('updateInstalledVersion');
+    if (version == null || version.isEmpty) {
+      throw PlatformException(code: 'INVALID_INSTALLED_VERSION');
+    }
+    return version;
+  }
+
+  Future<ApkInstallStatus> updateInstallStatus() async =>
+      _apkInstallStatus(await methodChannel.invokeMethod<String>('updateInstallStatus'));
+
+  Future<bool> continueUpdateInstall() async =>
+      await methodChannel.invokeMethod<bool>('continueUpdateInstall') ?? false;
+
+  ApkInstallStatus _apkInstallStatus(Object? value) => switch (value) {
+    'none' => ApkInstallStatus.none,
+    'preparing' => ApkInstallStatus.preparing,
+    'awaitingConfirmation' => ApkInstallStatus.awaitingConfirmation,
+    'installing' => ApkInstallStatus.installing,
+    'success' => ApkInstallStatus.success,
+    'failed' => ApkInstallStatus.failed,
+    'cancelled' => ApkInstallStatus.cancelled,
+    _ => throw PlatformException(
+        code: 'INVALID_INSTALL_STATUS',
+        message: 'Android returned an invalid APK install status',
+      ),
+  };
 
   Future<AppExitInfo?> getLastExitInfo() async {
     try {

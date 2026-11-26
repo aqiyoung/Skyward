@@ -1969,6 +1969,69 @@ abstract class _$Query extends $Notifier<String> {
   }
 }
 
+/// Fraction (0..1) of the update APK already downloaded; null when idle.
+/// The version row reads it while `loadingProvider(updateDownload)` is on.
+
+@ProviderFor(UpdateDownloadProgress)
+final updateDownloadProgressProvider = UpdateDownloadProgressProvider._();
+
+/// Fraction (0..1) of the update APK already downloaded; null when idle.
+/// The version row reads it while `loadingProvider(updateDownload)` is on.
+final class UpdateDownloadProgressProvider
+    extends $NotifierProvider<UpdateDownloadProgress, double?> {
+  /// Fraction (0..1) of the update APK already downloaded; null when idle.
+  /// The version row reads it while `loadingProvider(updateDownload)` is on.
+  UpdateDownloadProgressProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'updateDownloadProgressProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$updateDownloadProgressHash();
+
+  @$internal
+  @override
+  UpdateDownloadProgress create() => UpdateDownloadProgress();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(double? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<double?>(value),
+    );
+  }
+}
+
+String _$updateDownloadProgressHash() =>
+    r'8165677681d98f3c3fafca56101a6ea2960aabce';
+
+/// Fraction (0..1) of the update APK already downloaded; null when idle.
+/// The version row reads it while `loadingProvider(updateDownload)` is on.
+
+abstract class _$UpdateDownloadProgress extends $Notifier<double?> {
+  double? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<double?, double?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<double?, double?>,
+              double?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Loading)
 final loadingProvider = LoadingFamily._();
 

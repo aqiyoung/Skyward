@@ -6,13 +6,14 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The ad-block module: one switch, and the list it stands behind.
+/// The ad-block module: a switch, the hits it blocked, and the rules behind it.
 ///
 /// The rules live in `features/ad_block` and are put in front of every profile's
-/// own by the config builder, so this page only has to say whether they go in
-/// and what they are.
+/// own by the config builder, so this page only has to say whether they go in,
+/// what they blocked, and what they are.
 class AdBlockView extends ConsumerWidget {
   const AdBlockView({super.key});
 
@@ -22,6 +23,8 @@ class AdBlockView extends ConsumerWidget {
     final enabled = ref.watch(
       appSettingProvider.select((state) => state.adBlock),
     );
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    final hits = ref.watch(adBlockHitListProvider);
     return BaseScaffold(
       rowSeparators: false,
       title: appLocalizations.rulePresetAdBlock,
@@ -51,6 +54,49 @@ class AdBlockView extends ConsumerWidget {
                         .applyProfile(force: true),
                   );
                 },
+              ),
+            ],
+          ),
+          generateSection(
+            title: zh ? '拦截记录 · 近 7 天' : 'Blocked · last 7 days',
+            items: [
+              ...hits.when(
+                data: (blocked) => blocked.isEmpty
+                    ? [
+                        ListItem(
+                          title: Text(
+                            zh ? '暂无拦截记录' : 'No blocked requests yet',
+                          ),
+                        ),
+                      ]
+                    : [
+                        for (final hit in blocked)
+                          ListItem(
+                            title: Text(
+                              hit.domain,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: Text(
+                              '${hit.hits} ${appLocalizations.hitsUnit}',
+                              style: TextStyle(
+                                color: context.colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                      ],
+                loading: () => [
+                  ListItem(title: Text(zh ? '统计中…' : 'Counting…')),
+                ],
+                error: (error, _) => [
+                  ListItem(
+                    title: Text(
+                      zh ? '统计失败：$error' : 'Counting failed: $error',
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

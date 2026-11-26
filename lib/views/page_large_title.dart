@@ -79,15 +79,28 @@ class PageLargeTitle extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  for (final data in actions) AppBarActionButton(data: data),
-                  if (menuItems.isNotEmpty)
-                    CommonPopupBox(
-                      targetBuilder: (open) => IconButton(
-                        tooltip: UiLocalizations.of(context).more,
-                        onPressed: open,
-                        icon: const GlyphIcon(AppGlyphs.moreCircle),
+                  if (actions.isNotEmpty || menuItems.isNotEmpty)
+                    IconTheme(
+                      data: IconTheme.of(
+                        context,
+                      ).copyWith(color: colorScheme.primary, size: 22),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final data in actions)
+                            AppBarActionButton(data: data),
+                          if (menuItems.isNotEmpty)
+                            CommonPopupBox(
+                              targetBuilder: (open) => IconButton(
+                                tooltip: UiLocalizations.of(context).more,
+                                onPressed: open,
+                                icon: const GlyphIcon(AppGlyphs.more),
+                              ),
+                              popupBuilder: (_) =>
+                                  CommonPopupMenu(items: menuItems),
+                            ),
+                        ],
                       ),
-                      popupBuilder: (_) => CommonPopupMenu(items: menuItems),
                     ),
                 ],
               ),

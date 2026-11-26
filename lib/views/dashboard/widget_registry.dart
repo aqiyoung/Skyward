@@ -13,8 +13,11 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => const ProfilesCard(),
     DashboardWidget.proxyGroups => const ProxyGroupsCard(),
     DashboardWidget.memoryInfo => const MemoryInfo(),
-    DashboardWidget.trafficStats => const TrafficUsageCard(),
-    DashboardWidget.appUsage => const AppUsageCard(),
+    DashboardWidget.trafficStats => const UsageCard(),
+    // Both stats cards are now one switchable UsageCard; the legacy value
+    // still renders the same card so saved configs stay valid.
+    DashboardWidget.appUsage => const UsageCard(),
+    DashboardWidget.speedTest => const SpeedTestCard(),
   };
 
   Glyph get glyph => switch (this) {
@@ -27,6 +30,7 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.memoryInfo => AppGlyphs.memory,
     DashboardWidget.trafficStats => AppGlyphs.connections,
     DashboardWidget.appUsage => AppGlyphs.dataUsage,
+    DashboardWidget.speedTest => AppGlyphs.speed,
   };
 
   String label(BuildContext context) {
@@ -41,6 +45,7 @@ extension DashboardWidgetView on DashboardWidget {
       DashboardWidget.memoryInfo => appLocalizations.memoryInfo,
       DashboardWidget.trafficStats => appLocalizations.trafficUsage,
       DashboardWidget.appUsage => appLocalizations.usageStats,
+      DashboardWidget.speedTest => appLocalizations.speedTest,
     };
   }
 

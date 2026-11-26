@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/database/database.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/app.dart';
 import 'package:skyward/providers/core.dart';
@@ -17,6 +18,20 @@ Duration trafficSampleInterval(Ref ref) => const Duration(seconds: 5);
 /// How long history rows are kept before being pruned.
 @Riverpod(keepAlive: true)
 Duration trafficHistoryRetention(Ref ref) => const Duration(days: 90);
+
+/// Domains blocked by the ad-block module in the last seven days, read from
+/// the same native history the traffic card uses. The sampler below keeps it
+/// fresh, so the dashboard card never shows a stale count.
+@Riverpod(keepAlive: true)
+Future<List<AdBlockHit>> adBlockHitList(Ref ref) async {
+  ref.watch(trafficSamplerProvider);
+  final now = DateTime.now();
+  final rows = await database.nativeTrafficDao.between(
+    now.subtract(const Duration(days: 7)),
+    now,
+  );
+  return adBlockHits(rows);
+}
 
 @Riverpod(keepAlive: true)
 bool nativeTrafficHistoryEnabled(Ref ref) => system.isAndroid;
@@ -147,6 +162,9 @@ class TrafficSampler extends _$TrafficSampler {
     if (changed && ref.mounted) {
       ref.invalidate(trafficStatisticsProvider);
       ref.invalidate(appUsageProvider);
+      // adBlockHitListProvider reads nativeTrafficDao, which only _importNative
+      // writes. Invalidating it here re-queries seven days of history every
+      // five seconds for no new data -- a visible stutter on the UI isolate.
     }
   }
 
@@ -167,6 +185,7 @@ class TrafficSampler extends _$TrafficSampler {
       if (rows.isNotEmpty && ref.mounted) {
         ref.invalidate(trafficStatisticsProvider);
         ref.invalidate(appUsageProvider);
+        ref.invalidate(adBlockHitListProvider);
       }
     } catch (error) {
       commonPrint.log(

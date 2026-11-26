@@ -49,6 +49,7 @@ ColorScheme genColorScheme(
         primaryColor: state.primaryColor,
         colorStyle: state.colorStyle,
         pureBlack: state.pureBlack,
+        warmLight: state.warmLight,
       ),
     ),
   );
@@ -65,26 +66,30 @@ ColorScheme genColorScheme(
     brightness,
     themeSetting.colorStyle,
     pureBlack ?? themeSetting.pureBlack,
+    themeSetting.warmLight,
   );
 }
 
 const _maxCachedColorSchemes = 64;
 
-final _colorSchemes = <(Color, Brightness, ColorStyle, bool), ColorScheme>{};
+final _colorSchemes =
+    <(Color, Brightness, ColorStyle, bool, bool), ColorScheme>{};
 
 ColorScheme _cachedColorScheme(
   Color seedColor,
   Brightness brightness,
   ColorStyle style,
   bool pureBlack,
+  bool warmLight,
 ) {
-  final key = (seedColor, brightness, style, pureBlack);
+  final key = (seedColor, brightness, style, pureBlack, warmLight);
   final colorScheme =
       _colorSchemes.remove(key) ??
       seededColorScheme(
         seedColor: seedColor,
         brightness: brightness,
         style: style,
+        warmLight: warmLight,
       ).toPureBlack(pureBlack);
   _colorSchemes[key] = colorScheme;
   if (_colorSchemes.length > _maxCachedColorSchemes) {

@@ -113,12 +113,11 @@ function write(file, buf) {
 // --- in-app icon and the macOS set -------------------------------------------------
 // Android masks an adaptive icon itself, but a launcher (or the pre-12 splash,
 // which falls back to the app icon) may show it as-is, so the plate carries its
-// corner radius in the artwork. Windows takes a square icon and keeps its own.
+// corner radius in the artwork; so does the Windows .ico, which the desktop
+// and taskbar show directly.
 const SIZES = [1024, 512, 256, 128, 64, 32, 16];
-const full = {};
 const rounded = {};
 for (const size of SIZES) {
-  full[size] = await render({ size });
   rounded[size] = await render({ size, rounded: size * 0.22 });
 }
 write(`${root}/assets/images/icon.png`, rounded[1024]);
@@ -127,9 +126,18 @@ for (const size of SIZES) {
 }
 
 // --- Windows .ico (PNG entries, which Vista and later accept) ----------------------
+// The desktop and taskbar show this artwork directly, so it needs the same
+// baked-in corner radius as the other platforms -- a square plate looks
+// unfinished next to Windows' own rounded tiles. Sizes not in SIZES (24, 48)
+// are rendered here with the radius too.
 const icoSizes = [16, 24, 32, 48, 64, 128, 256];
 const images = [];
-for (const size of icoSizes) images.push({ size, png: size <= 256 ? full[size] ?? (await render({ size })) : null });
+for (const size of icoSizes) {
+  images.push({
+    size,
+    png: rounded[size] ?? (await render({ size, rounded: size * 0.22 })),
+  });
+}
 function buildIco(list) {
   const header = Buffer.alloc(6 + 16 * list.length);
   header.writeUInt16LE(0, 0);

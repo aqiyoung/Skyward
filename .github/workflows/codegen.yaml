@@ -1,0 +1,54 @@
+name: codegen
+
+# Generates freezed/json_serializable sources for models that are checked
+# into the repository (Skyward commits its generated/ files). Runs on demand
+# from beta so a new model such as rcx.dart can get its .freezed.dart/.g.dart
+# without a local Dart toolchain, then pushes the result back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.50.1'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: beta
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      # The setup hook would build the Go core assets, not needed for codegen.
+      - name: Skip Go core asset build
+        run: yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate sources
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/models/generated lib/providers/generated lib/core/generated 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+          else
+            git commit -m "chore: regenerate freezed/json sources for rcx models"
+            git push origin HEAD:beta
+          fi

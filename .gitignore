@@ -84,3 +84,4 @@ devtools_options.yaml
 
 # Cloudflare Pages / wrangler local cache
 .wrangler/
+.env*

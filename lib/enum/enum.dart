@@ -274,6 +274,7 @@ enum CoreEventType {
   geoUpdate,
   routeChanged,
   dialerLoop,
+  rcxStatus,
 }
 
 enum FindProcessMode { always, off }
@@ -548,7 +549,11 @@ enum DashboardWidget {
   proxyGroups,
   memoryInfo,
   trafficStats,
-  appUsage;
+  appUsage,
+
+  /// Connection speed test with a live arc gauge. Appended so every
+  /// existing value keeps its persisted index.
+  speedTest;
 
   final List<SupportPlatform> platforms;
 
@@ -565,16 +570,20 @@ enum DashboardWidget {
     DashboardWidget.networkControl ||
     DashboardWidget.routingBoard ||
     DashboardWidget.proxyGroups ||
-    DashboardWidget.trafficStats || DashboardWidget.appUsage => DashboardCardSize.tall,
+    DashboardWidget.trafficStats ||
+    DashboardWidget.appUsage => DashboardCardSize.tall,
     DashboardWidget.networkOverview ||
     DashboardWidget.profiles ||
     DashboardWidget.memoryInfo => DashboardCardSize.compact,
+    // A unique size: the test card must stand on its own, never buried in a
+    // pile where the reader would have to swipe to find it.
+    DashboardWidget.speedTest => DashboardCardSize.speedTest,
   };
 }
 
 /// The room a dashboard card takes. Cards pile only with cards of the same
 /// size; a hero card never piles at all.
-enum DashboardCardSize { hero, tall, compact }
+enum DashboardCardSize { hero, tall, compact, speedTest }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
 

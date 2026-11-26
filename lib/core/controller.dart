@@ -41,6 +41,14 @@ class CoreController {
     return _instance!;
   }
 
+  /// Chain reports and live inspections live on the platform interface, not
+  /// on the controller's lifecycle surface. Delegate them so callers can use
+  /// the same provider they use for every other core method.
+  Future<List<ChainReport>> getChainReport() => _interface.getChainReport();
+
+  Future<ChainInspection> inspectChain(InspectChainParams params) =>
+      _interface.inspectChain(params);
+
   Future<CoreLifecycleResult> start() => _interface.start();
 
   Future<CoreLifecycleResult> restart() => _interface.restart();
@@ -211,6 +219,52 @@ class CoreController {
 
   Future<RouteSnapshot?> watchRoute(bool watch) {
     return _interface.watchRoute(watch);
+  }
+
+  Future<RcxStatus> rcxSetPolicy(RcxUserLayer layer) {
+    return _interface.rcxSetPolicy(layer);
+  }
+
+  Future<RcxStatus> rcxStatus() {
+    return _interface.rcxStatus();
+  }
+
+  Future<RcxExplanation> rcxExplain(String group) {
+    return _interface.rcxExplain(group);
+  }
+
+  Future<List<RcxJournalEntry>> rcxJournal({
+    int cursor = 0,
+    String? group,
+    int limit = 0,
+  }) {
+    return _interface.rcxJournal(cursor: cursor, group: group, limit: limit);
+  }
+
+  Future<RcxDecision> rcxAction({
+    required String group,
+    required RcxAction action,
+    String? node,
+    bool here = false,
+  }) {
+    return _interface.rcxAction(
+      group: group,
+      action: action,
+      node: node,
+      here: here,
+    );
+  }
+
+  Future<bool> rcxHints(Map<String, Object?> hints) {
+    return _interface.rcxHints(hints);
+  }
+
+  Future<List<RcxProfileInfo>> rcxProfiles() {
+    return _interface.rcxProfiles();
+  }
+
+  Future<RcxStudioResult> rcxStudio(Map<String, Object?> request) {
+    return _interface.rcxStudio(request);
   }
 
   Future<List<TrackerInfo>> getConnections() async {

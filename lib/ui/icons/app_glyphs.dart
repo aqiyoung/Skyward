@@ -143,6 +143,20 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  /// Two opposed chevrons: one control for expanding or folding a list.
+  static const unfold = Glyph([
+    GlyphPolyline([
+      GlyphVertex(6, 10),
+      GlyphVertex(12, 4, 0.4),
+      GlyphVertex(18, 10),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(6, 14),
+      GlyphVertex(12, 20, 0.4),
+      GlyphVertex(18, 14),
+    ], role: GlyphRole.line),
+  ]);
+
   static const chevronUp = Glyph([
     GlyphPolyline([
       GlyphVertex(5.5, 15.25),
@@ -2065,4 +2079,31 @@ abstract final class AppGlyphs {
       _ => arrowBack,
     };
   }
+
+  static const skip = Glyph([
+    GlyphPolyline([
+      GlyphVertex(6.5, 5.5),
+      GlyphVertex(13, 12, 0.4),
+      GlyphVertex(6.5, 18.5),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(17.5, 5.5),
+      GlyphVertex(17.5, 18.5),
+    ], role: GlyphRole.line),
+  ], matchTextDirection: true);
+
+  static const power = Glyph([
+    GlyphArc(
+      12,
+      13,
+      7.6,
+      -math.pi / 2 + 0.72,
+      2 * math.pi - 1.44,
+      role: GlyphRole.line,
+    ),
+    GlyphPolyline([
+      GlyphVertex(12, 3.4),
+      GlyphVertex(12, 11.4),
+    ], role: GlyphRole.line),
+  ]);
 }

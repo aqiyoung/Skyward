@@ -2781,7 +2781,9 @@ as double,
 /// @nodoc
 mixin _$ThemeProps {
 
- int? get primaryColor; List<int> get primaryColors; ThemeMode get themeMode;@JsonKey(readValue: _readColorStyle) ColorStyle get colorStyle; bool get pureBlack; bool get sidebarBlur;@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode get liquidGlass; double get dockScale; bool get dockHideLabelOnScroll; TextScale get textScale;@JsonKey(name: 'systemFontFamily') String? get fontFamily;
+ int? get primaryColor; List<int> get primaryColors; ThemeMode get themeMode;@JsonKey(readValue: _readColorStyle) ColorStyle get colorStyle; bool get pureBlack;/// Keep the warm, seed-tinted light surfaces. Off means a clean white
+/// light theme, matching the neutral look of the cards.
+ bool get warmLight; bool get sidebarBlur;@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode get liquidGlass; double get dockScale; bool get dockHideLabelOnScroll; TextScale get textScale;@JsonKey(name: 'systemFontFamily') String? get fontFamily;
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2795,20 +2797,20 @@ $ThemePropsCopyWith<ThemeProps> get copyWith => _$ThemePropsCopyWithImpl<ThemePr
 @override
 bool operator ==(Object other) {
   final _this = this as ThemeProps;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ThemeProps&&(identical(other.primaryColor, _this.primaryColor) || other.primaryColor == _this.primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _this.primaryColors)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&(identical(other.colorStyle, _this.colorStyle) || other.colorStyle == _this.colorStyle)&&(identical(other.pureBlack, _this.pureBlack) || other.pureBlack == _this.pureBlack)&&(identical(other.sidebarBlur, _this.sidebarBlur) || other.sidebarBlur == _this.sidebarBlur)&&(identical(other.liquidGlass, _this.liquidGlass) || other.liquidGlass == _this.liquidGlass)&&(identical(other.dockScale, _this.dockScale) || other.dockScale == _this.dockScale)&&(identical(other.dockHideLabelOnScroll, _this.dockHideLabelOnScroll) || other.dockHideLabelOnScroll == _this.dockHideLabelOnScroll)&&(identical(other.textScale, _this.textScale) || other.textScale == _this.textScale)&&(identical(other.fontFamily, _this.fontFamily) || other.fontFamily == _this.fontFamily));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ThemeProps&&(identical(other.primaryColor, _this.primaryColor) || other.primaryColor == _this.primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _this.primaryColors)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&(identical(other.colorStyle, _this.colorStyle) || other.colorStyle == _this.colorStyle)&&(identical(other.pureBlack, _this.pureBlack) || other.pureBlack == _this.pureBlack)&&(identical(other.warmLight, _this.warmLight) || other.warmLight == _this.warmLight)&&(identical(other.sidebarBlur, _this.sidebarBlur) || other.sidebarBlur == _this.sidebarBlur)&&(identical(other.liquidGlass, _this.liquidGlass) || other.liquidGlass == _this.liquidGlass)&&(identical(other.dockScale, _this.dockScale) || other.dockScale == _this.dockScale)&&(identical(other.dockHideLabelOnScroll, _this.dockHideLabelOnScroll) || other.dockHideLabelOnScroll == _this.dockHideLabelOnScroll)&&(identical(other.textScale, _this.textScale) || other.textScale == _this.textScale)&&(identical(other.fontFamily, _this.fontFamily) || other.fontFamily == _this.fontFamily));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ThemeProps;
-  return Object.hash(runtimeType,_this.primaryColor,const DeepCollectionEquality().hash(_this.primaryColors),_this.themeMode,_this.colorStyle,_this.pureBlack,_this.sidebarBlur,_this.liquidGlass,_this.dockScale,_this.dockHideLabelOnScroll,_this.textScale,_this.fontFamily);
+  return Object.hash(runtimeType,_this.primaryColor,const DeepCollectionEquality().hash(_this.primaryColors),_this.themeMode,_this.colorStyle,_this.pureBlack,_this.warmLight,_this.sidebarBlur,_this.liquidGlass,_this.dockScale,_this.dockHideLabelOnScroll,_this.textScale,_this.fontFamily);
 }
 
 @override
 String toString() {
   final _this = this as ThemeProps;
-  return 'ThemeProps(primaryColor: ${_this.primaryColor}, primaryColors: ${_this.primaryColors}, themeMode: ${_this.themeMode}, colorStyle: ${_this.colorStyle}, pureBlack: ${_this.pureBlack}, sidebarBlur: ${_this.sidebarBlur}, liquidGlass: ${_this.liquidGlass}, dockScale: ${_this.dockScale}, dockHideLabelOnScroll: ${_this.dockHideLabelOnScroll}, textScale: ${_this.textScale}, fontFamily: ${_this.fontFamily})';
+  return 'ThemeProps(primaryColor: ${_this.primaryColor}, primaryColors: ${_this.primaryColors}, themeMode: ${_this.themeMode}, colorStyle: ${_this.colorStyle}, pureBlack: ${_this.pureBlack}, warmLight: ${_this.warmLight}, sidebarBlur: ${_this.sidebarBlur}, liquidGlass: ${_this.liquidGlass}, dockScale: ${_this.dockScale}, dockHideLabelOnScroll: ${_this.dockHideLabelOnScroll}, textScale: ${_this.textScale}, fontFamily: ${_this.fontFamily})';
 }
 
 
@@ -2819,7 +2821,7 @@ abstract mixin class $ThemePropsCopyWith<$Res>  {
   factory $ThemePropsCopyWith(ThemeProps value, $Res Function(ThemeProps) _then) = _$ThemePropsCopyWithImpl;
 @useResult
 $Res call({
- int? primaryColor, List<int> primaryColors, ThemeMode themeMode,@JsonKey(readValue: _readColorStyle) ColorStyle colorStyle, bool pureBlack, bool sidebarBlur,@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode liquidGlass, double dockScale, bool dockHideLabelOnScroll, TextScale textScale,@JsonKey(name: 'systemFontFamily') String? fontFamily
+ int? primaryColor, List<int> primaryColors, ThemeMode themeMode,@JsonKey(readValue: _readColorStyle) ColorStyle colorStyle, bool pureBlack, bool warmLight, bool sidebarBlur,@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode liquidGlass, double dockScale, bool dockHideLabelOnScroll, TextScale textScale,@JsonKey(name: 'systemFontFamily') String? fontFamily
 });
 
 
@@ -2836,13 +2838,14 @@ class _$ThemePropsCopyWithImpl<$Res>
 
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? colorStyle = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? liquidGlass = null,Object? dockScale = null,Object? dockHideLabelOnScroll = null,Object? textScale = null,Object? fontFamily = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? colorStyle = null,Object? pureBlack = null,Object? warmLight = null,Object? sidebarBlur = null,Object? liquidGlass = null,Object? dockScale = null,Object? dockHideLabelOnScroll = null,Object? textScale = null,Object? fontFamily = freezed,}) {
   return _then(ThemeProps(
 primaryColor: freezed == primaryColor ? _self.primaryColor : primaryColor // ignore: cast_nullable_to_non_nullable
 as int?,primaryColors: null == primaryColors ? _self.primaryColors : primaryColors // ignore: cast_nullable_to_non_nullable
 as List<int>,themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as ThemeMode,colorStyle: null == colorStyle ? _self.colorStyle : colorStyle // ignore: cast_nullable_to_non_nullable
 as ColorStyle,pureBlack: null == pureBlack ? _self.pureBlack : pureBlack // ignore: cast_nullable_to_non_nullable
+as bool,warmLight: null == warmLight ? _self.warmLight : warmLight // ignore: cast_nullable_to_non_nullable
 as bool,sidebarBlur: null == sidebarBlur ? _self.sidebarBlur : sidebarBlur // ignore: cast_nullable_to_non_nullable
 as bool,liquidGlass: null == liquidGlass ? _self.liquidGlass : liquidGlass // ignore: cast_nullable_to_non_nullable
 as LiquidGlassMode,dockScale: null == dockScale ? _self.dockScale : dockScale // ignore: cast_nullable_to_non_nullable
@@ -2943,10 +2946,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool warmLight,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ThemeProps() when $default != null:
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.warmLight,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
   return orElse();
 
 }
@@ -2964,10 +2967,10 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.col
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool warmLight,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)  $default,) {final _that = this;
 switch (_that) {
 case _ThemeProps():
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.warmLight,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2984,10 +2987,10 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.col
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? primaryColor,  List<int> primaryColors,  ThemeMode themeMode, @JsonKey(readValue: _readColorStyle)  ColorStyle colorStyle,  bool pureBlack,  bool warmLight,  bool sidebarBlur, @JsonKey(readValue: _readLiquidGlass)  LiquidGlassMode liquidGlass,  double dockScale,  bool dockHideLabelOnScroll,  TextScale textScale, @JsonKey(name: 'systemFontFamily')  String? fontFamily)?  $default,) {final _that = this;
 switch (_that) {
 case _ThemeProps() when $default != null:
-return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
+return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.colorStyle,_that.pureBlack,_that.warmLight,_that.sidebarBlur,_that.liquidGlass,_that.dockScale,_that.dockHideLabelOnScroll,_that.textScale,_that.fontFamily);case _:
   return null;
 
 }
@@ -2999,7 +3002,7 @@ return $default(_that.primaryColor,_that.primaryColors,_that.themeMode,_that.col
 @JsonSerializable()
 
 class _ThemeProps implements ThemeProps {
-  const _ThemeProps({this.primaryColor,  List<int> primaryColors = defaultPrimaryColors, this.themeMode = ThemeMode.light, @JsonKey(readValue: _readColorStyle) this.colorStyle = ColorStyle.vivid, this.pureBlack = false, this.sidebarBlur = false, @JsonKey(readValue: _readLiquidGlass) this.liquidGlass = LiquidGlassMode.none, this.dockScale = 1.0, this.dockHideLabelOnScroll = true, this.textScale = const TextScale(), @JsonKey(name: 'systemFontFamily') this.fontFamily}): _primaryColors = primaryColors;
+  const _ThemeProps({this.primaryColor,  List<int> primaryColors = defaultPrimaryColors, this.themeMode = ThemeMode.light, @JsonKey(readValue: _readColorStyle) this.colorStyle = ColorStyle.vivid, this.pureBlack = false, this.warmLight = false, this.sidebarBlur = false, @JsonKey(readValue: _readLiquidGlass) this.liquidGlass = LiquidGlassMode.none, this.dockScale = 1.0, this.dockHideLabelOnScroll = true, this.textScale = const TextScale(), @JsonKey(name: 'systemFontFamily') this.fontFamily}): _primaryColors = primaryColors;
   factory _ThemeProps.fromJson(Map<String, dynamic> json) => _$ThemePropsFromJson(json);
 
 @override final  int? primaryColor;
@@ -3013,6 +3016,9 @@ class _ThemeProps implements ThemeProps {
 @override@JsonKey() final  ThemeMode themeMode;
 @override@JsonKey(readValue: _readColorStyle) final  ColorStyle colorStyle;
 @override@JsonKey() final  bool pureBlack;
+/// Keep the warm, seed-tinted light surfaces. Off means a clean white
+/// light theme, matching the neutral look of the cards.
+@override@JsonKey() final  bool warmLight;
 @override@JsonKey() final  bool sidebarBlur;
 @override@JsonKey(readValue: _readLiquidGlass) final  LiquidGlassMode liquidGlass;
 @override@JsonKey() final  double dockScale;
@@ -3033,18 +3039,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ThemeProps&&(identical(other.primaryColor, primaryColor) || other.primaryColor == primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _primaryColors)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.colorStyle, colorStyle) || other.colorStyle == colorStyle)&&(identical(other.pureBlack, pureBlack) || other.pureBlack == pureBlack)&&(identical(other.sidebarBlur, sidebarBlur) || other.sidebarBlur == sidebarBlur)&&(identical(other.liquidGlass, liquidGlass) || other.liquidGlass == liquidGlass)&&(identical(other.dockScale, dockScale) || other.dockScale == dockScale)&&(identical(other.dockHideLabelOnScroll, dockHideLabelOnScroll) || other.dockHideLabelOnScroll == dockHideLabelOnScroll)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.fontFamily, fontFamily) || other.fontFamily == fontFamily));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ThemeProps&&(identical(other.primaryColor, primaryColor) || other.primaryColor == primaryColor)&&const DeepCollectionEquality().equals(other.primaryColors, _primaryColors)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.colorStyle, colorStyle) || other.colorStyle == colorStyle)&&(identical(other.pureBlack, pureBlack) || other.pureBlack == pureBlack)&&(identical(other.warmLight, warmLight) || other.warmLight == warmLight)&&(identical(other.sidebarBlur, sidebarBlur) || other.sidebarBlur == sidebarBlur)&&(identical(other.liquidGlass, liquidGlass) || other.liquidGlass == liquidGlass)&&(identical(other.dockScale, dockScale) || other.dockScale == dockScale)&&(identical(other.dockHideLabelOnScroll, dockHideLabelOnScroll) || other.dockHideLabelOnScroll == dockHideLabelOnScroll)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.fontFamily, fontFamily) || other.fontFamily == fontFamily));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,primaryColor,const DeepCollectionEquality().hash(_primaryColors),themeMode,colorStyle,pureBlack,sidebarBlur,liquidGlass,dockScale,dockHideLabelOnScroll,textScale,fontFamily);
+    return Object.hash(runtimeType,primaryColor,const DeepCollectionEquality().hash(_primaryColors),themeMode,colorStyle,pureBlack,warmLight,sidebarBlur,liquidGlass,dockScale,dockHideLabelOnScroll,textScale,fontFamily);
 }
 
 @override
 String toString() {
-    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, colorStyle: $colorStyle, pureBlack: $pureBlack, sidebarBlur: $sidebarBlur, liquidGlass: $liquidGlass, dockScale: $dockScale, dockHideLabelOnScroll: $dockHideLabelOnScroll, textScale: $textScale, fontFamily: $fontFamily)';
+    return 'ThemeProps(primaryColor: $primaryColor, primaryColors: $primaryColors, themeMode: $themeMode, colorStyle: $colorStyle, pureBlack: $pureBlack, warmLight: $warmLight, sidebarBlur: $sidebarBlur, liquidGlass: $liquidGlass, dockScale: $dockScale, dockHideLabelOnScroll: $dockHideLabelOnScroll, textScale: $textScale, fontFamily: $fontFamily)';
 }
 
 
@@ -3055,7 +3061,7 @@ abstract mixin class _$ThemePropsCopyWith<$Res> implements $ThemePropsCopyWith<$
   factory _$ThemePropsCopyWith(_ThemeProps value, $Res Function(_ThemeProps) _then) = __$ThemePropsCopyWithImpl;
 @override @useResult
 $Res call({
- int? primaryColor, List<int> primaryColors, ThemeMode themeMode,@JsonKey(readValue: _readColorStyle) ColorStyle colorStyle, bool pureBlack, bool sidebarBlur,@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode liquidGlass, double dockScale, bool dockHideLabelOnScroll, TextScale textScale,@JsonKey(name: 'systemFontFamily') String? fontFamily
+ int? primaryColor, List<int> primaryColors, ThemeMode themeMode,@JsonKey(readValue: _readColorStyle) ColorStyle colorStyle, bool pureBlack, bool warmLight, bool sidebarBlur,@JsonKey(readValue: _readLiquidGlass) LiquidGlassMode liquidGlass, double dockScale, bool dockHideLabelOnScroll, TextScale textScale,@JsonKey(name: 'systemFontFamily') String? fontFamily
 });
 
 
@@ -3072,13 +3078,14 @@ class __$ThemePropsCopyWithImpl<$Res>
 
 /// Create a copy of ThemeProps
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? colorStyle = null,Object? pureBlack = null,Object? sidebarBlur = null,Object? liquidGlass = null,Object? dockScale = null,Object? dockHideLabelOnScroll = null,Object? textScale = null,Object? fontFamily = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? primaryColor = freezed,Object? primaryColors = null,Object? themeMode = null,Object? colorStyle = null,Object? pureBlack = null,Object? warmLight = null,Object? sidebarBlur = null,Object? liquidGlass = null,Object? dockScale = null,Object? dockHideLabelOnScroll = null,Object? textScale = null,Object? fontFamily = freezed,}) {
   return _then(_ThemeProps(
 primaryColor: freezed == primaryColor ? _self.primaryColor : primaryColor // ignore: cast_nullable_to_non_nullable
 as int?,primaryColors: null == primaryColors ? _self._primaryColors : primaryColors // ignore: cast_nullable_to_non_nullable
 as List<int>,themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as ThemeMode,colorStyle: null == colorStyle ? _self.colorStyle : colorStyle // ignore: cast_nullable_to_non_nullable
 as ColorStyle,pureBlack: null == pureBlack ? _self.pureBlack : pureBlack // ignore: cast_nullable_to_non_nullable
+as bool,warmLight: null == warmLight ? _self.warmLight : warmLight // ignore: cast_nullable_to_non_nullable
 as bool,sidebarBlur: null == sidebarBlur ? _self.sidebarBlur : sidebarBlur // ignore: cast_nullable_to_non_nullable
 as bool,liquidGlass: null == liquidGlass ? _self.liquidGlass : liquidGlass // ignore: cast_nullable_to_non_nullable
 as LiquidGlassMode,dockScale: null == dockScale ? _self.dockScale : dockScale // ignore: cast_nullable_to_non_nullable
@@ -3105,7 +3112,8 @@ $TextScaleCopyWith<$Res> get textScale {
 /// @nodoc
 mixin _$Config {
 
- int? get currentProfileId; List<HotKeyAction> get hotKeyActions;@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps get appSettingProps; DAVProps? get davProps; NetworkProps get networkProps; VpnProps get vpnProps;@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps get themeProps; ProxiesStyleProps get proxiesStyleProps;@JsonKey(name: 'windowGeometry') WindowProps get windowProps; PatchClashConfig get patchClashConfig; List<String> get excludeSSIDs;
+ int? get currentProfileId; List<HotKeyAction> get hotKeyActions;@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps get appSettingProps; DAVProps? get davProps; NetworkProps get networkProps; VpnProps get vpnProps;@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps get themeProps; ProxiesStyleProps get proxiesStyleProps;@JsonKey(name: 'windowGeometry') WindowProps get windowProps; PatchClashConfig get patchClashConfig; List<String> get excludeSSIDs;/// The user's own routing profiles, shared by every subscription.
+ Map<String, RcxUserProfile> get rcxProfiles;
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3119,20 +3127,20 @@ $ConfigCopyWith<Config> get copyWith => _$ConfigCopyWithImpl<Config>(this as Con
 @override
 bool operator ==(Object other) {
   final _this = this as Config;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Config&&(identical(other.currentProfileId, _this.currentProfileId) || other.currentProfileId == _this.currentProfileId)&&const DeepCollectionEquality().equals(other.hotKeyActions, _this.hotKeyActions)&&(identical(other.appSettingProps, _this.appSettingProps) || other.appSettingProps == _this.appSettingProps)&&(identical(other.davProps, _this.davProps) || other.davProps == _this.davProps)&&(identical(other.networkProps, _this.networkProps) || other.networkProps == _this.networkProps)&&(identical(other.vpnProps, _this.vpnProps) || other.vpnProps == _this.vpnProps)&&(identical(other.themeProps, _this.themeProps) || other.themeProps == _this.themeProps)&&(identical(other.proxiesStyleProps, _this.proxiesStyleProps) || other.proxiesStyleProps == _this.proxiesStyleProps)&&(identical(other.windowProps, _this.windowProps) || other.windowProps == _this.windowProps)&&(identical(other.patchClashConfig, _this.patchClashConfig) || other.patchClashConfig == _this.patchClashConfig)&&const DeepCollectionEquality().equals(other.excludeSSIDs, _this.excludeSSIDs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Config&&(identical(other.currentProfileId, _this.currentProfileId) || other.currentProfileId == _this.currentProfileId)&&const DeepCollectionEquality().equals(other.hotKeyActions, _this.hotKeyActions)&&(identical(other.appSettingProps, _this.appSettingProps) || other.appSettingProps == _this.appSettingProps)&&(identical(other.davProps, _this.davProps) || other.davProps == _this.davProps)&&(identical(other.networkProps, _this.networkProps) || other.networkProps == _this.networkProps)&&(identical(other.vpnProps, _this.vpnProps) || other.vpnProps == _this.vpnProps)&&(identical(other.themeProps, _this.themeProps) || other.themeProps == _this.themeProps)&&(identical(other.proxiesStyleProps, _this.proxiesStyleProps) || other.proxiesStyleProps == _this.proxiesStyleProps)&&(identical(other.windowProps, _this.windowProps) || other.windowProps == _this.windowProps)&&(identical(other.patchClashConfig, _this.patchClashConfig) || other.patchClashConfig == _this.patchClashConfig)&&const DeepCollectionEquality().equals(other.excludeSSIDs, _this.excludeSSIDs)&&const DeepCollectionEquality().equals(other.rcxProfiles, _this.rcxProfiles));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Config;
-  return Object.hash(runtimeType,_this.currentProfileId,const DeepCollectionEquality().hash(_this.hotKeyActions),_this.appSettingProps,_this.davProps,_this.networkProps,_this.vpnProps,_this.themeProps,_this.proxiesStyleProps,_this.windowProps,_this.patchClashConfig,const DeepCollectionEquality().hash(_this.excludeSSIDs));
+  return Object.hash(runtimeType,_this.currentProfileId,const DeepCollectionEquality().hash(_this.hotKeyActions),_this.appSettingProps,_this.davProps,_this.networkProps,_this.vpnProps,_this.themeProps,_this.proxiesStyleProps,_this.windowProps,_this.patchClashConfig,const DeepCollectionEquality().hash(_this.excludeSSIDs),const DeepCollectionEquality().hash(_this.rcxProfiles));
 }
 
 @override
 String toString() {
   final _this = this as Config;
-  return 'Config(currentProfileId: ${_this.currentProfileId}, hotKeyActions: ${_this.hotKeyActions}, appSettingProps: ${_this.appSettingProps}, davProps: ${_this.davProps}, networkProps: ${_this.networkProps}, vpnProps: ${_this.vpnProps}, themeProps: ${_this.themeProps}, proxiesStyleProps: ${_this.proxiesStyleProps}, windowProps: ${_this.windowProps}, patchClashConfig: ${_this.patchClashConfig}, excludeSSIDs: ${_this.excludeSSIDs})';
+  return 'Config(currentProfileId: ${_this.currentProfileId}, hotKeyActions: ${_this.hotKeyActions}, appSettingProps: ${_this.appSettingProps}, davProps: ${_this.davProps}, networkProps: ${_this.networkProps}, vpnProps: ${_this.vpnProps}, themeProps: ${_this.themeProps}, proxiesStyleProps: ${_this.proxiesStyleProps}, windowProps: ${_this.windowProps}, patchClashConfig: ${_this.patchClashConfig}, excludeSSIDs: ${_this.excludeSSIDs}, rcxProfiles: ${_this.rcxProfiles})';
 }
 
 
@@ -3143,7 +3151,7 @@ abstract mixin class $ConfigCopyWith<$Res>  {
   factory $ConfigCopyWith(Config value, $Res Function(Config) _then) = _$ConfigCopyWithImpl;
 @useResult
 $Res call({
- int? currentProfileId, List<HotKeyAction> hotKeyActions,@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps appSettingProps, DAVProps? davProps, NetworkProps networkProps, VpnProps vpnProps,@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps, ProxiesStyleProps proxiesStyleProps,@JsonKey(name: 'windowGeometry') WindowProps windowProps, PatchClashConfig patchClashConfig, List<String> excludeSSIDs
+ int? currentProfileId, List<HotKeyAction> hotKeyActions,@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps appSettingProps, DAVProps? davProps, NetworkProps networkProps, VpnProps vpnProps,@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps, ProxiesStyleProps proxiesStyleProps,@JsonKey(name: 'windowGeometry') WindowProps windowProps, PatchClashConfig patchClashConfig, List<String> excludeSSIDs, Map<String, RcxUserProfile> rcxProfiles
 });
 
 
@@ -3160,7 +3168,7 @@ class _$ConfigCopyWithImpl<$Res>
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? currentProfileId = freezed,Object? hotKeyActions = null,Object? appSettingProps = null,Object? davProps = freezed,Object? networkProps = null,Object? vpnProps = null,Object? themeProps = null,Object? proxiesStyleProps = null,Object? windowProps = null,Object? patchClashConfig = null,Object? excludeSSIDs = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? currentProfileId = freezed,Object? hotKeyActions = null,Object? appSettingProps = null,Object? davProps = freezed,Object? networkProps = null,Object? vpnProps = null,Object? themeProps = null,Object? proxiesStyleProps = null,Object? windowProps = null,Object? patchClashConfig = null,Object? excludeSSIDs = null,Object? rcxProfiles = null,}) {
   return _then(Config(
 currentProfileId: freezed == currentProfileId ? _self.currentProfileId : currentProfileId // ignore: cast_nullable_to_non_nullable
 as int?,hotKeyActions: null == hotKeyActions ? _self.hotKeyActions : hotKeyActions // ignore: cast_nullable_to_non_nullable
@@ -3173,7 +3181,8 @@ as ThemeProps,proxiesStyleProps: null == proxiesStyleProps ? _self.proxiesStyleP
 as ProxiesStyleProps,windowProps: null == windowProps ? _self.windowProps : windowProps // ignore: cast_nullable_to_non_nullable
 as WindowProps,patchClashConfig: null == patchClashConfig ? _self.patchClashConfig : patchClashConfig // ignore: cast_nullable_to_non_nullable
 as PatchClashConfig,excludeSSIDs: null == excludeSSIDs ? _self.excludeSSIDs : excludeSSIDs // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,rcxProfiles: null == rcxProfiles ? _self.rcxProfiles : rcxProfiles // ignore: cast_nullable_to_non_nullable
+as Map<String, RcxUserProfile>,
   ));
 }
 /// Create a copy of Config
@@ -3333,10 +3342,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs,  Map<String, RcxUserProfile> rcxProfiles)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Config() when $default != null:
-return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs);case _:
+return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs,_that.rcxProfiles);case _:
   return orElse();
 
 }
@@ -3354,10 +3363,10 @@ return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs,  Map<String, RcxUserProfile> rcxProfiles)  $default,) {final _that = this;
 switch (_that) {
 case _Config():
-return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs);case _:
+return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs,_that.rcxProfiles);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3374,10 +3383,10 @@ return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? currentProfileId,  List<HotKeyAction> hotKeyActions, @JsonKey(fromJson: AppSettingProps.safeFromJson)  AppSettingProps appSettingProps,  DAVProps? davProps,  NetworkProps networkProps,  VpnProps vpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson)  ThemeProps themeProps,  ProxiesStyleProps proxiesStyleProps, @JsonKey(name: 'windowGeometry')  WindowProps windowProps,  PatchClashConfig patchClashConfig,  List<String> excludeSSIDs,  Map<String, RcxUserProfile> rcxProfiles)?  $default,) {final _that = this;
 switch (_that) {
 case _Config() when $default != null:
-return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs);case _:
+return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps,_that.davProps,_that.networkProps,_that.vpnProps,_that.themeProps,_that.proxiesStyleProps,_that.windowProps,_that.patchClashConfig,_that.excludeSSIDs,_that.rcxProfiles);case _:
   return null;
 
 }
@@ -3389,7 +3398,7 @@ return $default(_that.currentProfileId,_that.hotKeyActions,_that.appSettingProps
 @JsonSerializable()
 
 class _Config implements Config {
-  const _Config({this.currentProfileId,  List<HotKeyAction> hotKeyActions = const [], @JsonKey(fromJson: AppSettingProps.safeFromJson) this.appSettingProps = defaultAppSettingProps, this.davProps, this.networkProps = defaultNetworkProps, this.vpnProps = defaultVpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson) required this.themeProps, this.proxiesStyleProps = defaultProxiesStyleProps, @JsonKey(name: 'windowGeometry') this.windowProps = defaultWindowProps, this.patchClashConfig = defaultClashConfig,  List<String> excludeSSIDs = const []}): _hotKeyActions = hotKeyActions,_excludeSSIDs = excludeSSIDs;
+  const _Config({this.currentProfileId,  List<HotKeyAction> hotKeyActions = const [], @JsonKey(fromJson: AppSettingProps.safeFromJson) this.appSettingProps = defaultAppSettingProps, this.davProps, this.networkProps = defaultNetworkProps, this.vpnProps = defaultVpnProps, @JsonKey(fromJson: ThemeProps.safeFromJson) required this.themeProps, this.proxiesStyleProps = defaultProxiesStyleProps, @JsonKey(name: 'windowGeometry') this.windowProps = defaultWindowProps, this.patchClashConfig = defaultClashConfig,  List<String> excludeSSIDs = const [],  Map<String, RcxUserProfile> rcxProfiles = const {}}): _hotKeyActions = hotKeyActions,_excludeSSIDs = excludeSSIDs,_rcxProfiles = rcxProfiles;
   factory _Config.fromJson(Map<String, dynamic> json) => _$ConfigFromJson(json);
 
 @override final  int? currentProfileId;
@@ -3415,6 +3424,15 @@ class _Config implements Config {
   return EqualUnmodifiableListView(_excludeSSIDs);
 }
 
+/// The user's own routing profiles, shared by every subscription.
+ final  Map<String, RcxUserProfile> _rcxProfiles;
+/// The user's own routing profiles, shared by every subscription.
+@override@JsonKey() Map<String, RcxUserProfile> get rcxProfiles {
+  if (_rcxProfiles is EqualUnmodifiableMapView) return _rcxProfiles;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_rcxProfiles);
+}
+
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
@@ -3429,18 +3447,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Config&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId)&&const DeepCollectionEquality().equals(other.hotKeyActions, _hotKeyActions)&&(identical(other.appSettingProps, appSettingProps) || other.appSettingProps == appSettingProps)&&(identical(other.davProps, davProps) || other.davProps == davProps)&&(identical(other.networkProps, networkProps) || other.networkProps == networkProps)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.themeProps, themeProps) || other.themeProps == themeProps)&&(identical(other.proxiesStyleProps, proxiesStyleProps) || other.proxiesStyleProps == proxiesStyleProps)&&(identical(other.windowProps, windowProps) || other.windowProps == windowProps)&&(identical(other.patchClashConfig, patchClashConfig) || other.patchClashConfig == patchClashConfig)&&const DeepCollectionEquality().equals(other.excludeSSIDs, _excludeSSIDs));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Config&&(identical(other.currentProfileId, currentProfileId) || other.currentProfileId == currentProfileId)&&const DeepCollectionEquality().equals(other.hotKeyActions, _hotKeyActions)&&(identical(other.appSettingProps, appSettingProps) || other.appSettingProps == appSettingProps)&&(identical(other.davProps, davProps) || other.davProps == davProps)&&(identical(other.networkProps, networkProps) || other.networkProps == networkProps)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.themeProps, themeProps) || other.themeProps == themeProps)&&(identical(other.proxiesStyleProps, proxiesStyleProps) || other.proxiesStyleProps == proxiesStyleProps)&&(identical(other.windowProps, windowProps) || other.windowProps == windowProps)&&(identical(other.patchClashConfig, patchClashConfig) || other.patchClashConfig == patchClashConfig)&&const DeepCollectionEquality().equals(other.excludeSSIDs, _excludeSSIDs)&&const DeepCollectionEquality().equals(other.rcxProfiles, _rcxProfiles));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,currentProfileId,const DeepCollectionEquality().hash(_hotKeyActions),appSettingProps,davProps,networkProps,vpnProps,themeProps,proxiesStyleProps,windowProps,patchClashConfig,const DeepCollectionEquality().hash(_excludeSSIDs));
+    return Object.hash(runtimeType,currentProfileId,const DeepCollectionEquality().hash(_hotKeyActions),appSettingProps,davProps,networkProps,vpnProps,themeProps,proxiesStyleProps,windowProps,patchClashConfig,const DeepCollectionEquality().hash(_excludeSSIDs),const DeepCollectionEquality().hash(_rcxProfiles));
 }
 
 @override
 String toString() {
-    return 'Config(currentProfileId: $currentProfileId, hotKeyActions: $hotKeyActions, appSettingProps: $appSettingProps, davProps: $davProps, networkProps: $networkProps, vpnProps: $vpnProps, themeProps: $themeProps, proxiesStyleProps: $proxiesStyleProps, windowProps: $windowProps, patchClashConfig: $patchClashConfig, excludeSSIDs: $excludeSSIDs)';
+    return 'Config(currentProfileId: $currentProfileId, hotKeyActions: $hotKeyActions, appSettingProps: $appSettingProps, davProps: $davProps, networkProps: $networkProps, vpnProps: $vpnProps, themeProps: $themeProps, proxiesStyleProps: $proxiesStyleProps, windowProps: $windowProps, patchClashConfig: $patchClashConfig, excludeSSIDs: $excludeSSIDs, rcxProfiles: $rcxProfiles)';
 }
 
 
@@ -3451,7 +3469,7 @@ abstract mixin class _$ConfigCopyWith<$Res> implements $ConfigCopyWith<$Res> {
   factory _$ConfigCopyWith(_Config value, $Res Function(_Config) _then) = __$ConfigCopyWithImpl;
 @override @useResult
 $Res call({
- int? currentProfileId, List<HotKeyAction> hotKeyActions,@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps appSettingProps, DAVProps? davProps, NetworkProps networkProps, VpnProps vpnProps,@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps, ProxiesStyleProps proxiesStyleProps,@JsonKey(name: 'windowGeometry') WindowProps windowProps, PatchClashConfig patchClashConfig, List<String> excludeSSIDs
+ int? currentProfileId, List<HotKeyAction> hotKeyActions,@JsonKey(fromJson: AppSettingProps.safeFromJson) AppSettingProps appSettingProps, DAVProps? davProps, NetworkProps networkProps, VpnProps vpnProps,@JsonKey(fromJson: ThemeProps.safeFromJson) ThemeProps themeProps, ProxiesStyleProps proxiesStyleProps,@JsonKey(name: 'windowGeometry') WindowProps windowProps, PatchClashConfig patchClashConfig, List<String> excludeSSIDs, Map<String, RcxUserProfile> rcxProfiles
 });
 
 
@@ -3468,7 +3486,7 @@ class __$ConfigCopyWithImpl<$Res>
 
 /// Create a copy of Config
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? currentProfileId = freezed,Object? hotKeyActions = null,Object? appSettingProps = null,Object? davProps = freezed,Object? networkProps = null,Object? vpnProps = null,Object? themeProps = null,Object? proxiesStyleProps = null,Object? windowProps = null,Object? patchClashConfig = null,Object? excludeSSIDs = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? currentProfileId = freezed,Object? hotKeyActions = null,Object? appSettingProps = null,Object? davProps = freezed,Object? networkProps = null,Object? vpnProps = null,Object? themeProps = null,Object? proxiesStyleProps = null,Object? windowProps = null,Object? patchClashConfig = null,Object? excludeSSIDs = null,Object? rcxProfiles = null,}) {
   return _then(_Config(
 currentProfileId: freezed == currentProfileId ? _self.currentProfileId : currentProfileId // ignore: cast_nullable_to_non_nullable
 as int?,hotKeyActions: null == hotKeyActions ? _self._hotKeyActions : hotKeyActions // ignore: cast_nullable_to_non_nullable
@@ -3481,7 +3499,8 @@ as ThemeProps,proxiesStyleProps: null == proxiesStyleProps ? _self.proxiesStyleP
 as ProxiesStyleProps,windowProps: null == windowProps ? _self.windowProps : windowProps // ignore: cast_nullable_to_non_nullable
 as WindowProps,patchClashConfig: null == patchClashConfig ? _self.patchClashConfig : patchClashConfig // ignore: cast_nullable_to_non_nullable
 as PatchClashConfig,excludeSSIDs: null == excludeSSIDs ? _self._excludeSSIDs : excludeSSIDs // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,rcxProfiles: null == rcxProfiles ? _self._rcxProfiles : rcxProfiles // ignore: cast_nullable_to_non_nullable
+as Map<String, RcxUserProfile>,
   ));
 }
 

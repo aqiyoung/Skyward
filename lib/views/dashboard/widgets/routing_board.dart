@@ -381,88 +381,39 @@ class _RoutingBoardCardState extends ConsumerState<RoutingBoardCard>
             ],
           ),
           const SizedBox(height: 14),
-          if (!mobile)
-            // Wide enough for the map to carry the route on its own, the
-            // legs read down the side as one column rather than stretching
-            // three across a banner.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 20,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: RouteMap(stops: stops, globe: globe),
+          RouteMap(stops: stops, globe: globe),
+          const SizedBox(height: 16),
+          Row(
+            spacing: 6,
+            children: [
+              Expanded(
+                child: _Legend(
+                  label: appLocalizations.routeFrom,
+                  value:
+                      localPlace?.label(chinese: chinese) ??
+                      localCountry?.label(chinese: chinese),
+                  detail: detail.localIp,
                 ),
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      spacing: 16,
-                      children: [
-                        _Legend(
-                          label: appLocalizations.routeFrom,
-                          value:
-                              localPlace?.label(chinese: chinese) ??
-                              localCountry?.label(chinese: chinese),
-                          detail: detail.localIp,
-                        ),
-                        _Legend(
-                          label: appLocalizations.routeVia,
-                          value:
-                              exit ??
-                              (active == null ? null : appLocalizations.direct),
-                          detail: relays,
-                        ),
-                        _Legend(
-                          label: appLocalizations.routeTo,
-                          value: active?.title,
-                          detail: destinationRegion,
-                        ),
-                      ],
-                    ),
-                  ),
+              ),
+              const _LegendArrow(),
+              Expanded(
+                child: _Legend(
+                  label: appLocalizations.routeVia,
+                  value:
+                      exit ?? (active == null ? null : appLocalizations.direct),
+                  detail: relays,
                 ),
-              ],
-            )
-          else ...[
-            RouteMap(stops: stops, globe: globe),
-            const SizedBox(height: 16),
-            Row(
-              spacing: 6,
-              children: [
-                Expanded(
-                  child: _Legend(
-                    label: appLocalizations.routeFrom,
-                    value:
-                        localPlace?.label(chinese: chinese) ??
-                        localCountry?.label(chinese: chinese),
-                    detail: detail.localIp,
-                  ),
+              ),
+              const _LegendArrow(),
+              Expanded(
+                child: _Legend(
+                  label: appLocalizations.routeTo,
+                  value: active?.title,
+                  detail: destinationRegion,
                 ),
-                const _LegendArrow(),
-                Expanded(
-                  child: _Legend(
-                    label: appLocalizations.routeVia,
-                    value:
-                        exit ??
-                        (active == null ? null : appLocalizations.direct),
-                    detail: relays,
-                  ),
-                ),
-                const _LegendArrow(),
-                Expanded(
-                  child: _Legend(
-                    label: appLocalizations.routeTo,
-                    value: active?.title,
-                    detail: destinationRegion,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );

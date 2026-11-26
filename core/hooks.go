@@ -17,7 +17,16 @@ import (
 func init() {
 	adapter.UrlTestHook = func(url string, name string, delay uint16, timedOut bool) {
 		sendMessage(DelayMessage, &Delay{Url: url, Name: name, Value: delayValue(delay, timedOut)})
+		// Feed RCX's delay learning from the same URL test the app shows. Its
+		// own probes are excluded so they are not counted twice.
+		if e := rcxIfReady(); e != nil && url == currentTestURL() && !rcxOwnProbes.owns(name) {
+			e.NoteURLTest(name, int(delay))
+		}
 	}
+	// This fork's mihomo has no DialResultHook or DefaultFirstProgressNotify,
+	// so RCX does not get dial-failure and traffic signals here. Its delay
+	// learning still works through UrlTestHook below; the engine treats the
+	// missing signals as simply unobserved.
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
 		if runtime.GOOS == "android" {
@@ -40,6 +49,7 @@ func init() {
 		}
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
+		requestRcxTopologyRefresh()
 		scheduleReclaimOwnership()
 		scheduleLoadMemoryRelease()
 		sendMessage(LoadedMessage, providerName)
