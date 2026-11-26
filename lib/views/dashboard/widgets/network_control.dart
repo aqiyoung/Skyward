@@ -254,7 +254,7 @@ class _IntranetIpSection extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         SizedBox(
           height: AppTextStyle.title2.leading,
           child: Align(
