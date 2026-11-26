@@ -80,7 +80,12 @@ void main() {
         child: const TestApp(child: ConnectionsTableCard()),
       ),
     );
-    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ConnectionsTableCard),
+        matching: find.text('Requests'),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 400));
   }
 
