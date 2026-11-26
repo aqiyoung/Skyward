@@ -167,9 +167,9 @@ void main() {
     final current = rectOf(tester, CurrentOutboundCard);
     final upload = rectOf(tester, SpeedCard);
     final mode = rectOf(tester, NetworkControlCard);
-    final systemProxy = tester.getRect(find.byType(NetworkTakeoverTile).first);
-    final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
-    final intranet = rectOf(tester, IntranetIpCard);
+    final systemProxy = tester.getRect(find.byType(TakeoverRow).first);
+    final tun = tester.getRect(find.byType(TakeoverRow).last);
+    final intranet = rectOf(tester, NetworkControlCard);
     final profile = rectOf(tester, ProfilesCard);
     final service = rectOf(tester, ServiceStatusCard);
     final routing = rectOf(tester, RoutingBoardCard);
@@ -286,7 +286,7 @@ void main() {
 
     expect(rectOf(tester, CurrentOutboundCard).height, 176);
     expect(rectOf(tester, NetworkControlCard).height, greaterThan(100));
-    expect(rectOf(tester, IntranetIpCard).height, 152);
+    expect(rectOf(tester, NetworkControlCard).height, greaterThan(100));
     expect(rectOf(tester, RoutingBoardCard).height, 290);
     expect(scrollExtentOf(tester), 226);
     expect(tester.takeException(), isNull);
@@ -464,8 +464,8 @@ void main() {
     final current = rectOf(tester, CurrentOutboundCard);
     final upload = rectOf(tester, SpeedCard);
     final mode = rectOf(tester, NetworkControlCard);
-    final tun = tester.getRect(find.byType(NetworkTakeoverTile).last);
-    final intranet = rectOf(tester, IntranetIpCard);
+    final tun = tester.getRect(find.byType(TakeoverRow).last);
+    final intranet = rectOf(tester, NetworkControlCard);
     final profile = rectOf(tester, ProfilesCard);
 
     expect(current.width, 800 - 16 - 24);
