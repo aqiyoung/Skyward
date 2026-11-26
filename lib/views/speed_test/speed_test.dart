@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:skyward/common/common.dart';
+import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/page_large_title.dart';
 import 'package:skyward/widgets/widgets.dart';
@@ -207,7 +208,9 @@ class _SpeedTestViewState extends ConsumerState<SpeedTestView> {
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: cs.error, fontSize: 13),
+                  style: AppTextStyle.footnote
+                      .of(context)
+                      .copyWith(color: cs.error),
                 ),
               ),
               null => null,
@@ -372,7 +375,7 @@ class _Step extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (state == _StepState.done)
-                Icon(Icons.check_circle_rounded, size: 13, color: color)
+                GlyphIcon(AppGlyphs.checkCircle, size: 13, color: color)
               else
                 Container(
                   width: 8,
@@ -383,7 +386,12 @@ class _Step extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: 5),
-              Text(label, style: TextStyle(color: textColor, fontSize: 12)),
+              Text(
+                label,
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: textColor),
+              ),
             ],
           ),
           const SizedBox(height: 3),
@@ -391,11 +399,9 @@ class _Step extends StatelessWidget {
             state == _StepState.skipped
                 ? '—'
                 : (value ?? (state == _StepState.active ? '···' : '—')),
-            style: TextStyle(
-              color: textColor,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyle.footnote
+                .of(context, emphasized: true)
+                .copyWith(color: textColor),
           ),
         ],
       ),
@@ -443,7 +449,9 @@ class _Gauge extends StatelessWidget {
           color: color,
           track: cs.surfaceContainerHighest,
           tick: cs.onSurfaceVariant,
-          tickLabel: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+          tickLabel: AppTextStyle.caption2
+              .of(context)
+              .copyWith(color: cs.onSurfaceVariant),
         ),
         child: Align(
           alignment: const Alignment(0, 0.45),
@@ -451,25 +459,26 @@ class _Gauge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (measuringLatency)
-                Icon(Icons.network_ping_rounded, color: color, size: 40)
+                GlyphIcon(AppGlyphs.wifi, color: color, size: 40)
               else
                 Text(
                   value > 0 ? value.toStringAsFixed(1) : '0.0',
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: 40,
-                    fontWeight: FontWeight.w300,
-                  ),
+                  style: AppTextStyle.custom(
+                    context,
+                    size: 40,
+                    leading: 44,
+                    weight: FontWeight.w300,
+                  ).copyWith(color: cs.onSurface),
                 ),
               const SizedBox(height: 2),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (!measuringLatency)
-                    Icon(
+                    GlyphIcon(
                       phase == SpeedPhase.upload
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded,
+                          ? AppGlyphs.arrowUp
+                          : AppGlyphs.arrowDown,
                       color: color,
                       size: 14,
                     ),
@@ -477,12 +486,17 @@ class _Gauge extends StatelessWidget {
                     measuringLatency
                         ? ' ms'
                         : ' ${context.appLocalizations.speedTestMbps}',
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+                    style: AppTextStyle.subheadline
+                        .of(context)
+                        .copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
               const SizedBox(height: 5),
-              Text(label, style: TextStyle(color: color, fontSize: 13)),
+              Text(
+                label,
+                style: AppTextStyle.footnote.of(context).copyWith(color: color),
+              ),
             ],
           ),
         ),
@@ -612,7 +626,7 @@ class _ReadoutRow extends StatelessWidget {
       children: [
         Expanded(
           child: _ReadoutCard(
-            icon: Icons.arrow_downward_rounded,
+            icon: AppGlyphs.arrowDown,
             label: context.appLocalizations.download,
             value: down,
             color: cs.primary,
@@ -624,7 +638,7 @@ class _ReadoutRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _ReadoutCard(
-            icon: Icons.arrow_upward_rounded,
+            icon: AppGlyphs.arrowUp,
             label: context.appLocalizations.upload,
             value: up,
             color: cs.tertiary,
@@ -649,7 +663,7 @@ class _ReadoutCard extends StatelessWidget {
     required this.zh,
   });
 
-  final IconData icon;
+  final Glyph icon;
   final String label;
   final String value;
   final Color color;
@@ -677,37 +691,40 @@ class _ReadoutCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, color: color, size: 17),
+                GlyphIcon(icon, color: color, size: 17),
                 const SizedBox(width: 6),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyle.subheadline
+                      .of(context, emphasized: true)
+                      .copyWith(color: cs.onSurface),
                 ),
                 const Spacer(),
                 Text(
                   context.appLocalizations.speedTestMbps,
-                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                  style: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
-                color: cs.onSurface,
-                fontSize: 31,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyle.custom(
+                context,
+                size: 31,
+                leading: 36,
+                weight: FontWeight.w700,
+              ).copyWith(color: cs.onSurface),
             ),
             Text(
               bytes == null
                   ? ' '
                   : '${zh ? '传输' : 'Transferred'} ${_formatBytes(bytes!)}',
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+              style: AppTextStyle.caption2
+                  .of(context)
+                  .copyWith(color: cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -780,18 +797,18 @@ class _StatItem extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: cs.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyle.subheadline
+                .of(context, emphasized: true)
+                .copyWith(color: cs.onSurface),
           ),
         ],
       ),
@@ -828,14 +845,14 @@ class _QualityIcons extends StatelessWidget {
     final down = result?.downloadMbps;
     final ping = result?.latencyMs;
     final jitter = result?.jitterMs;
-    final items = <(IconData, String, int)>[
+    final items = <(Glyph, String, int)>[
       (
-        Icons.language_rounded,
+        AppGlyphs.language,
         zh ? '网页' : 'Web',
         down == null ? 0 : _byDownload(down, [1, 3, 5, 10, 25]),
       ),
       (
-        Icons.sports_esports_rounded,
+        AppGlyphs.puzzle,
         zh ? '游戏' : 'Game',
         ping == null || jitter == null
             ? 0
@@ -845,12 +862,12 @@ class _QualityIcons extends StatelessWidget {
               ),
       ),
       (
-        Icons.video_library_rounded,
+        AppGlyphs.photos,
         zh ? '视频' : 'Video',
         down == null ? 0 : _byDownload(down, [3, 5, 10, 25, 50]),
       ),
       (
-        Icons.badge_rounded,
+        AppGlyphs.verified,
         zh ? '通话' : 'VoIP',
         jitter == null ? 0 : _byLatency(jitter, [100, 60, 30, 15, 8]),
       ),
@@ -869,7 +886,7 @@ class _QualityIcons extends StatelessWidget {
                 child: SizedBox(
                   width: 48,
                   height: 48,
-                  child: Icon(
+                  child: GlyphIcon(
                     icon,
                     color: dots > 0 ? cs.primary : cs.onSurfaceVariant,
                     size: 24,
@@ -894,7 +911,9 @@ class _QualityIcons extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 label,
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+                style: AppTextStyle.caption2
+                    .of(context)
+                    .copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -929,15 +948,12 @@ class _StartButton extends StatelessWidget {
           shape: AppShape.full,
         ),
         onPressed: running ? onStop : onStart,
-        icon: Icon(
-          running ? Icons.stop_rounded : Icons.speed_rounded,
-          size: 20,
-        ),
+        icon: GlyphIcon(running ? AppGlyphs.block : AppGlyphs.speed, fill: 1),
         label: Text(
           running
               ? context.appLocalizations.speedTestStop
               : context.appLocalizations.speedTestStart,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyle.callout.of(context, emphasized: true),
         ),
       ),
     );

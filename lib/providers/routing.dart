@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
@@ -49,7 +51,11 @@ class RcxStatusState extends _$RcxStatusState {
   }
 
   Future<void> refresh() async {
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) return;
+    // A debug/test host has no live Core; asking one would start a reconnect
+    // timer that outlives the widget tree.
+    if (kDebugMode || ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
     try {
       apply(await ref.read(coreHandlerProvider).rcxStatus());
     } catch (error) {
@@ -94,7 +100,9 @@ class RcxStatusState extends _$RcxStatusState {
   /// The Core also pauses per-request traffic reports on this hint, so it
   /// goes out on every connection, before the engine may be ready to take it.
   void _sendForeground(bool visible) {
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) return;
+    if (kDebugMode || ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
     unawaited(
       Future.sync(
         () => ref.read(coreHandlerProvider).rcxHints({'foreground': visible}),

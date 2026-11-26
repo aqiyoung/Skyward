@@ -45,8 +45,10 @@ void main() {
 
       for (final key in expectedKeys) {
         final template = arbByLocale['en']![key] as String;
+        // Only a name followed by `,` or `}` is a placeholder. A bare
+        // `one{...}` ICU branch starts with prose and is not an argument.
         final placeholderNames = RegExp(
-          r'\{([A-Za-z_][A-Za-z0-9_]*)\b',
+          r'\{([A-Za-z_][A-Za-z0-9_]*)\s*[,}]',
         ).allMatches(template).map((match) => match.group(1)).toSet();
         final argumentCount = placeholderNames.length;
         final arguments = List<dynamic>.filled(argumentCount, 2);

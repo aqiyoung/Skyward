@@ -10,7 +10,6 @@ import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:material_ui/material_ui.dart';
 
 import 'state.dart';
@@ -44,26 +43,24 @@ extension _ChainL10n on BuildContext {
   String get cAll => _zh ? '全部' : 'All';
   String get cRemoveMiddle => _zh ? '移除中转服务器' : 'Remove middle server';
   String get cAddMiddle => _zh ? '添加中转服务器' : 'Add middle server';
-  String get cShowInServers =>
-      _zh ? '在服务器中显示' : 'Show among servers';
+  String get cShowInServers => _zh ? '在服务器中显示' : 'Show among servers';
   String get cOfferedHint => _zh
       ? '链路会出现在“🚀 节点选择”中普通服务器旁边。当前所选服务器不会改变。'
       : 'The chain appears beside regular servers in the proxy group. The current selection will not change.';
   String get cDeleteChain => _zh ? '删除链路' : 'Delete chain';
-  String get cUdpTitle => _zh
-      ? '通话和游戏无法通过此链路'
-      : 'Calls and games won’t pass through this chain';
+  String get cUdpTitle =>
+      _zh ? '通话和游戏无法通过此链路' : 'Calls and games won’t pass through this chain';
   String cUdpBody(String entry) => _zh
       ? '入口“$entry”不转发 UDP，而通话、游戏和部分视频需要它。网站、即时通讯和 YouTube 可以正常使用。'
       : 'The entry “$entry” doesn’t carry UDP, which calls, games and some video need. Sites, messengers and YouTube will work.';
-  String get cUdpMissingTitle => _zh ? '出口无法在此入口下工作' : 'The exit won’t work behind this entry';
+  String get cUdpMissingTitle =>
+      _zh ? '出口无法在此入口下工作' : 'The exit won’t work behind this entry';
   String cUdpMissingBody(String entry, String exit) => _zh
       ? '“$exit”需要 UDP，而入口“$entry”仅转发 TCP。'
       : '“$exit” needs UDP, and the entry “$entry” carries only TCP.';
   String get cPickUdpEntry => _zh ? '选择支持 UDP 的入口' : 'Pick an entry with UDP';
   String get cChooseAnother => _zh ? '更换服务器' : 'Choose another';
-  String get cNotInSubscription =>
-      _zh ? '不在当前订阅中' : 'Not in subscription';
+  String get cNotInSubscription => _zh ? '不在当前订阅中' : 'Not in subscription';
   String cManual(int n) => _zh ? '$n 个中手动' : 'Manual among $n';
   String cFastest(int n) => _zh ? '$n 个中最快' : 'Fastest among $n';
   String cFallback(int n) => _zh ? '$n 个中第一个可用' : 'First available among $n';
@@ -143,11 +140,7 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
     return [_entry!, if (_hasMiddle) _middle!, _exit!];
   }
 
-  List<String?> get _hops => [
-    _entry,
-    if (_hasMiddle) _middle,
-    _exit,
-  ];
+  List<String?> get _hops => [_entry, if (_hasMiddle) _middle, _exit];
 
   String get _autoName => _hops.whereType<String>().join(' → ');
 
@@ -173,9 +166,9 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
       if (mounted) setState(() => _inspection = null);
       return;
     }
-    final result = await ref.read(coreHandlerProvider).inspectChain(
-      InspectChainParams(hops: hops),
-    );
+    final result = await ref
+        .read(coreHandlerProvider)
+        .inspectChain(InspectChainParams(hops: hops));
     if (mounted) setState(() => _inspection = result);
   }
 
@@ -293,7 +286,8 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final canSave = _completeHops != null &&
+    final canSave =
+        _completeHops != null &&
         !_issues.any(_isError) &&
         (widget.chain == null || _changed);
     final title = widget.chain == null
@@ -330,37 +324,35 @@ class _ChainEditorState extends ConsumerState<ChainEditor> {
           Expanded(
             child: switch (_picking) {
               final slot? => _HopPicker(
-                  key: ValueKey(slot),
-                  slot: slot,
-                  hops: [
-                    _entry ?? '',
-                    if (_hasMiddle) _middle ?? '',
-                    _exit ?? '',
-                  ],
-                  current: _valueOf(slot),
-                  onPicked: (name) => _fill(slot, name),
-                ),
+                key: ValueKey(slot),
+                slot: slot,
+                hops: [
+                  _entry ?? '',
+                  if (_hasMiddle) _middle ?? '',
+                  _exit ?? '',
+                ],
+                current: _valueOf(slot),
+                onPicked: (name) => _fill(slot, name),
+              ),
               null => _ReadyBody(
-                  entry: _entry,
-                  middle: _middle,
-                  exit: _exit,
-                  hasMiddle: _hasMiddle,
-                  issues: _issues,
-                  name: _name.text.trim().isEmpty ? _autoName : _name.text.trim(),
-                  offered: _offered,
-                  onPick: _pick,
-                  onAddMiddle: _addMiddle,
-                  onRemoveMiddle: _removeMiddle,
-                  onName: (value) => setState(
-                    () => _name.text = value ?? '',
-                  ),
-                  onOffered: (value) => setState(() {
-                    _offered = value;
-                    _changed = true;
-                  }),
-                  onIssue: _act,
-                  onDelete: widget.chain == null ? null : _delete,
-                ),
+                entry: _entry,
+                middle: _middle,
+                exit: _exit,
+                hasMiddle: _hasMiddle,
+                issues: _issues,
+                name: _name.text.trim().isEmpty ? _autoName : _name.text.trim(),
+                offered: _offered,
+                onPick: _pick,
+                onAddMiddle: _addMiddle,
+                onRemoveMiddle: _removeMiddle,
+                onName: (value) => setState(() => _name.text = value ?? ''),
+                onOffered: (value) => setState(() {
+                  _offered = value;
+                  _changed = true;
+                }),
+                onIssue: _act,
+                onDelete: widget.chain == null ? null : _delete,
+              ),
             },
           ),
         ],
@@ -548,14 +540,15 @@ class _RouteRow extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 170),
             child: EmojiText(
-              value ?? (Localizations.localeOf(context).languageCode == 'zh'
-                  ? '选择'
-                  : 'Choose'),
+              value ??
+                  (Localizations.localeOf(context).languageCode == 'zh'
+                      ? '选择'
+                      : 'Choose'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.subheadline.of(context).copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.subheadline
+                  .of(context)
+                  .copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(width: 4),
@@ -602,7 +595,9 @@ class _IssueCard extends StatelessWidget {
     final String title;
     final String body;
     if (issue.code == 'udpLost') {
-      title = zh ? '通话和游戏无法通过此链路' : 'Calls and games won’t pass through this chain';
+      title = zh
+          ? '通话和游戏无法通过此链路'
+          : 'Calls and games won’t pass through this chain';
       body = zh
           ? '入口“$entry”不转发 UDP，而通话、游戏和部分视频需要它。网站、即时通讯和 YouTube 可以正常使用。'
           : 'The entry “$entry” doesn’t carry UDP, which calls, games and some video need. Sites, messengers and YouTube will work.';
@@ -710,8 +705,8 @@ class _Strip extends ConsumerWidget {
         caption: entry == null
             ? (zh ? '选择' : 'Choose')
             : entryDelay == null
-                ? (zh ? '入口' : 'Entry')
-                : '${zh ? '入口' : 'Entry'} · $entryDelay ms',
+            ? (zh ? '入口' : 'Entry')
+            : '${zh ? '入口' : 'Entry'} · $entryDelay ms',
         value: entry,
         active: picking == _Slot.entry,
         filled: entry != null,
@@ -730,9 +725,7 @@ class _Strip extends ConsumerWidget {
         ),
       _Node(
         label: exit ?? (zh ? '出口' : 'Exit'),
-        caption: exit == null
-            ? (zh ? '选择' : 'Choose')
-            : (zh ? '出口' : 'Exit'),
+        caption: exit == null ? (zh ? '选择' : 'Choose') : (zh ? '出口' : 'Exit'),
         value: exit,
         active: picking == _Slot.exit,
         filled: exit != null,
@@ -824,11 +817,7 @@ class _NodeView extends StatelessWidget {
           color: colors.tone2,
           shape: AppShape.circle,
         ),
-        child: GlyphIcon(
-          node.glyph!,
-          size: 22,
-          color: scheme.onSurfaceVariant,
-        ),
+        child: GlyphIcon(node.glyph!, size: 22, color: scheme.onSurfaceVariant),
       );
     } else {
       content = Container(
@@ -929,9 +918,11 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
   /// Ask the core to check each candidate in this slot. Blocked ones are
   /// marked with a reason instead of looking like plain, tappable servers.
   Future<void> _inspectSlot() async {
-    final result = await ref.read(coreHandlerProvider).inspectChain(
-      InspectChainParams(hops: widget.hops, slot: widget.slot.index),
-    );
+    final result = await ref
+        .read(coreHandlerProvider)
+        .inspectChain(
+          InspectChainParams(hops: widget.hops, slot: widget.slot.index),
+        );
     if (mounted) setState(() => _blocked = result.blocked);
   }
 
@@ -946,9 +937,7 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
     for (final group in groups) {
       if (group.hidden == true) continue;
       if (q.isEmpty || group.name.toLowerCase().contains(q)) {
-        groups2.add(
-          _Candidate(group.name, group.type, true, group.all.length),
-        );
+        groups2.add(_Candidate(group.name, group.type, true, group.all.length));
       }
       for (final proxy in group.all) {
         if (!seen.add(proxy.name)) continue;
@@ -966,7 +955,9 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
     final countryCodes = counts.keys.toList()..sort();
     final shownLeaves = _country == null
         ? leaves
-        : leaves.where((c) => geoCountryOfNode(c.name)?.code == _country).toList();
+        : leaves
+              .where((c) => geoCountryOfNode(c.name)?.code == _country)
+              .toList();
 
     final caption = switch (widget.slot) {
       _Slot.entry => context.cEntryCaption,
@@ -1044,7 +1035,10 @@ class _HopPickerState extends ConsumerState<_HopPicker> {
                   padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
                   child: Text(
                     context.cServers,
-                    style: AppTextStyle.subheadline.of(context, emphasized: true),
+                    style: AppTextStyle.subheadline.of(
+                      context,
+                      emphasized: true,
+                    ),
                   ),
                 ),
               for (final c in shownLeaves)
@@ -1089,14 +1083,18 @@ class _CandidateRow extends ConsumerWidget {
   String _reasonText(BuildContext context, String code) {
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     return switch (code) {
-      'loop' => zh ? '不可用：这就是服务器列表本身' : 'Unavailable: it is the server list itself',
-      'udpTransportMissing' => zh
-          ? '不可用：需要 UDP，而入口不转发'
-          : 'Unavailable: needs UDP, which the entry does not carry',
-      'emptyExit' => zh ? '不可用：组中没有服务器' : 'Unavailable: no servers in the group',
-      'providerPending' => zh
-          ? '不可用：其列表尚不支持链路'
-          : 'Unavailable: its list does not support chains yet',
+      'loop' =>
+        zh ? '不可用：这就是服务器列表本身' : 'Unavailable: it is the server list itself',
+      'udpTransportMissing' =>
+        zh
+            ? '不可用：需要 UDP，而入口不转发'
+            : 'Unavailable: needs UDP, which the entry does not carry',
+      'emptyExit' =>
+        zh ? '不可用：组中没有服务器' : 'Unavailable: no servers in the group',
+      'providerPending' =>
+        zh
+            ? '不可用：其列表尚不支持链路'
+            : 'Unavailable: its list does not support chains yet',
       _ => zh ? '不可用：链路无法经过它' : 'Unavailable: a chain cannot pass through it',
     };
   }
@@ -1109,20 +1107,24 @@ class _CandidateRow extends ConsumerWidget {
     final subtitle = reason != null
         ? _reasonText(context, reason!)
         : candidate.isGroup
-            ? switch (candidate.type) {
-                GroupType.URLTest => context.cFastest(candidate.count),
-                GroupType.Fallback => context.cFallback(candidate.count),
-                GroupType.LoadBalance => context.cBalance(candidate.count),
-                _ => context.cManual(candidate.count),
-              }
-            : (delay == null ? context.cGroup : '$delay ms');
+        ? switch (candidate.type) {
+            GroupType.URLTest => context.cFastest(candidate.count),
+            GroupType.Fallback => context.cFallback(candidate.count),
+            GroupType.LoadBalance => context.cBalance(candidate.count),
+            _ => context.cManual(candidate.count),
+          }
+        : (delay == null ? context.cGroup : '$delay ms');
     return Opacity(
       opacity: reason == null ? 1 : 0.5,
       child: ListTile(
         leading: candidate.isGroup
             ? CircleAvatar(child: GlyphIcon(AppGlyphs.globe, size: 18))
             : RoundFlag(candidate.name, size: 32),
-        title: Text(candidate.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          candidate.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: Text(subtitle),
         selected: candidate.name == current,
         onTap: reason == null ? onTap : null,

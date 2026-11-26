@@ -286,7 +286,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m108(tag) => "La etiqueta ${tag} nunca se usa";
 
-  static String m109(group, tier) =>
+  static String m109(tier, group) =>
       "Ahora ningún servidor de ${group} está en «${tier}»";
 
   static String m110(tier, after) =>

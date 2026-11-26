@@ -33,50 +33,60 @@ class NetworkControlCard extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     return DashboardCard(
       semanticLabel: appLocalizations.networkControl,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DashboardCardHeader(
-            glyph: AppGlyphs.split,
-            title: appLocalizations.networkControl,
-          ),
-          const SizedBox(height: 12),
-          const OutboundModeSelector(),
-          const SizedBox(height: 10),
-          if (desktopPlatforms.contains(platform)) ...[
-            // The render keeps the control card short: the mode selector and
-            // one row of switch tiles, then the intranet address folded in
-            // from the old standalone card -- the address and its LAN switch
-            // belong together, so they live here and there is no second card.
-            Row(
-              spacing: 8,
-              children: [
-                for (final kind in TakeoverSwitch.values)
-                  Expanded(
-                    child: TakeoverRow(
-                      kind: kind,
-                      metrics: cardRowMetrics,
-                      showIcon: false,
-                      compact: true,
-                    ),
-                  ),
-              ],
-            ),
-            const _IntranetIpSection(),
-          ] else if (platform == SupportPlatform.Android)
-            // The two status blocks a phone has sit side by side: each is
-            // a single value, and neither needs the card's full width.
-            const Row(
-              spacing: 8,
-              children: [
-                Expanded(child: _VpnStatusTile()),
-                Expanded(child: _LanStatusTile()),
-              ],
-            )
-          else
-            const LanSwitchRow(showAddress: true),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final column = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DashboardCardHeader(
+                glyph: AppGlyphs.split,
+                title: appLocalizations.networkControl,
+              ),
+              const SizedBox(height: 12),
+              const OutboundModeSelector(),
+              const SizedBox(height: 10),
+              if (desktopPlatforms.contains(platform)) ...[
+                // The render keeps the control card short: the mode selector and
+                // one row of switch tiles, then the intranet address folded in
+                // from the old standalone card -- the address and its LAN switch
+                // belong together, so they live here and there is no second card.
+                Row(
+                  spacing: 8,
+                  children: [
+                    for (final kind in TakeoverSwitch.values)
+                      Expanded(
+                        child: TakeoverRow(
+                          kind: kind,
+                          metrics: cardRowMetrics,
+                          showIcon: false,
+                          compact: true,
+                        ),
+                      ),
+                  ],
+                ),
+                const _IntranetIpSection(),
+              ] else if (platform == SupportPlatform.Android)
+                // The two status blocks a phone has sit side by side: each is
+                // a single value, and neither needs the card's full width.
+                const Row(
+                  spacing: 8,
+                  children: [
+                    Expanded(child: _VpnStatusTile()),
+                    Expanded(child: _LanStatusTile()),
+                  ],
+                )
+              else
+                const LanSwitchRow(showAddress: true),
+            ],
+          );
+          // A short desktop row cannot fit the folded-in intranet section;
+          // let the card scroll instead of overflowing its neighbours.
+          if (constraints.maxHeight.isFinite) {
+            return SingleChildScrollView(child: column);
+          }
+          return column;
+        },
       ),
     );
   }
@@ -244,7 +254,7 @@ class _IntranetIpSection extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         SizedBox(
           height: AppTextStyle.title2.leading,
           child: Align(
@@ -252,11 +262,11 @@ class _IntranetIpSection extends ConsumerWidget {
             child: switch (localIp) {
               null => SkeletonText(width: 120, style: style),
               '' => Text(
-                  appLocalizations.noNetwork,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: style.copyWith(color: colorScheme.onSurfaceVariant),
-                ),
+                appLocalizations.noNetwork,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style.copyWith(color: colorScheme.onSurfaceVariant),
+              ),
               final ip => DashboardFitText(ip, style: style),
             },
           ),

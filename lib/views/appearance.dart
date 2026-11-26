@@ -5,7 +5,6 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/views/theme.dart';
 import 'package:skyward/widgets/widgets.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

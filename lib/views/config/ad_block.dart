@@ -6,7 +6,6 @@ import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/material.dart' show Localizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The ad-block module: a switch, the hits it blocked, and the rules behind it.
@@ -79,10 +78,11 @@ class AdBlockView extends ConsumerWidget {
                             ),
                             trailing: Text(
                               '${hit.hits} ${appLocalizations.hitsUnit}',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 13,
-                              ),
+                              style: AppTextStyle.footnote
+                                  .of(context)
+                                  .copyWith(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ),
                       ],

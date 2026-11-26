@@ -257,7 +257,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m108(tag) => "태그 ${tag}은(는) 사용되지 않습니다";
 
-  static String m109(group, tier) =>
+  static String m109(tier, group) =>
       "현재 ${group}의 서버 중 “${tier}”에 해당하는 것이 없습니다";
 
   static String m110(tier, after) =>

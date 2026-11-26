@@ -256,7 +256,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m108(tag) => "タグ ${tag} は使われていません";
 
-  static String m109(group, tier) => "現在、${group} のサーバーは「${tier}」にありません";
+  static String m109(tier, group) => "現在、${group} のサーバーは「${tier}」にありません";
 
   static String m110(tier, after) => "「${tier}」は「${after}」と同じ条件のため、何も振り分けられません";
 
