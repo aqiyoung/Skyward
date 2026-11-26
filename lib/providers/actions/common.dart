@@ -219,7 +219,13 @@ class CommonAction extends _$CommonAction {
     final sha256 =
         asset?.sha256 ??
         (asset == null ? null : await _sha256FromSums(release, asset.name));
-    if (asset == null || sha256 == null) {
+    if (sha256 == null && asset != null) {
+      commonPrint.log(
+        'No published SHA-256 for ${asset.name}; downloading without the hash check',
+        logLevel: LogLevel.warning,
+      );
+    }
+    if (asset == null) {
       final page = release['html_url'];
       final tag = release['tag_name'];
       await launchUrl(
@@ -360,6 +366,7 @@ class CommonAction extends _$CommonAction {
       return null;
     }
     ({String url, String name, String? sha256})? generic;
+    final apks = <({String url, String name, String? sha256})>[];
     for (final asset in assets) {
       if (asset is! Map) {
         continue;
@@ -374,15 +381,18 @@ class CommonAction extends _$CommonAction {
         name: name,
         sha256: releaseApkSha256(release['body'], name),
       );
+      apks.add(entry);
       if (name.contains(abi)) return entry;
       // A preview only ships one arm64 APK, named `...-android.apk` rather
       // than after its ABI. Keep it as a fallback, never ahead of an exact
       // ABI build when a release carries both.
-      if (abi == 'arm64-v8a' && name.endsWith('-android.apk')) {
+      if (name.endsWith('-android.apk')) {
         generic ??= entry;
       }
     }
-    return generic;
+    // Some devices report an ABI string the asset never spells out. When a
+    // release carries exactly one APK it can only be that device's package.
+    return generic ?? (apks.length == 1 ? apks.single : null);
   }
 
   /// Reads the hash a release publishes in its SHA256SUMS asset. Releases

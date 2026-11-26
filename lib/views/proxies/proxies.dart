@@ -122,15 +122,26 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           section: const CommonPopupMenuSection(),
           onPressed: () => unawaited(showNewStrategyGroup(context)),
         ),
-      CommonPopupMenuItem(
-        glyph: AppGlyphs.proxies,
-        label: Localizations.localeOf(context).languageCode == 'zh'
-            ? '链路'
-            : 'Chains',
-        section: const CommonPopupMenuSection(),
-        onPressed: () => openChainsPage(context),
-      ),
     ];
+  }
+
+  /// Expands every group, or folds them all when they are already open.
+  IconButtonData _foldAction(BuildContext context) {
+    final groups = ref.watch(groupsProvider);
+    final unfolded = ref.watch(unfoldSetProvider);
+    final allOpen = groups.isNotEmpty &&
+        groups.every((group) => unfolded.contains(group.name));
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return IconButtonData(
+      glyph: allOpen ? AppGlyphs.chevronUp : AppGlyphs.chevronDown,
+      tooltip: allOpen
+          ? (zh ? '收起全部' : 'Collapse all')
+          : (zh ? '展开全部' : 'Expand all'),
+      onPressed: () => ref.read(proxiesActionProvider.notifier)
+          .updateCurrentUnfoldSet(
+            allOpen ? const <String>{} : groups.map((g) => g.name).toSet(),
+          ),
+    );
   }
 
   IconButtonData? _buildPrimaryAction() {
@@ -188,6 +199,15 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
           },
           tooltip: context.appLocalizations.scrollToSelected,
         ),
+      if (!picker)
+        IconButtonData(
+          glyph: AppGlyphs.link,
+          tooltip: Localizations.localeOf(context).languageCode == 'zh'
+              ? '链路'
+              : 'Chains',
+          onPressed: () => openChainsPage(context),
+        ),
+      if (!picker) _foldAction(context),
     ];
     // On a phone the heading and its buttons move into the page and the bar
     // is left completely empty, matching the dashboard and the global-search
