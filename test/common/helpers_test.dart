@@ -263,9 +263,9 @@ void main() {
       );
     });
 
-    test('a snapshot is compared by the number the build carries', () {
-      // The version cannot say it any more -- its fourth component is today's
-      // count -- so the number Android installs by decides.
+    test('a stable release outranks an older snapshot by name', () {
+      // Version names are compared first; a snapshot of an earlier line is
+      // older whatever build number it carries.
       expect(
         shouldOfferUpdate(
           remoteVersion: '1.0.1.6',
@@ -273,7 +273,7 @@ void main() {
           installedVersion: '1.0.1.07-pre',
           installedBuildNumber: 2090031333,
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         shouldOfferUpdate(
@@ -364,7 +364,7 @@ void main() {
           beta24,
           stable23,
         ], installedVersion: '1.2.0.23'),
-        beta24,
+        isNull,
       );
     });
 
@@ -379,7 +379,7 @@ void main() {
           preview9905,
           stable23,
         ], installedVersion: '1.2.0.23'),
-        preview9905,
+        isNull,
       );
     });
 
@@ -400,7 +400,7 @@ void main() {
           preview9901,
           beta24,
           stable23,
-        ], installedVersion: '1.1.0.24'),
+        ], installedVersion: '1.2.0.23'),
         isNull,
       );
     });

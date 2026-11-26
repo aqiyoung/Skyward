@@ -81,6 +81,7 @@ void main() {
     }
 
     setUpAll(() async {
+      globalState.appEnv = 'dev';
       globalState.packageInfo = PackageInfo(
         appName: 'Skyward',
         packageName: 'com.threely.skyward',

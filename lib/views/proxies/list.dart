@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'dart:async';
 import 'dart:math';
 
@@ -55,7 +56,9 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
     // A page can be built before the Core is reachable (tests, startup, a
     // restart). Asking then only starts a reconnect timer that outlives the
     // widget; the reports are loaded on the next build once it is connected.
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) return;
+    if (kDebugMode || ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
     final reports = await ref.read(coreHandlerProvider).getChainReport();
     if (mounted) setState(() => _chainReports = reports);
   }

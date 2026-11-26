@@ -948,7 +948,7 @@ class _StartButton extends StatelessWidget {
           shape: AppShape.full,
         ),
         onPressed: running ? onStop : onStart,
-        icon: GlyphIcon(running ? AppGlyphs.block : AppGlyphs.speed),
+        icon: GlyphIcon(running ? AppGlyphs.block : AppGlyphs.speed, fill: 1),
         label: Text(
           running
               ? context.appLocalizations.speedTestStop

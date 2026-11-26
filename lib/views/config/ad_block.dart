@@ -78,10 +78,11 @@ class AdBlockView extends ConsumerWidget {
                             ),
                             trailing: Text(
                               '${hit.hits} ${appLocalizations.hitsUnit}',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 13,
-                              ),
+                              style: AppTextStyle.footnote
+                                  .of(context)
+                                  .copyWith(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ),
                       ],

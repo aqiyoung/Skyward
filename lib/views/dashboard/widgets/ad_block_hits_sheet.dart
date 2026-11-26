@@ -50,10 +50,11 @@ class AdBlockHitsSheet extends ConsumerWidget {
                             ),
                             trailing: Text(
                               '${hit.hits} $unit',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 13,
-                              ),
+                              style: AppTextStyle.footnote
+                                  .of(context)
+                                  .copyWith(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ),
                       ],
