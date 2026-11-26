@@ -188,6 +188,26 @@ func TestMaterializeChainsReportsEachIssue(t *testing.T) {
 	}
 }
 
+func TestMaterializeChainsHealsARenamedTargetGroup(t *testing.T) {
+	// A subscription script can prefix the main selector with a flag. The
+	// saved target still names the old group; the chain must follow the rename.
+	profile := strings.Replace(chainProfile, "name: main,", "name: \U0001F680 main,", 1)
+	target := "main"
+	spec := chainSpec("c", "entry", "hk1")
+	spec.TargetGroup = &target
+	result := materializeTest(t, profile, "", nil, spec)
+	if codes := issueCodes(result.reports[0].Issues); len(codes) != 0 {
+		t.Fatalf("issues = %v, want none", codes)
+	}
+	group := result.groups["\U0001F680 main"]
+	if group == nil {
+		t.Fatal("renamed main group not found")
+	}
+	if got := stringList(group["proxies"]); !slices.Contains(got, "c") {
+		t.Fatalf("chain not injected into renamed group: %v", got)
+	}
+}
+
 func TestMaterializeChainsHealsAMissingHopOnlyOnAUniqueFingerprint(t *testing.T) {
 	renamed := &ChainFingerprint{Type: "ss", Server: "10.0.1.1", Port: 8388}
 	elsewhere := &ChainFingerprint{Type: "ss", Server: "10.9.9.9", Port: 8388}

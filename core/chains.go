@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/dlclark/regexp2"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
@@ -673,14 +674,35 @@ func (ix *chainIndex) analyze(spec ChainSpec, hint string) chainAnalysis {
 	return a
 }
 
+// plainGroupName drops the flags and symbols a subscription script may add
+// to a group name, so a saved target can still find its renamed group.
+func plainGroupName(name string) string {
+	var b strings.Builder
+	for _, r := range name {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsSpace(r) {
+			b.WriteRune(r)
+		}
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
+}
+
 func (ix *chainIndex) resolveTarget(a *chainAnalysis, targetGroup *string, hint string) {
 	target := ""
-	if targetGroup != nil && *targetGroup != "" && ix.groupMaps[*targetGroup] != nil {
-		target = *targetGroup
+	if targetGroup != nil && *targetGroup != "" {
+		if ix.groupMaps[*targetGroup] != nil {
+			target = *targetGroup
+		} else {
+			// A script may add a flag to the group name between applies. Only
+			// heal that exact rename; any other missing target stays an issue.
+			want := plainGroupName(*targetGroup)
+			for _, name := range slices.Sorted(maps.Keys(ix.groupMaps)) {
+				if plainGroupName(name) == want {
+					target = name
+					break
+				}
+			}
+		}
 	} else {
-		// A subscription script can rename groups between applies (for
-		// example by prefixing the main selector with a flag). A stale saved
-		// target must not drop the chain: put it in the running main group.
 		target = ix.mainGroup(hint)
 	}
 	if target == "" {
