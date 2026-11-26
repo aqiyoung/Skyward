@@ -251,7 +251,7 @@ class _MemorySummary extends StatelessWidget {
         ),
         SizedBox(height: compact ? 4 : 6),
         Wrap(
-          spacing: 16,
+          spacing: 8,
           runSpacing: 4,
           children: [
             for (final part in parts)

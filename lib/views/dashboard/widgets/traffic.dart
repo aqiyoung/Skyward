@@ -152,7 +152,7 @@ class SpeedCard extends ConsumerWidget {
                 SizedBox(
                   height: 24 * scale,
                   child: Row(
-                    spacing: 8,
+                    spacing: 4,
                     children: [
                       GlyphIcon(
                         direction.glyph,
