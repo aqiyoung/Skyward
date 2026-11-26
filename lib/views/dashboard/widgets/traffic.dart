@@ -159,10 +159,13 @@ class SpeedCard extends ConsumerWidget {
                         size: 18,
                         color: direction.glyphColorOf(context),
                       ),
-                      Text(
-                        direction.labelOf(context),
-                        maxLines: 1,
-                        style: DashboardText.cardTitle(context),
+                      Flexible(
+                        child: Text(
+                          direction.labelOf(context),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DashboardText.cardTitle(context),
+                        ),
                       ),
                       Expanded(
                         child: Text(
