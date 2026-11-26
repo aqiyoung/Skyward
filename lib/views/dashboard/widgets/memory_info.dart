@@ -243,13 +243,13 @@ class _MemorySummary extends StatelessWidget {
           ),
           maxLines: 1,
         ),
-        if (mobile) const SizedBox(height: 8) else const Spacer(),
+        if (mobile) const SizedBox(height: 14) else const Spacer(),
         _MemoryBar(
           segments: [
             for (final part in parts) (bytes: part.bytes, color: part.color),
           ],
         ),
-        SizedBox(height: compact ? 4 : 6),
+        SizedBox(height: compact ? 8 : 10),
         Wrap(
           spacing: 16,
           runSpacing: 4,
