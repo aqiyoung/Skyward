@@ -77,13 +77,10 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: DashboardView(platform: SupportPlatform.MacOS),
-        ),
+        child: const TestApp(child: ConnectionsTableCard()),
       ),
     );
     await tester.pump();
-    await tester.tap(find.byType(ConnectionsTableCard));
     await tester.pump(const Duration(milliseconds: 400));
   }
 

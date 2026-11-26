@@ -177,9 +177,9 @@ class Request {
         _updateOverrides(),
       );
       final releases = response.data ?? const <dynamic>[];
-      // The cache is best-effort: a slow or unavailable disk must not hold the
-      // result, or the row would sit on "Checking…" behind a background write.
-      unawaited(_cacheReleases(releases));
+      // Keep the write in line so a caller that reads the cache immediately
+      // after a successful check sees the list it just fetched.
+      await _cacheReleases(releases);
       return newestOfferableRelease(
         _platformCandidates(releases, channel),
         installedVersion: globalState.packageInfo.displayVersion,
