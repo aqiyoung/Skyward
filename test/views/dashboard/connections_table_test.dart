@@ -8,6 +8,7 @@ import 'package:skyward/state.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/dashboard/dashboard.dart';
 import 'package:skyward/views/dashboard/layout.dart';
+import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/views/dashboard/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
