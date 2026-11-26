@@ -236,10 +236,10 @@ class _ServiceStatusCardState extends ConsumerState<ServiceStatusCard>
       fill: !mobile,
       cellHeight:
           (mobile
-              ? 50
+              ? 44
               : density.isCompact
-              ? 40
-              : 46) *
+              ? 32
+              : 40) *
           scale,
       gap: density.isCompact ? 6 : 8,
     );
