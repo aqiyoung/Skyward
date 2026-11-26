@@ -23,7 +23,7 @@ Future<void> showUpdateSheet(
 }) {
   return showSheet<void>(
     context: context,
-    props: const SheetProps(detents: [0.6]),
+    props: const SheetProps(detents: [0.74]),
     builder: (_) => UpdateSheet(check: check),
   );
 }
@@ -83,9 +83,10 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
   }
 
   void _preferences() {
-    showSheet<void>(
-      context: context,
-      builder: (_) => const UpdatePreferencesSheet(),
+    // A full page instead of a sheet on top of a sheet: the stacked handle
+    // bars covered the title and the lower sheet had no room for its list.
+    unawaited(
+      BaseNavigator.push<void>(context, const UpdatePreferencesSheet()),
     );
   }
 
@@ -134,45 +135,194 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
     return TextSpan(children: spans);
   }
 
+  Widget _channelPill(BuildContext context) {
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    final label = globalState.isPre
+        ? (zh ? '预发布版' : 'Pre-release')
+        : (zh ? '正式版' : 'Stable');
+    final scheme = context.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: ShapeDecoration(
+        color: scheme.primaryContainer,
+        shape: AppShape.full,
+      ),
+      child: Text(
+        label,
+        style: AppTextStyle.footnote
+            .of(context)
+            .copyWith(color: scheme.onPrimaryContainer),
+      ),
+    );
+  }
+
+  /// The status line: channel on the left, live state on the right.
+  Widget _statusLine(BuildContext context, String text, bool checking) {
+    final scheme = context.colorScheme;
+    return Row(
+      children: [
+        _channelPill(context),
+        const Spacer(),
+        if (checking) CommonCircleLoading(size: 16),
+        if (!checking)
+          GlyphIcon(
+            _phase == _UpdatePhase.latest
+                ? AppGlyphs.check
+                : AppGlyphs.cloudDownload,
+            size: 16,
+            color: _phase == _UpdatePhase.latest
+                ? scheme.success
+                : scheme.primary,
+          ),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: AppTextStyle.subheadline
+              .of(context)
+              .copyWith(color: scheme.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+
+  /// The version itself is the hero, not a decorative ring. The accent line
+  /// under it carries the checking progress and the release channel colour.
+  Widget _versionCard(BuildContext context, String version, String caption) {
+    final scheme = context.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      decoration: ShapeDecoration(
+        color: context.raisedSurfaceLevel.colorOf(scheme),
+        shape: AppShape.all(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            version,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.title1
+                .of(context, emphasized: true)
+                .copyWith(color: scheme.primary),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              caption,
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ),
+          if (_phase == _UpdatePhase.checking)
+            const LinearProgressIndicator(minHeight: 3)
+          else
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                color: _phase == _UpdatePhase.latest
+                    ? scheme.success
+                    : scheme.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Notes get their own scrollable card, so a long changelog never pushes
+  /// the action buttons off the sheet.
+  Widget _notesCard(BuildContext context, String? body) {
+    final l = context.appLocalizations;
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    final scheme = context.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: ShapeDecoration(
+        color: context.raisedSurfaceLevel.colorOf(scheme),
+        shape: AppShape.all(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GlyphIcon(AppGlyphs.code, size: 16, color: scheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                zh ? '更新日志' : "What's new",
+                style: AppTextStyle.headline.of(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 190),
+            child: SingleChildScrollView(
+              child: Text.rich(_releaseNotes(context, body)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Three quiet lines while the check is in flight: enough to show the
+  /// panel is alive without inventing release information.
+  Widget _checkingHints(BuildContext context) {
+    final scheme = context.colorScheme;
+    final tint = scheme.onSurface.withValues(alpha: 0.08);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final width in [1.0, 0.82, 0.64])
+          Container(
+            height: 10,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: ShapeDecoration(color: tint, shape: AppShape.all(6)),
+            child: FractionallySizedBox(
+              alignment: AlignmentDirectional.centerStart,
+              widthFactor: width,
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
-    final scheme = context.colorScheme;
     final zh = Localizations.localeOf(context).languageCode == 'zh';
-    final version = globalState.hasPackageInfo
+    final installed = globalState.hasPackageInfo
         ? globalState.packageInfo.labeledVersion
         : '';
-    final installed = zh ? '已安装版本：$version' : 'Installed version: $version';
-    final (
-      Glyph glyph,
-      Color color,
-      double? value,
-      String title,
-      String detail,
-    ) = switch (_phase) {
+    final remote = releaseVersionOf(
+      (_release?['tag_name'] as String?) ?? '',
+      _release?['name'] as String?,
+    );
+    final body = _release?['body'] as String?;
+    final showNotes =
+        _phase == _UpdatePhase.found && body?.trim().isNotEmpty == true;
+    final (status, version, caption) = switch (_phase) {
       _UpdatePhase.checking => (
-        AppGlyphs.cloudSync,
-        scheme.primary,
-        null,
         l.versionUpdateChecking,
         installed,
+        zh ? '正在连接更新源…' : 'Contacting the release feed…',
       ),
       _UpdatePhase.latest => (
-        AppGlyphs.check,
-        scheme.success,
-        1,
         zh ? '已是最新版本' : "You're up to date",
         installed,
+        zh ? '无需更新' : 'Nothing to install',
       ),
       _UpdatePhase.found => (
-        AppGlyphs.cloudDownload,
-        scheme.primary,
-        1,
         l.versionUpdateFound,
-        releaseVersionOf(
-          (_release?['tag_name'] as String?) ?? '',
-          _release?['name'] as String?,
-        ),
+        remote,
+        zh ? '已安装：$installed' : 'Installed: $installed',
       ),
     };
     final primaryLabel = _phase == _UpdatePhase.found
@@ -188,37 +338,20 @@ class _UpdateSheetState extends ConsumerState<UpdateSheet> {
         ),
       ],
       body: StageSheetLayout(
-        hero: StageSheetHero(
-          badge: StageSheetBadge(
-            color: color,
-            value: value,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: Tween(begin: 0.7, end: 1.0).animate(animation),
-                  child: child,
-                ),
-              ),
-              child: GlyphIcon(glyph, key: ValueKey(glyph)),
-            ),
-          ),
-          title: title,
-          subtitle: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Text(detail),
-          ),
+        hero: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _statusLine(context, status, _phase == _UpdatePhase.checking),
+            const SizedBox(height: 12),
+            _versionCard(context, version, caption),
+          ],
         ),
         body: [
-          if (_phase == _UpdatePhase.found &&
-              (_release?['body'] as String?)?.trim().isNotEmpty == true)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Text.rich(
-                _releaseNotes(context, _release?['body'] as String?),
-              ),
-            ),
+          const SizedBox(height: 16),
+          if (showNotes)
+            _notesCard(context, body)
+          else if (_phase == _UpdatePhase.checking)
+            _checkingHints(context),
         ],
         primary: FilledButton(
           onPressed: () => unawaited(_accept()),
