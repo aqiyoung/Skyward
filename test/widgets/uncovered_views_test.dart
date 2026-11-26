@@ -127,6 +127,8 @@ ProviderContainer _containerFor(
   );
   addTearDown(container.dispose);
   globalState.container = container;
+  // tools.dart reads isPre during build for the update-channel choice.
+  globalState.appEnv = 'stable';
   container.read(viewSizeProvider.notifier).update((_) => size);
   return container;
 }

@@ -164,5 +164,7 @@ class _BarPainter extends CustomPainter {
   bool shouldRepaint(_BarPainter old) =>
       old.points != points ||
       old.downloadColor != downloadColor ||
-      old.uploadColor != uploadColor;
+      old.uploadColor != uploadColor ||
+      old.gridColor != gridColor ||
+      old.labelColor != labelColor;
 }

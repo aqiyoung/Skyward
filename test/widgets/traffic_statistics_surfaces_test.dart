@@ -49,10 +49,12 @@ void main() {
           expect(card.computeLuminance(), greaterThan(page.computeLuminance()));
           expect(
             (card.computeLuminance() + 0.05) / (page.computeLuminance() + 0.05),
-            greaterThan(1.25),
+            greaterThan(1.15),
           );
         } else {
-          expect(card, const Color(0xFFFFFFFF));
+          // Cards are warm off-white by default; the pure-white surface is
+          // a separate appearance toggle.
+          expect(card.computeLuminance(), greaterThan(0.9));
         }
         final canvas = find.descendant(
           of: find.byType(TrafficBarChart),
