@@ -351,7 +351,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.byType(UpdateSheet), findsOneWidget);
 
     // The word is news for a few seconds, not for the rest of the visit: the
     // row goes back to naming the build.

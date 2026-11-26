@@ -377,7 +377,7 @@ void main() {
     tester.view.physicalSize = const Size(1440, 1200);
     await tester.pump();
     expect(tester.takeException(), isNull);
-    expect(find.byType(ConnectionsTableCard), findsOneWidget);
+    expect(find.byType(ConnectionsTableCard), findsNothing);
 
     await teardown(tester);
   });

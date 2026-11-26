@@ -251,13 +251,13 @@ class _MemorySummary extends StatelessWidget {
         ),
         SizedBox(height: compact ? 4 : 6),
         Wrap(
-          spacing: 4,
-          runSpacing: 2,
+          spacing: 2,
+          runSpacing: 1,
           children: [
             for (final part in parts)
               Row(
                 mainAxisSize: MainAxisSize.min,
-                spacing: 6,
+                spacing: 2,
                 children: [
                   DecoratedBox(
                     decoration: ShapeDecoration(
