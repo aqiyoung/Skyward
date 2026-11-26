@@ -675,11 +675,12 @@ func (ix *chainIndex) analyze(spec ChainSpec, hint string) chainAnalysis {
 
 func (ix *chainIndex) resolveTarget(a *chainAnalysis, targetGroup *string, hint string) {
 	target := ""
-	if targetGroup != nil && *targetGroup != "" {
-		if ix.groupMaps[*targetGroup] != nil {
-			target = *targetGroup
-		}
+	if targetGroup != nil && *targetGroup != "" && ix.groupMaps[*targetGroup] != nil {
+		target = *targetGroup
 	} else {
+		// A subscription script can rename groups between applies (for
+		// example by prefixing the main selector with a flag). A stale saved
+		// target must not drop the chain: put it in the running main group.
 		target = ix.mainGroup(hint)
 	}
 	if target == "" {
