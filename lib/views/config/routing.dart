@@ -461,6 +461,13 @@ const _groupGlyphs = [
 Glyph _groupGlyph(String name) =>
     _groupGlyphs[name.hashCode.abs() % _groupGlyphs.length];
 
+/// A group without a known service logo gets the monochrome glyph, never the
+/// app's own mark: that would make every unknown group look identical.
+String _groupIconOf(String name) {
+  final src = GroupIconSource.of(name: name, icon: '');
+  return src == GroupIconSource.logo ? '' : src;
+}
+
 /// Every group the app selects for: a connected strategy or an engine
 /// binding. One group can carry either, never both in this list.
 Widget _activeGroups(BuildContext context, RcxStatus status) {
@@ -485,7 +492,7 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
       return DecorationListItem(
         invalid: fault != null,
         leading: CommonTargetIcon(
-          src: GroupIconSource.of(name: name, icon: ''),
+          src: _groupIconOf(name),
           fallback: GlyphIcon(_groupGlyph(name)),
         ),
         title: EmojiText(name),
@@ -506,7 +513,7 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
     return DecorationListItem(
       invalid: _isFault(group.problem),
       leading: CommonTargetIcon(
-        src: GroupIconSource.of(name: name, icon: ''),
+        src: _groupIconOf(name),
         fallback: GlyphIcon(_groupGlyph(name)),
       ),
       title: EmojiText(name),
