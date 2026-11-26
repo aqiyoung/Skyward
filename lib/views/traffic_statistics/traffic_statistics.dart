@@ -173,14 +173,15 @@ class _DateStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(trafficRangeProvider.notifier);
+    final canGoForward = notifier.canShift(period, 1);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronBack),
           tooltip: context.appLocalizations.previousPeriod,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, -1),
+          onPressed: () => notifier.shift(period, -1),
         ),
         Text(
           _label(context.appLocalizations),
@@ -189,8 +190,7 @@ class _DateStrip extends ConsumerWidget {
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronForward),
           tooltip: context.appLocalizations.nextPeriod,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, 1),
+          onPressed: canGoForward ? () => notifier.shift(period, 1) : null,
         ),
       ],
     );

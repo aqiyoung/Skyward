@@ -16,6 +16,33 @@ import 'package:mocktail/mocktail.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('a period cannot advance past the period containing today', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final range = container.read(trafficRangeProvider.notifier);
+
+    for (final period in TrafficPeriod.values) {
+      range.setPeriod(period);
+      final current = container.read(trafficRangeProvider);
+      // At the current period there is no future period to advance to.
+      expect(
+        range.canShift(period, 1),
+        isFalse,
+        reason: '$period at its current period must not advance',
+      );
+      range.shift(period, 1);
+      expect(
+        container.read(trafficRangeProvider),
+        current,
+        reason: '$period shift must not cross into the future',
+      );
+      // One period back is still reachable and can return forward.
+      expect(range.canShift(period, -1), isTrue);
+      range.shift(period, -1);
+      expect(range.canShift(period, 1), isTrue);
+    }
+  });
+
   test(
     'switching from a month back to a week anchors on today, not the month first',
     () {

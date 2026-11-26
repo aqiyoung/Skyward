@@ -229,14 +229,29 @@ class TrafficRange extends _$TrafficRange {
     state = startOfTrafficPeriod(period, DateTime.now());
   }
 
-  void shift(TrafficPeriod period, int amount) {
-    final next = switch (period) {
-      TrafficPeriod.day => state.add(Duration(days: amount)),
-      TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
-      TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
-    };
-    state = startOfTrafficPeriod(period, next);
+  /// Whether the range can move by [amount] periods. Past periods are always
+  /// reachable, but a view never advances past the period containing today:
+  /// there is no traffic to show for a future day, week or month.
+  bool canShift(TrafficPeriod period, int amount) {
+    if (amount <= 0) return true;
+    final current = startOfTrafficPeriod(period, DateTime.now());
+    final next = _shifted(state, period, amount);
+    return !next.isAfter(current);
   }
+
+  void shift(TrafficPeriod period, int amount) {
+    if (!canShift(period, amount)) return;
+    state = _shifted(state, period, amount);
+  }
+}
+
+DateTime _shifted(DateTime state, TrafficPeriod period, int amount) {
+  final next = switch (period) {
+    TrafficPeriod.day => state.add(Duration(days: amount)),
+    TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
+    TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
+  };
+  return startOfTrafficPeriod(period, next);
 }
 
 /// Loads history for the selected period and aggregates it off-isolate.
