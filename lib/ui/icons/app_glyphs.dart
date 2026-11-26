@@ -143,6 +143,20 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  /// Two opposed chevrons: one control for expanding or folding a list.
+  static const unfold = Glyph([
+    GlyphPolyline([
+      GlyphVertex(6, 10.5),
+      GlyphVertex(12, 5, 0.4),
+      GlyphVertex(18, 10.5),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(6, 13.5),
+      GlyphVertex(12, 19, 0.4),
+      GlyphVertex(18, 13.5),
+    ], role: GlyphRole.line),
+  ]);
+
   static const chevronUp = Glyph([
     GlyphPolyline([
       GlyphVertex(5.5, 15.25),

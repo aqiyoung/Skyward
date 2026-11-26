@@ -80,13 +80,10 @@ class PageLargeTitle extends StatelessWidget {
                     ),
                   ),
                   if (actions.isNotEmpty || menuItems.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsetsDirectional.only(start: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: ShapeDecoration(
-                        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                        shape: AppShape.full,
-                      ),
+                    IconTheme(
+                      data: IconTheme.of(
+                        context,
+                      ).copyWith(color: colorScheme.primary, size: 22),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

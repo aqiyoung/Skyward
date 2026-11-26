@@ -129,15 +129,17 @@ class _ProxiesViewState extends ConsumerState<ProxiesView> {
   IconButtonData _foldAction(BuildContext context) {
     final groups = ref.watch(groupsProvider);
     final unfolded = ref.watch(unfoldSetProvider);
-    final allOpen = groups.isNotEmpty &&
+    final allOpen =
+        groups.isNotEmpty &&
         groups.every((group) => unfolded.contains(group.name));
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     return IconButtonData(
-      glyph: allOpen ? AppGlyphs.chevronUp : AppGlyphs.chevronDown,
+      glyph: AppGlyphs.unfold,
       tooltip: allOpen
           ? (zh ? '收起全部' : 'Collapse all')
           : (zh ? '展开全部' : 'Expand all'),
-      onPressed: () => ref.read(proxiesActionProvider.notifier)
+      onPressed: () => ref
+          .read(proxiesActionProvider.notifier)
           .updateCurrentUnfoldSet(
             allOpen ? const <String>{} : groups.map((g) => g.name).toSet(),
           ),
