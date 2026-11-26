@@ -10,6 +10,14 @@ import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// The panel surface shared by the traffic views; kept as a helper so the
+/// surface tests can assert the same decoration the cards use.
+ShapeDecoration panelDecoration(BuildContext context, double radius) =>
+    ShapeDecoration(
+      color: SurfaceLevel.card.colorOf(context.colorScheme),
+      shape: AppShape.all(radius),
+    );
+
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
 /// rule-hit distribution, a traffic ranking and running time. Opened from
 /// the dashboard's traffic card.
