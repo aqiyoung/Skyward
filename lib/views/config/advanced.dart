@@ -62,6 +62,11 @@ class AdvancedConfigView extends StatelessWidget {
         leading: const IconWell(AppGlyphs.photos),
         widget: const IconSetsView(),
       ),
+      ListItem.open(
+        title: Text(appLocalizations.rcxTitle),
+        leading: const IconWell(AppGlyphs.shuffle),
+        widget: const RoutingHubView(),
+      ),
     ];
     return BaseScaffold(
       rowSeparators: false,
@@ -71,19 +76,7 @@ class AdvancedConfigView extends StatelessWidget {
           top: context.cardTopPadding,
           bottom: 16 + context.bottomInset,
         ),
-        children: [
-          generateSection(leadingGap: false, items: items),
-          generateSection(
-            title: appLocalizations.rcxTitle,
-            items: [
-              ListItem.open(
-                title: Text(appLocalizations.rcxTitle),
-                leading: const IconWell(AppGlyphs.shuffle),
-                widget: const RoutingHubView(),
-              ),
-            ],
-          ),
-        ],
+        children: [generateSection(leadingGap: false, items: items)],
       ),
     );
   }

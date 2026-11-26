@@ -532,12 +532,14 @@ class RunningScenarioList extends ConsumerStatefulWidget {
     this.route,
     this.onRouteShown,
     this.routeLine,
+    this.embedded = false,
   });
 
   final List<Widget> leading;
   final List<Widget> trailing;
   final String? route;
   final VoidCallback? onRouteShown;
+  final bool embedded;
 
   /// Where a route's traffic goes now, when its group reports it.
   final String? Function(String route)? routeLine;
@@ -581,7 +583,7 @@ class _RunningScenarioListState extends ConsumerState<RunningScenarioList>
       controller: _controller,
       padding:
           const EdgeInsets.symmetric(horizontal: 16).copyWith(
-            top: context.appBarInset,
+            top: widget.embedded ? 8 : context.appBarInset,
             bottom: context.bottomInset + 32,
           ) +
           context.bodyInsets,

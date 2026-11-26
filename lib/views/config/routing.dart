@@ -66,8 +66,13 @@ class _RoutingHubViewState extends ConsumerState<RoutingHubView> {
                 ref,
                 _route,
                 (route) => setState(() => _route = route),
+                embedded: true,
               ),
-              _RoutingTab.groups => scriptedGroupsBody(context, ref),
+              _RoutingTab.groups => scriptedGroupsBody(
+                context,
+                ref,
+                embedded: true,
+              ),
             },
           ),
         ],
@@ -120,8 +125,9 @@ Widget routingScenarioBody(
   BuildContext context,
   WidgetRef ref,
   String? route,
-  void Function(String?) onRoute,
-) {
+  void Function(String?) onRoute, {
+  bool embedded = false,
+}) {
   final l = context.appLocalizations;
   final hasProfile = ref.watch(
     currentProfileProvider.select((profile) => profile != null),
@@ -158,6 +164,7 @@ Widget routingScenarioBody(
       ],
       route: route,
       onRouteShown: () => onRoute(null),
+      embedded: embedded,
       routeLine: (name) => switch (status.groups
           .where((group) => group.name == name)
           .firstOrNull) {
@@ -170,10 +177,15 @@ Widget routingScenarioBody(
 
 /// A hub page's scroll view, under the app bar and above the floating bar.
 class _HubList extends StatefulWidget {
-  const _HubList({required this.id, required this.children});
+  const _HubList({
+    required this.id,
+    required this.children,
+    this.embedded = false,
+  });
 
   final String id;
   final List<Widget> children;
+  final bool embedded;
 
   @override
   State<_HubList> createState() => _HubListState();
@@ -193,9 +205,10 @@ class _HubListState extends State<_HubList> {
     key: PageStorageKey('routing-${widget.id}'),
     controller: _controller,
     padding:
-        const EdgeInsets.symmetric(
-          horizontal: 16,
-        ).copyWith(top: context.appBarInset, bottom: context.bottomInset + 32) +
+        const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: widget.embedded ? 8 : context.appBarInset,
+          bottom: context.bottomInset + 32,
+        ) +
         context.bodyInsets,
     children: widget.children,
   );
@@ -388,11 +401,16 @@ class ScriptedGroupsView extends ConsumerWidget {
 }
 
 /// The scripted-groups page body, shared with the combined routing hub.
-Widget scriptedGroupsBody(BuildContext context, WidgetRef ref) {
+Widget scriptedGroupsBody(
+  BuildContext context,
+  WidgetRef ref, {
+  bool embedded = false,
+}) {
   final l = context.appLocalizations;
   final status = ref.watch(rcxStatusStateProvider);
   return _HubList(
     id: 'scripted-groups',
+    embedded: embedded,
     children: [
       if (status == null)
         ListFooter(text: l.rcxHubNeedsCore)
@@ -466,7 +484,10 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
           : null;
       return DecorationListItem(
         invalid: fault != null,
-        leading: GlyphIcon(_groupGlyph(name)),
+        leading: CommonTargetIcon(
+          src: GroupIconSource.of(name: name, icon: ''),
+          fallback: GlyphIcon(_groupGlyph(name)),
+        ),
         title: EmojiText(name),
         subtitle: EmojiText(
           fault ??
@@ -484,7 +505,10 @@ Widget _activeGroups(BuildContext context, RcxStatus status) {
     final group = groups[name]!;
     return DecorationListItem(
       invalid: _isFault(group.problem),
-      leading: GlyphIcon(_groupGlyph(name)),
+      leading: CommonTargetIcon(
+        src: GroupIconSource.of(name: name, icon: ''),
+        fallback: GlyphIcon(_groupGlyph(name)),
+      ),
       title: EmojiText(name),
       subtitle: EmojiText(
         _groupLine(l, group, status.tunnelMode),
