@@ -1088,6 +1088,15 @@ func (b *chainBuild) freezeIncludeAll() {
 				setMappingValue(node, key, boolNode(false))
 			}
 		}
+		// The group now carries an explicit proxy list, so its old filter must
+		// not drop the chain members we are about to append. Subscription
+		// scripts commonly use exclude-filter to strip airport-info nodes;
+		// a chain named after such a node would otherwise disappear here.
+		for _, key := range []string{"filter", "exclude-filter", "exclude-type"} {
+			if _, present := ix.groupMaps[name][key]; present {
+				setMappingValue(node, key, scalarNode(""))
+			}
+		}
 		use := option.Use
 		if withProviders {
 			use = ix.providerOrder

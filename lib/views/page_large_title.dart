@@ -79,7 +79,7 @@ class PageLargeTitle extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (actions.isNotEmpty)
+                  if (actions.isNotEmpty || menuItems.isNotEmpty)
                     Container(
                       margin: const EdgeInsetsDirectional.only(start: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -92,17 +92,18 @@ class PageLargeTitle extends StatelessWidget {
                         children: [
                           for (final data in actions)
                             AppBarActionButton(data: data),
+                          if (menuItems.isNotEmpty)
+                            CommonPopupBox(
+                              targetBuilder: (open) => IconButton(
+                                tooltip: UiLocalizations.of(context).more,
+                                onPressed: open,
+                                icon: const GlyphIcon(AppGlyphs.moreCircle),
+                              ),
+                              popupBuilder: (_) =>
+                                  CommonPopupMenu(items: menuItems),
+                            ),
                         ],
                       ),
-                    ),
-                  if (menuItems.isNotEmpty)
-                    CommonPopupBox(
-                      targetBuilder: (open) => IconButton(
-                        tooltip: UiLocalizations.of(context).more,
-                        onPressed: open,
-                        icon: const GlyphIcon(AppGlyphs.moreCircle),
-                      ),
-                      popupBuilder: (_) => CommonPopupMenu(items: menuItems),
                     ),
                 ],
               ),
