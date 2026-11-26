@@ -326,7 +326,7 @@ void main() {
 
     await tester.tap(row);
     await tester.pump();
-    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
     // A second tap while the first is still in flight must not ask twice.
     await tester.tap(row);

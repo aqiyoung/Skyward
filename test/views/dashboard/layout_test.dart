@@ -189,7 +189,7 @@ void main() {
     expect(profile.top, greaterThan(0));
     expect(profile.left, greaterThan(0));
     expect(service.width, greaterThan(0));
-    expect(find.byType(MemoryInfo), findsNothing);
+    expect(find.byType(MemoryInfo), findsOneWidget);
     // The routing board takes a full-width row of its own now, so this
     // window no longer spares the tables row: the summaries step down to
     // their fixed height and the page scrolls.
