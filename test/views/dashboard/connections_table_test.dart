@@ -5,6 +5,7 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/dashboard/dashboard.dart';
 import 'package:skyward/views/dashboard/layout.dart';
 import 'package:skyward/views/dashboard/widgets/widgets.dart';
@@ -80,12 +81,8 @@ void main() {
         child: const TestApp(child: ConnectionsTableCard()),
       ),
     );
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ConnectionsTableCard),
-        matching: find.text('Requests'),
-      ),
-    );
+    // The Requests tab is the second connected button in the card header.
+    await tester.tap(find.byType(DashboardConnectedButton).at(1));
     await tester.pump(const Duration(milliseconds: 400));
   }
 
