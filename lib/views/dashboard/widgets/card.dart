@@ -13,15 +13,15 @@ import 'package:material_ui/material_ui.dart';
 EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
   DashboardDensity.standard => const EdgeInsets.symmetric(
     horizontal: 22,
-    vertical: 20,
+    vertical: 16,
   ),
   DashboardDensity.compact => const EdgeInsets.symmetric(
     horizontal: 20,
-    vertical: 16,
+    vertical: 12,
   ),
   DashboardDensity.mobile => const EdgeInsets.symmetric(
     horizontal: 20,
-    vertical: 18,
+    vertical: 16,
   ),
 };
 
