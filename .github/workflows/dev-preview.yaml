@@ -629,6 +629,22 @@ jobs:
             --notes-file preview-notes.md \
             --prerelease
 
+          # Claim the four-part version as a git tag too. The version step
+          # counts the line's `v<major>.0.*` tags to pick the next revision;
+          # without this a dev build writes only `dev-<build>` and every run
+          # re-derives the same version (e.g. 1.0.2.21 over and over). This is
+          # a bare tag, not a release, so the updater still sees only the
+          # dev release and never mistakes it for an installable version.
+          version_tag="v${VERSION}"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${version_tag}" > /dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${version_tag}" \
+              -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${version_tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
+          fi
+          echo "claimed version tag ${version_tag}"
+
       - name: Prune old previews
         env:
           GH_TOKEN: ${{ github.token }}
