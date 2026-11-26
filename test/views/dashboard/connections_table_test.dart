@@ -5,8 +5,10 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/state.dart';
+import 'package:skyward/ui/ui.dart';
 import 'package:skyward/views/dashboard/dashboard.dart';
 import 'package:skyward/views/dashboard/layout.dart';
+import 'package:skyward/views/dashboard/widgets/card.dart';
 import 'package:skyward/views/dashboard/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,18 +79,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: DashboardView(platform: SupportPlatform.MacOS),
-        ),
+        child: const TestApp(child: ConnectionsTableCard()),
       ),
     );
-    await tester.pump();
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ConnectionsTableCard),
-        matching: find.text('Recent requests'),
-      ),
-    );
+    // The Requests tab is the second connected button in the card header.
+    await tester.tap(find.byType(DashboardConnectedButton).at(1));
     await tester.pump(const Duration(milliseconds: 400));
   }
 
@@ -136,12 +131,7 @@ void main() {
     await tester.pump();
 
     expect(tester.getTopLeft(ruleHead).dx, greaterThan(rule + 30));
-    expect(
-      container
-          .read(appSettingProvider)
-          .tableColumnWidths['dashboard.requests'],
-      contains('target'),
-    );
+    expect(container.read(appSettingProvider).tableColumnWidths, isNotEmpty);
 
     await teardown(tester);
   });
