@@ -83,12 +83,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ConnectionsTableCard),
-        matching: find.text('Recent requests'),
-      ),
-    );
+    await tester.tap(find.byType(ConnectionsTableCard));
     await tester.pump(const Duration(milliseconds: 400));
   }
 

@@ -266,10 +266,24 @@ class _MemorySummary extends StatelessWidget {
                     ),
                     child: const SizedBox.square(dimension: 8),
                   ),
-                  Text(part.label, style: DashboardText.label(context)),
-                  Text(
-                    '${part.bytes.traffic.value} ${part.bytes.traffic.unit}',
-                    style: DashboardText.value(context, AppTextStyle.footnote),
+                  Flexible(
+                    child: Text(
+                      part.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DashboardText.label(context),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      '${part.bytes.traffic.value} ${part.bytes.traffic.unit}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DashboardText.value(
+                        context,
+                        AppTextStyle.footnote,
+                      ),
+                    ),
                   ),
                 ],
               ),
