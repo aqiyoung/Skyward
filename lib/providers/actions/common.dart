@@ -429,9 +429,8 @@ class CommonAction extends _$CommonAction {
     // before its background download starts, so a stray tap never pulls
     // an APK on its own. Startup auto-check is unaffected.
     bool silent = false,
-    // With auto-install on, skip the confirmation and go straight to the
-    // download (the system installer still opens at the end -- Android does
-    // not let a normal app install silently).
+    // Desktop only: a confirmed update replaces the running install without
+    // asking again. Android always hands the APK to the system installer.
     bool autoInstall = false,
     // With Wi-Fi pre-download on, a confirmed download stays on Wi-Fi.
     bool preloadWifi = false,

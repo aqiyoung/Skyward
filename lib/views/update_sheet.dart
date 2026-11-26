@@ -491,7 +491,7 @@ class _UpdatePreferencesSheetState
                 (value) => setState(() => _check = value),
               ),
               _toggle(
-                zh ? '通过 Wi-Fi 预下载' : 'Pre-download over Wi-Fi',
+                zh ? '仅在 Wi-Fi 下载' : 'Download over Wi-Fi only',
                 _preloadWifi,
                 (value) => setState(() => _preloadWifi = value),
               ),
@@ -500,11 +500,12 @@ class _UpdatePreferencesSheetState
                 _notifyOnUpdate,
                 (value) => setState(() => _notifyOnUpdate = value),
               ),
-              _toggle(
-                zh ? '自动安装' : 'Auto install',
-                _autoInstall,
-                (value) => unawaited(_setAutomatic(value, zh)),
-              ),
+              if (system.isDesktop)
+                _toggle(
+                  zh ? '自动安装（桌面）' : 'Auto install (desktop)',
+                  _autoInstall,
+                  (value) => unawaited(_setAutomatic(value, zh)),
+                ),
             ],
           ),
           generateSection(
