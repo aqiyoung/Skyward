@@ -480,6 +480,22 @@ const _groupIconKeywords = [
   ('cursor', 'assets/images/groups/spark.png'),
 ];
 
+Widget _groupLeading(BuildContext context, String name, String icon) {
+  return SizedBox.square(
+    dimension: 28,
+    child: IconTheme(
+      data: IconTheme.of(context).copyWith(size: 28),
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: CommonTargetIcon(
+          src: _groupIconOf(name, icon),
+          fallback: GlyphIcon(_groupGlyph(name)),
+        ),
+      ),
+    ),
+  );
+}
+
 String _groupIconOf(String name, String icon) {
   // The script/profile's own icon is authoritative: skyward.js already gives
   // every service group its branded logo URL.
@@ -519,10 +535,7 @@ Widget _activeGroups(
           : null;
       return DecorationListItem(
         invalid: fault != null,
-        leading: CommonTargetIcon(
-          src: _groupIconOf(name, icons[name] ?? ''),
-          fallback: GlyphIcon(_groupGlyph(name)),
-        ),
+        leading: _groupLeading(context, name, icons[name] ?? ''),
         title: EmojiText(name),
         subtitle: EmojiText(
           fault ??
@@ -540,10 +553,7 @@ Widget _activeGroups(
     final group = groups[name]!;
     return DecorationListItem(
       invalid: _isFault(group.problem),
-      leading: CommonTargetIcon(
-        src: _groupIconOf(name, icons[name] ?? ''),
-        fallback: GlyphIcon(_groupGlyph(name)),
-      ),
+      leading: _groupLeading(context, name, icons[name] ?? ''),
       title: EmojiText(name),
       subtitle: EmojiText(
         _groupLine(l, group, status.tunnelMode),
