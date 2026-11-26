@@ -17,6 +17,32 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
+    'switching from a month back to a week anchors on today, not the month first',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final range = container.read(trafficRangeProvider.notifier);
+
+      // A month view leaves the state at that month's first day.
+      range.setPeriod(TrafficPeriod.month);
+      final monthStart = container.read(trafficRangeProvider);
+      expect(monthStart.day, 1);
+
+      // Switching to a week must count from today's Monday, not the Monday
+      // of the month's first day.
+      range.setPeriod(TrafficPeriod.week);
+      final weekStart = container.read(trafficRangeProvider);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expectedMonday = today.subtract(
+        Duration(days: today.weekday - DateTime.monday),
+      );
+      expect(weekStart, expectedMonday);
+      expect(weekStart.isBefore(monthStart), isFalse);
+    },
+  );
+
+  test(
     'native snapshots are idempotent and selected dates use matching traffic and duration',
     () async {
       await AppLocalizations.load(const Locale('en'));

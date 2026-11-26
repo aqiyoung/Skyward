@@ -221,10 +221,12 @@ class TrafficRange extends _$TrafficRange {
 
   void set(DateTime value) => state = value;
 
-  /// Re-anchor on a period change so the reader sees that period's own first
-  /// day rather than the previous period's boundary.
+  /// Re-anchor on a period change to *today's* period, not to the previous
+  /// period's boundary. The state holds a period start, so a month's state is
+  /// its first day; anchoring a new period on that made a week count from the
+  /// Monday of the month's first day instead of the Monday of today.
   void setPeriod(TrafficPeriod period) {
-    state = startOfTrafficPeriod(period, state);
+    state = startOfTrafficPeriod(period, DateTime.now());
   }
 
   void shift(TrafficPeriod period, int amount) {
