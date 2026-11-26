@@ -8,3 +8,4 @@ export 'route_state.dart';
 export 'routing.dart';
 export 'state.dart';
 export 'traffic_statistics.dart';
+export 'update.dart';

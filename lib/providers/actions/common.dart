@@ -196,76 +196,74 @@ class CommonAction extends _$CommonAction {
     return null;
   }
 
-  /// Downloads the APK through the system download manager and lets its
-  /// completion receiver open the system installer. No VPN guard, no private
-  /// PackageInstaller session: the installer window is the confirmation.
+  /// Downloads the matching release asset, verifies it, then waits for the
+  /// reader to confirm installation. Nothing is installed behind their back.
   Future<void> _downloadRelease(
     Map<String, dynamic> release, {
     bool wifiOnly = false,
     bool automatic = false,
   }) async {
-    if (_ongoingUpdateDownload) return;
+    if (_ongoingUpdateDownload ||
+        ref.read(preparedUpdateStateProvider) != null) {
+      return;
+    }
     final downloader = systemDownloader;
     if (downloader == null) {
-      // Desktop: replace this installation in place when it is an installer
-      // build we can write; otherwise fall back to the release page.
       await _downloadDesktopUpdate(release, automatic: automatic);
       return;
     }
     final abi = await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
-    // Preview releases list one generic arm64 APK and publish its hash in a
-    // SHA256SUMS asset instead of a comment in the notes.
-    final sha256 =
-        asset?.sha256 ??
-        (asset == null ? null : await _sha256FromSums(release, asset.name));
-    if (sha256 == null && asset != null) {
-      commonPrint.log(
-        'No published SHA-256 for ${asset.name}; downloading without the hash check',
-        logLevel: LogLevel.warning,
-      );
-    }
     if (asset == null) {
-      final page = release['html_url'];
-      final tag = release['tag_name'];
-      await launchUrl(
-        Uri.parse(
-          page is String
-              ? page
-              : tag is String
-              ? 'https://github.com/$repository/releases/tag/$tag'
-              : 'https://github.com/$repository/releases/latest',
-        ),
-      );
+      await _openReleasePage(release);
       return;
     }
     if (wifiOnly && !await _isOnWifi()) {
       commonPrint.log('Skipping automatic update download on mobile data');
       return;
     }
+    final tag = release['tag_name'] as String? ?? '';
+    final version = releaseVersionOf(tag, release['name'] as String?);
+    final sha = asset.sha256 ?? await _sha256FromSums(release, asset.name);
     _ongoingUpdateDownload = true;
+    final cancelToken = CancelToken();
+    _updateCancelToken = cancelToken;
     ref.read(updateDownloadProgressProvider.notifier).set(0);
     try {
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
-      final id = await downloader.download(
-        url: asset.url,
-        fileName: asset.name,
-        expectedSha256: sha256,
-        wifiOnly: wifiOnly,
+      final directory = Directory(
+        join(await appPath.homeDirPath, 'app-updates'),
       );
-      if (id == null) throw StateError('download did not start');
-      while (true) {
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-        final status = await downloader.status(id);
-        if (status == null || status.isFailed) {
-          throw StateError('download failed: ${asset.name}');
-        }
-        ref.read(updateDownloadProgressProvider.notifier).set(status.progress);
-        if (status.isSuccessful) break;
-      }
-      // The download-complete receiver normally opens the installer already;
-      // this call is a no-op then, and the fallback when it did not run.
-      await downloader.install(id);
+      await directory.create(recursive: true);
+      final safeTag = tag.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      final target = File(
+        join(directory.path, 'update-$safeTag-${asset.name}'),
+      );
+      final error = await request.downloadUpdateFile(
+        Uri.parse(asset.url),
+        target.path,
+        cancelToken: cancelToken,
+        onProgress: (received, total) {
+          if (total <= 0) return;
+          ref
+              .read(updateDownloadProgressProvider.notifier)
+              .set((received / total).clamp(0.0, 1.0));
+        },
+        expectedSha256: sha ?? '',
+      );
+      if (error == '') return; // cancelled
+      if (error != null) throw StateError(error);
+      ref
+          .read(preparedUpdateStateProvider.notifier)
+          .set(
+            PreparedUpdate(
+              tag: tag,
+              path: target.path,
+              sha256: sha,
+              version: version,
+            ),
+          );
+      _notifyUpdateReady();
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
@@ -274,11 +272,94 @@ class CommonAction extends _$CommonAction {
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
       _ongoingUpdateDownload = false;
+      _updateCancelToken = null;
       ref.read(updateDownloadProgressProvider.notifier).set(null);
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
     }
+  }
+
+  Future<void> _openReleasePage(Map<String, dynamic> release) async {
+    final page = release['html_url'];
+    final tag = release['tag_name'];
+    await launchUrl(
+      Uri.parse(
+        page is String
+            ? page
+            : tag is String
+            ? 'https://github.com/$repository/releases/tag/$tag'
+            : 'https://github.com/$repository/releases/latest',
+      ),
+    );
+  }
+
+  void _notifyUpdateReady() {
+    final zh = _interfaceLanguageCode == 'zh';
+    dialogs.showNotifier(
+      zh ? '更新已下载完成，点此安装' : 'Update downloaded. Tap to install',
+      level: MessageLevel.success,
+      actionState: MessageActionState(
+        actionText: zh ? '安装' : 'Install',
+        action: () => unawaited(installUpdate()),
+      ),
+    );
+  }
+
+  /// Installs the verified package the reader just tapped. Android hands it
+  /// to the system installer; desktop starts the detached replacement.
+  Future<void> installUpdate() async {
+    final ready = ref.read(preparedUpdateStateProvider);
+    if (ready == null) return;
+    ref.read(preparedUpdateStateProvider.notifier).set(null);
+    if (system.isAndroid) {
+      final status = await app?.installApk(
+        ready.path,
+        expectedVersion: ready.version ?? '',
+        expectedSha256: ready.sha256 ?? '',
+      );
+      if (status != null &&
+          (status == ApkInstallResult.permissionRequired ||
+              status == ApkInstallResult.vpnActive)) {
+        dialogs.showNotifier(
+          _interfaceLanguageCode == 'zh'
+              ? '安装未完成：请授予安装权限或断开 VPN'
+              : 'Install blocked: allow installing apps or disconnect the VPN',
+          level: MessageLevel.warning,
+        );
+      }
+      await _clearUpdateFiles();
+      return;
+    }
+    final updater = ready.installData;
+    if (updater is DesktopUpdater) {
+      final logPath = join(
+        await appPath.homeDirPath,
+        'app-updates',
+        'desktop-update.log',
+      );
+      await updater.launch(ready.path, relaunch: true, logPath: logPath);
+      // The replacement waits for this process to exit before swapping files.
+      exit(0);
+    }
+  }
+
+  Future<void> _clearUpdateFiles() async {
+    try {
+      await safeDeletePath(
+        join(await appPath.homeDirPath, 'app-updates'),
+      );
+    } on Object catch (_) {
+      // Best effort: a stale package is cleared on the next update.
+    }
+  }
+
+  void cancelUpdateDownload() => _updateCancelToken?.cancel();
+
+  Future<void> discardUpdate() async {
+    if (ref.read(preparedUpdateStateProvider) == null) return;
+    ref.read(preparedUpdateStateProvider.notifier).set(null);
+    await _clearUpdateFiles();
   }
 
   /// Downloads the desktop installer/AppImage/DMG for this release and starts
@@ -334,10 +415,17 @@ class CommonAction extends _$CommonAction {
       );
       if (error == '') return;
       if (error != null) throw StateError(error);
-      final logPath = join(directory.path, 'desktop-update.log');
-      await updater.launch(target.path, relaunch: automatic, logPath: logPath);
-      // The replacement waits for this process to exit before swapping files.
-      exit(0);
+      ref
+          .read(preparedUpdateStateProvider.notifier)
+          .set(
+            PreparedUpdate(
+              tag: tag ?? '',
+              path: target.path,
+              sha256: asset.sha256,
+              installData: updater,
+            ),
+          );
+      _notifyUpdateReady();
     } catch (error) {
       commonPrint.log(
         'desktop update failed: ${compactError(error)}',
