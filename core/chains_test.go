@@ -191,7 +191,17 @@ func TestMaterializeChainsReportsEachIssue(t *testing.T) {
 func TestMaterializeChainsHealsARenamedTargetGroup(t *testing.T) {
 	// A subscription script can prefix the main selector with a flag. The
 	// saved target still names the old group; the chain must follow the rename.
-	profile := strings.Replace(chainProfile, "name: main,", "name: \U0001F680 main,", 1)
+	// A minimal profile whose only group is the renamed main selector: the
+	// shared fixture has other groups referencing `main`, which a rename
+	// would legitimately break at parse time.
+	profile := `proxies:
+  - {name: entry, type: vless, server: 10.0.0.1, port: 443, uuid: 2a70e3a9-b4ce-4f20-908d-e99950a0a611, udp: true}
+  - {name: hk1, type: ss, server: 10.0.1.1, port: 8388, cipher: aes-128-gcm, password: p, udp: true}
+proxy-groups:
+  - {name: "🚀 main", type: select, proxies: [entry, hk1]}
+rules:
+  - MATCH,"🚀 main"
+`
 	target := "main"
 	spec := chainSpec("c", "entry", "hk1")
 	spec.TargetGroup = &target
