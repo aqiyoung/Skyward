@@ -43,7 +43,9 @@ class AppearanceView extends ConsumerWidget {
       title: appLocalizations.preferences,
       body: ListView(
         padding: EdgeInsets.only(
-          top: context.cardTopPadding,
+          // The first _Section adds its own 16 above the group, so start at
+          // the bar inset alone; cardTopPadding would double that gap.
+          top: context.appBarInset,
           bottom: 24 + context.bottomInset,
         ),
         children: [
