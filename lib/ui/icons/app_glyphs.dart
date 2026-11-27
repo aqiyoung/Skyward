@@ -490,6 +490,15 @@ abstract final class AppGlyphs {
     GlyphCircle(12, 18.5, 1.4, role: GlyphRole.line, solid: true),
   ]);
 
+  /// A larger, heavier vertical three-dot mark for page headings, where the
+  /// compact [more] reads as three tiny specks. The dots are a full diameter
+  /// wider and spaced further apart, and use the bolder filled-line weight.
+  static const moreLarge = Glyph([
+    GlyphCircle(12, 5, 2.3, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 12, 2.3, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 19, 2.3, role: GlyphRole.line, solid: true),
+  ]);
+
   /// The three dots laid flat, for the tab that holds the pages which do not
   /// fit. [more] is the same mark standing up, which the app bar already uses
   /// to open a menu; a tab bar reads a vertical one as a menu rather than a

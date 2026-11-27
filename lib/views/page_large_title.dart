@@ -81,23 +81,37 @@ class PageLargeTitle extends StatelessWidget {
                   ),
                   if (actions.isNotEmpty || menuItems.isNotEmpty)
                     IconTheme(
-                      data: IconTheme.of(
-                        context,
-                      ).copyWith(color: colorScheme.primary, size: 22),
+                      data: IconTheme.of(context).copyWith(
+                        color: colorScheme.primary,
+                        size: 24,
+                        fill: 1,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
+                        // Pull the heading actions together instead of letting
+                        // IconButton's default padding spread them apart.
                         children: [
                           for (final data in actions)
-                            AppBarActionButton(data: data),
+                            Transform.translate(
+                              offset: const Offset(6, 0),
+                              child: AppBarActionButton(data: data),
+                            ),
                           if (menuItems.isNotEmpty)
-                            CommonPopupBox(
-                              targetBuilder: (open) => IconButton(
-                                tooltip: UiLocalizations.of(context).more,
-                                onPressed: open,
-                                icon: const GlyphIcon(AppGlyphs.more),
+                            Transform.translate(
+                              offset: const Offset(-6, 0),
+                              child: CommonPopupBox(
+                                targetBuilder: (open) => IconButton(
+                                  tooltip:
+                                      UiLocalizations.of(context).more,
+                                  onPressed: open,
+                                  icon: const GlyphIcon(
+                                    AppGlyphs.moreLarge,
+                                    size: 26,
+                                  ),
+                                ),
+                                popupBuilder: (_) =>
+                                    CommonPopupMenu(items: menuItems),
                               ),
-                              popupBuilder: (_) =>
-                                  CommonPopupMenu(items: menuItems),
                             ),
                         ],
                       ),
