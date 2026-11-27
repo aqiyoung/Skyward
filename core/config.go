@@ -355,7 +355,11 @@ func updateConfig(params *UpdateParams) error {
 }
 
 func patchTun(target *LC.Tun, params *tunSchema) {
-	target.Enable = params.Enable
+	// Enable is a pointer so a partial update that only names device/stack
+	// does not silently turn TUN off by decoding a missing field as false.
+	if params.Enable != nil {
+		target.Enable = *params.Enable
+	}
 	if params.AutoRoute != nil {
 		target.AutoRoute = *params.AutoRoute
 	}

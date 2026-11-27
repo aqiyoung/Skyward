@@ -158,9 +158,13 @@ func (e *Engine) saveLocked(now time.Time) {
 		m.statusDirty = true
 	}
 	e.storeOK = err
-	e.lastSave = now
 	if err == nil {
+		e.lastSave = now
 		m.dirty = false
+	} else {
+		// Retry a transient write failure quickly instead of waiting the full
+		// saveInterval, but do not hammer the store every tick.
+		e.lastSave = now.Add(-saveInterval + 15*time.Second)
 	}
 }
 

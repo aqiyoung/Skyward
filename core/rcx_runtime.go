@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
+	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -531,9 +532,11 @@ func rcxNode(proxy constant.Proxy) rcx.Node {
 		_ = outbound
 		node.Provider = outbound.ProxyInfo().ProviderName
 	}
-	if host, _, found := strings.Cut(proxy.Addr(), ":"); found {
+	if host, _, err := net.SplitHostPort(proxy.Addr()); err == nil {
 		node.Server = host
 	} else {
+		// SplitHostPort fails for a bare address; keep it verbatim instead of
+		// slicing at the first colon, which truncated IPv6 to "[".
 		node.Server = proxy.Addr()
 	}
 	return node

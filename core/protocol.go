@@ -177,7 +177,7 @@ type UpdateParams struct {
 }
 
 type tunSchema struct {
-	Enable    bool               `yaml:"enable" json:"enable"`
+	Enable    *bool              `yaml:"enable" json:"enable"`
 	Device    *string            `yaml:"device" json:"device"`
 	Stack     *constant.TUNStack `yaml:"stack" json:"stack"`
 	AutoRoute *bool              `yaml:"auto-route" json:"auto-route"`

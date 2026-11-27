@@ -197,7 +197,10 @@ func (h *trafficHistory) sampleLocked(now time.Time) error {
 			var previous historyRow
 			if data := bucket.Get([]byte(id)); data != nil {
 				if err := json.Unmarshal(data, &previous); err != nil {
-					return err
+					// One corrupt row must not poison every later sample. Start
+					// this connection from a clean baseline and overwrite it.
+					logError("traffic history: dropping corrupt row %q: %v", id, err)
+					previous = historyRow{}
 				}
 			}
 			delta.Upload += previous.Upload
@@ -225,7 +228,13 @@ func (h *trafficHistory) sampleLocked(now time.Time) error {
 		for key, data := cursor.First(); key != nil; key, data = cursor.Next() {
 			var row historyRow
 			if err := json.Unmarshal(data, &row); err != nil {
-				return err
+				// A row we cannot read is not worth keeping; drop it so pruning
+				// cannot be wedged forever by a single bad record.
+				logError("traffic history: pruning corrupt row: %v", err)
+				if err := cursor.Delete(); err != nil {
+					return err
+				}
+				continue
 			}
 			if row.Hour < cutoff {
 				if err := cursor.Delete(); err != nil {
