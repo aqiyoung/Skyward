@@ -563,7 +563,13 @@ class _IpText extends ConsumerWidget {
     final hideIp = ref.watch(
       appSettingProvider.select((state) => state.hideIp),
     );
-    return DashboardFitText(hideIp ? ipMask : ip, style: style);
+    return DashboardFitText(
+      hideIp ? ipMask : ip,
+      style: style,
+      // IPv6 addresses are long; let them shrink enough to stay fully
+      // readable instead of ending in an ellipsis.
+      minScale: 0.5,
+    );
   }
 }
 

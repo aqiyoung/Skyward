@@ -167,12 +167,21 @@ class DashboardCardHeader extends StatelessWidget {
 
 /// Cut short past [_minScale]: an IPv6 address shrunk any further is unreadable.
 class DashboardFitText extends StatelessWidget {
-  const DashboardFitText(this.text, {super.key, required this.style});
+  const DashboardFitText(
+    this.text, {
+    super.key,
+    required this.style,
+    this.minScale = 0.75,
+  });
 
-  static const _minScale = 0.75;
+  static const defaultMinScale = 0.75;
 
   final String text;
   final TextStyle style;
+
+  /// Long values such as IPv6 addresses may shrink further before they are
+  /// allowed to clip; short text keeps the ordinary floor.
+  final double minScale;
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +190,7 @@ class DashboardFitText extends StatelessWidget {
         final width = globalState.measure
             .computeTextSize(Text(text, style: style))
             .width;
-        if (width * _minScale <= constraints.maxWidth) {
+        if (width * minScale <= constraints.maxWidth) {
           return FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
