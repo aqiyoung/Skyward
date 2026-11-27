@@ -43,11 +43,14 @@ class AppearanceView extends ConsumerWidget {
       title: appLocalizations.preferences,
       body: ListView(
         padding: EdgeInsets.only(
-          top: context.cardTopPadding,
+          // The first section brings its own top gap; don't stack a second
+          // one here (cardTopPadding = appBarInset + 16 would add to it).
+          top: context.appBarInset,
           bottom: 24 + context.bottomInset,
         ),
         children: [
           const _Section(
+            top: 4,
             items: [
               _LiquidGlassItem(),
               _LanguageItem(),
@@ -102,16 +105,17 @@ class AppearanceView extends ConsumerWidget {
 /// One card of rows, set in from the page edge, with an optional title that
 /// also carries the section's action.
 class _Section extends StatelessWidget {
-  const _Section({this.title, this.actions = const [], required this.items});
+  const _Section({this.title, this.actions = const [], this.top = 16, required this.items});
 
   final String? title;
   final List<IconButtonData> actions;
+  final double top;
   final List<Widget> items;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: EdgeInsets.only(top: top),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: generateSection(
