@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:skyward/ui/context.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/item_position.dart';
-import 'package:skyward/ui/motion.dart';
 import 'package:skyward/ui/shape.dart';
 import 'package:skyward/ui/surface.dart';
 import 'package:skyward/ui/typography.dart';
@@ -44,7 +43,7 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
   late var _expanded = widget.initiallyExpanded;
   late final _controller = AnimationController(
     vsync: this,
-    duration: UnfoldMotion.duration,
+    duration: UnfoldEntryTransition.duration,
     value: _isOpen(widget.collapsible) ? 1 : 0,
   );
   late final _size = UnfoldEntryTransition.curveOf(_controller);
@@ -65,11 +64,7 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
   bool _isOpen(bool collapsible) => _expanded || !collapsible;
 
   void _animate() {
-    UnfoldMotion.run(
-      _controller,
-      open: _isOpen(widget.collapsible),
-      animate: !context.disableAnimations,
-    );
+    _isOpen(widget.collapsible) ? _controller.forward() : _controller.reverse();
   }
 
   void _handleToggle() {
@@ -229,16 +224,12 @@ class UnfoldEntryTransition extends StatelessWidget {
     required this.child,
   });
 
-  static CurvedAnimation curveOf(AnimationController controller) {
-    // One outline spring both ways: the rows settle softly with the chevron
-    // instead of snapping open on a cubic ease.
-    final spring = SpringCurve(outlineUnfoldSpring, seconds: 0.367);
-    return CurvedAnimation(
-      parent: controller,
-      curve: spring,
-      reverseCurve: spring,
-    );
-  }
+  static CurvedAnimation curveOf(AnimationController controller) =>
+      CurvedAnimation(
+        parent: controller,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
 
   @override
   Widget build(BuildContext context) {

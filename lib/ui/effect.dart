@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:skyward/ui/motion.dart';
 import 'dart:ui';
 
 import 'package:skyward/ui/icons/icons.dart';
@@ -20,26 +19,21 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
   late AnimationController _animationController;
   late Animation<double> _iconTurns;
 
-  // The chevron rests pointing at the rows (-90 degrees) when folded and
-  // turns to face down as the group opens, on the same outline spring the
-  // rows use, so the two read as one motion.
-  static final Animatable<double> _iconTurnTween = UnfoldMotion.chevronTurns
-      .chain(
-        CurveTween(curve: SpringCurve(outlineUnfoldSpring, seconds: 0.367)),
-      );
+  static final Animatable<double> _iconTurnTween = Tween<double>(
+    begin: 0.0,
+    end: 0.5,
+  ).chain(CurveTween(curve: Curves.fastOutSlowIn));
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: UnfoldMotion.duration,
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _iconTurns = _animationController.drive(_iconTurnTween);
-    // The controller is a normalized 0..1 driver; a spring-curved tween maps
-    // its endpoints to the chevron's folded/opened turns.
     if (widget.expand) {
-      _animationController.value = 1;
+      _animationController.value = pi;
     }
   }
 
@@ -47,7 +41,11 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
   void didUpdateWidget(covariant CommonExpandIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.expand != widget.expand) {
-      UnfoldMotion.run(_animationController, open: widget.expand);
+      if (widget.expand) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
     }
   }
 

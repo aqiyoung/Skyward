@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:skyward/ui/motion.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -388,13 +387,10 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   }
 
   void _handleUnfold(bool isExpand) {
-    // A spring driven from the current value and velocity: a second tap during
-    // the fold reverses without a jolt, and the rows move with the chevron.
-    UnfoldMotion.run(
-      _controller,
-      open: isExpand,
-      animate: !context.disableAnimations,
+    _controller.duration = context.motionDuration(
+      UnfoldEntryTransition.duration,
     );
+    isExpand ? _controller.forward() : _controller.reverse();
   }
 
   @override
