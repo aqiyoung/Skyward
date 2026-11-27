@@ -340,7 +340,7 @@ abstract final class GroupIconSource {
     'netflix.png': ['netflix', '奈飞', '网飞', '影视', '国外媒体', '电影'],
     'disney.png': ['disney', '迪士尼'],
     'spotify.png': ['spotify', '音乐'],
-    'chatgpt.png': ['chatgpt', 'openai', 'gpt', 'ai', '人工智能'],
+    'chatgpt.png': ['chatgpt', 'openai', 'gpt', 'ai', '人工智能', 'gemini', 'copilot', 'cursor', 'perplexity', 'claude', 'agenttools', 'aider', 'windsurf', '人工智能工具'],
     'github.png': ['github'],
     'telegram.png': ['telegram', '电报', '纸飞机', 'tg'],
     'twitter.png': ['twitter', '推特'],
