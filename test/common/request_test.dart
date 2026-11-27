@@ -120,24 +120,17 @@ void main() {
       expect(update?['tag_name'], 'v1.1.0.24');
     });
 
-    test(
-      'strips rendered HTML from Atom notes when the API is rate limited',
-      () async {
-        final feed =
-            '<?xml version="1.0"?><feed><entry><link href="https://github.com/aqiyoung/Skyward/releases/tag/v1.2.5"/><title>Skyward 1.2.5（正式版）</title><content type="html">&lt;p&gt;head&lt;/p&gt;&lt;ul&gt;&lt;li&gt;体验｜漂亮的新功能&lt;/li&gt;&lt;/ul&gt;</content></entry></feed>';
-        final request = requestAnswering({
-          'api.github.com': () => ResponseBody.fromString('{}', 403),
-          'github.com': () => ResponseBody.fromString(feed, 200),
-        });
-
-        final update = await request.checkForUpdate();
-        final body = update?['body'] as String? ?? '';
-        expect(body, isNot(contains('&lt;')));
-        expect(body, isNot(contains('<li>')));
-        expect(body, isNot(contains('</p>')));
-        expect(body, contains('漂亮的新功能'));
-      },
-    );
+    test('strips rendered HTML from Atom notes', () {
+      final notes = stripAtomNotes(
+        '&lt;p&gt;head&lt;/p&gt;&lt;ul&gt;&lt;li&gt;line one&lt;/li&gt;'
+        '&lt;li&gt;line two&lt;/li&gt;&lt;/ul&gt;',
+      );
+      expect(notes, isNot(contains('&lt;')));
+      expect(notes, isNot(contains('<li>')));
+      expect(notes, isNot(contains('</p>')));
+      expect(notes, contains('- line one'));
+      expect(notes, contains('- line two'));
+    });
 
     test('answers null when the installed build is already the newest', () async {
       final request = requestAnswering({
