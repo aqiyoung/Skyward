@@ -356,7 +356,7 @@ func deliverEvent(data []byte) {
 
 func init() {
 	go func() {
-		_, ch := bus.subscribe()
+		ch := bus.subscribe()
 		for data := range ch {
 			eventListenerLock.RLock()
 			cb := eventListener

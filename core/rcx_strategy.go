@@ -16,12 +16,10 @@ import (
 
 	"core/rcx"
 
-	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/callback"
 	N "github.com/metacubex/mihomo/common/net"
-	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
 	P "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/tunnel"
@@ -446,25 +444,6 @@ func scriptedGroupOf(p C.Proxy) *scriptedGroup {
 	return nil
 }
 
-func attachScriptedGroups(cfg *config.Config, disableUDP map[string]bool) {
-	for _, p := range cfg.Proxies {
-		outer, ok := p.(*adapter.Proxy)
-		if !ok || !isProxyGroupType(p.Type()) {
-			continue
-		}
-		base, ok := p.Adapter().(outboundgroup.ProxyGroup)
-		if !ok {
-			continue
-		}
-		wrapper := &scriptedGroup{ProxyGroup: base, disableUDP: disableUDP[p.Name()]}
-		if selectable, ok := base.(outboundgroup.SelectAble); ok {
-			outer.ProxyAdapter = &scriptedSelector{scriptedGroup: wrapper, SelectAble: selectable}
-		} else {
-			outer.ProxyAdapter = wrapper
-		}
-	}
-}
-
 func resolveGroupStrategies(proxies map[string]C.Proxy, provider map[string]string, user rcx.UserLayer, invalid map[string]rcx.StrategyReport) map[string]rcx.StrategyReport {
 	report := make(map[string]rcx.StrategyReport)
 	// The registry still belongs to the config being replaced, so a manual
@@ -729,65 +708,6 @@ func validateLocalStrategyGroup(name string, spec rcx.LocalStrategyGroup) error 
 		return errors.New("a group cannot contain itself")
 	}
 	return nil
-}
-
-func injectStrategyGroups(raw *config.RawConfig, user rcx.UserLayer) (*config.RawConfig, map[string]rcx.StrategyReport) {
-	issues := make(map[string]rcx.StrategyReport)
-	if len(user.LocalGroups) == 0 {
-		return raw, issues
-	}
-	out := cloneRaw(raw)
-	taken := make(map[string]bool)
-	for _, mappings := range [][]map[string]any{raw.Proxy, raw.ProxyGroup} {
-		for _, mapping := range mappings {
-			if name, ok := mapping["name"].(string); ok {
-				taken[name] = true
-			}
-		}
-	}
-	known := maps.Clone(taken)
-	for _, name := range builtinTargets {
-		known[name] = true
-	}
-	valid := make(map[string]rcx.LocalStrategyGroup)
-	for i, name := range slices.Sorted(maps.Keys(user.LocalGroups)) {
-		spec := user.LocalGroups[name]
-		err := validateLocalStrategyGroup(name, spec)
-		switch {
-		case i >= rcx.MaxStrategies:
-			err = errors.New("too many local groups")
-		case taken[name]:
-			err = errors.New("group name is already in use")
-		}
-		if err == nil {
-			_, err = rcx.ParseStrategy(user.Strategies[name])
-		}
-		if err != nil {
-			issues[name] = rcx.StrategyReport{Issue: err.Error()}
-			continue
-		}
-		valid[name] = spec
-		// Groups are parsed in this order, so a member may name only a group
-		// that comes before it.
-		known[name] = true
-	}
-	for _, name := range slices.Sorted(maps.Keys(valid)) {
-		spec := valid[name]
-		members := slices.DeleteFunc(slices.Clone(spec.Members), func(member string) bool {
-			return !known[member]
-		})
-		providers := slices.DeleteFunc(slices.Clone(spec.Providers), func(name string) bool {
-			_, exists := raw.ProxyProvider[name]
-			return !exists
-		})
-		if !spec.IncludeAll && len(members)+len(providers) == 0 {
-			members = []string{"COMPATIBLE"}
-		}
-		out.ProxyGroup = append(out.ProxyGroup, map[string]any{
-			"name": name, "type": "select", "proxies": members, "use": providers, "include-all": spec.IncludeAll,
-		})
-	}
-	return out, issues
 }
 
 func groupCanReach(proxy C.Proxy, target string, seen map[string]bool) bool {

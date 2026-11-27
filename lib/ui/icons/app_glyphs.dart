@@ -146,14 +146,14 @@ abstract final class AppGlyphs {
   /// Two opposed chevrons: one control for expanding or folding a list.
   static const unfold = Glyph([
     GlyphPolyline([
-      GlyphVertex(6, 10),
-      GlyphVertex(12, 4, 0.4),
-      GlyphVertex(18, 10),
+      GlyphVertex(5, 9.5),
+      GlyphVertex(12, 2.5, 0.4),
+      GlyphVertex(19, 9.5),
     ], role: GlyphRole.line),
     GlyphPolyline([
-      GlyphVertex(6, 14),
-      GlyphVertex(12, 20, 0.4),
-      GlyphVertex(18, 14),
+      GlyphVertex(5, 14.5),
+      GlyphVertex(12, 21.5, 0.4),
+      GlyphVertex(19, 14.5),
     ], role: GlyphRole.line),
   ]);
 
@@ -485,9 +485,9 @@ abstract final class AppGlyphs {
   ]);
 
   static const more = Glyph([
-    GlyphCircle(12, 5.5, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(12, 12, 1.4, role: GlyphRole.line, solid: true),
-    GlyphCircle(12, 18.5, 1.4, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 5, 2.0, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 12, 2.0, role: GlyphRole.line, solid: true),
+    GlyphCircle(12, 19, 2.0, role: GlyphRole.line, solid: true),
   ]);
 
   /// The three dots laid flat, for the tab that holds the pages which do not

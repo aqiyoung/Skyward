@@ -791,11 +791,6 @@ type chainBuild struct {
 	siblingDir []string
 }
 
-func materializeChains(root *yaml.Node, chains []ChainSpec, mainGroupHint string) []ChainReport {
-	reports, _ := materializeChainsWith(root, chains, mainGroupHint, servedChainLeaves())
-	return reports
-}
-
 func materializeChainsWith(
 	root *yaml.Node,
 	chains []ChainSpec,
@@ -1264,9 +1259,6 @@ func (ix *chainIndex) inspect(params InspectChainParams) *ChainInspection {
 	spec := ChainSpec{Hops: params.Hops, Offered: true, TargetGroup: params.TargetGroup}
 	a := ix.analyze(spec, params.MainGroupHint)
 	inspection := &ChainInspection{Issues: a.issues, Leaves: []string{}, UDP: a.carry, Blocked: map[string]string{}}
-	if inspection.UDP == nil {
-		inspection.UDP = []bool{}
-	}
 	if len(a.hops) > 1 {
 		for _, leaf := range a.hops[len(a.hops)-1].leaves {
 			inspection.Leaves = append(inspection.Leaves, leaf.name)

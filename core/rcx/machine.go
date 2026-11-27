@@ -734,15 +734,6 @@ func (m *machine) groupOf(key string) []*groupState {
 	return out
 }
 
-func (m *machine) currentOf(key string) bool {
-	for _, g := range m.groupOf(key) {
-		if i, ok := g.byName[g.now]; ok && g.members[i].Key == key {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *machine) keyOf(group, node string) (string, bool) {
 	g := m.groups[group]
 	if g == nil {
@@ -1094,7 +1085,8 @@ func (m *machine) plan(now time.Time) []probeJob {
 					break
 				}
 				if !stale(row, now, m.env(now).Freshness(now)) {
-					sent++
+					// A still-fresh line does not spend the send budget: counting
+					// it let two fresh standbys starve every expired one behind them.
 					continue
 				}
 				if add(g, row, MaintainBucket, "maintain") {
@@ -1193,8 +1185,11 @@ func (m *machine) nextDue(now time.Time) time.Time {
 		if g.needsRecovery() && (mode != BackgroundMode || g.recoverArmed) {
 			consider(g.recoverAt)
 		}
-		if g.decision.Until != nil && g.decision.Until.Code == "until.dwell" {
-			consider(ctl.LastSwitch.Add(g.policy.Dwell))
+		// A group whose policy failed to compile keeps its previous decision,
+		// which may still carry an until.dwell marker. Do not dereference a
+		// missing policy for it.
+		if g.decision.Until != nil && g.decision.Until.Code == "until.dwell" && g.policy != nil {
+			consider(ctl.LastSwitch.Add(g.active().Dwell))
 		}
 		if (mode == ActiveMode || mode == EcoMode) && now.Before(m.windowUntil) {
 			consider(g.maintainAt)

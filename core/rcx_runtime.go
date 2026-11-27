@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
+	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -41,8 +42,6 @@ var (
 	rcxRoutes      rcx.AppliedRoutes
 	// Hints the Android service sends before the core is initialized.
 	rcxPendingHints []rcx.Hints
-	// Flattened nested selector → its smart group; replaced whole, never mutated.
-	rcxFlatOwner = map[string]string{}
 	// The mode a scenario holds over the user's own; nil leaves the user's.
 	rcxModeWish atomic.Pointer[tunnel.TunnelMode]
 	rcxUserMode atomic.Pointer[tunnel.TunnelMode]
@@ -317,7 +316,7 @@ func rcxRefreshTopology() {
 	for _, name := range append(targets, fixed...) {
 		smart[name] = true
 	}
-	topology, flat := rcxTopologyOf(proxies, names, smart, rcxReferences(proxies, names, rules))
+	topology, _ := rcxTopologyOf(proxies, names, smart, rcxReferences(proxies, names, rules))
 	topology.Subscription, topology.Main = subscription, main
 	topology.Strategies = strategyGroupList(proxies)
 	topology.Leaves, topology.Routes, topology.User = rcxLeaves(proxies), routes, user
@@ -330,9 +329,6 @@ func rcxRefreshTopology() {
 			}
 		}
 	}
-	rcxMu.Lock()
-	rcxFlatOwner = flat
-	rcxMu.Unlock()
 	e.SetTopology(topology)
 	// The scenario was read from the library before this topology rebuilt
 	// it; a new subscription may name other groups.
@@ -466,55 +462,6 @@ func rcxLeaf(proxies map[string]constant.Proxy, flat map[string]string, name str
 	return name
 }
 
-// A pick of a flattened selector, or inside one, picks its leaf in the owner.
-func rcxPickOf(group, name string) (string, string) {
-	rcxMu.Lock()
-	flat := rcxFlatOwner
-	rcxMu.Unlock()
-	if owner, ok := flat[group]; ok {
-		group = owner
-	}
-	return group, rcxLeaf(tunnel.AllProxies(), flat, name)
-}
-
-// rcxDirectSplit keeps local destinations local: private, CGNAT, link-local
-// and ULA addresses, and names that only resolve on the LAN.
-func rcxDirectSplit(metadata *constant.Metadata) string {
-	e := rcxIfReady()
-	if e == nil {
-		return ""
-	}
-	target := e.SplitTarget()
-	if target == "" || rcxLocal(metadata) {
-		return ""
-	}
-	return target
-}
-
-var rcxCGNAT = netip.MustParsePrefix("100.64.0.0/10")
-
-func rcxLocal(metadata *constant.Metadata) bool {
-	if ip := metadata.DstIP.Unmap(); ip.IsValid() {
-		if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
-			ip.IsMulticast() || ip.IsUnspecified() || rcxCGNAT.Contains(ip) {
-			return true
-		}
-	}
-	host := strings.TrimSuffix(strings.ToLower(metadata.Host), ".")
-	if host == "" {
-		return false
-	}
-	if !strings.Contains(host, ".") {
-		return true
-	}
-	for _, suffix := range []string{".local", ".lan", ".home.arpa", ".internal", ".localdomain", ".localhost"} {
-		if strings.HasSuffix(host, suffix) {
-			return true
-		}
-	}
-	return false
-}
-
 func appendUnique(list []string, value string) []string {
 	if slices.Contains(list, value) {
 		return list
@@ -531,9 +478,11 @@ func rcxNode(proxy constant.Proxy) rcx.Node {
 		_ = outbound
 		node.Provider = outbound.ProxyInfo().ProviderName
 	}
-	if host, _, found := strings.Cut(proxy.Addr(), ":"); found {
+	if host, _, err := net.SplitHostPort(proxy.Addr()); err == nil {
 		node.Server = host
 	} else {
+		// SplitHostPort fails for a bare address; keep it verbatim instead of
+		// slicing at the first colon, which truncated IPv6 to "[".
 		node.Server = proxy.Addr()
 	}
 	return node

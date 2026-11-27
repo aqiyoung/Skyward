@@ -81,9 +81,14 @@ class PageLargeTitle extends StatelessWidget {
                   ),
                   if (actions.isNotEmpty || menuItems.isNotEmpty)
                     IconTheme(
-                      data: IconTheme.of(
-                        context,
-                      ).copyWith(color: colorScheme.primary, size: 22),
+                      // Page-heading actions read as dark, weighty controls:
+                      // a heavier stroke and a little more air between them,
+                      // rather than thin tinted marks tight against the title.
+                      data: IconTheme.of(context).copyWith(
+                        color: colorScheme.onSurface,
+                        size: 24,
+                        fill: 0.7,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

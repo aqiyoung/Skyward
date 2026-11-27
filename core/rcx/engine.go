@@ -158,9 +158,13 @@ func (e *Engine) saveLocked(now time.Time) {
 		m.statusDirty = true
 	}
 	e.storeOK = err
-	e.lastSave = now
 	if err == nil {
+		e.lastSave = now
 		m.dirty = false
+	} else {
+		// Retry a transient write failure quickly instead of waiting the full
+		// saveInterval, but do not hammer the store every tick.
+		e.lastSave = now.Add(-saveInterval + 15*time.Second)
 	}
 }
 
@@ -410,15 +414,6 @@ func (e *Engine) Close() {
 		e.timer.Stop()
 	}
 	e.saveLocked(e.now())
-}
-
-// SplitTarget is the group DIRECT rules should go through now, or empty. It
-// takes no lock: mihomo asks on every rule match.
-func (e *Engine) SplitTarget() string {
-	if target := e.split.Load(); target != nil {
-		return *target
-	}
-	return ""
 }
 
 func (e *Engine) refreshCounters(topology Topology) {
