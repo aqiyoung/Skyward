@@ -41,6 +41,11 @@ void main() {
       expect(globalState.coreUaVersion, '1.19.32');
     });
 
+    test('extracts the version from the branded Rust core string', () {
+      globalState.coreVersion = 'Skyward Core (Rust) v0.1.0-alpha.1';
+      expect(globalState.coreUaVersion, '0.1.0');
+    });
+
     test('is empty before the core answers', () {
       globalState.coreVersion = '';
       expect(globalState.coreUaVersion, isEmpty);

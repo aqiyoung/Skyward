@@ -58,9 +58,14 @@ class GlobalState {
   String coreVersion = '';
 
   /// The tag carries a `v` and this fork's own revision suffix; a provider
-  /// reading the User-Agent expects the bare upstream version it knows.
-  String get coreUaVersion =>
-      coreVersion.replaceFirst(RegExp(r'^v'), '').split('-').first;
+  /// reading the User-Agent expects the bare upstream version it knows. The
+  /// Rust core reports a branded `Skyward Core (Rust) v<ver>` string, so pull
+  /// the numeric version out of either shape with a regex.
+  String get coreUaVersion {
+    final match = RegExp(r'v(\d+\.\d+\.\d+)').firstMatch(coreVersion);
+    if (match != null) return match.group(1)!;
+    return coreVersion.replaceFirst(RegExp(r'^v'), '').split('-').first;
+  }
 
   String get ua => container
       .read(patchClashConfigProvider.select((state) => state.globalUa))
