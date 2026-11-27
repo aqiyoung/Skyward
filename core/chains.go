@@ -1259,9 +1259,6 @@ func (ix *chainIndex) inspect(params InspectChainParams) *ChainInspection {
 	spec := ChainSpec{Hops: params.Hops, Offered: true, TargetGroup: params.TargetGroup}
 	a := ix.analyze(spec, params.MainGroupHint)
 	inspection := &ChainInspection{Issues: a.issues, Leaves: []string{}, UDP: a.carry, Blocked: map[string]string{}}
-	if inspection.UDP == nil {
-		inspection.UDP = []bool{}
-	}
 	if len(a.hops) > 1 {
 		for _, leaf := range a.hops[len(a.hops)-1].leaves {
 			inspection.Leaves = append(inspection.Leaves, leaf.name)

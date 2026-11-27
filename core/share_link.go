@@ -223,9 +223,6 @@ func encodeVmess(f proxyFields) string {
 		"path": "",
 		"tls":  "",
 	}
-	if values["aid"] == "" {
-		values["aid"] = "0"
-	}
 	switch network := f.str("network"); network {
 	case "ws", "httpupgrade":
 		opts := f.sub("ws-opts")
