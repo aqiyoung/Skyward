@@ -365,11 +365,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m163(label) => "${label}必须为URL";
 
-  static String m164(month, day) => "${month}/${day} 当周";
+  static String m164(week, year) => "${year}年 第${week}周";
 
-  static String m165(count) => "${count} 年前";
+  static String m165(month, day) => "${month}/${day} 当周";
 
   static String m166(count) => "${count} 年前";
+
+  static String m167(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2333,14 +2335,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "无法解析 STUN 服务，网络不可用",
     ),
     "week": MessageLookupByLibrary.simpleMessage("周"),
-    "weeklyRange": m164,
+    "weekOfYear": m164,
+    "weeklyRange": m165,
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("写入系统"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "写入系统会同时设置系统时钟，Android 上不生效。",
     ),
-    "yearsAgo": m165,
-    "yearsAgoShort": m166,
+    "yearsAgo": m166,
+    "yearsAgoShort": m167,
     "yes": MessageLookupByLibrary.simpleMessage("是"),
     "zhCN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };

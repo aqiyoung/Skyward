@@ -64,7 +64,7 @@ jobs:
       - name: Build and test the wrapper
         working-directory: core
         run: |
-          go test -count=1 .
+          go test -count=1 . ./tun
           go vet . ./cmd/...
       # The kernel has its own check in the repository it lives in. What
       # matters here is that the pin this build carries still compiles.

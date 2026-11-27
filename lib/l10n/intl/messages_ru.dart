@@ -413,12 +413,14 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m163(label) => "Значение «${label}» должно быть URL";
 
-  static String m164(month, day) => "Неделя с ${month}/${day}";
+  static String m164(week, year) => "${year} год, неделя ${week}";
 
-  static String m165(count) =>
-      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+  static String m165(month, day) => "Неделя с ${month}/${day}";
 
   static String m166(count) =>
+      "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
+
+  static String m167(count) =>
       "${Intl.plural(count, one: '${count} г. назад', few: '${count} г. назад', many: '${count} л. назад', other: '${count} г. назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -3073,7 +3075,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Не удалось разрешить адрес STUN: сеть недоступна",
     ),
     "week": MessageLookupByLibrary.simpleMessage("Неделя"),
-    "weeklyRange": m164,
+    "weekOfYear": m164,
+    "weeklyRange": m165,
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
@@ -3083,8 +3086,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "«Записывать в систему» также устанавливает системные часы; Android это игнорирует.",
     ),
-    "yearsAgo": m165,
-    "yearsAgoShort": m166,
+    "yearsAgo": m166,
+    "yearsAgoShort": m167,
     "yes": MessageLookupByLibrary.simpleMessage("Да"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };

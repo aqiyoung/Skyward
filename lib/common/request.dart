@@ -14,6 +14,29 @@ import 'package:skyward/common/secure_client.dart';
 import 'package:skyward/common/subscription.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+/// Turns a GitHub Atom feed's escaped HTML `<content>` into plain release
+/// notes. The feed escapes tags (`&lt;li&gt;`), so entities must be decoded
+/// before tags are stripped; doing it the other way round leaves the decoded
+/// markers in the in-app changelog.
+String stripAtomNotes(String content) {
+  final decoded = content
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&amp;', '&');
+  return decoded
+      .replaceAll(RegExp(r'</(p|div|ul|ol|li|br|h[1-6])>'), '\n')
+      .replaceAll('<li>', '- ')
+      .replaceAll('<br>', '\n')
+      .replaceAll(RegExp(r'<[^>]+>'), '')
+      .replaceAll(RegExp(r'^\s*-\s*', multiLine: true), '- ')
+      .replaceAllMapped(
+        RegExp(r'^\s*(?!-)(\S.*)$', multiLine: true),
+        (m) => '- ${m.group(1)}',
+      );
+}
+
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
@@ -271,19 +294,7 @@ class Request {
             dotAll: true,
           ).firstMatch(entry)?.group(1) ??
           '';
-      final notes = content
-          .replaceAll('</li>', '\n')
-          .replaceAll(RegExp(r'<[^>]+>'), '')
-          .replaceAll('&lt;', '<')
-          .replaceAll('&gt;', '>')
-          .replaceAll('&quot;', '"')
-          .replaceAll('&#39;', "'")
-          .replaceAll('&amp;', '&')
-          .replaceAll(RegExp(r'^\s*-\s*', multiLine: true), '- ')
-          .replaceAllMapped(
-            RegExp(r'^\s*(?!-)(\S.*)$', multiLine: true),
-            (m) => '- ${m.group(1)}',
-          );
+      final notes = stripAtomNotes(content);
       final version =
           RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0) ??
           '1.0.0.${RegExp(r'\d+').firstMatch(tag)?.group(0) ?? '0'}';

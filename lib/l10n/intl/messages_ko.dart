@@ -376,11 +376,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m163(label) => "${label}은(는) URL이어야 합니다";
 
-  static String m164(month, day) => "${month}/${day} 주간";
+  static String m164(week, year) => "${year}년 ${week}주차";
 
-  static String m165(count) => "${Intl.plural(count, other: '${count}년 전')}";
+  static String m165(month, day) => "${month}/${day} 주간";
 
   static String m166(count) => "${Intl.plural(count, other: '${count}년 전')}";
+
+  static String m167(count) => "${Intl.plural(count, other: '${count}년 전')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -2526,14 +2528,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "STUN 호스트를 해석할 수 없습니다. 네트워크를 사용할 수 없습니다",
     ),
     "week": MessageLookupByLibrary.simpleMessage("주"),
-    "weeklyRange": m164,
+    "weekOfYear": m164,
+    "weeklyRange": m165,
     "whitelistMode": MessageLookupByLibrary.simpleMessage("화이트리스트 모드"),
     "writeToSystem": MessageLookupByLibrary.simpleMessage("시스템에 기록"),
     "writeToSystemDesc": MessageLookupByLibrary.simpleMessage(
       "시스템에 기록하면 시스템 시계도 설정합니다. Android에서는 무시됩니다.",
     ),
-    "yearsAgo": m165,
-    "yearsAgoShort": m166,
+    "yearsAgo": m166,
+    "yearsAgoShort": m167,
     "yes": MessageLookupByLibrary.simpleMessage("예"),
     "zhCN": MessageLookupByLibrary.simpleMessage("중국어 간체"),
   };

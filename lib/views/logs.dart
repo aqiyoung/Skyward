@@ -83,6 +83,31 @@ class _LogsViewState extends ConsumerState<LogsView>
     ];
   }
 
+  List<CommonPopupMenuItem> _buildMenuItems(
+    BuildContext context,
+    LogLevel logLevel,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    return [
+      CommonPopupMenuItem(
+        glyph: AppGlyphs.sliders,
+        label: appLocalizations.logLevel,
+        subtitle: logLevel.name,
+        subItems: [
+          for (final option in LogLevel.values)
+            CommonPopupMenuItem(
+              label: option.name,
+              checked: option == logLevel,
+              keepsOpen: true,
+              onPressed: () => ref
+                  .read(patchClashConfigProvider.notifier)
+                  .update((state) => state.copyWith(logLevel: option)),
+            ),
+        ],
+      ),
+    ];
+  }
+
   @override
   void dispose() {
     _listController.dispose();
@@ -125,9 +150,15 @@ class _LogsViewState extends ConsumerState<LogsView>
       onFilter: _filters.add,
       child: _buildBody(context),
     );
+    final logLevel = ref.watch(
+      patchClashConfigProvider.select((state) => state.logLevel),
+    );
     return CommonScaffold(
       iconActions: _buildActions(),
-      menuItems: _filters.menuItems(context, pinned: false),
+      menuItems: [
+        ..._buildMenuItems(context, logLevel),
+        ..._filters.menuItems(context, pinned: false),
+      ],
       searchState: AppBarSearchState(onSearch: _listController.search),
       title: context.appLocalizations.logs,
       body: body,

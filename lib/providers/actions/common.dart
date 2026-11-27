@@ -196,9 +196,11 @@ class CommonAction extends _$CommonAction {
     return null;
   }
 
-  /// Downloads the APK through the system download manager and lets its
-  /// completion receiver open the system installer. No VPN guard, no private
-  /// PackageInstaller session: the installer window is the confirmation.
+  /// Downloads the APK through the system download manager. Its completion
+  /// receiver verifies the hash and opens the system installer directly — no
+  /// private PackageInstaller session, no VPN guard, no FileProvider handoff.
+  /// The installer window is the reader's confirmation, and the system
+  /// notification stays as a fallback. Progress is polled from the manager.
   Future<void> _downloadRelease(
     Map<String, dynamic> release, {
     bool wifiOnly = false,
@@ -207,42 +209,21 @@ class CommonAction extends _$CommonAction {
     if (_ongoingUpdateDownload) return;
     final downloader = systemDownloader;
     if (downloader == null) {
-      // Desktop: replace this installation in place when it is an installer
-      // build we can write; otherwise fall back to the release page.
+      // Desktop keeps its own two-step replacement flow.
       await _downloadDesktopUpdate(release, automatic: automatic);
       return;
     }
     final abi = await downloader.supportedAbi();
     final asset = abi == null ? null : _apkAssetOf(release, abi);
-    // Preview releases list one generic arm64 APK and publish its hash in a
-    // SHA256SUMS asset instead of a comment in the notes.
-    final sha256 =
-        asset?.sha256 ??
-        (asset == null ? null : await _sha256FromSums(release, asset.name));
-    if (sha256 == null && asset != null) {
-      commonPrint.log(
-        'No published SHA-256 for ${asset.name}; downloading without the hash check',
-        logLevel: LogLevel.warning,
-      );
-    }
     if (asset == null) {
-      final page = release['html_url'];
-      final tag = release['tag_name'];
-      await launchUrl(
-        Uri.parse(
-          page is String
-              ? page
-              : tag is String
-              ? 'https://github.com/$repository/releases/tag/$tag'
-              : 'https://github.com/$repository/releases/latest',
-        ),
-      );
+      await _openReleasePage(release);
       return;
     }
     if (wifiOnly && !await _isOnWifi()) {
       commonPrint.log('Skipping automatic update download on mobile data');
       return;
     }
+    final sha256 = asset.sha256 ?? await _sha256FromSums(release, asset.name);
     _ongoingUpdateDownload = true;
     ref.read(updateDownloadProgressProvider.notifier).set(0);
     try {
@@ -274,11 +255,98 @@ class CommonAction extends _$CommonAction {
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     } finally {
       _ongoingUpdateDownload = false;
+      _updateCancelToken = null;
       ref.read(updateDownloadProgressProvider.notifier).set(null);
       unawaited(
         ref.read(loadingProvider(LoadingTag.updateDownload).notifier).stop(),
       );
     }
+  }
+
+  Future<void> _openReleasePage(Map<String, dynamic> release) async {
+    final page = release['html_url'];
+    final tag = release['tag_name'];
+    await launchUrl(
+      Uri.parse(
+        page is String
+            ? page
+            : tag is String
+            ? 'https://github.com/$repository/releases/tag/$tag'
+            : 'https://github.com/$repository/releases/latest',
+      ),
+    );
+  }
+
+  void _notifyUpdateReady() {
+    final zh = _interfaceLanguageCode == 'zh';
+    dialogs.showNotifier(
+      zh ? '更新已下载完成，点此安装' : 'Update downloaded. Tap to install',
+      level: MessageLevel.success,
+      actionState: MessageActionState(
+        actionText: zh ? '安装' : 'Install',
+        action: () => unawaited(installUpdate()),
+      ),
+    );
+  }
+
+  /// Installs the verified package the reader just tapped. Android hands it
+  /// to the system installer; desktop starts the detached replacement.
+  Future<void> installUpdate() async {
+    final ready = ref.read(preparedUpdateStateProvider);
+    if (ready == null) return;
+    ref.read(preparedUpdateStateProvider.notifier).set(null);
+    if (system.isAndroid) {
+      try {
+        await app?.installApk(
+          ready.path,
+          expectedVersion: ready.version ?? '',
+          expectedSha256: ready.sha256 ?? '',
+        );
+      } on Object catch (error) {
+        commonPrint.log(
+          'install update failed: ${compactError(error)}',
+          logLevel: LogLevel.warning,
+        );
+        dialogs.showNotifier(
+          _interfaceLanguageCode == 'zh'
+              ? '无法调起系统安装器，请手动安装下载的包'
+              : 'Could not open the system installer; install the downloaded package manually',
+          level: MessageLevel.warning,
+        );
+      }
+      // Do not delete the staged APK here. The system installer opens it
+      // asynchronously after startActivity returns; removing the file in that
+      // window makes the install silently fail. The next download overwrites
+      // it, and clearAppData removes it on a data reset.
+      return;
+    }
+    final updater = ready.installData;
+    if (updater is DesktopUpdater) {
+      final logPath = join(
+        await appPath.homeDirPath,
+        'app-updates',
+        'desktop-update.log',
+      );
+      await updater.launch(ready.path, relaunch: true, logPath: logPath);
+      // The replacement waits for this process to exit before swapping files.
+      exit(0);
+    }
+  }
+
+  Future<void> _clearUpdateFiles() async {
+    try {
+      await safeDeletePath(join(await appPath.homeDirPath, 'app-updates'));
+    } on Object catch (_) {
+      // Best effort: a stale package is cleared on the next update.
+    }
+  }
+
+  void cancelUpdateDownload() => _updateCancelToken?.cancel();
+
+  Future<void> discardUpdate() async {
+    if (ref.read(preparedUpdateStateProvider) == null) return;
+    ref.read(preparedUpdateStateProvider.notifier).set(null);
+    await _clearUpdateFiles();
   }
 
   /// Downloads the desktop installer/AppImage/DMG for this release and starts
@@ -334,10 +402,17 @@ class CommonAction extends _$CommonAction {
       );
       if (error == '') return;
       if (error != null) throw StateError(error);
-      final logPath = join(directory.path, 'desktop-update.log');
-      await updater.launch(target.path, relaunch: automatic, logPath: logPath);
-      // The replacement waits for this process to exit before swapping files.
-      exit(0);
+      ref
+          .read(preparedUpdateStateProvider.notifier)
+          .set(
+            PreparedUpdate(
+              tag: tag ?? '',
+              path: target.path,
+              sha256: asset.sha256,
+              installData: updater,
+            ),
+          );
+      _notifyUpdateReady();
     } catch (error) {
       commonPrint.log(
         'desktop update failed: ${compactError(error)}',

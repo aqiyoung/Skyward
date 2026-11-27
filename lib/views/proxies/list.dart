@@ -924,7 +924,7 @@ class _GroupSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         EmojiText(
-          groupName,
+          GroupMonogram.labelOf(context, groupName),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTextStyle.callout.of(context, emphasized: true),

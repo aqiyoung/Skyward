@@ -213,6 +213,30 @@ DateTime startOfTrafficPeriod(TrafficPeriod period, DateTime date) {
   };
 }
 
+/// The ISO-8601 week number (1..53) of [date] within its week-numbering year.
+///
+/// ISO weeks start on Monday and week 1 is the one holding the year's first
+/// Thursday, so a day near New Year can belong to the week-numbering year
+/// before or after its calendar year. Callers pair this with [isoWeekYear] so
+/// the label never shows a week number under the wrong year.
+int isoWeekNumber(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  // Three days forward lands on Thursday, which decides the ISO year.
+  final thursday = day.add(Duration(days: DateTime.thursday - day.weekday));
+  final jan4 = DateTime(thursday.year, 1, 4);
+  final firstThursday = jan4.add(
+    Duration(days: DateTime.thursday - jan4.weekday),
+  );
+  return ((thursday.difference(firstThursday).inDays) ~/ 7) + 1;
+}
+
+/// The ISO-8601 week-numbering year for the week containing [date].
+int isoWeekYear(DateTime date) {
+  final day = DateTime(date.year, date.month, date.day);
+  final thursday = day.add(Duration(days: DateTime.thursday - day.weekday));
+  return thursday.year;
+}
+
 /// The range a statistics view currently shows: the start of the period.
 @Riverpod(keepAlive: true)
 class TrafficRange extends _$TrafficRange {
@@ -221,20 +245,37 @@ class TrafficRange extends _$TrafficRange {
 
   void set(DateTime value) => state = value;
 
-  /// Re-anchor on a period change so the reader sees that period's own first
-  /// day rather than the previous period's boundary.
+  /// Re-anchor on a period change to *today's* period, not to the previous
+  /// period's boundary. The state holds a period start, so a month's state is
+  /// its first day; anchoring a new period on that made a week count from the
+  /// Monday of the month's first day instead of the Monday of today.
   void setPeriod(TrafficPeriod period) {
-    state = startOfTrafficPeriod(period, state);
+    state = startOfTrafficPeriod(period, DateTime.now());
+  }
+
+  /// Whether the range can move by [amount] periods. Past periods are always
+  /// reachable, but a view never advances past the period containing today:
+  /// there is no traffic to show for a future day, week or month.
+  bool canShift(TrafficPeriod period, int amount) {
+    if (amount <= 0) return true;
+    final current = startOfTrafficPeriod(period, DateTime.now());
+    final next = _shifted(state, period, amount);
+    return !next.isAfter(current);
   }
 
   void shift(TrafficPeriod period, int amount) {
-    final next = switch (period) {
-      TrafficPeriod.day => state.add(Duration(days: amount)),
-      TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
-      TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
-    };
-    state = startOfTrafficPeriod(period, next);
+    if (!canShift(period, amount)) return;
+    state = _shifted(state, period, amount);
   }
+}
+
+DateTime _shifted(DateTime state, TrafficPeriod period, int amount) {
+  final next = switch (period) {
+    TrafficPeriod.day => state.add(Duration(days: amount)),
+    TrafficPeriod.week => state.add(Duration(days: 7 * amount)),
+    TrafficPeriod.month => DateTime(state.year, state.month + amount, 1),
+  };
+  return startOfTrafficPeriod(period, next);
 }
 
 /// Loads history for the selected period and aggregates it off-isolate.

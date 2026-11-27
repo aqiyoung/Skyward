@@ -120,6 +120,18 @@ void main() {
       expect(update?['tag_name'], 'v1.1.0.24');
     });
 
+    test('strips rendered HTML from Atom notes', () {
+      final notes = stripAtomNotes(
+        '&lt;p&gt;head&lt;/p&gt;&lt;ul&gt;&lt;li&gt;line one&lt;/li&gt;'
+        '&lt;li&gt;line two&lt;/li&gt;&lt;/ul&gt;',
+      );
+      expect(notes, isNot(contains('&lt;')));
+      expect(notes, isNot(contains('<li>')));
+      expect(notes, isNot(contains('</p>')));
+      expect(notes, contains('- line one'));
+      expect(notes, contains('- line two'));
+    });
+
     test('answers null when the installed build is already the newest', () async {
       final request = requestAnswering({
         'api.github.com': () => ResponseBody.fromString(

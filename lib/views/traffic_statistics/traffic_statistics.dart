@@ -5,10 +5,19 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// The panel surface shared by the traffic views; kept as a helper so the
+/// surface tests can assert the same decoration the cards use.
+ShapeDecoration panelDecoration(BuildContext context, double radius) =>
+    ShapeDecoration(
+      color: SurfaceLevel.card.colorOf(context.colorScheme),
+      shape: AppShape.all(radius),
+    );
 
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
 /// rule-hit distribution, a traffic ranking and running time. Opened from
@@ -158,21 +167,25 @@ class _DateStrip extends ConsumerWidget {
     return switch (period) {
       TrafficPeriod.day =>
         '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
-      TrafficPeriod.week => l.weeklyRange(start.month, start.day),
+      TrafficPeriod.week => l.weekOfYear(
+        isoWeekNumber(start),
+        isoWeekYear(start),
+      ),
       TrafficPeriod.month => '${start.year}/${start.month}',
     };
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(trafficRangeProvider.notifier);
+    final canGoForward = notifier.canShift(period, 1);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronBack),
           tooltip: context.appLocalizations.previousPeriod,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, -1),
+          onPressed: () => notifier.shift(period, -1),
         ),
         Text(
           _label(context.appLocalizations),
@@ -181,8 +194,7 @@ class _DateStrip extends ConsumerWidget {
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronForward),
           tooltip: context.appLocalizations.nextPeriod,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, 1),
+          onPressed: canGoForward ? () => notifier.shift(period, 1) : null,
         ),
       ],
     );

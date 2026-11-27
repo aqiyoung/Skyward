@@ -13,9 +13,10 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => const ProfilesCard(),
     DashboardWidget.proxyGroups => const ProxyGroupsCard(),
     DashboardWidget.memoryInfo => const MemoryInfo(),
+    // One switchable card covers traffic, per-app usage and ad-block hits.
+    // The legacy appUsage value keeps rendering the same card so saved boards
+    // that still name it stay valid.
     DashboardWidget.trafficStats => const UsageCard(),
-    // Both stats cards are now one switchable UsageCard; the legacy value
-    // still renders the same card so saved configs stay valid.
     DashboardWidget.appUsage => const UsageCard(),
     DashboardWidget.speedTest => const SpeedTestCard(),
   };
