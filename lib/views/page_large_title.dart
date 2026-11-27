@@ -87,11 +87,10 @@ class PageLargeTitle extends StatelessWidget {
                       data: IconTheme.of(context).copyWith(
                         color: colorScheme.onSurface,
                         size: 24,
-                        fill: 0.5,
+                        fill: 0.7,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        spacing: 12,
                         children: [
                           for (final data in actions)
                             AppBarActionButton(data: data),
@@ -117,8 +116,9 @@ class PageLargeTitle extends StatelessWidget {
                   data: searchPillTheme(context),
                   child: SearchField(
                     hintText: searchHint,
-                    fill: SurfaceLevel.floatingOf(colorScheme)
-                        .colorOf(colorScheme),
+                    fill: SurfaceLevel.floatingOf(
+                      colorScheme,
+                    ).colorOf(colorScheme),
                     onChanged: onSearch,
                   ),
                 ),
