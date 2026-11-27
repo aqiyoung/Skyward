@@ -96,14 +96,21 @@ class _UsageCardState extends ConsumerState<UsageCard> {
             title: label,
           ),
           const SizedBox(height: 10),
-          SegmentedControl<_UsageTab>(
-            segments: [
-              (_UsageTab.traffic, context.appLocalizations.trafficUsage),
-              (_UsageTab.app, context.appLocalizations.usageStats),
-              (_UsageTab.blocked, zh ? '广告拦截' : 'Ads blocked'),
-            ],
-            value: _tab,
-            onChanged: (v) => setState(() => _tab = v),
+          // The card is a pure-white surface in light mode. Tell controls
+          // inside it that they sit on a card so raised surfaces pick the
+          // next, grey level -- otherwise the segmented control's capsule
+          // track resolves to the same white as the card and disappears.
+          SurfaceScope(
+            level: SurfaceLevel.card,
+            child: SegmentedControl<_UsageTab>(
+              segments: [
+                (_UsageTab.traffic, context.appLocalizations.trafficUsage),
+                (_UsageTab.app, context.appLocalizations.usageStats),
+                (_UsageTab.blocked, zh ? '广告拦截' : 'Ads blocked'),
+              ],
+              value: _tab,
+              onChanged: (v) => setState(() => _tab = v),
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
