@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- The in-app updater stages verified APKs here before handing them to
-         the system installer through a content URI. -->
-    <files-path name="app_updates" path="app-updates/" />
-</paths>

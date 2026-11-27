@@ -196,19 +196,20 @@ class CommonAction extends _$CommonAction {
     return null;
   }
 
-  /// Downloads the matching release asset, verifies it, then waits for the
-  /// reader to confirm installation. Nothing is installed behind their back.
+  /// Downloads the APK through the system download manager. Its completion
+  /// receiver verifies the hash and opens the system installer directly — no
+  /// private PackageInstaller session, no VPN guard, no FileProvider handoff.
+  /// The installer window is the reader's confirmation, and the system
+  /// notification stays as a fallback. Progress is polled from the manager.
   Future<void> _downloadRelease(
     Map<String, dynamic> release, {
     bool wifiOnly = false,
     bool automatic = false,
   }) async {
-    if (_ongoingUpdateDownload ||
-        ref.read(preparedUpdateStateProvider) != null) {
-      return;
-    }
+    if (_ongoingUpdateDownload) return;
     final downloader = systemDownloader;
     if (downloader == null) {
+      // Desktop keeps its own two-step replacement flow.
       await _downloadDesktopUpdate(release, automatic: automatic);
       return;
     }
@@ -222,48 +223,30 @@ class CommonAction extends _$CommonAction {
       commonPrint.log('Skipping automatic update download on mobile data');
       return;
     }
-    final tag = release['tag_name'] as String? ?? '';
-    final version = releaseVersionOf(tag, release['name'] as String?);
-    final sha = asset.sha256 ?? await _sha256FromSums(release, asset.name);
+    final sha256 = asset.sha256 ?? await _sha256FromSums(release, asset.name);
     _ongoingUpdateDownload = true;
-    final cancelToken = CancelToken();
-    _updateCancelToken = cancelToken;
     ref.read(updateDownloadProgressProvider.notifier).set(0);
     try {
       ref.read(loadingProvider(LoadingTag.updateDownload).notifier).start();
-      final directory = Directory(
-        join(await appPath.homeDirPath, 'app-updates'),
+      final id = await downloader.download(
+        url: asset.url,
+        fileName: asset.name,
+        expectedSha256: sha256,
+        wifiOnly: wifiOnly,
       );
-      await directory.create(recursive: true);
-      final safeTag = tag.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-      final target = File(
-        join(directory.path, 'update-$safeTag-${asset.name}'),
-      );
-      final error = await request.downloadUpdateFile(
-        Uri.parse(asset.url),
-        target.path,
-        cancelToken: cancelToken,
-        onProgress: (received, total) {
-          if (total <= 0) return;
-          ref
-              .read(updateDownloadProgressProvider.notifier)
-              .set((received / total).clamp(0.0, 1.0));
-        },
-        expectedSha256: sha ?? '',
-      );
-      if (error == '') return; // cancelled
-      if (error != null) throw StateError(error);
-      ref
-          .read(preparedUpdateStateProvider.notifier)
-          .set(
-            PreparedUpdate(
-              tag: tag,
-              path: target.path,
-              sha256: sha,
-              version: version,
-            ),
-          );
-      _notifyUpdateReady();
+      if (id == null) throw StateError('download did not start');
+      while (true) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        final status = await downloader.status(id);
+        if (status == null || status.isFailed) {
+          throw StateError('download failed: ${asset.name}');
+        }
+        ref.read(updateDownloadProgressProvider.notifier).set(status.progress);
+        if (status.isSuccessful) break;
+      }
+      // The download-complete receiver normally opens the installer already;
+      // this call is a no-op then, and the fallback when it did not run.
+      await downloader.install(id);
     } catch (error) {
       commonPrint.log(
         'download release failed: ${compactError(error)}',
