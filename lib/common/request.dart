@@ -271,14 +271,20 @@ class Request {
             dotAll: true,
           ).firstMatch(entry)?.group(1) ??
           '';
-      final notes = content
-          .replaceAll('</li>', '\n')
-          .replaceAll(RegExp(r'<[^>]+>'), '')
+      // The feed's <content> is XML-escaped HTML: `<li>` arrives as
+      // `&lt;li&gt;`. Decode the entities *before* stripping tags, or the
+      // decoded markers survive as literal text in the in-app changelog.
+      final decoded = content
           .replaceAll('&lt;', '<')
           .replaceAll('&gt;', '>')
           .replaceAll('&quot;', '"')
           .replaceAll('&#39;', "'")
-          .replaceAll('&amp;', '&')
+          .replaceAll('&amp;', '&');
+      final notes = decoded
+          .replaceAll(RegExp(r'</(p|div|ul|ol|li|br|h[1-6])>'), '\n')
+          .replaceAll('<li>', '- ')
+          .replaceAll('<br>', '\n')
+          .replaceAll(RegExp(r'<[^>]+>'), '')
           .replaceAll(RegExp(r'^\s*-\s*', multiLine: true), '- ')
           .replaceAllMapped(
             RegExp(r'^\s*(?!-)(\S.*)$', multiLine: true),

@@ -331,7 +331,10 @@ class CommonAction extends _$CommonAction {
           level: MessageLevel.warning,
         );
       }
-      await _clearUpdateFiles();
+      // Do not delete the staged APK here. The system installer opens it
+      // asynchronously after startActivity returns; removing the file in that
+      // window makes the install silently fail. The next download overwrites
+      // it, and clearAppData removes it on a data reset.
       return;
     }
     final updater = ready.installData;
