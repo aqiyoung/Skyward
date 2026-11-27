@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:skyward/ui/typography.dart';
 import 'package:flutter/widgets.dart';
+import 'package:skyward/ui/l10n.dart';
 
 /// One hour's bytes, in the UI's own plain type so the chart stays independent
 /// of the app's models (lib/ui may not reach lib/models).
@@ -16,16 +16,19 @@ class TrafficBarChart extends StatelessWidget {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
-    required this.labelColor,
     required this.gridColor,
+    required this.labelColor,
     this.height = 180,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
-  final Color labelColor;
+
+  /// Grid lines and axis labels are drawn in the theme's ink, not a fixed
+  /// black: on a dark card a black grid is darker than the card itself.
   final Color gridColor;
+  final Color labelColor;
   final double height;
 
   @override
@@ -33,9 +36,7 @@ class TrafficBarChart extends StatelessWidget {
     if (points.isEmpty) {
       return SizedBox(
         height: height,
-        child: Center(
-          child: Text('暂无数据', style: TextStyle(color: labelColor)),
-        ),
+        child: Center(child: Text(UiLocalizations.of(context).noData)),
       );
     }
     return CustomPaint(
@@ -43,9 +44,8 @@ class TrafficBarChart extends StatelessWidget {
         points: points,
         downloadColor: downloadColor,
         uploadColor: uploadColor,
-        labelColor: labelColor,
         gridColor: gridColor,
-        labelStyle: AppTextStyle.caption2.of(context, emphasized: true),
+        labelColor: labelColor,
       ),
       child: SizedBox(height: height, width: double.infinity),
     );
@@ -57,17 +57,15 @@ class _BarPainter extends CustomPainter {
     required this.points,
     required this.downloadColor,
     required this.uploadColor,
-    required this.labelColor,
     required this.gridColor,
-    required this.labelStyle,
+    required this.labelColor,
   });
 
   final List<TrafficBarPoint> points;
   final Color downloadColor;
   final Color uploadColor;
-  final Color labelColor;
   final Color gridColor;
-  final TextStyle labelStyle;
+  final Color labelColor;
 
   static const _left = 46.0;
   static const _bottom = 22.0;
@@ -97,7 +95,7 @@ class _BarPainter extends CustomPainter {
         canvas,
         _formatAxis(value),
         Offset(0, y - 6),
-        labelStyle.copyWith(color: labelColor),
+        TextStyle(fontSize: 10, color: labelColor),
       );
     }
 
@@ -132,7 +130,7 @@ class _BarPainter extends CustomPainter {
           canvas,
           '${p.hour.hour}',
           Offset(cx - 8, _top + plotH + 5),
-          labelStyle.copyWith(color: labelColor),
+          TextStyle(fontSize: 10, color: labelColor),
         );
       }
     }
@@ -167,7 +165,6 @@ class _BarPainter extends CustomPainter {
       old.points != points ||
       old.downloadColor != downloadColor ||
       old.uploadColor != uploadColor ||
-      old.labelColor != labelColor ||
       old.gridColor != gridColor ||
-      old.labelStyle != labelStyle;
+      old.labelColor != labelColor;
 }

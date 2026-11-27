@@ -8,14 +8,39 @@ import 'package:dio/io.dart';
 import 'package:path/path.dart';
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/features/features.dart';
 import 'package:skyward/state.dart';
 import 'package:skyward/common/secure_client.dart';
 import 'package:skyward/common/subscription.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+/// Turns a GitHub Atom feed's escaped HTML `<content>` into plain release
+/// notes. The feed escapes tags (`&lt;li&gt;`), so entities must be decoded
+/// before tags are stripped; doing it the other way round leaves the decoded
+/// markers in the in-app changelog.
+String stripAtomNotes(String content) {
+  final decoded = content
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&amp;', '&');
+  return decoded
+      .replaceAll(RegExp(r'</(p|div|ul|ol|li|br|h[1-6])>'), '\n')
+      .replaceAll('<li>', '- ')
+      .replaceAll('<br>', '\n')
+      .replaceAll(RegExp(r'<[^>]+>'), '')
+      .replaceAll(RegExp(r'^\s*-\s*', multiLine: true), '- ')
+      .replaceAllMapped(
+        RegExp(r'^\s*(?!-)(\S.*)$', multiLine: true),
+        (m) => '- ${m.group(1)}',
+      );
+}
+
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
+  late final Dio _updateFileDio;
   String? userAgent;
 
   ProviderReader? _read;
@@ -26,6 +51,20 @@ class Request {
 
   Request() {
     dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
+    // Update packages are security-sensitive: strict TLS, but allowed through
+    // the app's own proxy so GitHub stays reachable on restricted networks.
+    _updateFileDio = Dio();
+    _updateFileDio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.findProxy = (uri) {
+          final read = _read;
+          if (read == null) return 'DIRECT';
+          return SkywardHttpOverrides.findProxyForReader(read, uri);
+        };
+        return client;
+      },
+    );
     _clashDio = Dio();
     _clashDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
@@ -88,6 +127,53 @@ class Request {
     }
   }
 
+  /// Reads a release asset through the same proxy/certificate setup as the
+  /// update check. Used for the SHA256SUMS file when the release notes carry
+  /// no inline hash for the APK.
+  Future<Response<String>> getUpdateTextResponseForUrl(String url) =>
+      HttpOverrides.runWithHttpOverrides(
+        () => getTextResponseForUrl(url),
+        _updateOverrides(),
+      );
+
+  /// Downloads an update APK into the app-private directory and verifies its
+  /// SHA-256 before returning the final path. A canceled download returns an
+  /// empty string; any other failure returns a human-readable error, matching
+  /// the contract callers already use for release checks.
+  Future<String?> downloadUpdateFile(
+    Uri uri,
+    String targetPath, {
+    required CancelToken cancelToken,
+    required void Function(int received, int total) onProgress,
+    required String expectedSha256,
+    int? expectedSize,
+  }) async {
+    try {
+      final transfer = UpdateFileTransfer(
+        dio: _updateFileDio,
+        uri: uri,
+        target: File(targetPath),
+        cancelToken: cancelToken,
+        onProgress: onProgress,
+        expectedSha256: expectedSha256,
+        expectedSize: expectedSize,
+      );
+      await transfer.run();
+      return null;
+    } catch (error) {
+      if (error is DioException && CancelToken.isCancel(error)) return '';
+      if (error is UpdateDownloadVerificationException) rethrow;
+      return compactError(error);
+    }
+  }
+
+  /// Update-check traffic: strict TLS, but allowed through the app's own proxy
+  /// so it works on networks that cannot reach GitHub directly.
+  HttpOverrides _updateOverrides() {
+    final read = _read;
+    return read == null ? DirectOverrides() : SecureUpdateOverrides(read);
+  }
+
   /// Null when this build is current; throws when GitHub cannot be asked.
   ///
   /// The check looks at the whole releases list, not just the latest
@@ -104,92 +190,141 @@ class Request {
   /// to the latest stable alone. Without the cache a preview would be told
   /// there is no update, because the release-page redirect the last fallback
   /// follows names a tag and nothing more.
-  Future<Map<String, dynamic>?> checkForUpdate() async {
+  Future<Map<String, dynamic>?> checkForUpdate([UpdateChannel? channel]) async {
     try {
       final response = await HttpOverrides.runWithHttpOverrides(
         () => dio.get<List<dynamic>>(
           'https://api.github.com/repos/$repository/releases?per_page=30',
           options: Options(responseType: ResponseType.json),
         ),
-        DirectOverrides(),
+        _updateOverrides(),
       );
       final releases = response.data ?? const <dynamic>[];
-      // The cache is best-effort: a slow or unavailable disk must not hold the
-      // result, or the row would sit on "Checking…" behind a background write.
-      unawaited(_cacheReleases(releases));
-      try {
-        return newestOfferableRelease(
-          _platformCandidates(releases),
-          installedVersion: globalState.packageInfo.displayVersion,
-        );
-      } catch (error) {
-        commonPrint.log(
-          'release parse failed: ${compactError(error)}',
-          logLevel: LogLevel.warning,
-        );
-        return null;
-      }
+      // Keep the write in line so a caller that reads the cache immediately
+      // after a successful check sees the list it just fetched.
+      await _cacheReleases(releases);
+      return newestOfferableRelease(
+        _platformCandidates(releases, channel),
+        installedVersion: globalState.packageInfo.displayVersion,
+      );
     } on DioException catch (error) {
       commonPrint.log(
         'releases list failed: ${compactError(error)}',
         logLevel: LogLevel.warning,
       );
     }
-    // The list could not be read. Reuse the last list we cached while the API
-    // was reachable so a preview can still be offered a newer beta or stable by
-    // build number, instead of being told there is nothing.
-    final cached = await _readCachedReleases();
-    if (cached.isNotEmpty) {
-      try {
-        final offer = newestOfferableRelease(
-          _platformCandidates(cached),
+    // The API is rate limited. The Atom feed is served outside the API and
+    // still names every release, so try it before falling back to a cache
+    // that may predate the newest build.
+    try {
+      final feed = await releasesFromFeed();
+      if (feed.isNotEmpty) {
+        return newestOfferableRelease(
+          _platformCandidates(feed, channel),
           installedVersion: globalState.packageInfo.displayVersion,
         );
-        if (offer != null) return offer;
-      } catch (_) {
-        // Ignore a bad cache entry and fall through to the release page.
       }
-    }
-    try {
-      // The /latest endpoint always names the newest release of the whole
-      // repository, which is the Go line -- offering that to a Rust app is
-      // wrong (different signature + core). The cached list was already
-      // core-filtered above; fall back to the redirect only as a last resort,
-      // and only when its tag belongs to this core's line.
-      Map<String, dynamic>? release;
-      final coreCandidates = _platformCandidates(cached);
-      if (coreCandidates.isNotEmpty) {
-        release = (coreCandidates.first as Map).cast<String, dynamic>();
-      } else {
-        final redirect = await latestRelease();
-        final tag = redirect['tag_name'] as String? ?? '';
-        final isRustAndroid =
-            !system.isDesktop &&
-            globalState.hasPackageInfo &&
-            globalState.packageInfo.packageName.endsWith('.rust');
-        if (isTagForCore(tag, isRustAndroid)) release = redirect;
-      }
-      if (release == null) return null;
-      final remoteVersion = release['tag_name'] as String;
-      final version = globalState.packageInfo.displayVersion;
-      final hasUpdate = shouldOfferUpdate(
-        remoteVersion: releaseVersionOf(
-          remoteVersion,
-          release['name'] as String?,
-        ),
-        remoteBuildNumber: releaseBuildNumber(release['body']),
-        installedVersion: version,
-      );
-      return hasUpdate ? release : null;
     } catch (error) {
-      // A non-semantic tag (e.g. `dev`) must not turn a reachable GitHub into
-      // a failed update check.
       commonPrint.log(
-        'release version parse failed: ${compactError(error)}',
+        'releases feed failed: ${compactError(error)}',
         logLevel: LogLevel.warning,
       );
+    }
+    // The list and the feed could not be read. Reuse the last list we cached
+    // while the API was reachable so a preview can still be offered a newer
+    // beta or stable by build number, instead of being told there is nothing.
+    final cached = await _readCachedReleases();
+    if (cached.isNotEmpty) {
+      final offer = newestOfferableRelease(
+        _platformCandidates(cached, channel),
+        installedVersion: globalState.packageInfo.displayVersion,
+      );
+      if (offer != null) return offer;
+    }
+    // The last fallback is the /latest page, which only ever names a stable
+    // tag. On the pre-release channel that is not what the reader asked for,
+    // so stay silent rather than offering a stable behind their back.
+    if (effectiveUpdateChannel(
+          configured: channel,
+          isPreBuild: globalState.isPre,
+        ) ==
+        UpdateChannel.pre) {
       return null;
     }
+    final release = await latestRelease();
+    final tag = release['tag_name'] as String? ?? '';
+    final isRustAndroid =
+        !system.isDesktop &&
+        globalState.hasPackageInfo &&
+        globalState.packageInfo.packageName.endsWith('.rust');
+    // /latest only ever names the newest release of the whole repository,
+    // which is the Go line. Never offer a Go tag to a Rust app.
+    if (!isTagForCore(tag, isRustAndroid)) return null;
+    final remoteVersion = tag;
+    final version = globalState.packageInfo.displayVersion;
+    final hasUpdate = shouldOfferUpdate(
+      remoteVersion: releaseVersionOf(
+        remoteVersion,
+        release['name'] as String?,
+      ),
+      remoteBuildNumber: releaseBuildNumber(release['body']),
+      installedVersion: version,
+    );
+    return hasUpdate ? release : null;
+  }
+
+  /// Releases as an Atom feed. GitHub serves it outside the API, so it keeps
+  /// working after the anonymous hourly quota is spent. Each entry carries
+  /// the tag, the display name and the notes; asset URLs follow the tag's
+  /// well-known naming, which is all the updater needs.
+  Future<List<Map<String, dynamic>>> releasesFromFeed() async {
+    final response = await getUpdateTextResponseForUrl(
+      'https://github.com/$repository/releases.atom',
+    );
+    final xml = response.data ?? '';
+    final entries = <Map<String, dynamic>>[];
+    for (final match in RegExp(
+      r'<entry>(.*?)</entry>',
+      dotAll: true,
+    ).allMatches(xml)) {
+      final entry = match.group(1)!;
+      final link = RegExp(r'releases/tag/([^"<]+)').firstMatch(entry)?.group(1);
+      final title = RegExp(
+        r'<title>(.*?)</title>',
+        dotAll: true,
+      ).firstMatch(entry)?.group(1)?.trim();
+      if (link == null || title == null) continue;
+      final tag = link.replaceAll('&amp;', '&');
+      final name = title.replaceAll('&amp;', '&');
+      final content =
+          RegExp(
+            r'<content[^>]*>(.*?)</content>',
+            dotAll: true,
+          ).firstMatch(entry)?.group(1) ??
+          '';
+      final notes = stripAtomNotes(content);
+      final version =
+          RegExp(r'\d+\.\d+\.\d+\.\d+').firstMatch(name)?.group(0) ??
+          '1.0.0.${RegExp(r'\d+').firstMatch(tag)?.group(0) ?? '0'}';
+      final apk = 'Skyward-$version-android.apk';
+      final base = 'https://github.com/$repository/releases/download/$tag';
+      entries.add({
+        'tag_name': tag,
+        'name': name,
+        'body': notes,
+        'html_url': 'https://github.com/$repository/releases/tag/$tag',
+        'prerelease':
+            tag.startsWith('preview-') ||
+            tag.startsWith('dev-') ||
+            name.contains('预览版'),
+        'draft': false,
+        'assets': [
+          {'name': apk, 'browser_download_url': '$base/$apk'},
+          {'name': 'SHA256SUMS', 'browser_download_url': '$base/SHA256SUMS'},
+        ],
+      });
+    }
+    return entries;
   }
 
   /// The release page redirect still answers once the hourly API quota is spent.
@@ -201,7 +336,7 @@ class Request {
           'https://api.github.com/repos/$repository/releases/latest',
           options: Options(responseType: ResponseType.json),
         ),
-        DirectOverrides(),
+        _updateOverrides(),
       );
       return response.data!;
     } on DioException catch (error) {
@@ -218,7 +353,7 @@ class Request {
           validateStatus: (status) => status != null && status < 400,
         ),
       ),
-      DirectOverrides(),
+      _updateOverrides(),
     );
     final location = response.headers.value(HttpHeaders.locationHeader);
     final segments = Uri.tryParse(location ?? '')?.pathSegments ?? const [];
@@ -272,51 +407,71 @@ class Request {
     }
   }
 
-  /// Rust and Go builds are separate release lines with different signing
-  /// certs and applicationIds. A Rust app must only be offered `-rust` tags,
-  /// and a Go app must never be offered one -- otherwise the update dialog
-  /// proposes a package that cannot be installed (or would swap the core).
-  List<dynamic> _platformCandidates(List<dynamic> releases) {
+  /// Drops Android-only preview releases on desktop, and narrows the list to
+  /// the selected update channel. `release` keeps only stable releases; `pre`
+  /// keeps every prerelease (beta, preview, dev). Filtering happens here --
+  /// before `newestOfferableRelease` compares build numbers across channels.
+  List<dynamic> _platformCandidates(
+    List<dynamic> releases,
+    UpdateChannel? channel,
+  ) {
+    final wanted = effectiveUpdateChannel(
+      configured: channel,
+      isPreBuild: globalState.isPre,
+    );
+    final coreFiltered = _filterByCore(releases);
+    return coreFiltered.where((release) {
+      if (release is! Map) return false;
+      final prerelease =
+          release['prerelease'] == true ||
+          _isPrereleaseTag(release['tag_name']);
+      if (wanted == UpdateChannel.release && prerelease) return false;
+      if (wanted == UpdateChannel.pre && !prerelease) return false;
+      // Previews have no desktop package.
+      if (system.isDesktop) {
+        final tag = release['tag_name'];
+        if (tag is String && tag.startsWith('preview-')) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  /// Rust and Go builds are separate release lines with different signatures
+  /// and applicationIds. A Rust app must only ever be offered `-rust` tags; a
+  /// Go tag cannot be installed and would silently swap cores.
+  List<dynamic> _filterByCore(List<dynamic> releases) {
     final isAndroid = !system.isDesktop;
     final isRustAndroid =
         isAndroid &&
         globalState.hasPackageInfo &&
         globalState.packageInfo.packageName.endsWith('.rust');
-    return filterReleasesForCore(
-      releases,
-      isDesktop: system.isDesktop,
-      isRustAndroid: isRustAndroid,
-    );
+    if (!isAndroid) return releases;
+    return releases.where((release) {
+      final tag = release is Map ? release['tag_name'] : null;
+      if (tag is! String) return true;
+      return isTagForCore(tag, isRustAndroid);
+    }).toList();
+  }
+
+  /// True for the tag shapes that only a prerelease build uses.
+  bool _isPrereleaseTag(Object? tag) {
+    if (tag is! String) return false;
+    return tag.startsWith('preview-') ||
+        tag.startsWith('dev-') ||
+        tag.contains('-beta') ||
+        tag.contains('-dev') ||
+        tag.contains('-pre');
   }
 }
 
+final request = Request();
+
 /// Whether a release tag belongs to this build's core line. A Rust app must
-/// reject Go tags (and vice versa): different signature, applicationId, core.
+/// reject Go tags (different signature + applicationId) and vice versa.
 bool isTagForCore(String tag, bool isRustAndroid) {
   final isRustTag = tag.contains('-rust');
   return isRustAndroid ? isRustTag : !isRustTag;
 }
-
-/// Keeps only releases installable by this build's core. Rust and Go apps are
-/// different signatures + applicationIds, so a Rust app must never be offered
-/// a Go tag (like `v1.2.1.2`) -- it cannot be installed and would swap cores.
-List<dynamic> filterReleasesForCore(
-  List<dynamic> releases, {
-  required bool isDesktop,
-  required bool isRustAndroid,
-}) {
-  final isAndroid = !isDesktop;
-  return releases.where((release) {
-    final tag = release is Map ? release['tag_name'] : null;
-    if (tag is! String) return true;
-    // Android-only preview releases have no installable package on desktop.
-    if (isDesktop && tag.startsWith('preview-')) return false;
-    if (isAndroid) return isTagForCore(tag, isRustAndroid);
-    return true;
-  }).toList();
-}
-
-final request = Request();
 
 /// Some subscription servers send a gzip or zlib body without saying so in
 /// Content-Encoding, which is the only signal dart:io decompresses on.

@@ -608,7 +608,7 @@ class _GroupTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: EmojiText(
-                        group.name,
+                        GroupMonogram.labelOf(context, group.name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyle.caption1

@@ -34,7 +34,7 @@ enum CoreMethod {
   outboundIp,
   serviceCheck,
   getConnections,
-  takeClosedConnections,
+  getTrafficHistory,
   getConnectionCount,
   closeConnections,
   resetConnections,
@@ -55,6 +55,16 @@ enum CoreMethod {
   clearEffect,
   updateDns,
   watchRoute,
+  getChainReport,
+  inspectChain,
+  rcxSetPolicy,
+  rcxStatus,
+  rcxExplain,
+  rcxJournal,
+  rcxAction,
+  rcxHints,
+  rcxProfiles,
+  rcxStudio,
 }
 
 class CoreMethodCall {

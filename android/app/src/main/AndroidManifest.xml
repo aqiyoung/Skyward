@@ -35,6 +35,10 @@
          (or the unknown-sources settings when it has not been granted yet)
          once the download completes. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Allows a verified, self-signed update to be installed without a user
+         action prompt. This is a normal-level permission; it only helps when
+         this app updates its own package with a matching signing certificate. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <!-- Signature-level permission guarding ServiceBroadcastReceiver below. -->
     <permission
@@ -126,6 +130,14 @@
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="true" />
         </service>
+
+        <!-- Receives the PackageInstaller result for a self-update. The
+             installer sends it to this app's own broadcast action; exported
+             is false and every callback is checked against a session and a
+             random token in UpdateInstaller.receive. -->
+        <receiver
+            android:name=".updates.UpdateInstallReceiver"
+            android:exported="false" />
 
         <receiver
             android:name=".WidgetProvider"

@@ -5,5 +5,7 @@ export 'core.dart';
 export 'database.dart';
 export 'on_demand.dart';
 export 'route_state.dart';
+export 'routing.dart';
 export 'state.dart';
 export 'traffic_statistics.dart';
+export 'update.dart';

@@ -65,11 +65,13 @@ class SystemDownloader {
     required String url,
     required String fileName,
     String? expectedSha256,
+    bool wifiOnly = false,
   }) {
     return _methodChannel.invokeMethod<int>('download', {
       'url': url,
       'fileName': fileName,
       'expectedSha256': ?expectedSha256,
+      'wifiOnly': wifiOnly,
     });
   }
 

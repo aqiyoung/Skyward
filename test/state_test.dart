@@ -40,6 +40,7 @@ void main() {
         seedColor: lightSeed,
         brightness: Brightness.light,
         style: style,
+        warmLight: false,
       ),
     );
     expect(
@@ -48,6 +49,7 @@ void main() {
         seedColor: darkSeed,
         brightness: Brightness.dark,
         style: style,
+        warmLight: false,
       ),
     );
   });
@@ -92,6 +94,7 @@ void main() {
         seedColor: accent,
         brightness: Brightness.light,
         style: container.read(themeSettingProvider).colorStyle,
+        warmLight: false,
       ),
     );
   });

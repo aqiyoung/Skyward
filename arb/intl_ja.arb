@@ -1095,6 +1095,31 @@
   "last7Days": "過去 7 日間",
   "thisMonth": "今月",
   "today": "今日",
+  "refresh": "更新",
+  "day": "日",
+  "week": "週",
+  "month": "月",
+  "previousPeriod": "前へ",
+  "nextPeriod": "次へ",
+  "trafficOverview": "トラフィック概要",
+  "totalUptime": "稼働時間",
+  "trafficTrend": "トラフィック傾向",
+  "ruleHits": "ルールヒット",
+  "trafficRanking": "トラフィックランキング",
+  "hitsUnit": "ヒット",
+  "weeklyRange": "{month}/{day} の週",
+  "weekOfYear": "{year}年 第{week}週",
+  "connectionCount": "{count} 件の接続",
+  "proxyShare": "プロキシ {value} · {percent}",
+  "directShare": "直結 {value} · {percent}",
+  "durationMinutes": "{count}分",
+  "durationHours": "{hours}時間 {minutes}分",
+  "durationDays": "{days}日 {hours}時間",
+  "trafficPeakLine": "ピーク {hour}:00 · {value}",
+  "ruleHitShare": "ヒット流量の {percent} · {count}",
+  "ruleHitCount": "{count} 件のルールにヒット",
+  "ruleHitDetail": "{count} · ↑ {upload} ↓ {download}",
+  "rankDetail": "{percent} · ↑ {upload} ↓ {download}",
   "speedTest": "接続テスト",
   "speedTestReady": "準備完了",
   "speedTestTesting": "テスト中",
@@ -1107,83 +1132,1179 @@
   "speedTestMbps": "Mbps",
   "speedTestMs": "ミリ秒",
   "speedTestProvider": "プロバイダー",
-  "chainManager": "チェーン",
-  "chainGuideTitle": "チェーンを作成",
-  "chainGuideDesc": "あるサーバーに接続し、別のサーバー経由でインターネットへ — サイトには 2 台目しか見えません。",
-  "chainCreate": "チェーンを作成",
-  "chainEntry": "入口",
-  "chainExit": "出口",
-  "chainEmpty": "チェーンはまだありません",
-  "chainExisting": "あなたのチェーン",
-  "chainNew": "新しいチェーン",
-  "chainDelete": "チェーンを削除",
-  "chainEdit": "チェーンを編集",
-  "chainEntryHint": "接続を確立するサーバー",
-  "chainExitHint": "ウェブサイトにアクセスするサーバー",
-  "chainSelectExit": "出口ノードを選択",
-  "chainSelectEntry": "入口ノードを選択",
-  "chainSaved": "チェーンを保存しました",
-  "chainRemoved": "チェーンを削除しました",
-  "chainNoProxies": "先に 2 つ以上のプロキシノードを追加してください",
-  "chainAtLeastTwo": "チェーンには入口と出口のノードが必要です",
-  "tsRefresh": "更新",
-  "tsDay": "日",
-  "tsWeek": "週",
-  "tsMonth": "月",
-  "tsRuleHits": "ルール命中",
-  "tsTrafficRank": "トラフィック順位",
-  "tsDomain": "ドメイン",
-  "tsNode": "ノード",
-  "tsConfig": "設定",
-  "tsWeekFrom": "{m}/{d} 以降",
-  "tsPrev": "前へ",
-  "tsNext": "次へ",
-  "tsMinutes": "{n} 分",
-  "tsHoursMinutes": "{h} 時間 {m} 分",
-  "tsDaysHours": "{d} 日 {h} 時間",
-  "tsOverview": "トラフィック概要",
-  "tsConnections": "{n} 接続",
-  "tsTotal": "合計",
-  "tsProxy": "プロキシ",
-  "tsDirect": "ダイレクト",
-  "tsUptime": "稼働時間",
-  "tsTrend": "トラフィック推移",
-  "tsPeak": "ピーク {h}:00",
-  "tsNoData": "データなし",
-  "tsHits": "{n} 回ヒット",
-  "tsShareOfHits": "ヒットの {p} · {n} 回",
-  "tsRulesWithHits": "{n} 件のルールがヒット",
-  "tsPercent": "全体の {p}",
-  "tsHitUnit": "回ヒット",
-  "chainEntryRole": "入口",
-  "chainMiddleRole": "中継",
-  "chainExitRole": "出口",
-  "chainYou": "あなた",
-  "chainPhone": "スマホ",
-  "chainInternet": "インターネット",
-  "chainPick": "選択",
-  "chainThen": "次に",
-  "chainEntryHint2": "入口はデバイスが接続するサーバーです。",
-  "chainMiddleHint": "中継は入口と出口の間で接続を転送します。",
-  "chainExitHint2": "出口はウェブサイトにアクセスし、サイトにはこのサーバーだけが見えます。",
-  "chainSearchHint": "都市、国または名前",
-  "chainGroupsSection": "グループ — サーバーを自動選択",
-  "chainAddMiddle": "中継サーバーを追加",
-  "chainRemoveMiddle": "中継サーバーを削除",
-  "chainName": "名前",
-  "chainShowInServers": "サーバーに表示",
-  "chainShowDesc": "チェーンは選択画面で通常サーバーの隣に表示されます。現在の選択は変わりません。",
-  "chainGroupManual": "{n} 個から手動",
-  "chainGroupFastest": "{n} 個中最速",
-  "chainGroupFallback": "{n} 個中最初の利用可能",
-  "chainGroupBalance": "{n} 個でラウンドロビン",
-  "chainSave": "保存",
-  "chainDiscard": "チェーンを破棄しますか？",
-  "chainNearYou": "あなたの近く",
-  "chainOtherCountries": "その他の国",
-  "chainServers": "サーバー",
-  "trafficDepleted": "使い切済み",
-  "trafficGathering": "予測するデータが不足",
-  "trafficPerDay": "約 {v}/日",
-  "trafficRunOut": "、約 {n} 日で使い切"
+  "speedTestDownloading": "ダウンロード速度を測定中",
+  "speedTestUploading": "アップロード速度を測定中",
+  "speedTestPinging": "レイテンシを測定中",
+  "rcxTitle": "自動ルーティング",
+  "rcxMakeSmart": "スクリプトで選択する",
+  "rcxMakeSmartHint": "選んだ動作によって、このグループのサーバー選択方法が決まります。",
+  "rcxTurnOff": "スクリプトによる選択を解除",
+  "rcxChangeServer": "サーバーを変更",
+  "rcxBackToAuto": "自動に戻す",
+  "rcxControl": "制御",
+  "rcxModeAuto": "自動",
+  "rcxModeAutoHint": "サーバーの順序に沿って動作中の最適なサーバーを選び、障害時に切り替えます。",
+  "rcxModeManual": "手動",
+  "rcxModeManualHint": "プロキシ画面で選んだサーバーを使い続けます。",
+  "rcxPinned": "固定: {node}",
+  "rcxPinnedLabel": "固定",
+  "rcxProfile": "動作",
+  "rcxSourceBuiltin": "組み込み",
+  "rcxSourceProvider": "プロバイダー提供",
+  "rcxSourceUser": "マイ",
+  "rcxLevelSimple": "シンプル",
+  "rcxLevelAdvanced": "詳細",
+  "rcxServers": "サーバー",
+  "rcxServersPattern": "名前のパターン",
+  "rcxServersMatch": "{total} 件中 {count} 件が一致",
+  "rcxPatternInvalid": "パターンが正しい正規表現ではありません",
+  "rcxSwitching": "切り替え",
+  "rcxFeelCalm": "まれに",
+  "rcxFeelEager": "頻繁に",
+  "rcxBalanced": "バランス",
+  "rcxChecks": "チェック頻度",
+  "rcxEnergyEco": "省電力",
+  "rcxEnergyPrecise": "精密",
+  "rcxEnergyToday": "本日のチェック: {requests} · {cap} 中 {used}",
+  "rcxWhy": "このサーバーの理由",
+  "rcxHistory": "履歴",
+  "rcxHealthAlive": "動作中",
+  "rcxHealthStale": "以前は動作",
+  "rcxHealthUnknown": "未確認",
+  "rcxHealthDead": "停止中",
+  "rcxReasonManual": "手動で制御中",
+  "rcxReasonHoldPinned": "固定したサーバーを維持",
+  "rcxReasonSwitchPinned": "固定したサーバー {node} に切り替え",
+  "rcxReasonStranded": "動作するサーバーがないため現在のものを維持",
+  "rcxReasonSwitchStranded": "動作するサーバーがないため {node} にフォールバック",
+  "rcxReasonInitial": "利用可能な最適なサーバーを選択",
+  "rcxReasonChangeServer": "サーバーを変更し、{from} は 15 分間除外",
+  "rcxReasonFailover": "{from} が停止したため最適な予備に切り替え",
+  "rcxReasonOutOfPool": "{from} は候補から外れました",
+  "rcxReasonNoAlternative": "切り替え先の動作するサーバーがありません",
+  "rcxReasonBest": "最適なサーバーです",
+  "rcxReasonChecking": "より良い候補を確認中",
+  "rcxReasonWorking": "動作中。障害が起きるまで維持",
+  "rcxReasonDwell": "最近切り替えたため次の変更まで待機",
+  "rcxReasonFlapLimit": "切り替え上限に達しました (1 時間に {limit} 回)",
+  "rcxReasonConfirming": "より高速なサーバーの再計測が必要です",
+  "rcxReasonBetterTier": "「{tier}」のサーバーへ移動",
+  "rcxReasonFaster": "{from} から切り替え: {gain} ms 高速",
+  "rcxReasonSelectFailed": "サーバーを選択できませんでした",
+  "rcxUntilCheck": "チェックで確認でき次第 {node} に切り替えます",
+  "rcxUntilDwell": "{minutes} 分後に {node} へ切り替える可能性があります",
+  "rcxUntilConfirm": "{gain} ms 速い状態が続けば {node} に切り替えます",
+  "rcxExcludedNoMatch": "候補外",
+  "rcxExcludedByProfile": "動作で除外",
+  "rcxExcludedUnroutable": "サーバーではありません",
+  "rcxExcludedCooldown": "「サーバーを変更」により除外中",
+  "rcxExcludedNoTier": "どの優先条件にも一致しません",
+  "rcxProblemProfileMissing": "動作 {profile} が見つからないため既定を使用",
+  "rcxProblemProfileInvalid": "動作のエラー: {error}",
+  "rcxProblemGroupUnavailable": "現在の設定ではこのグループはセレクターではありません",
+  "rcxProblemGroupEmpty": "このグループにはサーバーがありません",
+  "rcxReasonNetworkSuspect": "ネットワークがダウンしているようです。サーバーは原因と見なしません",
+  "rcxReasonNetworkChanged": "ネットワークが変わりました",
+  "rcxJournalFailure": "{node} が停止しました",
+  "rcxProblemStoreFailed": "ルーティング状態を保存できませんでした: {error}",
+  "rcxChangeTo": "選択対象",
+  "rcxAnyServer": "すべて",
+  "rcxNetwork": "ネットワーク: {kind}",
+  "rcxKindOpen": "制限なしのインターネット",
+  "rcxKindWhitelist": "ホワイトリストのみ",
+  "rcxKindPortal": "ログインページ",
+  "rcxKindChecking": "確認中",
+  "rcxReasonPaused": "ネットワークが「{kind}」の間は一時停止中: チェックも切り替えも行いません",
+  "rcxExcludedPending": "未チェック",
+  "rcxPendingTier": "チェック後に「{tier}」に入る可能性があります",
+  "rcxCheckOpen": "ブロックされたサイトが開く",
+  "rcxExit": "出口 {country}",
+  "rcxReasonSplitOn": "直接接続のサイトがこのグループ経由になりました",
+  "rcxReasonSplitOff": "直接接続のサイトが再び直接接続になりました",
+  "rcxDirectSplit": "直接接続のサイトをこのグループ経由に",
+  "rcxDirectSplitHint": "ルールで直接接続にしているサイトが開かなくなったら、このグループを経由させます。ローカルアドレスは常に直接接続のままです。",
+  "rcxDirectSplitActive": "現在オン",
+  "rcxDirectSplitStandby": "待機中: 直接接続のサイトはまだ開けます",
+  "rcxAddTag": "タグを追加",
+  "rcxAdvanced": "詳細",
+  "rcxBasedOn": "ベース",
+  "rcxBehaviour": "動作",
+  "rcxBringChanges": "変更を取り込む",
+  "rcxBringChangesHint": "自分の編集内容はそのまま残ります",
+  "rcxCheckDifferent": "{now} ではなく {pick} を選びます",
+  "rcxCheckNone": "サーバーが見つかりません",
+  "rcxCheckOn": "{group} で選ばれるサーバー",
+  "rcxCheckSame": "{pick} を維持します",
+  "rcxCondAdd": "条件を追加",
+  "rcxCondAll": "すべての条件",
+  "rcxCondAlways": "常に",
+  "rcxCondAny": "いずれかの条件",
+  "rcxCondAnyServer": "すべてのサーバー",
+  "rcxCondField": "項目",
+  "rcxCondIgnoreCase": "大文字小文字を区別しない",
+  "rcxCondMatch": "一致条件",
+  "rcxCondNoNames": "未定義",
+  "rcxCondNotPrefix": "非",
+  "rcxCondOp": "演算子",
+  "rcxCondPattern": "パターン",
+  "rcxCondText": "テキストで表示",
+  "rcxCondTooComplex": "この条件にはグループが入れ子になっているため、テキストで編集します。",
+  "rcxCondValue": "値",
+  "rcxCondValues": "値（カンマ区切り）",
+  "rcxConsentAllow": "許可",
+  "rcxConsentAsk": "「{profile}」がこれらのサイトを確認しようとしています",
+  "rcxConsentHint": "許可するまで、グループは「シンプル」の動作を使います。サイトへの接続は、お使いのサーバー経由か、ネットワークのテスト時のみです。",
+  "rcxConsentTitle": "許可が必要",
+  "rcxContacts": "接続したサイト",
+  "rcxContactsHint": "サードパーティのサイトは、プロバイダーにも組み込みの動作にも属していません。",
+  "rcxDeleteProfile": "「{profile}」を削除しますか？",
+  "rcxDuplicate": "コピーを編集",
+  "rcxExport": "エクスポート",
+  "rcxFieldAlive": "動作中",
+  "rcxFieldCurrent": "使用中",
+  "rcxFieldDead": "停止中",
+  "rcxFieldDiag": "ネットワーク診断",
+  "rcxFieldEntry": "入口国",
+  "rcxFieldExit": "出口国",
+  "rcxFieldFails": "チェックに失敗",
+  "rcxFieldKind": "ネットワークの種類",
+  "rcxFieldLatency": "遅延 (ms)",
+  "rcxFieldMeasured": "測定済み",
+  "rcxFieldMetered": "従量制ネットワーク",
+  "rcxFieldName": "名前",
+  "rcxFieldPasses": "チェックに成功",
+  "rcxFieldPortal": "ログインページ",
+  "rcxFieldProvider": "プロバイダー",
+  "rcxFieldServer": "サーバーアドレス",
+  "rcxFieldTag": "タグ",
+  "rcxFieldTransport": "接続の種類",
+  "rcxFieldType": "プロトコル",
+  "rcxFieldUdp": "UDP対応",
+  "rcxHistoryVersions": "以前のバージョン",
+  "rcxImportAdd": "マイライブラリに追加",
+  "rcxImportNeedsCore": "このファイルを確認するには、アプリのコアを起動してください。",
+  "rcxImportTitle": "自動ルーティングをインポート",
+  "rcxImported": "「{profile}」を追加しました",
+  "rcxLastResort": "最終手段",
+  "rcxLevel": "複雑さ",
+  "rcxLine": "{line} 行目: {text}",
+  "rcxLintCheckUnused": "チェック {check} はどこでも使われていないため、実行されません",
+  "rcxLintConsent": "サードパーティのサイトに接続します: {hosts}",
+  "rcxLintPoolEmpty": "{group} のサーバーはフィルターを通過しません",
+  "rcxLintTagUnused": "タグ {tag} は使われていません",
+  "rcxLintTierEmpty": "現在、{group} のサーバーは「{tier}」にありません",
+  "rcxLintTierUnreachable": "「{tier}」は「{after}」と同じ条件のため、何も振り分けられません",
+  "rcxMergeFailed": "変更を取り込めませんでした",
+  "rcxMerged": "変更を取り込みました",
+  "rcxMergedConflicts": "取り込みました。次の項目は自分でも変更していたため、自分の内容を残しました: {keys}",
+  "rcxNeedsConsent": "許可が必要です",
+  "rcxNewProfile": "新しい動作",
+  "rcxOpFail": "失敗する",
+  "rcxOpIn": "のいずれか",
+  "rcxOpIs": "が次と等しい",
+  "rcxOpIsNot": "が次と異なる",
+  "rcxOpMatches": "に一致する",
+  "rcxOpOk": "成功する",
+  "rcxPoolExclude": "サーバーを除外",
+  "rcxPoolInclude": "サーバーのみ",
+  "rcxProfileName": "名前",
+  "rcxSourceChanged": "元の内容が変更されました",
+  "rcxSourceChanges": "変更内容",
+  "rcxStranded": "使えるサーバーがないとき",
+  "rcxStrandedDirect": "直接接続",
+  "rcxStrandedHold": "現在のまま",
+  "rcxTagName": "タグ名",
+  "rcxTagNameInvalid": "ラテン文字、数字、-、_ のみ、24文字まで",
+  "rcxTags": "タグ",
+  "rcxTagsHint": "タグは一度サーバーの集合に名前を付け、優先条件で tag(name) として使えるようにします。",
+  "rcxThirdParty": "サードパーティ",
+  "rcxTierLabel": "ラベル",
+  "rcxUseCheck": "チェック {name}",
+  "rcxUseDiagnostic": "ネットワーク診断 {name}",
+  "rcxUseEcho": "出口国チェック",
+  "rcxWarnings": "警告",
+  "rcxYaml": "YAML",
+  "rcxAddGroup": "グループを追加",
+  "rcxAddKind": "ネットワーク種別を追加",
+  "rcxAllGroups": "すべてのグループ",
+  "rcxMainGroup": "その他の通信",
+  "rcxCheckGroup": "グループ",
+  "rcxCondClause": "条件 {number}",
+  "rcxExcept": "{condition} を除く",
+  "rcxFixedHint": "グループ全体がこのメンバー経由になり、サーバー探索は行いません。ロードバランサーや入れ子のグループを選ぶと、すべてを任せられます。",
+  "rcxFixedOn": "{member} 経由",
+  "rcxGroupProfiles": "動作",
+  "rcxGroupProfilesHint": "グループがサーバーを選ぶ方法です。自分のものはタップで編集、それ以外はコピーを編集します。",
+  "rcxJournalMode": "モード {from} → {to}",
+  "rcxKindGroupsHint": "このネットワークでは、シナリオ内の同名グループを置き換えます。それ以外は他のネットワークと同じ動作です。",
+  "rcxKindName": "名前",
+  "rcxKindNameInvalid": "半角小文字のアルファベット、数字、ハイフン、24文字まで",
+  "rcxKindWhen": "判定条件",
+  "rcxKindWhenHint": "種別は上から順に判定され、最初に一致したものがネットワークに適用されます。",
+  "rcxLintGroupMissing": "この設定にはグループ {group} がありません",
+  "rcxManageHint": "ツール → 詳細設定 → スクリプト制御グループで動作を管理できます。",
+  "rcxModeBackToAuto": "モードをシナリオに戻す",
+  "rcxModeByScenario": "このネットワークのモードはシナリオが決めます",
+  "rcxModeIs": "モード: {mode}",
+  "rcxModeKeep": "変更しない",
+  "rcxModeManualNow": "モードを手動で選択しました。「シナリオ連動」 を選ぶまでシナリオは待機します",
+  "rcxModeYours": "このネットワークではモードを手動で管理します",
+  "rcxNewScenario": "新しいシナリオ",
+  "rcxOnThisNetwork": "このネットワークでは",
+  "rcxOwnProfile": "グループでの設定どおり",
+  "rcxProgramMember": "メンバー",
+  "rcxReasonFixed": "シナリオが {node} を維持しています",
+  "rcxReasonFixedMissing": "{node} はこのグループにありません",
+  "rcxReasonIdle": "未使用: モード {mode}",
+  "rcxReasonSwitchFixed": "シナリオが {node} に切り替えます",
+  "rcxScenario": "シナリオ",
+  "rcxScenarioDrives": "現在、このグループはシナリオ「{scenario}」が制御しています。",
+  "rcxScenarioGroups": "グループ",
+  "rcxScenarioKindsHint": "直接診断でネットワークを判別し、それぞれのモードとグループを変更します。",
+  "rcxScenarioMode": "接続モード",
+  "rcxScenarios": "シナリオ",
+  "rcxScenariosHint": "シナリオをタップして編集できます。組み込みやプロバイダーのシナリオはコピーとして開きます。",
+  "rcxSmartGroups": "スクリプト制御グループ",
+  "rcxHubRoutes": "ルート",
+  "rcxHubLibrary": "シナリオライブラリ",
+  "rcxHubAuto": "シナリオを使う",
+  "rcxHubOffHint": "シナリオは、このサブスクリプションのルート、プロキシグループ、トンネルモードを制御できます。",
+  "rcxHubChange": "シナリオを選ぶ",
+  "rcxHubNoProfile": "サブスクリプションがありません",
+  "rcxHubNoProfileHint": "先にサブスクリプションを追加してください。自動ルーティングはそのグループを使います。",
+  "rcxHubNeedsCore": "自動ルーティングを表示するには接続を開始してください",
+  "rcxHubGroupsEmpty": "このサブスクリプションには動作中のスクリプト制御グループがありません。",
+  "rcxHubCopyTitle": "コピーを編集しますか？",
+  "rcxHubCopyMessage": "「{title}」は変更できません。編集はコピーに保存され、そのコピーが実行中のシナリオになります。",
+  "rcxHubCopyConfirm": "コピーを編集",
+  "rcxHubOtherGroups": "このシナリオのグループ",
+  "rcxHubOtherGroupsHint": "このシナリオが個別のサブスクリプショングループに対して行うことです。",
+  "rcxHubRoutesHint": "通信は上から順に、最初に一致したルートを通ります。残りは「その他の通信」を通ります。",
+  "rcxHubRoutesRuleOnly": "ルートはルールモードで適用されます。現在の接続は{mode}モードです。",
+  "rcxHubEverythingElse": "その他の通信",
+  "rcxHubNetworks": "ネットワークの種類",
+  "rcxHubDescriptionHint": "このシナリオの内容",
+  "rcxHubBundle": "このファイルの内容",
+  "rcxRouteNew": "新しいルート",
+  "rcxRouteAdd": "ルートを追加",
+  "rcxRouteName": "名前",
+  "rcxRouteNameLong": "名前が長すぎます",
+  "rcxRouteNameReserved": "この名前は予約されています",
+  "rcxRouteSendFixed": "1台のサーバー",
+  "rcxRouteSendAutoHint": "動作するサーバーの中から最適なものを自動で選びます。",
+  "rcxRouteSendDirectHint": "この通信はプロキシを経由しません。",
+  "rcxRouteSendFixedHint": "この通信は常に選んだサーバーまたはグループを通ります。",
+  "rcxRouteTarget": "サーバー",
+  "rcxRouteChoose": "選択",
+  "rcxOwnProfileHint": "グループは自身の設定の動作を使います。",
+  "rcxMatchServices": "サービス",
+  "rcxMatchCustom": "カスタム",
+  "rcxMatchHint": "このルートが追加で扱うドメイン、IP範囲、アプリ、ルールセットです。",
+  "rcxMatchAdd": "項目を追加",
+  "rcxMatchNone": "通信が選ばれていません",
+  "rcxMatchMore": "{name} ほか {count} 件",
+  "rcxMatchType": "種類",
+  "rcxMatchValue": "値",
+  "rcxMatchTypeHint": "ドメインサフィックスはすべてのサブドメインも含みます。",
+  "rcxMatchNoResolve": "ドメインを解決しない",
+  "rcxMatchInvalid": "無効な値です",
+  "rcxMatchDomain": "ドメイン",
+  "rcxMatchSuffix": "ドメインとサブドメイン",
+  "rcxMatchKeyword": "ドメインキーワード",
+  "rcxMatchGeosite": "サイトカテゴリ",
+  "rcxMatchGeoip": "IP カテゴリ",
+  "rcxMatchCidr": "IP 範囲",
+  "rcxMatchProcess": "アプリ",
+  "rcxMatchRuleSet": "ルールセット",
+  "rcxCountryPickMany": "国を選択",
+  "rcxCountryPickOne": "国を1つ選択",
+  "rcxCountryServers": "{count, plural, other{{count} 台のサーバー}}",
+  "rcxCountryVerified": "確認済み",
+  "rcxCountryOnServers": "サーバーにある国",
+  "rcxCountryAll": "すべての国",
+  "rcxLadderTitle": "サーバーの順序",
+  "rcxLadderAdd": "ステップを追加",
+  "rcxLadderStep": "ステップ {number}",
+  "rcxLadderFallThrough": "どれも使えなければ",
+  "rcxLadderInherited": "動作の設定です。ステップを編集すると独自の順序になります",
+  "rcxLadderEmptyHint": "ステップを追加すると特定のサーバーを優先できます",
+  "rcxLadderNameHas": "名前に {text}",
+  "rcxLadderNot": "{what} 以外",
+  "rcxLadderProvider": "{provider} から",
+  "rcxLadderTag": "タグ {tag}",
+  "rcxLadderUdp": "UDP",
+  "rcxLadderLatency": "{ms} ms 未満",
+  "rcxLadderAnyWorking": "使える任意のサーバー",
+  "rcxLadderServersIn": "このステップのサーバー",
+  "rcxLadderNameContains": "名前に含む",
+  "rcxLadderCountry": "国",
+  "rcxLadderExceptCountries": "これらの国以外",
+  "rcxLadderAdvanced": "詳細な条件…",
+  "rcxLadderOther": "その他の条件",
+  "rcxLadderLatencyUnder": "遅延の上限 (ms)",
+  "rcxLadderFits": "{count, plural, other{現在 {count} 台が該当}}",
+  "rcxLadderLastResortHint": "最終手段のステップのサーバーは、下にあるステップも含め、他のどのステップにも使えるサーバーがないときだけ使われます。",
+  "rcxCondCountry": "国",
+  "rcxCondLess": "未満",
+  "rcxCondAtMost": "以下",
+  "rcxCondMore": "超",
+  "rcxCondAtLeast": "以上",
+  "rcxModePinnedHint": "{node} を使い続けます。障害時のみ離れ、復旧すると戻ります。",
+  "rcxWouldDo": "既定の動作",
+  "rcxWouldServers": "{count, plural, other{このグループの {count} 台のサーバーから選びます。}}",
+  "rcxRouteGroup": "ルートで作成",
+  "rcxRouteGroupHint": "このグループはシナリオ「{scenario}」のルートが作成しました。編集や削除はそちらで行います。",
+  "rcxRouteEdit": "ルートを編集",
+  "rcxReasonRouteNameTaken": "ルート「{route}」はスキップされました。同じ名前のグループが既にあります。",
+  "rcxReasonRouteToMissing": "ルート「{route}」の送信先「{to}」はプロファイルにありません。",
+  "rcxReasonRouteInvalid": "ルート「{route}」を適用できません: {error}",
+  "rcxProfileDescriptionHint": "この動作の内容",
+  "rcxMatchAllServices": "すべてのサービス",
+  "rcxRouteWhere": "送信先",
+  "rcxSendBest": "最適なサーバー",
+  "rcxHowToChoose": "サーバーの選び方",
+  "rcxOnly": "{condition} のみ",
+  "rcxSendDirect": "直接接続",
+  "rcxStudioPreview": "今選ばれるサーバー",
+  "rcxStudioPreviewHint": "グループを選ぶと、この動作がそのグループで選ぶサーバーが表示されます。",
+  "rcxStudioRanking": "すべての候補",
+  "rcxStudioCharacter": "特性",
+  "rcxStudioCharacterHint": "切り替えは、より速いサーバーへどれだけ素早く移るかです。チェックは精度とバッテリー消費のトレードオフです。",
+  "rcxStudioServersHint": "これらの条件に合わないサーバーは選ばれることがありません。",
+  "rcxModeScenario": "シナリオ連動",
+  "rcxFromScenario": "シナリオ「{scenario}」から",
+  "rcxFromYours": "このグループ用の設定",
+  "rcxDetails": "詳細",
+  "rcxActiveScriptedGroups": "動作中のスクリプト制御グループ",
+  "rcxStrategyAuto": "サーバーを自動選択",
+  "rcxStrategyEdit": "選択戦略を編集",
+  "rcxStrategyCoreUnavailable": "戦略を利用できません。グループは標準の動作を使用できます。",
+  "rcxStrategyProfileChanged": "使用中のプロファイルが変わりました。保存するにはエディターを開き直してください。",
+  "rcxStrategyLines": "既存のサーバー、グループ、プロバイダーの名前を対応する欄に1行ずつ入力してください。",
+  "rcxStrategyAllServers": "プロファイルのすべてのサーバーを使う",
+  "rcxStrategyLowestLatency": "計測した遅延が小さいサーバーを優先",
+  "rcxStrategyPreferNames": "この文字を含む名前を優先",
+  "rcxStrategyHold": "動作中のサーバーを維持",
+  "rcxStrategyYaml": "YAML を編集",
+  "rcxStrategyNotApplied": "戦略を適用できませんでした",
+  "@rcxAddTag": {
+    "description": "Row: add a named server filter (tag) to a routing profile"
+  },
+  "@rcxAdvanced": {
+    "description": "Section title for advanced profile parts edited as YAML"
+  },
+  "@rcxBasedOn": {
+    "description": "Row: the profile this one extends"
+  },
+  "@rcxBehaviour": {
+    "description": "Section title: switching, checks, no-candidate behaviour"
+  },
+  "@rcxBringChanges": {
+    "description": "Action: merge changes of the source profile into the user's copy"
+  },
+  "@rcxBringChangesHint": {
+    "description": "Subtitle of bring changes over"
+  },
+  "@rcxCheckDifferent": {
+    "description": "Simulation result",
+    "placeholders": {
+      "pick": {
+        "type": "String"
+      },
+      "now": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxCheckNone": {
+    "description": "Simulation result"
+  },
+  "@rcxCheckOn": {
+    "description": "Section title: simulation of the profile on a proxy group",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxCheckSame": {
+    "description": "Simulation result",
+    "placeholders": {
+      "pick": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxCondAdd": {
+    "description": "Row/title"
+  },
+  "@rcxCondAll": {
+    "description": "Join choice: all clauses must hold"
+  },
+  "@rcxCondAlways": {
+    "description": "Empty network condition means always"
+  },
+  "@rcxCondAny": {
+    "description": "Join choice: one clause is enough"
+  },
+  "@rcxCondAnyServer": {
+    "description": "Empty server condition means any server"
+  },
+  "@rcxCondClause": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxCondField": {
+    "description": "Row: which attribute a clause tests"
+  },
+  "@rcxCondIgnoreCase": {
+    "description": "Switch for pattern matching"
+  },
+  "@rcxCondMatch": {
+    "description": "Section title: how clauses combine"
+  },
+  "@rcxCondNoNames": {
+    "description": "Value when the profile declares no tags/checks/diagnostics"
+  },
+  "@rcxCondNotPrefix": {
+    "description": "Lowercase word placed before a negated clause, e.g. 'not Exit country is RU'"
+  },
+  "@rcxCondOp": {
+    "description": "Row: comparison operator"
+  },
+  "@rcxCondPattern": {
+    "description": "Row: regular expression"
+  },
+  "@rcxCondText": {
+    "description": "Section title: the condition in the profile language"
+  },
+  "@rcxCondTooComplex": {
+    "description": "Shown instead of the clause list"
+  },
+  "@rcxCondValue": {
+    "description": "Row"
+  },
+  "@rcxCondValues": {
+    "description": "Row"
+  },
+  "@rcxConsentAllow": {
+    "description": "Button: allow the profile to contact the listed hosts"
+  },
+  "@rcxConsentAsk": {
+    "description": "Consent prompt",
+    "placeholders": {
+      "profile": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxConsentHint": {
+    "description": "Footer of consent section"
+  },
+  "@rcxConsentTitle": {
+    "description": "Section title"
+  },
+  "@rcxContacts": {
+    "description": "Section title: hosts the profile makes the app contact"
+  },
+  "@rcxContactsHint": {
+    "description": "Footer"
+  },
+  "@rcxCountryServers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxDeleteProfile": {
+    "description": "Confirmation",
+    "placeholders": {
+      "profile": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxDuplicate": {
+    "description": "Menu item"
+  },
+  "@rcxEnergyToday": {
+    "placeholders": {
+      "requests": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      },
+      "cap": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxExcept": {
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxExit": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxExport": {
+    "description": "Menu item / sheet title"
+  },
+  "@rcxFieldAlive": {
+    "description": "Condition field: server is alive"
+  },
+  "@rcxFieldCurrent": {
+    "description": "Condition field: the server in use now"
+  },
+  "@rcxFieldDead": {
+    "description": "Condition field"
+  },
+  "@rcxFieldDiag": {
+    "description": "Condition field"
+  },
+  "@rcxFieldEntry": {
+    "description": "Condition field: country of the server address"
+  },
+  "@rcxFieldExit": {
+    "description": "Condition field: verified country traffic exits in"
+  },
+  "@rcxFieldFails": {
+    "description": "Condition field"
+  },
+  "@rcxFieldKind": {
+    "description": "Condition field"
+  },
+  "@rcxFieldLatency": {
+    "description": "Condition field"
+  },
+  "@rcxFieldMeasured": {
+    "description": "Condition field: has a latency sample"
+  },
+  "@rcxFieldMetered": {
+    "description": "Condition field"
+  },
+  "@rcxFieldName": {
+    "description": "Condition field: server name"
+  },
+  "@rcxFieldPasses": {
+    "description": "Condition field"
+  },
+  "@rcxFieldPortal": {
+    "description": "Condition field: captive portal network"
+  },
+  "@rcxFieldProvider": {
+    "description": "Condition field: proxy provider name"
+  },
+  "@rcxFieldServer": {
+    "description": "Condition field"
+  },
+  "@rcxFieldTag": {
+    "description": "Condition field"
+  },
+  "@rcxFieldTransport": {
+    "description": "Condition field: wifi, cellular, ethernet"
+  },
+  "@rcxFieldType": {
+    "description": "Condition field: proxy type"
+  },
+  "@rcxFieldUdp": {
+    "description": "Condition field"
+  },
+  "@rcxFixedOn": {
+    "placeholders": {
+      "member": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxFromScenario": {
+    "placeholders": {
+      "scenario": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxHistoryVersions": {
+    "description": "Menu item / sheet title"
+  },
+  "@rcxHowToChoose": {
+    "description": "Row and page title: behaviour, server order and server filters used to pick the best server"
+  },
+  "@rcxHubCopyMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxHubRoutesRuleOnly": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxImportAdd": {
+    "description": "Confirm button"
+  },
+  "@rcxImportNeedsCore": {
+    "description": "Error"
+  },
+  "@rcxImportTitle": {
+    "description": "Page title"
+  },
+  "@rcxImported": {
+    "description": "Toast",
+    "placeholders": {
+      "profile": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxJournalFailure": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxJournalMode": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLadderFits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxLadderLatency": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxLadderNameHas": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLadderNot": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLadderProvider": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLadderStep": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxLadderTag": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLastResort": {
+    "description": "Switch/label: tier used only when better tiers are empty"
+  },
+  "@rcxLevel": {
+    "description": "Row: simple or advanced"
+  },
+  "@rcxLine": {
+    "description": "Error with line number",
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintCheckUnused": {
+    "description": "Lint warning",
+    "placeholders": {
+      "check": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintConsent": {
+    "description": "Lint warning",
+    "placeholders": {
+      "hosts": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintGroupMissing": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintPoolEmpty": {
+    "description": "Lint warning",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintTagUnused": {
+    "description": "Lint warning",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintTierEmpty": {
+    "description": "Lint warning",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxLintTierUnreachable": {
+    "description": "Lint warning",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxMatchAllServices": {
+    "description": "Route editor chip: expands the service list to show every service"
+  },
+  "@rcxMatchMore": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxMergeFailed": {
+    "description": "Toast"
+  },
+  "@rcxMerged": {
+    "description": "Toast"
+  },
+  "@rcxMergedConflicts": {
+    "description": "Toast",
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxModeIs": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxModePinnedHint": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxModeScenario": {
+    "description": "Label of the tunnel-mode choice where the running scenario sets the mode (dashboard mode card and mode bar). Short, 1–2 words."
+  },
+  "@rcxNeedsConsent": {
+    "description": "Subtitle/reason"
+  },
+  "@rcxNetwork": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxNewProfile": {
+    "description": "Row / default title"
+  },
+  "@rcxOnly": {
+    "description": "Summary fragment: only servers matching the condition are used. Lowercase, joined with ' · '",
+    "placeholders": {
+      "condition": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxOpFail": {
+    "description": "Operator: diagnostic fails"
+  },
+  "@rcxOpIn": {
+    "description": "Operator"
+  },
+  "@rcxOpIs": {
+    "description": "Operator"
+  },
+  "@rcxOpIsNot": {
+    "description": "Operator"
+  },
+  "@rcxOpMatches": {
+    "description": "Operator: regex"
+  },
+  "@rcxOpOk": {
+    "description": "Operator: diagnostic succeeds"
+  },
+  "@rcxPendingTier": {
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxPinned": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxPoolExclude": {
+    "description": "Row: servers excluded from the pool"
+  },
+  "@rcxPoolInclude": {
+    "description": "Row: servers included in the pool"
+  },
+  "@rcxProblemProfileInvalid": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxProblemProfileMissing": {
+    "placeholders": {
+      "profile": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxProblemStoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxProfileName": {
+    "description": "Row: profile title"
+  },
+  "@rcxReasonBetterTier": {
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonChangeServer": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonFailover": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonFaster": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxReasonFixed": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonFixedMissing": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonFlapLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxReasonIdle": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonOutOfPool": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonPaused": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonRouteInvalid": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonRouteNameTaken": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonRouteToMissing": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonSwitchFixed": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonSwitchPinned": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxReasonSwitchStranded": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxRouteGroupHint": {
+    "placeholders": {
+      "scenario": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxRouteWhere": {
+    "description": "Route editor section title above the three destination options (best server, one server, direct)"
+  },
+  "@rcxScenarioDrives": {
+    "placeholders": {
+      "scenario": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxSendBest": {
+    "description": "Destination option: the app picks the best working server automatically"
+  },
+  "@rcxSendDirect": {
+    "description": "Destination option in the route editor: this traffic bypasses the proxy. An adverb in Russian, next to «Лучший сервер» and «Один сервер»"
+  },
+  "@rcxServersMatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxSourceChanged": {
+    "description": "Section title"
+  },
+  "@rcxSourceChanges": {
+    "description": "Row/page title: diff of the source"
+  },
+  "@rcxStranded": {
+    "description": "Row"
+  },
+  "@rcxStrandedDirect": {
+    "description": "Choice"
+  },
+  "@rcxStrandedHold": {
+    "description": "Choice"
+  },
+  "@rcxStudioCharacter": {
+    "description": "Section title: switching, checks and no-server behaviour"
+  },
+  "@rcxStudioCharacterHint": {
+    "description": "Footer under the character section"
+  },
+  "@rcxStudioPreview": {
+    "description": "Section title: live simulation of which server the behaviour picks"
+  },
+  "@rcxStudioPreviewHint": {
+    "description": "Footer when no group is chosen for the simulation"
+  },
+  "@rcxStudioRanking": {
+    "description": "Page title: every server of the simulation in rank order"
+  },
+  "@rcxStudioServersHint": {
+    "description": "Footer under the server filter rows"
+  },
+  "@rcxTagName": {
+    "description": "Input label"
+  },
+  "@rcxTagNameInvalid": {
+    "description": "Validation"
+  },
+  "@rcxTags": {
+    "description": "Section title"
+  },
+  "@rcxTagsHint": {
+    "description": "Footer"
+  },
+  "@rcxThirdParty": {
+    "description": "Lowercase marker on a host"
+  },
+  "@rcxTierLabel": {
+    "description": "Row"
+  },
+  "@rcxUntilCheck": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxUntilConfirm": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      },
+      "gain": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxUntilDwell": {
+    "placeholders": {
+      "node": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxUseCheck": {
+    "description": "Lowercase: endpoint used by a check",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxUseDiagnostic": {
+    "description": "Lowercase",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@rcxUseEcho": {
+    "description": "Lowercase"
+  },
+  "@rcxWarnings": {
+    "description": "Section title"
+  },
+  "@rcxWouldServers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rcxYaml": {
+    "description": "Action / page title"
+  }
 }

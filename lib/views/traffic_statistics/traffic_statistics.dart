@@ -2,28 +2,22 @@ import 'dart:math' as math;
 
 import 'package:skyward/common/common.dart';
 import 'package:skyward/enum/enum.dart';
+import 'package:skyward/l10n/l10n.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
+import 'package:skyward/providers/traffic_statistics.dart';
 import 'package:skyward/ui/icons/icons.dart';
-import 'package:skyward/views/dashboard/style.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A panel that still reads against the page in dark and pure-black themes.
-/// The page uses `surface`; one step up keeps the grouping visible when the
-/// lowest surface is forced to black.
-ShapeDecoration panelDecoration(BuildContext context, double radius) {
-  final cs = context.colorScheme;
-  final card = cs.brightness == Brightness.light
-      ? const Color(0xFFFFFFFF)
-      : SurfaceLevel.block.colorOf(cs);
-  return ShapeDecoration(
-    color: card,
-    shape: AppShape.all(radius),
-    shadows: DashboardShadows.e1(context),
-  );
-}
+/// The panel surface shared by the traffic views; kept as a helper so the
+/// surface tests can assert the same decoration the cards use.
+ShapeDecoration panelDecoration(BuildContext context, double radius) =>
+    ShapeDecoration(
+      color: SurfaceLevel.card.colorOf(context.colorScheme),
+      shape: AppShape.all(radius),
+    );
 
 /// A full-page traffic statistics view: hourly trend, proxy/direct split,
 /// rule-hit distribution, a traffic ranking and running time. Opened from
@@ -64,7 +58,7 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
       iconActions: [
         IconButtonData(
           glyph: AppGlyphs.refresh,
-          tooltip: context.appLocalizations.tsRefresh,
+          tooltip: context.appLocalizations.refresh,
           onPressed: _refresh,
         ),
       ],
@@ -74,12 +68,15 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
           children: [
             SegmentedControl<TrafficPeriod>(
               segments: [
-                (TrafficPeriod.day, currentAppLocalizations.tsDay),
-                (TrafficPeriod.week, currentAppLocalizations.tsWeek),
-                (TrafficPeriod.month, currentAppLocalizations.tsMonth),
+                (TrafficPeriod.day, context.appLocalizations.day),
+                (TrafficPeriod.week, context.appLocalizations.week),
+                (TrafficPeriod.month, context.appLocalizations.month),
               ],
               value: _period,
-              onChanged: (v) => setState(() => _period = v),
+              onChanged: (v) {
+                ref.read(trafficRangeProvider.notifier).setPeriod(v);
+                setState(() => _period = v);
+              },
             ),
             const SizedBox(height: 12),
             _DateStrip(period: _period, range: range),
@@ -96,18 +93,21 @@ class _TrafficStatisticsViewState extends ConsumerState<TrafficStatisticsView> {
                     uploadColor: cs.tertiary,
                   ),
                   const SizedBox(height: 16),
-                  _SectionLabel(currentAppLocalizations.tsRuleHits),
+                  _SectionLabel(context.appLocalizations.ruleHits),
                   const SizedBox(height: 8),
                   _RuleHits(hits: data.ruleHits),
                   const SizedBox(height: 16),
-                  _SectionLabel(currentAppLocalizations.tsTrafficRank),
+                  _SectionLabel(context.appLocalizations.trafficRanking),
                   const SizedBox(height: 8),
                   SegmentedControl<TrafficRankKind>(
                     segments: [
-                      (TrafficRankKind.domain, currentAppLocalizations.tsDomain),
-                      (TrafficRankKind.rule, currentAppLocalizations.rule),
-                      (TrafficRankKind.node, currentAppLocalizations.tsNode),
-                      (TrafficRankKind.config, currentAppLocalizations.tsConfig),
+                      (TrafficRankKind.domain, context.appLocalizations.domain),
+                      (TrafficRankKind.rule, context.appLocalizations.rule),
+                      (TrafficRankKind.node, context.appLocalizations.nodes),
+                      (
+                        TrafficRankKind.config,
+                        context.appLocalizations.configuration,
+                      ),
                     ],
                     value: _kind,
                     onChanged: (v) => setState(() => _kind = v),
@@ -162,33 +162,39 @@ class _DateStrip extends ConsumerWidget {
   final TrafficPeriod period;
   final DateTime range;
 
-  String _label() => switch (period) {
-    TrafficPeriod.day =>
-      '${range.year}-${range.month.toString().padLeft(2, '0')}-${range.day.toString().padLeft(2, '0')}',
-    TrafficPeriod.week => currentAppLocalizations.tsWeekFrom(
-      weekStartOf(range).month,
-      weekStartOf(range).day,
-    ),
-    TrafficPeriod.month => '${range.year}/${range.month}',
-  };
+  String _label(AppLocalizations l) {
+    final start = startOfTrafficPeriod(period, range);
+    return switch (period) {
+      TrafficPeriod.day =>
+        '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
+      TrafficPeriod.week => l.weekOfYear(
+        isoWeekNumber(start),
+        isoWeekYear(start),
+      ),
+      TrafficPeriod.month => '${start.year}/${start.month}',
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(trafficRangeProvider.notifier);
+    final canGoForward = notifier.canShift(period, 1);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronBack),
-          tooltip: context.appLocalizations.tsPrev,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, -1),
+          tooltip: context.appLocalizations.previousPeriod,
+          onPressed: () => notifier.shift(period, -1),
         ),
-        Text(_label(), style: AppTextStyle.body.of(context)),
+        Text(
+          _label(context.appLocalizations),
+          style: AppTextStyle.body.of(context),
+        ),
         IconButton(
           icon: const GlyphIcon(AppGlyphs.chevronForward),
-          tooltip: context.appLocalizations.tsNext,
-          onPressed: () =>
-              ref.read(trafficRangeProvider.notifier).shift(period, 1),
+          tooltip: context.appLocalizations.nextPeriod,
+          onPressed: canGoForward ? () => notifier.shift(period, 1) : null,
         ),
       ],
     );
@@ -201,14 +207,13 @@ class _OverviewCard extends ConsumerWidget {
   final TrafficStatistics data;
 
   // runTimeProvider is the already-elapsed milliseconds, not a timestamp.
-  String _duration(int? elapsedMs) {
+  String _duration(AppLocalizations l, int? elapsedMs) {
     if (elapsedMs == null || elapsedMs <= 0) return '—';
-    final l = currentAppLocalizations;
     final minutes = Duration(milliseconds: elapsedMs).inMinutes;
-    if (minutes < 60) return l.tsMinutes(minutes);
+    if (minutes < 60) return l.durationMinutes(minutes);
     final hours = minutes ~/ 60;
-    if (hours < 24) return l.tsHoursMinutes(hours, minutes % 60);
-    return l.tsDaysHours(hours ~/ 24, hours % 24);
+    if (hours < 24) return l.durationHours(hours, minutes % 60);
+    return l.durationDays(hours ~/ 24, hours % 24);
   }
 
   @override
@@ -219,7 +224,10 @@ class _OverviewCard extends ConsumerWidget {
     final runMs = ref.watch(runTimeProvider);
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -228,12 +236,12 @@ class _OverviewCard extends ConsumerWidget {
               GlyphIcon(AppGlyphs.connections, size: 16, color: cs.primary),
               const SizedBox(width: 6),
               Text(
-                currentAppLocalizations.tsOverview,
+                context.appLocalizations.trafficOverview,
                 style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const Spacer(),
               Text(
-                currentAppLocalizations.tsConnections(data.connectionCount),
+                context.appLocalizations.connectionCount(data.connectionCount),
                 style: AppTextStyle.caption1
                     .of(context)
                     .copyWith(color: cs.onSurfaceVariant),
@@ -241,7 +249,10 @@ class _OverviewCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(currentAppLocalizations.tsTotal, style: AppTextStyle.caption1.of(context)),
+          Text(
+            context.appLocalizations.totalTraffic,
+            style: AppTextStyle.caption1.of(context),
+          ),
           Text(
             (data.totalUpload + data.totalDownload).traffic.show,
             style: AppTextStyle.title1.of(context),
@@ -251,13 +262,13 @@ class _OverviewCard extends ConsumerWidget {
             children: [
               _FlowStat(
                 dotColor: cs.primary,
-                label: currentAppLocalizations.download,
+                label: context.appLocalizations.download,
                 bytes: data.totalDownload,
               ),
               const SizedBox(width: 28),
               _FlowStat(
                 dotColor: cs.tertiary,
-                label: currentAppLocalizations.upload,
+                label: context.appLocalizations.upload,
                 bytes: data.totalUpload,
               ),
             ],
@@ -272,12 +283,18 @@ class _OverviewCard extends ConsumerWidget {
           Row(
             children: [
               Text(
-                '${currentAppLocalizations.tsProxy} ${data.proxyBytes.traffic.show} · ${_pct(proxyPct)}',
+                context.appLocalizations.proxyShare(
+                  data.proxyBytes.traffic.show,
+                  _pct(proxyPct),
+                ),
                 style: AppTextStyle.caption1.of(context),
               ),
               const Spacer(),
               Text(
-                '${currentAppLocalizations.tsDirect} ${data.directBytes.traffic.show} · ${_pct(1 - proxyPct)}',
+                context.appLocalizations.directShare(
+                  data.directBytes.traffic.show,
+                  _pct(1 - proxyPct),
+                ),
                 style: AppTextStyle.caption1
                     .of(context)
                     .copyWith(color: cs.onSurfaceVariant),
@@ -291,10 +308,13 @@ class _OverviewCard extends ConsumerWidget {
             children: [
               GlyphIcon(AppGlyphs.clock, size: 14, color: cs.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text(currentAppLocalizations.tsUptime, style: AppTextStyle.caption1.of(context)),
+              Text(
+                context.appLocalizations.totalUptime,
+                style: AppTextStyle.caption1.of(context),
+              ),
               const SizedBox(width: 8),
               Text(
-                _duration(runMs),
+                _duration(context.appLocalizations, runMs),
                 style: AppTextStyle.body.of(context, emphasized: true),
               ),
             ],
@@ -389,7 +409,10 @@ class _TrendCard extends StatelessWidget {
     final hasData = peak != null && (peak.download + peak.upload) > 0;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -398,20 +421,28 @@ class _TrendCard extends StatelessWidget {
               GlyphIcon(AppGlyphs.speed, size: 16, color: cs.primary),
               const SizedBox(width: 6),
               Text(
-                currentAppLocalizations.tsTrend,
+                context.appLocalizations.trafficTrend,
                 style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const Spacer(),
-              _LegendDot(color: downloadColor, label: currentAppLocalizations.download),
+              _LegendDot(
+                color: downloadColor,
+                label: context.appLocalizations.download,
+              ),
               const SizedBox(width: 10),
-              _LegendDot(color: uploadColor, label: currentAppLocalizations.upload),
+              _LegendDot(
+                color: uploadColor,
+                label: context.appLocalizations.upload,
+              ),
             ],
           ),
           if (hasData) ...[
             const SizedBox(height: 4),
             Text(
-              '${currentAppLocalizations.tsPeak(peak.hour.hour)}'
-              ' · ${(peak.download + peak.upload).traffic.show}',
+              context.appLocalizations.trafficPeakLine(
+                peak.hour.hour,
+                (peak.download + peak.upload).traffic.show,
+              ),
               style: AppTextStyle.caption2
                   .of(context)
                   .copyWith(color: cs.onSurfaceVariant),
@@ -426,12 +457,15 @@ class _TrendCard extends StatelessWidget {
               ],
               downloadColor: downloadColor,
               uploadColor: uploadColor,
-              labelColor: context.colorScheme.onSurfaceVariant,
-              gridColor: cs.onSurface.withValues(alpha: 0.16),
+              gridColor: cs.onSurfaceVariant.withValues(alpha: 0.16),
+              labelColor: cs.onSurfaceVariant.withValues(alpha: 0.85),
               height: 150,
             )
           else
-            SizedBox(height: 150, child: Center(child: Text(currentAppLocalizations.tsNoData))),
+            SizedBox(
+              height: 150,
+              child: Center(child: Text(context.appLocalizations.noData)),
+            ),
         ],
       ),
     );
@@ -477,14 +511,17 @@ class _RuleHits extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (hits.isEmpty) {
-      return Text(currentAppLocalizations.tsNoData);
+      return Text(context.appLocalizations.noData);
     }
     final cs = context.colorScheme;
     final shown = hits.take(8).toList();
     final totalHits = hits.fold<int>(0, (sum, h) => sum + h.hits);
     final top = hits.first;
     return Container(
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -495,7 +532,7 @@ class _RuleHits extends StatelessWidget {
                 RingChart(
                   segments: [for (final h in hits.take(5)) h.percent],
                   center: '$totalHits',
-                  subtitle: currentAppLocalizations.tsHitUnit,
+                  subtitle: context.appLocalizations.hitsUnit,
                   size: 76,
                   strokeWidth: 7,
                   trackColor: cs.surfaceContainerHighest,
@@ -513,14 +550,17 @@ class _RuleHits extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        currentAppLocalizations.tsShareOfHits(_pct(top.percent), top.hits),
+                        context.appLocalizations.ruleHitShare(
+                          _pct(top.percent),
+                          top.hits,
+                        ),
                         style: AppTextStyle.caption1
                             .of(context)
                             .copyWith(color: cs.onSurfaceVariant),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        currentAppLocalizations.tsRulesWithHits(hits.length),
+                        context.appLocalizations.ruleHitCount(hits.length),
                         style: AppTextStyle.caption2
                             .of(context)
                             .copyWith(color: cs.onSurfaceVariant),
@@ -575,8 +615,11 @@ class _RuleRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${currentAppLocalizations.tsHits(hit.hits)} · ↑ ${hit.upload.traffic.show} '
-            '↓ ${hit.download.traffic.show}',
+            context.appLocalizations.ruleHitDetail(
+              hit.hits,
+              hit.upload.traffic.show,
+              hit.download.traffic.show,
+            ),
             style: AppTextStyle.caption2
                 .of(context)
                 .copyWith(color: cs.onSurfaceVariant),
@@ -645,7 +688,7 @@ class _Ranking extends StatelessWidget {
     if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24),
-        child: Center(child: Text(currentAppLocalizations.tsNoData)),
+        child: Center(child: Text(context.appLocalizations.noData)),
       );
     }
     final cs = context.colorScheme;
@@ -655,7 +698,10 @@ class _Ranking extends StatelessWidget {
       (m, e) => math.max(m, e.upload + e.download),
     );
     return Container(
-      decoration: panelDecoration(context, 20),
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.card.colorOf(cs),
+        shape: AppShape.all(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -741,7 +787,9 @@ class _RankRow extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  item.key.isEmpty ? currentAppLocalizations.unknown : item.key,
+                  item.key.isEmpty
+                      ? context.appLocalizations.unknown
+                      : item.key,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.body.of(context, emphasized: true),
@@ -765,8 +813,11 @@ class _RankRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${currentAppLocalizations.tsPercent('${item.percent.toStringAsFixed(1)}%')}'
-            ' ↑ ${item.upload.traffic.show} ↓ ${item.download.traffic.show}',
+            context.appLocalizations.rankDetail(
+              '${item.percent.toStringAsFixed(1)}%',
+              item.upload.traffic.show,
+              item.download.traffic.show,
+            ),
             style: AppTextStyle.caption2
                 .of(context)
                 .copyWith(color: cs.onSurfaceVariant),

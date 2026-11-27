@@ -33,6 +33,7 @@ ColorScheme seededColorScheme({
   required Color seedColor,
   required Brightness brightness,
   ColorStyle style = ColorStyle.vivid,
+  bool warmLight = true,
 }) {
   final dark = brightness == Brightness.dark;
   final source = Hct.fromInt(seedColor.toARGB32());
@@ -138,7 +139,7 @@ ColorScheme seededColorScheme({
       _darkInsetTone,
     ),
     outlineVariant: neutral(MaterialDynamicColors.outlineVariant, 4),
-  );
+  ).toPureWhiteLight(warmLight);
 }
 
 const _surfaceChroma = 3.0;
@@ -303,6 +304,24 @@ extension ColorExtension on Color {
 }
 
 extension ColorSchemeExtension on ColorScheme {
+  /// A clean white light theme: the seed still tints the accents, but the
+  /// surfaces stay neutral instead of taking on the seed's warm cast.
+  ColorScheme toPureWhiteLight(bool warmLight) {
+    if (warmLight || brightness != Brightness.light) {
+      return this;
+    }
+    return copyWith(
+      surface: Colors.white,
+      surfaceBright: Colors.white,
+      surfaceDim: const Color(0xFFEDEDED),
+      surfaceContainerLowest: Colors.white,
+      surfaceContainerLow: const Color(0xFFF7F7F7),
+      surfaceContainer: const Color(0xFFF2F2F2),
+      surfaceContainerHigh: const Color(0xFFECECEC),
+      surfaceContainerHighest: const Color(0xFFE6E6E6),
+    );
+  }
+
   ColorScheme toPureBlack(bool isPureBlack) {
     if (!isPureBlack || brightness != Brightness.dark) {
       return this;

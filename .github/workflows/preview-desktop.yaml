@@ -1,20 +1,18 @@
 name: dev-desktop
 
-# The desktop dev channel: one Windows build, no tests, published under a
-# `dev-win-` tag so it can be tried on a desktop without waiting for a full
-# build of every platform.
+# The desktop dev channel: one Windows build, no tests, sent to Telegram as a
+# document so it can be tried without waiting for a full build of every
+# platform. No GitHub Release is created here: a Release is only ever beta or
+# stable, both published manually through ci.yaml.
 #
-# Started by a push to `dev` that touches `.desktop-preview`, not by the
-# dispatch button: GitHub only dispatches a workflow the default branch carries,
-# and this repository promotes `beta` into `main`, so a CI-only commit on main
-# would make every promotion non-fast-forward. The branch that builds is `dev`,
-# so the workflow lives there and its trigger is a file in the tree.
-# `workflow_dispatch` stays for whenever it does reach main.
+# A push to `dev` that touches `.desktop-preview` rebuilds it; it can also be
+# started by hand via workflow_dispatch. The packages go to the private
+# Telegram chat -- no GitHub Release, which stays manual (beta/stable only).
 #
-# The tag is not `v*`, so the version counter in ci.yaml -- which reads `v*`
-# tags and release titles -- never counts it, and the Android numbering is
-# untouched. Its number is its own: see the version step for why it cannot
-# reuse the phone dev channel's.
+# Its number is its own: it has to fit in a Windows file version (four 16-bit
+# fields), so the larger phone counter cannot be reused. A git tag records the
+# number so the next run can advance it; a tag is not a Release. The tag is not
+# `v*` either, so ci.yaml's version counter never counts it.
 on:
   push:
     branches:
@@ -51,8 +49,8 @@ permissions:
   contents: write
 
 env:
-  FLUTTER_VERSION: '3.47.6'
-  GO_VERSION: '1.27.1'
+  FLUTTER_VERSION: '3.50.1'
+  GO_VERSION: '1.27.4'
 
 jobs:
   preview:
@@ -61,14 +59,15 @@ jobs:
     # it needs Rust set up by hand; the x64 one has it in the image.
     runs-on: ${{ (inputs.arch || 'amd64') == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
     timeout-minutes: 120
-    env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      # Dev 版推送优先发到私聊 user ID；未设置时回退到公开频道 TELEGRAM_CHAT_ID。
-      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      previous: ${{ steps.changelog.outputs.previous }}
+      entries: ${{ steps.changelog.outputs.entries }}
+      commit: ${{ steps.tag.outputs.commit }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref || 'beta' }}
           submodules: recursive
@@ -100,24 +99,26 @@ jobs:
           now=$(date -u +%s)
           origin=$(date -u -d 2026-01-01 +%s)
           prefix=$(( (now - origin) / 86400 * 100 ))
-          tags=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq '.[].tag_name' 2>/dev/null || true)
+          tags=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-win-" \
+            --jq '.[].ref' 2>/dev/null || true)
           # Only this day's numbers count: yesterday's are below the prefix and
           # the next run must not walk backwards past it.
           highest=$(printf '%s\n' "$tags" \
-            | sed -n 's/^dev-win-\([0-9][0-9]*\)$/\1/p' \
+            | sed -n 's,^refs/tags/dev-win-\([0-9][0-9]*\)$,\1,p' \
             | awk -v p="$prefix" '$1 >= p' | sort -n | tail -1)
           build_number=$(( ${highest:-$(( prefix - 1 ))} + 1 ))
           if [ "$build_number" -ge 65535 ]; then
             echo "::error::build number ${build_number} no longer fits a Windows file version"
             exit 1
           fi
-          # What users read is the four components plus `-dev`: the desktop
-          # package is a dev snapshot, so its fourth component counts today's
-          # builds rather than spending a release number on the line. The build
-          # number stays behind it for the Windows file version, which takes
-          # digits only.
-          version="${base}.$(printf '%02d' "$(( build_number - prefix ))")-dev"
+          # What users read is four components: major and patch from upstream,
+          # second component the channel code (0 here for DEV), fourth today's
+          # count. The build number stays behind it for the Windows file version,
+          # which takes digits only.
+          major="${base%%.*}"
+          patch="${base##*.}"
+          version="${major}.0.${patch}.$(printf '%02d' "$(( build_number - prefix ))")"
           awk -v v="${base}+${build_number}" '/^version:/{ print "version: " v; next } { print }' \
             pubspec.yaml > pubspec.yaml.new
           mv pubspec.yaml.new pubspec.yaml
@@ -135,15 +136,20 @@ jobs:
           TAG: dev-win-${{ steps.version.outputs.build_number }}
         run: |
           set -euo pipefail
-          previous=$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq '[.[] | select(.tag_name | startswith("dev-win-"))] | .[].tag_name' 2>/dev/null \
-            | grep -vx "$TAG" | head -1 || true)
+          previous=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/dev-win-" \
+            --jq '.[].ref' 2>/dev/null \
+            | sed -n 's,^refs/tags/\(dev-win-[0-9][0-9]*\)$,\1,p' \
+            | grep -vx "$TAG" | sort -t- -k3 -n | tail -1 || true)
           commit="$(git rev-parse HEAD)"
 
           entries=""
           if [ -n "$previous" ]; then
-            echo "changelog: $previous...$commit"
-            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+            prev_sha=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/git/ref/tags/${previous}" \
+              --jq '.object.sha' 2>/dev/null || true)
+            echo "changelog: $previous ($prev_sha)...$commit"
+            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${prev_sha}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
               | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=40' || true)
           else
@@ -166,7 +172,7 @@ jobs:
           Add-Content $env:GITHUB_PATH "$env:USERPROFILE\.cargo\bin"
 
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: core/go.sum
@@ -296,18 +302,54 @@ jobs:
           ls -l "${zips[0]}" "${setups[0]}"
 
       - name: Upload the preview
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dev-desktop-windows-${{ inputs.arch || 'amd64' }}
           path: ./dist
           if-no-files-found: error
 
+      # A tag, not a Release: it is only the counter's diary. The next run
+      # reads it back so two previews on the same day do not claim same number.
+      - name: Tag the preview
+        id: tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          tag="dev-win-${BASE_NUMBER}"
+          sha="$(git rev-parse HEAD)"
+          # The commit URL goes into the Telegram notice regardless of the tag.
+          echo "commit=${sha}" >> "$GITHUB_OUTPUT"
+          # The tag is only the counter's ledger, never a Release. GitHub
+          # occasionally answers 403 here; a retry covers that. If it still
+          # fails, warn instead of losing the build -- the next run may reuse
+          # the number, which is preferable to shipping no package at all.
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" -X DELETE 2>/dev/null || true
+          tagged=""
+          for _ in 1 2 3; do
+            if gh api "repos/${GITHUB_REPOSITORY}/git/refs" -X POST \
+                 -f "ref=refs/tags/${tag}" -f "sha=${sha}" > /dev/null 2>&1; then
+              tagged=1
+              break
+            fi
+            sleep 3
+          done
+          if [ -n "$tagged" ]; then
+            echo "tagged ${tag} at ${sha}"
+          else
+            echo "::warning::could not create ${tag}; the next preview may reuse this number"
+          fi
+
+      # Publish the installers as a prerelease so the Telegram notice can carry
+      # public gh-proxy download links for readers who cannot log in to GitHub.
       - name: Publish the preview
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
           BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION: ${{ steps.version.outputs.version }}
           REF: ${{ inputs.ref || 'beta' }}
           ARCH: ${{ inputs.arch || 'amd64' }}
           PREVIOUS: ${{ steps.changelog.outputs.previous }}
@@ -315,99 +357,142 @@ jobs:
         run: |
           set -euo pipefail
           tag="dev-win-${BASE_NUMBER}"
-          commit="$(git rev-parse --short HEAD)"
           (cd dist && sha256sum ./* > SHA256SUMS)
-
-          cat > preview-notes.md <<EOF
+          cat > release-notes.md <<EOF
           Skyward ${VERSION} 桌面 Dev 版，只含 Windows ${ARCH}。
           EOF
           {
             echo
             echo "- 分支：\`${REF}\`"
             echo "- 版本：\`${VERSION}\`"
-            echo "- 平台：\`Windows ${ARCH}\`"
-            echo "- 提交：[\`${commit}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${commit})"
             echo "- 构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
               echo
               echo "**自 \`${PREVIOUS}\` 以来**"
-              echo
-              printf '%s\n' "$CHANGELOG"
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=40'
             fi
-            echo
-            echo "桌面 Dev 版自己计数（100/天），与正式版的构建号不在一条线上：它的数字更小，装上之后正式版的更新检查不会提示升级到同一个版本。验完请卸掉再装正式版。这不是正式发布。"
-          } >> preview-notes.md
-
-          # A retried run reuses its number, so the tag may already exist.
+          } >> release-notes.md
+          # The tag was just created by "Tag the preview"; repoint it to HEAD
+          # in case a retry left it elsewhere, then publish.
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" \
+            -f sha="$(git rev-parse HEAD)" -F force=true > /dev/null 2>&1 || true
           gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-            -f ref="refs/tags/${tag}" -f sha="$(git rev-parse HEAD)" > /dev/null
           gh release create "$tag" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Skyward ${VERSION}（Windows 桌面 Dev 版）" \
-            --notes-file preview-notes.md \
+            --title "Skyward ${VERSION}（Windows Dev 版）" \
+            --notes-file release-notes.md \
             --prerelease
 
-      # Only the newest few desktop previews are worth keeping; the rest would
-      # fill the release list.
-      - name: Prune old previews
-        shell: bash
+  # The bot API needs a container to accept files over 50 MB, and GitHub only
+  # runs services on Linux. The Windows build uploads its artifacts above; this
+  # job downloads them and sends them as Telegram documents. No Release here.
+  announce:
+    name: Telegram
+    needs: preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      # 私聊 user ID 优先；未设置时回退到公开频道。
+      TELEGRAM_PREVIEW_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
+    services:
+      telegram-bot-api:
+        image: aiogram/telegram-bot-api:latest@sha256:e71b78c32ac7d6a56a127f8bb432aaa9cb0055fda37c3ef79d2b1b0723eadf70
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 \
-            --json tagName,createdAt,isPrerelease \
-            --jq '[.[] | select(.isPrerelease and (.tagName | startswith("dev-win-")))]
-                  | sort_by(.createdAt) | reverse | .[3:] | .[].tagName' \
-          | while read -r tag; do
-              [ -z "$tag" ] && continue
-              echo "deleting $tag"
-              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-            done
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        ports:
+          - 8081:8081
+    steps:
+      - name: Download the preview
+        uses: actions/download-artifact@v4
+        with:
+          name: dev-desktop-windows-${{ inputs.arch || 'amd64' }}
+          path: dist
 
-      - name: Announce on Telegram
-        if: env.TELEGRAM_BOT_TOKEN != '' && (env.TELEGRAM_PREVIEW_CHAT_ID != '' || env.TELEGRAM_CHAT_ID != '')
+      - name: Send to Telegram
+        if: env.TELEGRAM_BOT_TOKEN != ''
         shell: bash
         env:
-          VERSION: ${{ steps.version.outputs.version }}
-          BASE_NUMBER: ${{ steps.version.outputs.build_number }}
+          VERSION: ${{ needs.preview.outputs.version }}
+          BASE_NUMBER: ${{ needs.preview.outputs.build_number }}
           REF: ${{ inputs.ref || 'beta' }}
           ARCH: ${{ inputs.arch || 'amd64' }}
-          PREVIOUS: ${{ steps.changelog.outputs.previous }}
-          CHANGELOG: ${{ steps.changelog.outputs.entries }}
+          PREVIOUS: ${{ needs.preview.outputs.previous }}
+          CHANGELOG: ${{ needs.preview.outputs.entries }}
+          COMMIT: ${{ needs.preview.outputs.commit }}
         run: |
           set -euo pipefail
           shopt -s nullglob
-          # gh-proxy.com in front of github.com: the assets live on GitHub,
-          # which is unreachable for a large part of the audience.
-          prefix="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}/"
+          chat_id="${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}"
+
+          # The self-hosted bot API accepts files over 50 MB, but it can be
+          # slow to come up or fail to reach Telegram's DCs. Wait longer than
+          # before, then fall back to the cloud API for the smaller file.
+          local_api="http://localhost:8081/bot${TELEGRAM_BOT_TOKEN}"
+          cloud_api="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}"
+          api="$local_api"
+          up=""
+          for _ in $(seq 1 60); do
+            if curl -fsS --max-time 5 "${local_api}/getMe" > /dev/null 2>&1; then up=1; break; fi
+            sleep 3
+          done
+          if [ -z "$up" ]; then
+            echo "::warning::telegram-bot-api never answered on localhost:8081, falling back to the cloud API (files over 50 MB will be skipped)"
+            api="$cloud_api"
+          fi
 
           {
-            echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）构建成功"
-            echo
-            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
-              echo "自 \`${PREVIOUS}\` 以来："
-              printf '%s\n' "$CHANGELOG" | awk 'NR<=10'
-              [ "$(printf '%s\n' "$CHANGELOG" | wc -l)" -gt 10 ] && echo "…（其余见 Release 页）"
-              echo
-            fi
-            for f in dist/*; do
-              name="$(basename "$f")"
-              [ "$name" = SHA256SUMS ] && continue
-              echo "• ${name}"
-              echo "  ${prefix}${name}"
-            done
+            echo "🧪 Skyward ${VERSION}（Windows 桌面 Dev 版）"
             echo
             echo "分支 \`${REF}\` ｜ Windows ${ARCH}"
-            echo "全部文件：https://github.com/${GITHUB_REPOSITORY}/releases/tag/dev-win-${BASE_NUMBER}"
-            echo "构建日志：${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            echo
-            echo "（桌面 Dev 版自己计数，号比正式版小：验完请卸掉再装正式版）"
-          } > "$RUNNER_TEMP/msg.txt"
+            echo "构建号 ${BASE_NUMBER}"
+            if [ -n "$PREVIOUS" ] && [ -n "$CHANGELOG" ]; then
+              echo
+              echo "📝 自 \`${PREVIOUS}\` 以来："
+              printf '%s\n' "$CHANGELOG" | awk 'NR<=8'
+            fi
+          } > "$RUNNER_TEMP/body.txt"
+          cat "$RUNNER_TEMP/body.txt"
 
-          cat "$RUNNER_TEMP/msg.txt"
-          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_PREVIEW_CHAT_ID:-$TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text@$RUNNER_TEMP/msg.txt" \
-            || echo "::error::Telegram 推送失败 — 检查 TELEGRAM_BOT_TOKEN 是否有效、TELEGRAM_CHAT_ID 是否是 bot 能发消息的会话或群"
+          sent=0
+          for file in dist/*.exe dist/*.zip; do
+            [ -f "$file" ] || continue
+            size=$(stat -c %s "$file")
+            # The cloud Bot API refuses files over 50 MB.
+            if [ "$api" = "$cloud_api" ] && [ "$size" -gt 52428800 ]; then
+              echo "::warning::$(basename "$file") is over 50 MB; the local bot API is down so it cannot be attached"
+              continue
+            fi
+            # The files go out alone; all text and links are in the second message.
+            response="$(curl -fsS --max-time 900 \
+              -F "chat_id=${chat_id}" \
+              -F "document=@${file}" \
+              "${api}/sendDocument")" || response=""
+            if printf '%s' "$response" | grep -q '"ok":true'; then
+              echo "telegram accepted $(basename "$file")"
+              sent=1
+            else
+              echo "::warning::Telegram refused $(basename "$file"): ${response}"
+            fi
+          done
+
+          # All text plus the links in one message; the build-log URL is the
+          # last line but is still the one Telegram previews as a GitHub card.
+          {
+            cat "$RUNNER_TEMP/body.txt"
+            echo
+            base="https://gh-proxy.com/https://github.com/${GITHUB_REPOSITORY}/releases/download/dev-win-${BASE_NUMBER}"
+            for f in dist/*.exe dist/*.zip; do
+              [ -f "$f" ] && echo "📦 $(basename "$f") → ${base}/$(basename "$f")"
+            done
+            echo "🔗 提交 https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT}"
+            echo "🔗 构建日志 ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > "$RUNNER_TEMP/links.txt"
+          preview_options="{\"url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}"
+          curl -fsS --max-time 60 -X POST "${api}/sendMessage" \
+            --data-urlencode "chat_id=${chat_id}" \
+            --data-urlencode "text@$RUNNER_TEMP/links.txt" \
+            --data-urlencode "link_preview_options=${preview_options}" \
+            || echo "::warning::链接消息推送失败"

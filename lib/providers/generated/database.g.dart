@@ -163,7 +163,7 @@ final class ScriptsProvider
   Scripts create() => Scripts();
 }
 
-String _$scriptsHash() => r'f88f4a2c9960c884fbc2317f754f0f968340ade2';
+String _$scriptsHash() => r'bda3ae39a808119b2f5621a4dd2f42ebb8daf0c8';
 
 abstract class _$Scripts extends $StreamNotifier<List<Script>> {
   Stream<List<Script>> build();
@@ -207,7 +207,7 @@ final class ClashProvidersProvider
   ClashProviders create() => ClashProviders();
 }
 
-String _$clashProvidersHash() => r'00588fa9c7300d3319d97d61962e898d29497188';
+String _$clashProvidersHash() => r'8cf27af120d0389d5d2c473bc51ffba418d025f7';
 
 abstract class _$ClashProviders extends $StreamNotifier<List<ClashProvider>> {
   Stream<List<ClashProvider>> build();
@@ -221,50 +221,6 @@ abstract class _$ClashProviders extends $StreamNotifier<List<ClashProvider>> {
             as $ClassProviderElement<
               AnyNotifier<AsyncValue<List<ClashProvider>>, List<ClashProvider>>,
               AsyncValue<List<ClashProvider>>,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
-
-@ProviderFor(Chains)
-final chainsProvider = ChainsProvider._();
-
-final class ChainsProvider
-    extends $StreamNotifierProvider<Chains, List<ChainSpec>> {
-  ChainsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'chainsProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$chainsHash();
-
-  @$internal
-  @override
-  Chains create() => Chains();
-}
-
-String _$chainsHash() => r'e9fe71da4b744e4ca5527877610161db5a1e04b8';
-
-abstract class _$Chains extends $StreamNotifier<List<ChainSpec>> {
-  Stream<List<ChainSpec>> build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<ChainSpec>>, List<ChainSpec>>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<ChainSpec>>, List<ChainSpec>>,
-              AsyncValue<List<ChainSpec>>,
               Object?,
               Object?
             >;
@@ -296,7 +252,7 @@ final class IconSetsProvider
   IconSets create() => IconSets();
 }
 
-String _$iconSetsHash() => r'fe06735ac9d8c8968278e163a3fcd5a3c0deb1d9';
+String _$iconSetsHash() => r'156404c618b212fea961e9e108b3db1d3e17e2d1';
 
 abstract class _$IconSets extends $StreamNotifier<List<IconSet>> {
   Stream<List<IconSet>> build();
@@ -340,7 +296,7 @@ final class GlobalRulesProvider
   GlobalRules create() => GlobalRules();
 }
 
-String _$globalRulesHash() => r'bde720c56b4914d6fc0190be3a80594840b21e47';
+String _$globalRulesHash() => r'44b89f90ca1499f7ea7a0344206fe16d38deeffb';
 
 abstract class _$GlobalRules extends $StreamNotifier<List<Rule>> {
   Stream<List<Rule>> build();
@@ -475,7 +431,7 @@ final class ProfileRulesProvider
   }
 }
 
-String _$profileRulesHash() => r'25bf8e4d02ca185036a27c951da9ca6b32422dc6';
+String _$profileRulesHash() => r'f13b77c76b86f66a99953b2854024acf33454f7b';
 
 /// What the standard extension adds to a profile, or a custom profile's rules.
 
@@ -570,7 +526,7 @@ final class ProxyGroupsProvider
   }
 }
 
-String _$proxyGroupsHash() => r'4bf2d9e4c3c1e56fa03b91fbef29c898f6f2b052';
+String _$proxyGroupsHash() => r'06c102cc212c13fce70b2e19d51250b230e9e54e';
 
 final class ProxyGroupsFamily extends $Family
     with
@@ -643,7 +599,7 @@ final class CustomProxiesProvider
   CustomProxies create() => CustomProxies();
 }
 
-String _$customProxiesHash() => r'77e62a3276ffd7ca1d05f656199049570fb0c73a';
+String _$customProxiesHash() => r'0bdcc748c64b67914741a6db78536296cadd9f84';
 
 abstract class _$CustomProxies extends $StreamNotifier<List<CustomProxy>> {
   Stream<List<CustomProxy>> build();
@@ -705,7 +661,7 @@ final class ProxyDialersProvider
   }
 }
 
-String _$proxyDialersHash() => r'ac852d78257e7fd6a4203a9e41904b2f63a9a19f';
+String _$proxyDialersHash() => r'455d5502f917430eb83d78b4c1e057cb828aa326';
 
 final class ProxyDialersFamily extends $Family
     with
@@ -797,7 +753,7 @@ final class ProfileDisabledRuleIdsProvider
 }
 
 String _$profileDisabledRuleIdsHash() =>
-    r'e18d42c510b21493b28a73e88b2cbc91622d17a9';
+    r'dd21cae3b8e09e10a53cf1fdd595f54c1e363463';
 
 final class ProfileDisabledRuleIdsFamily extends $Family
     with

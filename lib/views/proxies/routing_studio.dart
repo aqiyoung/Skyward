@@ -1,0 +1,923 @@
+import 'dart:async';
+
+import 'package:skyward/common/common.dart';
+import 'package:skyward/features/form/form.dart';
+import 'package:skyward/l10n/l10n.dart';
+import 'package:skyward/models/models.dart';
+import 'package:skyward/pages/editor.dart';
+import 'package:skyward/providers/providers.dart';
+import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/ui/ui.dart';
+import 'package:skyward/widgets/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'routing.dart';
+import 'routing_condition.dart';
+import 'routing_import.dart';
+import 'routing_ladder.dart';
+import 'routing_route.dart';
+
+const rcxFeels = ['calm', 'balanced', 'eager'];
+const rcxEnergies = ['eco', 'balanced', 'precise'];
+const _strandings = ['hold', 'direct'];
+const _titleDelay = Duration(milliseconds: 500);
+
+/// A new profile starts from the simple built-in's behaviour with one tier,
+/// so the first edit is the user's own.
+const _blankProfile =
+    'rcx: 1\n'
+    'title: My profile\n'
+    'level: simple\n'
+    'prefer:\n'
+    '  - { label: Working, when: not dead }\n'
+    'rank: { by: latency, tolerance: 50 }\n'
+    'switch: { feel: calm }\n';
+
+/// Opens the editor for the user's profile [name]. Without a name it starts
+/// a new one from [text]; [from] names the profile it copies, whose later
+/// changes the editor then offers to bring over.
+Future<void> openRoutingStudio(
+  BuildContext context, {
+  String? name,
+  String? text,
+  String from = '',
+  String? groupName,
+}) {
+  return BaseNavigator.push<void>(
+    context,
+    RoutingStudio(name: name, text: text, from: from, groupName: groupName),
+  );
+}
+
+class RoutingStudio extends ConsumerStatefulWidget {
+  const RoutingStudio({
+    super.key,
+    this.name,
+    this.text,
+    this.from = '',
+    this.groupName,
+  });
+
+  final String? name;
+  final String? text;
+  final String from;
+  final String? groupName;
+
+  @override
+  ConsumerState<RoutingStudio> createState() => _RoutingStudioState();
+}
+
+class _RoutingStudioState extends ConsumerState<RoutingStudio> {
+  late RcxUserProfile _saved;
+  late String _text;
+  final _title = TextEditingController();
+  final _description = TextEditingController();
+  Timer? _titleDebounce;
+  RcxStudioResult? _lint;
+  Map<String, Object?> _profile = const {};
+  String? _source;
+  bool _saving = false;
+  int _request = 0;
+  // The smart group the draft is checked against.
+  late String? _group = widget.groupName;
+  final _revision = ValueNotifier(0);
+
+  RcxRoutingAction get _action => ref.read(rcxRoutingActionProvider.notifier);
+
+  String get _id => 'user/${widget.name ?? 'draft'}';
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.name == null
+        ? null
+        : ref.read(rcxProfilesProvider)[widget.name];
+    _saved =
+        existing ??
+        RcxUserProfile(
+          text: widget.text ?? _blankProfile,
+          from: widget.from,
+          base: widget.from.isEmpty ? '' : widget.text ?? '',
+        );
+    _text = _saved.text;
+    unawaited(_check());
+    unawaited(_loadSource());
+  }
+
+  @override
+  void dispose() {
+    _titleDebounce?.cancel();
+    _title.dispose();
+    _description.dispose();
+    _revision.dispose();
+    super.dispose();
+  }
+
+  bool get _dirty => widget.name == null || _text != _saved.text;
+
+  Future<void> _loadSource() async {
+    if (_saved.from.isEmpty) return;
+    final result = await _action.studio({'op': 'source', 'id': _saved.from});
+    if (mounted && result != null) setState(() => _source = result.text);
+  }
+
+  Future<void> _check() async {
+    final id = ++_request;
+    final result = await _action.studio({
+      'op': 'lint',
+      'text': _text,
+      'id': _id,
+      'group': ?_group,
+    });
+    if (!mounted || id != _request || result == null) return;
+    setState(() {
+      _lint = result;
+      if (result.profile case final profile?) {
+        _profile = profile;
+        final title = profile['title'] as String? ?? '';
+        final description = profile['description'] as String? ?? '';
+        if (_titleDebounce?.isActive != true) {
+          if (_title.text != title) _title.text = title;
+          if (_description.text != description) {
+            _description.text = description;
+          }
+        }
+      }
+    });
+    _revision.value++;
+  }
+
+  Future<void> _openPage(
+    String title,
+    List<Widget> Function(AppLocalizations l) page,
+  ) => BaseNavigator.push<void>(
+    context,
+    RoutingLivePage(
+      title: title,
+      revision: _revision,
+      builder: (l) => mounted ? page(l) : const [],
+    ),
+  );
+
+  void _setText(String text) {
+    setState(() => _text = text);
+    unawaited(_check());
+  }
+
+  /// Section edits rewrite the document from its parsed form, so the
+  /// comments of hand-written YAML do not survive them.
+  Future<void> _edit(void Function(Map<String, Object?> profile) update) async {
+    final profile = rcxDeepCopy(_profile);
+    update(profile);
+    profile.removeWhere((_, value) => rcxIsEmpty(value));
+    final result = await _action.studio({'op': 'format', 'profile': profile});
+    if (!mounted || result == null) return;
+    _setText(result.text);
+  }
+
+  void _onTextChanged(String _) {
+    _titleDebounce?.cancel();
+    _titleDebounce = Timer(_titleDelay, () {
+      unawaited(
+        _edit((p) {
+          p['title'] = _title.text.trim();
+          p['description'] = _description.text.trim();
+        }),
+      );
+    });
+  }
+
+  Future<void> _editYaml() async {
+    final l = context.appLocalizations;
+    final text = await BaseNavigator.push<String>(
+      context,
+      EditorPage(
+        title: l.rcxYaml,
+        content: _text,
+        onSave: (context, _, content) => Navigator.of(context).pop(content),
+      ),
+    );
+    if (text != null && mounted) _setText(text);
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final name =
+          widget.name ??
+          rcxFreeProfileName(
+            ref.read(rcxProfilesProvider),
+            _profile['title'] as String? ?? '',
+          );
+      await _action.saveProfile(
+        name,
+        _saved.copyWith(text: _text, history: _saved.history),
+      );
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final name = widget.name;
+    if (name == null) return;
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      title: l.delete,
+      message: TextSpan(text: l.rcxDeleteProfile(_titleOf(context))),
+    );
+    if (confirmed != true || !mounted) return;
+    await _action.saveProfile(name, null);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _restore() async {
+    final l = context.appLocalizations;
+    final version = await showInSheet<RcxProfileVersion>(
+      context,
+      builder: (sheetContext) => SelectionSheet<RcxProfileVersion>(
+        title: l.rcxHistoryVersions,
+        sections: [SelectionSection(items: _saved.history)],
+        labelBuilder: (v) => v.at.getLastUpdateTimeDesc(sheetContext),
+        selectedOf: (_) => null,
+        onSelected: (v) => Navigator.of(sheetContext).pop(v),
+      ),
+    );
+    if (version != null && mounted) _setText(version.text);
+  }
+
+  Future<void> _bringOver() async {
+    final source = _source;
+    if (source == null) return;
+    final result = await _action.studio({
+      'op': 'merge',
+      'base': _saved.base,
+      'theirs': source,
+      'text': _text,
+    });
+    if (!mounted || result == null) return;
+    final l = context.appLocalizations;
+    if (result.text.isEmpty) {
+      context.showNotifier(l.rcxMergeFailed);
+      return;
+    }
+    setState(() => _saved = _saved.copyWith(base: source));
+    _setText(result.text);
+    context.showNotifier(
+      result.conflicts.isEmpty
+          ? l.rcxMerged
+          : l.rcxMergedConflicts(result.conflicts.join(', ')),
+    );
+  }
+
+  void _showChanges() {
+    final source = _source;
+    if (source == null) return;
+    unawaited(
+      showInSheet<void>(
+        context,
+        builder: (_) => _DiffPage(
+          title: context.appLocalizations.rcxSourceChanges,
+          before: _saved.base,
+          after: source,
+        ),
+      ),
+    );
+  }
+
+  String _titleOf(BuildContext context) {
+    final title = _profile['title'] as String? ?? '';
+    return title.isEmpty ? context.appLocalizations.rcxNewProfile : title;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final lint = _lint;
+    final errors = lint?.errors ?? const <RcxIssue>[];
+    final sourceChanged =
+        _source != null && _saved.base.isNotEmpty && _source != _saved.base;
+    return CommonScaffold(
+      title: _titleOf(context),
+      isLoading: lint == null,
+      menuItems: [
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.code,
+          label: l.rcxYaml,
+          onPressed: _editYaml,
+        ),
+        CommonPopupMenuItem(
+          glyph: AppGlyphs.export,
+          label: l.rcxExport,
+          onPressed: () => unawaited(
+            showRoutingExport(context, text: _text, title: _titleOf(context)),
+          ),
+        ),
+        if (_saved.history.isNotEmpty)
+          CommonPopupMenuItem(
+            glyph: AppGlyphs.clock,
+            label: l.rcxHistoryVersions,
+            onPressed: _restore,
+          ),
+        if (widget.name != null)
+          CommonPopupMenuItem(
+            glyph: AppGlyphs.delete,
+            label: l.delete,
+            danger: true,
+            onPressed: _delete,
+          ),
+      ],
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
+        tooltip: l.save,
+        isLoading: _saving,
+        onPressed: _saving || errors.isNotEmpty || !_dirty || lint == null
+            ? null
+            : _save,
+      ),
+      body: ListView(
+        padding:
+            const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: context.contentTopPadding, bottom: 20) +
+            context.bodyInsets,
+        children: [
+          ErrorBanner(
+            message: errors.isEmpty ? null : rcxIssueText(l, errors.first),
+          ),
+          if (sourceChanged)
+            generateSection(
+              title: l.rcxSourceChanged,
+              items: [
+                DecorationListItem(
+                  title: Text(l.rcxBringChanges),
+                  subtitle: Text(l.rcxBringChangesHint),
+                  onPressed: _bringOver,
+                  trailing: const GlyphIcon(AppGlyphs.sync),
+                ),
+                DecorationListItem(
+                  title: Text(l.rcxSourceChanges),
+                  onPressed: _showChanges,
+                  trailing: const GlyphIcon(AppGlyphs.chevronForward),
+                ),
+              ],
+            ),
+          if (lint?.profile != null) ..._sections(context, lint!),
+          if (lint != null && lint.warnings.isNotEmpty)
+            generateSection(
+              title: l.rcxWarnings,
+              items: [
+                for (final warning in lint.warnings)
+                  DecorationListItem(title: Text(rcxIssueText(l, warning))),
+              ],
+            ),
+          if (lint != null && lint.endpoints.isNotEmpty)
+            _endpointsSection(l, lint.endpoints),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _sections(BuildContext context, RcxStudioResult lint) {
+    final l = context.appLocalizations;
+    final p = _profile;
+    final pool = rcxMap(p['pool']);
+    final steps = rcxList(p['prefer']);
+    final switching = rcxMap(p['switch']);
+    return [
+      generateSection(
+        items: [
+          FormRow(
+            title: l.rcxProfileName,
+            trailing: FormRowTextField(
+              controller: _title,
+              hintText: l.rcxNewProfile,
+              onChanged: _onTextChanged,
+            ),
+          ),
+          DecorationListItem(
+            title: TextField(
+              controller: _description,
+              minLines: 2,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              onChanged: _onTextChanged,
+              decoration: InputDecoration.collapsed(
+                border: const NoInputBorder(),
+                hintText: l.rcxProfileDescriptionHint,
+              ),
+            ),
+          ),
+        ],
+      ),
+      _previewSection(lint),
+      RoutingLadderSection(
+        steps: [for (final step in steps) rcxMap(step)],
+        onChanged: (steps) => _edit((p) => p['prefer'] = steps),
+        scope: p,
+        groupName: _group,
+      ),
+      generateSection(
+        title: l.rcxChangeTo,
+        footer: l.rcxStudioServersHint,
+        items: [
+          _conditionRow(
+            title: l.rcxPoolInclude,
+            value: pool['include'] as String? ?? '',
+            empty: l.rcxCondAnyServer,
+            onChanged: (text) => _edit(
+              (p) => p['pool'] = {...rcxMap(p['pool']), 'include': text},
+            ),
+          ),
+          _conditionRow(
+            title: l.rcxPoolExclude,
+            value: pool['exclude'] as String? ?? '',
+            empty: l.none,
+            onChanged: (text) => _edit(
+              (p) => p['pool'] = {...rcxMap(p['pool']), 'exclude': text},
+            ),
+          ),
+        ],
+      ),
+      generateSection(
+        title: l.rcxStudioCharacter,
+        footer: l.rcxStudioCharacterHint,
+        items: [
+          _options(
+            title: l.rcxSwitching,
+            options: rcxFeels,
+            value: switching['feel'] as String? ?? 'balanced',
+            label: (v) => rcxFeelLabel(l, v),
+            onChanged: (v) =>
+                _edit((p) => p['switch'] = {...rcxMap(p['switch']), 'feel': v}),
+          ),
+          _options(
+            title: l.rcxChecks,
+            options: rcxEnergies,
+            value: p['energy'] as String? ?? 'balanced',
+            label: (v) => rcxEnergyLabel(l, v),
+            onChanged: (v) => _edit((p) => p['energy'] = v),
+          ),
+          _options(
+            title: l.rcxStranded,
+            options: _strandings,
+            value: p['stranded'] as String? ?? 'hold',
+            label: (v) => _strandedLabel(l, v),
+            onChanged: (v) => _edit((p) => p['stranded'] = v),
+          ),
+        ],
+      ),
+      _moreSection(l),
+    ];
+  }
+
+  Widget _moreSection(AppLocalizations l) {
+    final p = _profile;
+    final tags = rcxMap(p['tags']);
+    Widget link(String title, String summary, VoidCallback onPressed) =>
+        DecorationListItem(
+          title: Text(title),
+          subtitle: EmojiText(
+            summary,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onPressed: onPressed,
+          trailing: const DisclosureIndicator(),
+        );
+    return generateSection(
+      title: l.more,
+      items: [
+        _baseRow(l),
+        _options(
+          title: l.rcxLevel,
+          options: const ['simple', 'advanced'],
+          value: p['level'] as String? ?? 'simple',
+          label: (v) => rcxLevelLabel(l, v),
+          onChanged: (v) => _edit((p) => p['level'] = v),
+        ),
+        link(
+          l.rcxTags,
+          tags.isEmpty ? l.rcxTagsHint : tags.keys.join(', '),
+          () => _openPage(l.rcxTags, _tagsSections),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _tagsSections(AppLocalizations l) {
+    final tags = rcxMap(_profile['tags']);
+    return [
+      generateSection(
+        footer: l.rcxTagsHint,
+        items: [
+          for (final MapEntry(:key, :value) in tags.entries)
+            ContextMenuRegion(
+              menuItems: [
+                CommonPopupMenuItem(
+                  glyph: AppGlyphs.delete,
+                  label: l.delete,
+                  danger: true,
+                  onPressed: () => _edit(
+                    (p) => p['tags'] = {...rcxMap(p['tags'])}..remove(key),
+                  ),
+                ),
+              ],
+              child: _conditionRow(
+                title: key,
+                value: '$value',
+                empty: '',
+                onChanged: (text) =>
+                    _edit((p) => p['tags'] = {...rcxMap(p['tags']), key: text}),
+              ),
+            ),
+          FormRow(
+            title: l.rcxAddTag,
+            leading: EntryButton.add(onPressed: _addTag),
+            onPressed: _addTag,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  Future<void> _addTag() async {
+    final l = context.appLocalizations;
+    final name = await dialogs.showCommonDialog<String>(
+      child: InputDialog(
+        title: l.rcxAddTag,
+        value: '',
+        labelText: l.rcxTagName,
+        validator: (value) {
+          final text = value?.trim() ?? '';
+          if (!RegExp(r'^[A-Za-z0-9_-]{1,24}$').hasMatch(text)) {
+            return l.rcxTagNameInvalid;
+          }
+          return rcxMap(_profile['tags']).containsKey(text)
+              ? l.existsTip(text)
+              : null;
+        },
+      ),
+    );
+    final tag = name?.trim() ?? '';
+    if (tag.isEmpty || !mounted) return;
+    final text = await editCondition(
+      context,
+      title: tag,
+      text: '',
+      profile: _profile,
+    );
+    if (text == null || text.isEmpty) return;
+    await _edit((p) => p['tags'] = {...rcxMap(p['tags']), tag: text});
+  }
+
+  Widget _baseRow(AppLocalizations l) {
+    final library = ref.watch(rcxLibraryProvider).value ?? const [];
+    final locale = Localizations.localeOf(context).toString();
+    final current = _profile['extends'] as String? ?? '';
+    final ids = [
+      '',
+      for (final info in library)
+        if (!info.isScenario && info.id != _id && info.error.isEmpty) info.id,
+      if (current.isNotEmpty && !library.any((i) => i.id == current)) current,
+    ];
+    return _options(
+      title: l.rcxBasedOn,
+      options: ids,
+      value: current,
+      label: (id) => id.isEmpty
+          ? l.none
+          : library
+                    .where((i) => i.id == id)
+                    .firstOrNull
+                    ?.displayTitle(locale) ??
+                id,
+      onChanged: (id) => _edit((p) => p['extends'] = id),
+    );
+  }
+
+  Widget _options({
+    required String title,
+    required List<String> options,
+    required String value,
+    required String Function(String) label,
+    required ValueChanged<String> onChanged,
+  }) {
+    return ListItem<String>.options(
+      title: Text(title),
+      options: options,
+      value: options.contains(value) ? value : options.first,
+      textBuilder: label,
+      onChanged: (v) {
+        if (v != value) onChanged(v);
+      },
+    );
+  }
+
+  Widget _conditionRow({
+    required String title,
+    required String value,
+    required String empty,
+    required ValueChanged<String> onChanged,
+  }) {
+    return DecorationListItem(
+      title: EmojiText(title),
+      subtitle: Text(
+        value.isEmpty ? empty : value,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onPressed: () async {
+        final text = await editCondition(
+          context,
+          title: title,
+          text: value,
+          profile: _profile,
+        );
+        if (text != null && text != value) onChanged(text);
+      },
+      trailing: const GlyphIcon(AppGlyphs.chevronForward),
+    );
+  }
+
+  /// What the draft would pick in a smart group now, against what the group
+  /// runs; the group is chosen here.
+  Widget _previewSection(RcxStudioResult lint) {
+    final l = context.appLocalizations;
+    final groups = ref.watch(
+      rcxStatusStateProvider.select(
+        (status) => [for (final g in status?.groups ?? const []) g.name],
+      ),
+    );
+    if (groups.isEmpty) return const SizedBox.shrink();
+    final candidate = lint.candidate;
+    final leaders = [
+      for (final row in candidate?.ranking ?? const <RcxRanked>[])
+        if (row.excluded == null)
+          row.latencyMs > 0 ? '${row.name} ${row.latencyMs} ms' : row.name,
+    ];
+    final ranked = candidate != null && candidate.ranking.isNotEmpty;
+    return generateSection(
+      title: l.rcxStudioPreview,
+      footer: candidate == null ? l.rcxStudioPreviewHint : null,
+      items: [
+        ListItem<String>.options(
+          title: Text(l.rcxCheckGroup),
+          options: ['', ...groups],
+          value: groups.contains(_group) ? _group! : '',
+          textBuilder: (name) => name.isEmpty ? l.none : name,
+          onChanged: (name) {
+            setState(() => _group = name.isEmpty ? null : name);
+            unawaited(_check());
+          },
+        ),
+        if (candidate != null)
+          DecorationListItem(
+            title: EmojiText(rcxCheckHeadline(l, lint)),
+            subtitle: leaders.isEmpty
+                ? null
+                : EmojiText(
+                    leaders.take(3).join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+            onPressed: ranked
+                ? () => _openPage(l.rcxStudioRanking, _rankingSections)
+                : null,
+            trailing: ranked ? const DisclosureIndicator() : null,
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _rankingSections(AppLocalizations l) {
+    final lint = _lint;
+    final candidate = lint?.candidate;
+    if (lint == null || candidate == null) return const [];
+    final locale = Localizations.localeOf(context).toString();
+    final pick = rcxBestOf(candidate);
+    String tier(String label) => lint.info?.localize(label, locale) ?? label;
+    return [
+      generateSection(
+        title: rcxCheckHeadline(l, lint),
+        items: [
+          for (final row in candidate.ranking)
+            DecorationListItem(
+              isSelected: row.name == pick,
+              title: EmojiText(row.name, maxLines: 1),
+              subtitle: Text(
+                row.excluded != null
+                    ? rcxReasonText(l, row.excluded!)
+                    : [
+                        if (row.tierLabel.isNotEmpty) tier(row.tierLabel),
+                        if (row.pending.isNotEmpty)
+                          l.rcxPendingTier(tier(row.pending)),
+                      ].join(' · '),
+              ),
+              trailing: row.latencyMs > 0 ? Text('${row.latencyMs} ms') : null,
+            ),
+        ],
+      ),
+    ];
+  }
+
+  Widget _endpointsSection(AppLocalizations l, List<RcxEndpoint> endpoints) {
+    return generateSection(
+      title: l.rcxContacts,
+      footer: l.rcxContactsHint,
+      items: [
+        for (final endpoint in endpoints)
+          DecorationListItem(
+            title: Text(endpoint.host),
+            subtitle: Text(
+              [
+                rcxEndpointUse(l, endpoint.use),
+                if (endpoint.thirdParty) l.rcxThirdParty,
+              ].join(' · '),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A line diff of two documents, removed lines then added ones in place.
+class _DiffPage extends StatelessWidget {
+  const _DiffPage({
+    required this.title,
+    required this.before,
+    required this.after,
+  });
+
+  final String title;
+  final String before;
+  final String after;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final style = AppTextStyle.footnote
+        .of(context)
+        .copyWith(fontFamily: FontFamily.jetBrainsMono.value);
+    final lines = rcxLineDiff(before, after);
+    return CommonScaffold(
+      title: title,
+      body: ListView.builder(
+        padding:
+            const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: context.contentTopPadding, bottom: 20) +
+            context.bodyInsets,
+        itemCount: lines.length,
+        itemBuilder: (context, index) {
+          final (mark, text) = lines[index];
+          return ColoredBox(
+            color: switch (mark) {
+              '+' => colorScheme.primaryContainer,
+              '-' => colorScheme.errorContainer,
+              _ => Colors.transparent,
+            },
+            child: Text('$mark $text', style: style),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Lines of [after] against [before], each marked ' ', '-' or '+'. Profiles
+/// are small, so the quadratic table is cheap.
+List<(String, String)> rcxLineDiff(String before, String after) {
+  final a = before.split('\n');
+  final b = after.split('\n');
+  final table = List.generate(
+    a.length + 1,
+    (_) => List.filled(b.length + 1, 0),
+  );
+  for (var i = a.length - 1; i >= 0; i--) {
+    for (var j = b.length - 1; j >= 0; j--) {
+      table[i][j] = a[i] == b[j]
+          ? table[i + 1][j + 1] + 1
+          : table[i + 1][j] > table[i][j + 1]
+          ? table[i + 1][j]
+          : table[i][j + 1];
+    }
+  }
+  final out = <(String, String)>[];
+  var i = 0, j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] == b[j]) {
+      out.add((' ', a[i]));
+      i++;
+      j++;
+    } else if (table[i + 1][j] >= table[i][j + 1]) {
+      out.add(('-', a[i++]));
+    } else {
+      out.add(('+', b[j++]));
+    }
+  }
+  return [
+    ...out,
+    for (; i < a.length; i++) ('-', a[i]),
+    for (; j < b.length; j++) ('+', b[j]),
+  ];
+}
+
+String? rcxBestOf(RcxDecision decision) {
+  for (final row in decision.ranking) {
+    if (row.excluded == null) return row.name;
+  }
+  return null;
+}
+
+/// What the draft would pick in the group, against what runs there now.
+String rcxCheckHeadline(AppLocalizations l, RcxStudioResult lint) {
+  final now = rcxBestOf(lint.current ?? const RcxDecision());
+  return switch (rcxBestOf(lint.candidate ?? const RcxDecision())) {
+    null => l.rcxCheckNone,
+    final pick when pick == now => l.rcxCheckSame(pick),
+    final pick => l.rcxCheckDifferent(pick, now ?? '—'),
+  };
+}
+
+/// A free name for a profile titled [title] among [taken].
+String rcxFreeProfileName(Map<String, Object?> taken, String title) {
+  final slug = title
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  final base = slug.isEmpty ? 'profile' : slug;
+  var name = base;
+  for (var i = 2; taken.containsKey(name); i++) {
+    name = '$base-$i';
+  }
+  return name;
+}
+
+String _strandedLabel(AppLocalizations l, String value) => switch (value) {
+  'hold' => l.rcxStrandedHold,
+  'direct' => l.rcxStrandedDirect,
+  _ => value,
+};
+
+String rcxEndpointUse(AppLocalizations l, String use) {
+  final (kind, name) = switch (use.split(':')) {
+    [final kind, final name] => (kind, name),
+    _ => (use, ''),
+  };
+  return switch (kind) {
+    'check' => l.rcxUseCheck(name),
+    'diagnostic' => l.rcxUseDiagnostic(name),
+    'echo' => l.rcxUseEcho,
+    _ => use,
+  };
+}
+
+/// A lint finding in the user's language when the Core gave it a code, with
+/// the line it is on.
+/// The issue in words; [line] prefixes its line where the text is shown.
+String rcxIssueText(AppLocalizations l, RcxIssue issue, {bool line = true}) {
+  String arg(String key) => '${issue.args[key] ?? ''}';
+  final text = switch (issue.code) {
+    'tag.unused' => l.rcxLintTagUnused(arg('tag')),
+    'check.unused' => l.rcxLintCheckUnused(arg('check')),
+    'tier.unreachable' => l.rcxLintTierUnreachable(arg('tier'), arg('after')),
+    'pool.empty' => l.rcxLintPoolEmpty(arg('group')),
+    'tier.empty' => l.rcxLintTierEmpty(arg('tier'), arg('group')),
+    'group.missing' => l.rcxLintGroupMissing(arg('group')),
+    'profile.consent' => l.rcxLintConsent(
+      (issue.args['hosts'] as List? ?? const []).join(', '),
+    ),
+    _ => issue.message,
+  };
+  return line && issue.line > 0 ? l.rcxLine(issue.line, text) : text;
+}
+
+Map<String, Object?> rcxMap(Object? value) =>
+    value is Map ? Map<String, Object?>.from(value) : <String, Object?>{};
+
+List<Object?> rcxList(Object? value) =>
+    value is List ? List<Object?>.from(value) : const [];
+
+bool rcxIsEmpty(Object? value) => switch (value) {
+  null => true,
+  String() => value.isEmpty,
+  Map() => value.values.every(rcxIsEmpty),
+  List() => value.isEmpty,
+  _ => false,
+};
+
+Map<String, Object?> rcxDeepCopy(Map<String, Object?> source) => {
+  for (final MapEntry(:key, :value) in source.entries)
+    key: switch (value) {
+      Map() => rcxDeepCopy(Map<String, Object?>.from(value)),
+      List() => [
+        for (final item in value)
+          item is Map ? rcxDeepCopy(Map<String, Object?>.from(item)) : item,
+      ],
+      _ => value,
+    },
+};

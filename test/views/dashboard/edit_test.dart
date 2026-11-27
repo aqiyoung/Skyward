@@ -482,7 +482,7 @@ void main() {
 
     expect(editButton(), findsNothing);
     expect(find.byType(DashboardEditor), findsNothing);
-    expect(find.byType(OutboundModeBar), findsOneWidget);
+    expect(find.byType(NetworkControlCard), findsOneWidget);
 
     await teardown(tester);
   });

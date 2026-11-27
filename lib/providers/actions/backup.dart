@@ -113,7 +113,6 @@ class BackupAction extends _$BackupAction {
         clashProviders: data.clashProviders,
         customProxies: data.customProxies,
         proxyDialers: data.proxyDialers,
-        chains: data.chains,
         isOverride: isOverride,
       );
     } catch (_) {

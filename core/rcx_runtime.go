@@ -1,0 +1,681 @@
+package core
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"maps"
+	"net/netip"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"sync"
+	"sync/atomic"
+
+	"core/rcx"
+
+	"github.com/metacubex/mihomo/adapter"
+	"github.com/metacubex/mihomo/adapter/outboundgroup"
+	"github.com/metacubex/mihomo/config"
+	"github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/tunnel"
+	"github.com/metacubex/mihomo/tunnel/statistic"
+	"go.yaml.in/yaml/v3"
+)
+
+const rcxStateFile = "rcx-state.json"
+
+const rcxBundleLimit = 512 << 10
+
+var (
+	rcxMu           sync.Mutex
+	rcxEngine       *rcx.Engine
+	rcxCurrent      atomic.Pointer[rcx.Engine]
+	rcxSubscription rcx.SubscriptionLayer
+	// Persisted, so a headless restart of the Android service keeps it.
+	rcxUser rcx.UserLayer
+	// rcxUserPending: the user layer waits to reach the engine with the
+	// topology of the config it was applied with.
+	rcxUserPending bool
+	rcxRoutes      rcx.AppliedRoutes
+	// Hints the Android service sends before the core is initialized.
+	rcxPendingHints []rcx.Hints
+	// Flattened nested selector → its smart group; replaced whole, never mutated.
+	rcxFlatOwner = map[string]string{}
+	// The mode a scenario holds over the user's own; nil leaves the user's.
+	rcxModeWish atomic.Pointer[tunnel.TunnelMode]
+	rcxUserMode atomic.Pointer[tunnel.TunnelMode]
+)
+
+const (
+	maxPendingHints = 16
+	maxFlattenDepth = 4
+)
+
+func rcxReady() *rcx.Engine {
+	rcxMu.Lock()
+	defer rcxMu.Unlock()
+	if rcxEngine == nil && isInit.Load() {
+		rcxEngine = rcx.NewEngine(rcxRuntime{}, rcxProber{}, rcxFileStore{rcxStateFile}, rcxHost{})
+		rcxEngine.SetRunning(isRunning.Load())
+		rcxCurrent.Store(rcxEngine)
+		if data, err := (rcxFileStore{rcxUserFile}).Load(); err == nil && len(data) > 0 {
+			_ = json.Unmarshal(data, &rcxUser)
+		}
+		rcxEngine.SetUserLayer(rcxUser)
+		if mode := rcxUserMode.Load(); mode != nil {
+			rcxEngine.SetUserMode(mode.String())
+		}
+		for _, hints := range rcxPendingHints {
+			rcxEngine.SetHints(hints)
+		}
+		rcxPendingHints = nil
+		rcxWatchPower()
+	}
+	return rcxEngine
+}
+
+// rcxIfReady never creates the engine: hooks on the dial path must not pay
+// for a first construction or take its lock.
+func rcxIfReady() *rcx.Engine {
+	return rcxCurrent.Load()
+}
+
+func rcxDefer(hints rcx.Hints) bool {
+	rcxMu.Lock()
+	defer rcxMu.Unlock()
+	if rcxEngine != nil || isInit.Load() {
+		return false
+	}
+	if len(rcxPendingHints) < maxPendingHints {
+		rcxPendingHints = append(rcxPendingHints, hints)
+	}
+	return true
+}
+
+type rcxRuntime struct{}
+
+// Innermost first, so the group never routes through a stale nested selector.
+func (rcxRuntime) Select(group string, via []string, node string) error {
+	selectMu.Lock()
+	defer selectMu.Unlock()
+	chain := append(append([]string{group}, via...), node)
+	for i := len(chain) - 2; i >= 0; i-- {
+		selector, err := selectableGroup(chain[i])
+		if err == nil {
+			if wrapped, ok := selector.(*scriptedSelector); ok && wrapped.state.Load() != nil {
+				err = errors.New("group is using a connection strategy")
+			} else {
+				err = selector.Set(chain[i+1])
+			}
+		}
+		if err != nil {
+			requestRcxTopologyRefresh()
+			return err
+		}
+	}
+	refreshRouteLocked(false)
+	return nil
+}
+
+func (rcxRuntime) CloseConnections(group, node string) {
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		chain := c.Info().Chain
+		if slices.Contains(chain, group) && slices.Contains(chain, node) {
+			_ = c.Close()
+		}
+		return true
+	})
+}
+
+func (rcxRuntime) SuppressHealthChecks(providers []string) {
+	// This fork's provider has no hook to suppress health checks; the engine
+	// still pauses its own probes through the hints it sends. Left as a no-op.
+}
+
+// ApplyMode runs under the engine's lock, so the route epoch moves on its
+// own goroutine.
+func (rcxRuntime) ApplyMode(mode string) {
+	if mode == "" {
+		rcxModeWish.Store(nil)
+	} else {
+		var wish tunnel.TunnelMode
+		if wish.UnmarshalText([]byte(mode)) != nil {
+			return
+		}
+		rcxModeWish.Store(&wish)
+	}
+	user := tunnel.Rule
+	if mode := rcxUserMode.Load(); mode != nil {
+		user = *mode
+	}
+	if target := rcxEffectiveMode(user); tunnel.Mode() != target {
+		tunnel.SetMode(target)
+		safeGo("bumpRouteEpoch", bumpRouteEpoch)
+	}
+}
+
+func rcxEffectiveMode(user tunnel.TunnelMode) tunnel.TunnelMode {
+	if wish := rcxModeWish.Load(); wish != nil {
+		return *wish
+	}
+	return user
+}
+
+// rcxSetUserMode records the mode the user set and returns the one to
+// apply: a scenario's mode stays in force over it.
+func rcxSetUserMode(mode tunnel.TunnelMode) tunnel.TunnelMode {
+	rcxUserMode.Store(&mode)
+	if e := rcxIfReady(); e != nil {
+		name := mode.String()
+		safeGo("rcxSetUserMode", func() { e.SetUserMode(name) })
+	}
+	return rcxEffectiveMode(mode)
+}
+
+type rcxProber struct{}
+
+func (rcxProber) Probe(ctx context.Context, node string) (int, error) {
+	proxy := lookupProxy(node)
+	if proxy == nil {
+		return 0, errors.New("proxy not found")
+	}
+	rcxOwnProbes.begin(proxy.Name())
+	defer rcxOwnProbes.end(proxy.Name())
+	delay, err := proxy.URLTest(ctx, currentTestURL(), anyDelayTestStatus)
+	return int(delay), err
+}
+
+// URLTest also calls adapter.UrlTestHook; the engine must not count its own probes twice.
+var rcxOwnProbes = nodeProbes{running: map[string]int{}}
+
+type nodeProbes struct {
+	mu      sync.Mutex
+	running map[string]int
+}
+
+func (p *nodeProbes) begin(node string) {
+	p.mu.Lock()
+	p.running[node]++
+	p.mu.Unlock()
+}
+
+func (p *nodeProbes) end(node string) {
+	p.mu.Lock()
+	if p.running[node]--; p.running[node] <= 0 {
+		delete(p.running, node)
+	}
+	p.mu.Unlock()
+}
+
+func (p *nodeProbes) owns(node string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.running[node] > 0
+}
+
+type rcxHost struct{}
+
+func (rcxHost) Publish(status rcx.Status) {
+	sendMessage(RcxStatusMessage, withStrategyReports(status))
+}
+
+type rcxFileStore struct{ name string }
+
+const rcxUserFile = "rcx-user.json"
+
+func (s rcxFileStore) path() string {
+	return filepath.Join(constant.Path.HomeDir(), s.name)
+}
+
+func (s rcxFileStore) Load() ([]byte, error) {
+	return os.ReadFile(s.path())
+}
+
+func (s rcxFileStore) Save(data []byte) error {
+	tmp := s.path() + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, s.path())
+}
+
+type coalescedRun struct {
+	pending, running atomic.Bool
+}
+
+func (c *coalescedRun) request(name string, run func()) {
+	c.pending.Store(true)
+	if c.running.CompareAndSwap(false, true) {
+		safeGo(name, func() { c.loop(name, run) })
+	}
+}
+
+func (c *coalescedRun) loop(name string, run func()) {
+	defer func() {
+		c.running.Store(false)
+		if c.pending.Load() {
+			c.request(name, run)
+		}
+	}()
+	for c.pending.Swap(false) {
+		run()
+	}
+}
+
+var rcxTopologyRefresh coalescedRun
+
+// Run asynchronously: callers may hold selectMu, which the engine takes when it selects.
+func requestRcxTopologyRefresh() {
+	rcxTopologyRefresh.request("rcxRefreshTopology", rcxRefreshTopology)
+}
+
+func rcxRefreshTopology() {
+	e := rcxReady()
+	if e == nil {
+		return
+	}
+	proxies := tunnel.AllProxies()
+	rcxMu.Lock()
+	subscription, routes := rcxSubscription, rcxRoutes
+	var user *rcx.UserLayer
+	if rcxUserPending {
+		layer := rcxUser
+		user, rcxUserPending = &layer, false
+	}
+	smart := map[string]bool{}
+	for _, name := range rcxRoutes.Groups {
+		smart[name] = true
+	}
+	for name := range rcxSubscription.Groups {
+		smart[name] = true
+	}
+	for name := range rcxUser.Groups {
+		smart[name] = true
+	}
+	rcxMu.Unlock()
+	names := proxyGroupNames(config.GetProxyNameList(), func(name string) (constant.AdapterType, bool) {
+		p, ok := proxies[name]
+		if !ok || p == nil {
+			return 0, false
+		}
+		return p.Type(), true
+	})
+	rules := tunnel.Rules()
+	main := rcxMainGroup(proxies, rules)
+	configMu.Lock()
+	if currentConfig != nil {
+		for _, sub := range currentConfig.SubRules {
+			rules = append(slices.Clip(rules), sub...)
+		}
+	}
+	configMu.Unlock()
+	// A scenario's groups are smart too, and a member it holds a group on
+	// stays whole.
+	targets, fixed := e.Targets(rcxSelectors(proxies, names), main)
+	for _, name := range append(targets, fixed...) {
+		smart[name] = true
+	}
+	topology, flat := rcxTopologyOf(proxies, names, smart, rcxReferences(proxies, names, rules))
+	topology.Subscription, topology.Main = subscription, main
+	topology.Strategies = strategyGroupList(proxies)
+	topology.Leaves, topology.Routes, topology.User = rcxLeaves(proxies), routes, user
+	geo := rcxGeo()
+	for i := range topology.Groups {
+		for j := range topology.Groups[i].Members {
+			member := &topology.Groups[i].Members[j]
+			if ip, err := netip.ParseAddr(member.Server); err == nil {
+				member.Entry = geo(ip)
+			}
+		}
+	}
+	rcxMu.Lock()
+	rcxFlatOwner = flat
+	rcxMu.Unlock()
+	e.SetTopology(topology)
+	// The scenario was read from the library before this topology rebuilt
+	// it; a new subscription may name other groups.
+	if again, fixedAgain := e.Targets(rcxSelectors(proxies, names), main); !slices.Equal(again, targets) || !slices.Equal(fixedAgain, fixed) {
+		requestRcxTopologyRefresh()
+	}
+}
+
+func rcxLeaves(proxies map[string]constant.Proxy) []string {
+	var leaves []string
+	for name, p := range proxies {
+		if p == nil || isProxyGroupType(p.Type()) {
+			continue
+		}
+		switch p.Type() {
+		case constant.Direct, constant.Reject, constant.RejectDrop, constant.Pass, constant.Compatible, constant.Dns:
+			continue
+		}
+		leaves = append(leaves, name)
+	}
+	slices.Sort(leaves)
+	return leaves
+}
+
+func rcxTopologyOf(proxies map[string]constant.Proxy, names []string, smart map[string]bool, refs map[string]int) (rcx.Topology, map[string]string) {
+	topology := rcx.Topology{Providers: map[string][]string{}}
+	flat := map[string]string{}
+	for _, name := range names {
+		selector, ok := adapterAs[*outboundgroup.Selector](proxies[name])
+		if !ok || name == globalProxyName && !smart[name] {
+			continue
+		}
+		group := rcx.GroupTopology{Name: name}
+		seen := map[string]int{}
+		var walk func(selector *outboundgroup.Selector, via []string)
+		walk = func(selector *outboundgroup.Selector, via []string) {
+			for _, member := range selector.Proxies() {
+				// This fork has no provider-policy gating on GLOBAL, so every
+				// member of GLOBAL is a candidate.
+				inner, nested := adapterAs[*outboundgroup.Selector](member)
+				if nested && smart[name] && name != globalProxyName && len(via) < maxFlattenDepth && rcxFlattens(member.Name(), refs, smart, flat) {
+					flat[member.Name()] = name
+					walk(inner, append(slices.Clip(via), member.Name()))
+					continue
+				}
+				node := rcxNode(member)
+				node.Via = via
+				// A server reached both directly and nested keeps the shortest path.
+				if i, dup := seen[node.Name]; dup {
+					if len(via) < len(group.Members[i].Via) {
+						group.Members[i] = node
+					}
+					continue
+				}
+				seen[node.Name] = len(group.Members)
+				group.Members = append(group.Members, node)
+			}
+			for _, pd := range selector.Providers() {
+				for _, member := range pd.Proxies() {
+					if pd.Name() != selector.Name() {
+						topology.Providers[member.Name()] = appendUnique(topology.Providers[member.Name()], pd.Name())
+					}
+				}
+			}
+		}
+		walk(selector, nil)
+		group.Now = rcxLeaf(proxies, flat, selector.Now())
+		topology.Groups = append(topology.Groups, group)
+	}
+	return topology, flat
+}
+
+// rcxMainGroup is the select group the final MATCH rule routes to.
+func rcxMainGroup(proxies map[string]constant.Proxy, rules []constant.Rule) string {
+	if len(rules) == 0 || rules[len(rules)-1].RuleType() != constant.MATCH {
+		return ""
+	}
+	name := rules[len(rules)-1].Adapter()
+	if _, ok := adapterAs[*outboundgroup.Selector](proxies[name]); !ok {
+		return ""
+	}
+	return name
+}
+
+func rcxSelectors(proxies map[string]constant.Proxy, names []string) []string {
+	var out []string
+	for _, name := range names {
+		if _, ok := adapterAs[*outboundgroup.Selector](proxies[name]); ok {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
+// Only a nested selector the smart group alone uses is flattened; one another
+// group or rule routes through stays the user's, as one opaque candidate.
+func rcxFlattens(name string, refs map[string]int, smart map[string]bool, flat map[string]string) bool {
+	_, done := flat[name]
+	return refs[name] == 1 && !smart[name] && !done
+}
+
+func rcxReferences(proxies map[string]constant.Proxy, groups []string, rules []constant.Rule) map[string]int {
+	refs := map[string]int{}
+	for _, name := range groups {
+		if name == globalProxyName {
+			continue
+		}
+		if group, ok := adapterAs[interface{ GetProxies(bool) []constant.Proxy }](proxies[name]); ok {
+			for _, member := range group.GetProxies(false) {
+				refs[member.Name()]++
+			}
+		}
+	}
+	for _, rule := range rules {
+		refs[rule.Adapter()]++
+	}
+	return refs
+}
+
+func rcxLeaf(proxies map[string]constant.Proxy, flat map[string]string, name string) string {
+	for range maxFlattenDepth + 1 {
+		if _, ok := flat[name]; !ok {
+			return name
+		}
+		selector, ok := adapterAs[*outboundgroup.Selector](proxies[name])
+		if !ok {
+			return name
+		}
+		name = selector.Now()
+	}
+	return name
+}
+
+// A pick of a flattened selector, or inside one, picks its leaf in the owner.
+func rcxPickOf(group, name string) (string, string) {
+	rcxMu.Lock()
+	flat := rcxFlatOwner
+	rcxMu.Unlock()
+	if owner, ok := flat[group]; ok {
+		group = owner
+	}
+	return group, rcxLeaf(tunnel.AllProxies(), flat, name)
+}
+
+// rcxDirectSplit keeps local destinations local: private, CGNAT, link-local
+// and ULA addresses, and names that only resolve on the LAN.
+func rcxDirectSplit(metadata *constant.Metadata) string {
+	e := rcxIfReady()
+	if e == nil {
+		return ""
+	}
+	target := e.SplitTarget()
+	if target == "" || rcxLocal(metadata) {
+		return ""
+	}
+	return target
+}
+
+var rcxCGNAT = netip.MustParsePrefix("100.64.0.0/10")
+
+func rcxLocal(metadata *constant.Metadata) bool {
+	if ip := metadata.DstIP.Unmap(); ip.IsValid() {
+		if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
+			ip.IsMulticast() || ip.IsUnspecified() || rcxCGNAT.Contains(ip) {
+			return true
+		}
+	}
+	host := strings.TrimSuffix(strings.ToLower(metadata.Host), ".")
+	if host == "" {
+		return false
+	}
+	if !strings.Contains(host, ".") {
+		return true
+	}
+	for _, suffix := range []string{".local", ".lan", ".home.arpa", ".internal", ".localdomain", ".localhost"} {
+		if strings.HasSuffix(host, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func appendUnique(list []string, value string) []string {
+	if slices.Contains(list, value) {
+		return list
+	}
+	return append(list, value)
+}
+
+func rcxNode(proxy constant.Proxy) rcx.Node {
+	node := rcx.Node{Name: proxy.Name(), Type: proxy.Type().String(), UDP: proxy.SupportUDP()}
+	if outbound, ok := proxy.(*adapter.Proxy); ok {
+		// This fork has no RouteFingerprint/EndpointFingerprint on its adapter;
+		// leave the identity hints empty. Node identity still comes from name
+		// and server, which is enough for strategy matching here.
+		_ = outbound
+		node.Provider = outbound.ProxyInfo().ProviderName
+	}
+	if host, _, found := strings.Cut(proxy.Addr(), ":"); found {
+		node.Server = host
+	} else {
+		node.Server = proxy.Addr()
+	}
+	return node
+}
+
+// rcxReadSubscription reads the routing a provider's manifest declares. The
+// subscription body carries none: mihomo ignores unknown keys, and other
+// clients must not have to carry ReClash's.
+func rcxReadSubscription(path string) rcx.SubscriptionLayer {
+	return rcxReadBundle(rcxBundlePath(path))
+}
+
+func rcxBundlePath(path string) string {
+	return strings.TrimSuffix(path, filepath.Ext(path)) + ".routing.yaml"
+}
+
+func rcxReadBundle(path string) rcx.SubscriptionLayer {
+	var manifest struct {
+		Routing struct {
+			Strategies yaml.Node              `yaml:"strategies"`
+			Profiles   map[string]any         `yaml:"profiles"`
+			Bindings   map[string]rcx.Binding `yaml:"bindings"`
+			Scenarios  map[string]any         `yaml:"scenarios"`
+			Scenario   string                 `yaml:"scenario"`
+		} `yaml:"routing"`
+	}
+	layer := rcx.SubscriptionLayer{Groups: map[string]rcx.Binding{}, Profiles: map[string]any{}, Scenarios: map[string]any{}}
+	buf, err := os.ReadFile(path)
+	if err != nil || len(buf) > rcxBundleLimit || yaml.Unmarshal(buf, &manifest) != nil {
+		return layer
+	}
+	routing := manifest.Routing
+	maps.Copy(layer.Groups, routing.Bindings)
+	maps.Copy(layer.Profiles, routing.Profiles)
+	maps.Copy(layer.Scenarios, routing.Scenarios)
+	layer.Scenario = routing.Scenario
+	layer.Strategies = make(map[string]string)
+	if routing.Strategies.Kind == 0 {
+		return layer
+	}
+	var strategies map[string]yaml.Node
+	if err := routing.Strategies.Decode(&strategies); err != nil {
+		layer.StrategyIssues = map[string]rcx.StrategyReport{"routing.strategies": {Issue: err.Error()}}
+		return layer
+	}
+	for _, name := range slices.Sorted(maps.Keys(strategies)) {
+		if len(layer.Strategies) >= rcx.MaxStrategies {
+			layer.StrategyIssues = map[string]rcx.StrategyReport{"routing.strategies": {Issue: "too many strategies"}}
+			break
+		}
+		text, err := rcx.StrategySource(strategies[name])
+		if err != nil {
+			text = "invalid"
+		}
+		layer.Strategies[name] = text
+	}
+	return layer
+}
+
+// rcxApplyConfig hands the engine what an applied config was built with;
+// the user layer travels with its topology.
+func rcxApplyConfig(user *rcx.UserLayer, subscription rcx.SubscriptionLayer, routes rcx.AppliedRoutes) {
+	rcxMu.Lock()
+	rcxSubscription, rcxRoutes = subscription, routes
+	if user != nil {
+		rcxUser, rcxUserPending = *user, true
+	}
+	rcxMu.Unlock()
+	if user != nil {
+		rcxSaveUser(*user)
+	}
+	requestRcxTopologyRefresh()
+}
+
+func rcxCurrentUser() rcx.UserLayer {
+	rcxMu.Lock()
+	defer rcxMu.Unlock()
+	return rcxUser
+}
+
+func rcxSaveUser(layer rcx.UserLayer) {
+	if data, err := json.Marshal(layer); err == nil {
+		_ = rcxFileStore{rcxUserFile}.Save(data)
+	}
+}
+
+var latestRCXPolicyCall uint64
+
+func withLatestRoutingPolicy(params *SetupParams) *SetupParams {
+	if params.callSequence == 0 || params.callSequence >= latestRCXPolicyCall ||
+		params.Rcx == nil || params.Rcx.ProfileScope == "" || params.Rcx.ProfileScope != appliedRCXProfileScope {
+		return params
+	}
+	user := rcxCurrentUser()
+	strategies := maps.Clone(user.Strategies)
+	if strategies == nil {
+		strategies = make(map[string]string)
+	}
+	for name := range user.LocalGroups {
+		if _, kept := params.Rcx.LocalGroups[name]; !kept {
+			delete(strategies, name)
+		}
+	}
+	for name, group := range params.Rcx.LocalGroups {
+		if current, exists := user.LocalGroups[name]; !exists || !sameLocalGroup(group, current) {
+			if source, exists := params.Rcx.Strategies[name]; exists {
+				strategies[name] = source
+			} else {
+				delete(strategies, name)
+			}
+		}
+	}
+	user.LocalGroups, user.Strategies = params.Rcx.LocalGroups, strategies
+	merged := *params
+	merged.Rcx = &user
+	return &merged
+}
+
+func rcxSetUser(layer rcx.UserLayer, sequence uint64) error {
+	configMu.Lock()
+	defer configMu.Unlock()
+	if sequence != 0 && sequence < latestRCXPolicyCall {
+		return nil
+	}
+	if currentConfig != nil && layer.ProfileScope != "" && appliedRCXProfileScope != "" && layer.ProfileScope != appliedRCXProfileScope {
+		return &MethodError{Code: "rcx_scope_changed", Message: "the routing profile changed"}
+	}
+	if err := validateChangedStrategies(rcxCurrentUser(), layer); err != nil {
+		return &MethodError{Code: "rcx_strategy_rejected", Message: err.Error()}
+	}
+	if sequence != 0 {
+		latestRCXPolicyCall = sequence
+	}
+	updateLiveGroupStrategies(layer)
+	rcxMu.Lock()
+	rcxUser = layer
+	rcxMu.Unlock()
+	rcxSaveUser(layer)
+	if e := rcxReady(); e != nil {
+		e.SetUserLayer(layer)
+	}
+	// Which nested selectors flatten depends on which groups are smart.
+	requestRcxTopologyRefresh()
+	return nil
+}

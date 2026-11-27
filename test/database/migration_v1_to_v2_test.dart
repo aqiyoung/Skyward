@@ -1002,4 +1002,23 @@ void main() {
     expect(_userVersion(raw), 25);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
   });
+
+  test('v24 adds native history without changing saved hourly bytes', () async {
+    raw.execute('DROP TABLE native_traffic');
+    raw.execute(
+      'INSERT INTO traffic_hourly (hour, direction, proxied, bytes) VALUES (1, 0, 0, 123)',
+    );
+    raw.execute(
+      "INSERT INTO app_traffic_hourly (hour, process, direction, bytes) VALUES (1, 'com.facebook.katana', 0, 123)",
+    );
+    raw.execute('PRAGMA user_version = 24');
+    await openAndMigrate();
+    expect(_userVersion(raw), 25);
+    expect(_hasTable(raw, 'native_traffic'), isTrue);
+    expect(raw.select('SELECT bytes FROM traffic_hourly').single['bytes'], 123);
+    expect(
+      raw.select('SELECT bytes FROM app_traffic_hourly').single['bytes'],
+      123,
+    );
+  });
 }

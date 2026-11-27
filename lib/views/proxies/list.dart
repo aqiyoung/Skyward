@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'dart:async';
 import 'dart:math';
 
 import 'package:skyward/common/common.dart';
@@ -5,12 +7,17 @@ import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
 import 'package:skyward/providers/providers.dart';
 import 'package:skyward/ui/icons/icons.dart';
+import 'package:skyward/views/chains/page.dart';
+import 'package:skyward/views/chains/state.dart';
+import 'package:skyward/views/chains/widgets.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
+import 'routing.dart';
+import 'routing_strategy.dart';
 
 const _pinnedHeaderGap = 8.0;
 const _headerInset = 10.0;
@@ -34,10 +41,26 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   int _groupColumns = 1;
   double _gap = 0;
 
+  /// Chain reports are shared by every group band; loading them once here
+  /// keeps each group sliver from calling the core for the same data.
+  List<ChainReport> _chainReports = const [];
+
   @override
   void initState() {
     super.initState();
     _controller = sheetScrollController(context);
+    unawaited(_loadChainReports());
+  }
+
+  Future<void> _loadChainReports() async {
+    // A page can be built before the Core is reachable (tests, startup, a
+    // restart). Asking then only starts a reconnect timer that outlives the
+    // widget; the reports are loaded on the next build once it is connected.
+    if (kDebugMode || ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    final reports = await ref.read(coreHandlerProvider).getChainReport();
+    if (mounted) setState(() => _chainReports = reports);
   }
 
   @override
@@ -211,6 +234,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 columns: columns,
                 cardType: cardType,
                 gap: gap,
+                reports: _chainReports,
                 onChange: _handleChange,
                 onScrollToSelected: _scrollToGroupSelected,
               );
@@ -293,6 +317,7 @@ class _GroupSliver extends ConsumerStatefulWidget {
     required this.columns,
     required this.cardType,
     required this.gap,
+    required this.reports,
     required this.onChange,
     required this.onScrollToSelected,
   });
@@ -301,6 +326,7 @@ class _GroupSliver extends ConsumerStatefulWidget {
   final int columns;
   final ProxyCardType cardType;
   final double gap;
+  final List<ChainReport> reports;
   final void Function(String groupName) onChange;
   final void Function(String groupName) onScrollToSelected;
 
@@ -317,6 +343,31 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     value: ref.read(unfoldSetProvider).contains(widget.group.name) ? 1 : 0,
   );
   late final _unfold = UnfoldEntryTransition.curveOf(_controller);
+
+  /// Enabled link chains that the Core injected into this group. They show in
+  /// their own band above the servers, so they must be kept out of the server
+  /// rows to avoid showing each one twice.
+  List<SavedChain> get _chainsInGroup {
+    final chains = ref.watch(chainsProvider);
+    if (chains.isEmpty) return const [];
+    final names = widget.group.all.map((p) => p.name).toSet();
+    return chains.where((c) => c.enabled && names.contains(c.name)).toList();
+  }
+
+  /// Reports are loaded once by the parent view and passed down; each group
+  /// used to call the core on its own, which meant one round trip per group.
+  ChainReport? _reportOf(int id) {
+    for (final report in widget.reports) {
+      if (report.id == id) return report;
+    }
+    return null;
+  }
+
+  List<Proxy> get _serverProxies {
+    final chains = _chainsInGroup.map((c) => c.name).toSet();
+    if (chains.isEmpty) return widget.group.all;
+    return widget.group.all.where((p) => !chains.contains(p.name)).toList();
+  }
 
   @override
   void initState() {
@@ -388,7 +439,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   }
 
   Widget _buildRows(double extent) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
+    final rows = _serverProxies.chunks(widget.columns).toList();
     return SliverFixedExtentList(
       itemExtent: extent,
       delegate: SliverChildBuilderDelegate(
@@ -402,7 +453,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   /// The card reaches up behind the header's rounded bottom corners, so the
   /// two read as one while the rows unfold or fold.
   Widget _buildUnfoldingRows(double extent, ShapeDecoration decoration) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
+    final rows = _serverProxies.chunks(widget.columns).toList();
     final visible = min(
       rows.length.toDouble(),
       MediaQuery.sizeOf(context).height / extent,
@@ -498,7 +549,80 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     return SliverPadding(
       padding: EdgeInsets.only(bottom: widget.gap),
       sliver: SliverMainAxisGroup(
-        slivers: [_buildPinnedHeader(isExpand, buildHeader), ?rows],
+        slivers: [
+          _buildPinnedHeader(isExpand, buildHeader),
+          ?_buildChainBand(),
+          ?rows,
+        ],
+      ),
+    );
+  }
+
+  /// The chains band above the servers, with a link to manage them all.
+  Widget? _buildChainBand() {
+    final chains = _chainsInGroup;
+    if (chains.isEmpty) return null;
+    final scheme = context.colorScheme;
+    final zh = Localizations.localeOf(context).languageCode == 'zh';
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          _headerInset,
+          2,
+          _headerInset,
+          proxyGridSpacing,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    zh ? '链路' : 'Chains',
+                    style: AppTextStyle.footnote
+                        .of(context, emphasized: true)
+                        .copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => openChainsPage(context),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(zh ? '全部链路' : 'All chains'),
+                      const GlyphIcon(AppGlyphs.chevronForward, size: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SurfaceScope(
+              level: context.raisedSurfaceLevel,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final chain in chains)
+                      _ChainChip(
+                        chain: chain,
+                        zh: zh,
+                        groupName: widget.group.name,
+                        groupType: widget.group.type,
+                        report: _reportOf(chain.id),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -513,7 +637,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     Widget Function({double floating, double lift}) buildHeader,
   ) {
     final columns = widget.columns;
-    final rowCount = (widget.group.all.length + columns - 1) ~/ columns;
+    final rowCount = (_serverProxies.length + columns - 1) ~/ columns;
     final rowsExtent = isExpand ? _rowsExtent(rowCount, _rowExtent) : 0.0;
     final groupExtent =
         listHeaderHeight +
@@ -610,6 +734,16 @@ class ListHeader extends ConsumerWidget {
     final isDelayTesting = ref.watch(
       delayTestingGroupsProvider.select((state) => state.contains(groupName)),
     );
+    final (scripted, profile) = ref.watch(
+      rcxGroupProvider(groupName).select(
+        (state) => switch (state) {
+          null => (false, null),
+          final group => (true, group.control.isManual ? null : group.profile),
+        },
+      ),
+    );
+    final behaviour = watchGroupBehaviour(ref, group);
+    final showRouting = behaviour || scripted;
     final colorScheme = context.colorScheme;
     final level = floating > 0
         ? SurfaceLevel.floatingOf(colorScheme)
@@ -637,6 +771,19 @@ class ListHeader extends ConsumerWidget {
               isExpand: isExpand,
               isDelayTesting: isDelayTesting,
               groupType: group.type,
+              routingLabel: profile == null
+                  ? null
+                  : rcxProfileTitle(context, ref, profile),
+              routingTooltip: behaviour
+                  ? context.appLocalizations.rcxBehaviour
+                  : null,
+              onRouting: showRouting
+                  ? () => unawaited(
+                      behaviour
+                          ? showGroupBehaviour(context, groupName)
+                          : showRoutingSheet(context, groupName),
+                    )
+                  : null,
               onScrollToSelected: () {
                 onScrollToSelected(groupName);
               },
@@ -777,7 +924,7 @@ class _GroupSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         EmojiText(
-          GroupMonogram.displayName(groupName),
+          GroupMonogram.labelOf(context, groupName),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTextStyle.callout.of(context, emphasized: true),
@@ -802,8 +949,18 @@ class _SelectedProxyName extends ConsumerWidget {
     if (proxyName.isEmpty) {
       return const SizedBox.shrink();
     }
+    final control = ref.watch(
+      rcxGroupProvider(groupName).select((state) => state?.control),
+    );
+    final l = context.appLocalizations;
+    final mode = switch (control) {
+      null => null,
+      RcxControl(isManual: true) => null,
+      RcxControl(isPinned: true) => l.rcxPinnedLabel,
+      _ => l.rcxModeAuto,
+    };
     return EmojiText(
-      proxyName,
+      mode == null ? proxyName : '$mode · $proxyName',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: AppTextStyle.caption1.of(context, emphasized: true).toLight,
@@ -816,6 +973,9 @@ class _GroupActions extends StatelessWidget {
     required this.isExpand,
     required this.isDelayTesting,
     required this.groupType,
+    this.routingLabel,
+    this.routingTooltip,
+    this.onRouting,
     required this.onScrollToSelected,
     required this.onDelayTest,
     required this.onToggle,
@@ -824,6 +984,9 @@ class _GroupActions extends StatelessWidget {
   final bool isExpand;
   final bool isDelayTesting;
   final GroupType groupType;
+  final String? routingLabel;
+  final String? routingTooltip;
+  final VoidCallback? onRouting;
   final VoidCallback onScrollToSelected;
   final VoidCallback onDelayTest;
   final VoidCallback onToggle;
@@ -851,12 +1014,29 @@ class _GroupActions extends StatelessWidget {
                       ? CommonCircleLoading(size: TonalButtonSize.compact.icon)
                       : const GlyphIcon(AppGlyphs.bolt),
                 ),
+                if (onRouting != null)
+                  IconButton(
+                    tooltip:
+                        routingTooltip ?? context.appLocalizations.rcxTitle,
+                    onPressed: onRouting,
+                    iconSize: 19,
+                    icon: const GlyphIcon(AppGlyphs.shuffle),
+                  ),
               ],
             )
           // Selector is the default group and the expand arrow already
           // says a choice can be made, so its name is noise on every row;
           // a computed group keeps its name, because it is the reason the
           // row cannot be picked from directly.
+          else if (routingLabel != null)
+            Text(
+              routingLabel!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.caption1
+                  .of(context, emphasized: true)
+                  .toLight,
+            )
           else if (groupType != GroupType.Selector)
             Text(
               groupType.name,
@@ -875,6 +1055,128 @@ class _GroupActions extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// One enabled chain in the band. It reads like a server: flags, name, the
+/// route as its detail line, a warning mark when the core reported problems,
+/// and the check badge when it is the group's current selection.
+class _ChainChip extends ConsumerWidget {
+  const _ChainChip({
+    required this.chain,
+    required this.zh,
+    required this.groupName,
+    required this.groupType,
+    required this.report,
+  });
+
+  final SavedChain chain;
+  final bool zh;
+  final String groupName;
+  final GroupType groupType;
+  final ChainReport? report;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = context.colorScheme;
+    final entry = chain.hops.first;
+    final exit = chain.hops.last;
+    final selected =
+        ref.watch(selectedProxyNameProvider(groupName)) == chain.name;
+    final delay = ref.watch(
+      delayProvider(proxyName: chain.name, testUrl: null),
+    );
+    final broken = report?.status == 'broken';
+    final warned = broken || (report?.issues.isNotEmpty ?? false);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300),
+      child: Container(
+        decoration: ShapeDecoration(
+          color: context.raisedSurfaceLevel.colorOf(scheme),
+          shape: AppShape.all(16),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            customBorder: AppShape.all(16),
+            onTap: () => selectGroupProxy(
+              ref,
+              groupName: groupName,
+              groupType: groupType,
+              proxyName: chain.name,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      PairedFlags(entry, exit, size: 24),
+                      if (selected)
+                        Positioned(
+                          right: -6,
+                          bottom: -4,
+                          child: CircleAvatar(
+                            radius: 9,
+                            backgroundColor: scheme.primary,
+                            child: GlyphIcon(
+                              AppGlyphs.check,
+                              size: 12,
+                              color: scheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          chain.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.footnote.of(context),
+                        ),
+                        Text(
+                          '$entry → $exit',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.caption2.of(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (warned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: GlyphIcon(
+                        broken ? AppGlyphs.error : AppGlyphs.warning,
+                        size: 14,
+                        color: broken ? scheme.error : scheme.warning,
+                      ),
+                    ),
+                  if (delay != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        '$delay ms',
+                        style: AppTextStyle.caption2
+                            .of(context, emphasized: true)
+                            .copyWith(color: scheme.delayColor(delay)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

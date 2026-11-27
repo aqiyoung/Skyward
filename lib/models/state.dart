@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'app.dart';
-import 'chain.dart';
+import 'proxy_chain.dart';
 import 'clash_config.dart';
 import 'common.dart';
 import 'core.dart';

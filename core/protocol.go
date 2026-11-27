@@ -3,6 +3,8 @@ package core
 import (
 	"time"
 
+	"core/rcx"
+
 	"github.com/metacubex/http"
 	"github.com/metacubex/mihomo/adapter/provider"
 	P "github.com/metacubex/mihomo/component/process"
@@ -39,6 +41,7 @@ const (
 	outboundIpMethod               CoreMethod = "outboundIp"
 	serviceCheckMethod             CoreMethod = "serviceCheck"
 	getConnectionsMethod           CoreMethod = "getConnections"
+	getTrafficHistoryMethod        CoreMethod = "getTrafficHistory"
 	getConnectionCountMethod       CoreMethod = "getConnectionCount"
 	closeConnectionsMethod         CoreMethod = "closeConnections"
 	resetConnectionsMethod         CoreMethod = "resetConnections"
@@ -66,6 +69,16 @@ const (
 	compileRuleSetMethod           CoreMethod = "compileRuleSet"
 	clearEffectMethod              CoreMethod = "clearEffect"
 	watchRouteMethod               CoreMethod = "watchRoute"
+	getChainReportMethod           CoreMethod = "getChainReport"
+	inspectChainMethod             CoreMethod = "inspectChain"
+	rcxSetPolicyMethod             CoreMethod = "rcxSetPolicy"
+	rcxStatusMethod                CoreMethod = "rcxStatus"
+	rcxExplainMethod               CoreMethod = "rcxExplain"
+	rcxJournalMethod               CoreMethod = "rcxJournal"
+	rcxActionMethod                CoreMethod = "rcxAction"
+	rcxHintsMethod                 CoreMethod = "rcxHints"
+	rcxProfilesMethod              CoreMethod = "rcxProfiles"
+	rcxStudioMethod                CoreMethod = "rcxStudio"
 )
 
 type MessageType string
@@ -81,6 +94,7 @@ const (
 	RouteChangedMessage   MessageType = "routeChanged"
 	DialerLoopMessage     MessageType = "dialerLoop"
 	RequestTrafficMessage MessageType = "requestTraffic"
+	RcxStatusMessage      MessageType = "rcxStatus"
 )
 
 type Message struct {
@@ -89,8 +103,9 @@ type Message struct {
 }
 
 type InitParams struct {
-	HomeDir string `json:"home-dir"`
-	Version int    `json:"version"`
+	TimeZone string `json:"time-zone"`
+	HomeDir  string `json:"home-dir"`
+	Version  int    `json:"version"`
 }
 
 type DecryptConfigParams struct {
@@ -107,6 +122,14 @@ type SetupParams struct {
 	// by skip-cert-verify in the proxy config.
 	SkipCertVerify bool       `json:"skip-cert-verify"`
 	Base           *SetupBase `json:"base,omitempty"`
+	// Chains describes the link chains to materialize into the config, and
+	// MainGroupHint names the group a chain's target resolves against.
+	Chains        []ChainSpec `json:"chains,omitempty"`
+	MainGroupHint string      `json:"main-group-hint,omitempty"`
+	// Rcx is the automatic-routing user layer; callSequence stamps the method
+	// call so stale policies cannot overwrite a newer one.
+	Rcx          *rcx.UserLayer `json:"rcx,omitempty"`
+	callSequence uint64
 }
 
 type SetupBase struct {

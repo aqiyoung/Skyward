@@ -297,7 +297,31 @@ void main() {
         dashboardWidgets: DashboardWidget.values,
       );
       final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
-      expect(restored.dashboardWidgets, DashboardWidget.values);
+      // The removed speed-test/app-usage cards are filtered on read, so a
+      // round trip returns only the widgets the dashboard still draws.
+      expect(restored.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkControl,
+        DashboardWidget.networkOverview,
+        DashboardWidget.routingBoard,
+        DashboardWidget.profiles,
+        DashboardWidget.proxyGroups,
+        DashboardWidget.memoryInfo,
+        DashboardWidget.trafficStats,
+      ]);
+    });
+
+    test('dashboard piles survive round-trip', () {
+      const stacks = [
+        [DashboardWidget.currentOutbound],
+        [DashboardWidget.networkControl, DashboardWidget.proxyGroups],
+      ];
+      const props = AppSettingProps(
+        dashboardWidgets: DashboardWidget.values,
+        dashboardStacks: stacks,
+      );
+      final restored = roundTrip(props.toJson, AppSettingProps.fromJson);
+      expect(restored.dashboardStacks, stacks);
     });
 
     test('dashboard piles survive round-trip', () {

@@ -98,10 +98,19 @@ func isMatchRule(rule string) bool {
 	return strings.EqualFold(strings.TrimSpace(kind), "MATCH")
 }
 
-func loadConfigWithBase(base *SetupBase, configPath string) (*config.Config, error) {
+func loadConfigWithBase(base *SetupBase, configPath string, prepare func(*yaml.Node)) (*config.Config, error) {
 	document, err := mergeProfileBase(base)
 	if err != nil {
 		return nil, err
+	}
+	if prepare != nil {
+		// mergeProfileBase returns a DocumentNode; the materializer needs its
+		// mapping root so it can read keys like "proxies".
+		root, err := documentMapping(document)
+		if err != nil {
+			return nil, err
+		}
+		prepare(root)
 	}
 	raw := config.DefaultRawConfig()
 	if err := document.Decode(raw); err != nil {

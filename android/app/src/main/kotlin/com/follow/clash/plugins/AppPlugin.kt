@@ -35,6 +35,9 @@ import com.follow.clash.common.shortcutId
 import com.follow.clash.getPackageIconPath
 import com.follow.clash.packages.PackageResolver
 import com.follow.clash.showToast
+import com.follow.clash.updates.InvalidUpdateApkException
+import com.follow.clash.updates.UpdateInstallStatus
+import com.follow.clash.updates.UpdateInstaller
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -208,6 +211,60 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 result.success(openAppSettings())
             }
 
+            "canRequestPackageInstalls" -> {
+                result.success(UpdateInstaller.canRequestInstalls(GlobalState.application))
+            }
+
+            "updateInstallBlockedByVpn" -> {
+                result.success(UpdateInstaller.blockedByVpn())
+            }
+
+            "openUpdateInstallPermission" -> replyUpdate(result) {
+                UpdateInstaller.openPermission(activity)
+            }
+
+            "updateInstalledVersion" -> replyUpdate(result) {
+                val context = GlobalState.application
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                    ?: throw IllegalStateException("Installed app version is unavailable")
+            }
+
+            "updateInstallStatus" -> replyUpdate(result) {
+                UpdateInstaller.status(GlobalState.application).wireValue
+            }
+
+            "continueUpdateInstall" -> replyUpdate(result) {
+                UpdateInstaller.continueInstall(GlobalState.application, activity)
+            }
+
+            "verifyUpdateApk", "installApk" -> {
+                val path = call.argument<String>("path")
+                val version = call.argument<String>("version")
+                val sha256 = call.argument<String>("sha256")
+                if (path.isNullOrEmpty() || version.isNullOrEmpty() || sha256.isNullOrEmpty()) {
+                    result.error(
+                        "INVALID_ARGUMENT",
+                        "APK path, version and SHA-256 are required",
+                        null,
+                    )
+                } else {
+                    replyUpdate(result) {
+                        if (call.method == "verifyUpdateApk") {
+                            UpdateInstaller.verify(GlobalState.application, path, version, sha256)
+                            null
+                        } else {
+                            UpdateInstaller.install(
+                                GlobalState.application,
+                                path,
+                                version,
+                                sha256,
+                                call.argument<Boolean>("automatic") == true,
+                            )
+                        }
+                    }
+                }
+            }
+
             "getLastExitInfo" -> reply(result) {
                 GlobalState.lastExitInfo()
             }
@@ -233,6 +290,31 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 GlobalState.log("Platform call failed: $error")
                 result.error("PLATFORM_ERROR", error.toString(), null)
             }
+        }
+    }
+
+    // Update verification and installation map their own failures to stable
+    // error codes so Dart can tell a bad APK from a failed install.
+    private fun replyUpdate(result: Result, block: suspend () -> Any?) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                result.success(block())
+            } catch (error: InvalidUpdateApkException) {
+                GlobalState.log("Update verification failed: $error")
+                result.error("APK_INVALID", error.message, null)
+            } catch (error: Exception) {
+                GlobalState.log("Update installation failed: $error")
+                result.error("APK_INSTALL_FAILED", error.toString(), null)
+            }
+        }
+    }
+
+    @Volatile
+    private var updateEngineAttached = false
+
+    private val updateInstallObserver: (UpdateInstallStatus) -> Unit = { status ->
+        onMainThread {
+            if (updateEngineAttached) channel.invokeMethod("updateInstallChanged", status.wireValue)
         }
     }
 
@@ -420,6 +502,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         channel =
             MethodChannel(flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/app")
         channel.setMethodCallHandler(this)
+        updateEngineAttached = true
+        UpdateInstaller.observe(updateInstallObserver)
         watchPackageChanges(flutterPluginBinding.applicationContext)
     }
 
@@ -435,6 +519,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        updateEngineAttached = false
+        UpdateInstaller.removeObserver(updateInstallObserver)
         packageChangeContext?.unregisterReceiver(packageChangeReceiver)
         packageChangeContext = null
         channel.setMethodCallHandler(null)

@@ -54,12 +54,17 @@ class TakeoverRow extends ConsumerWidget {
     required this.metrics,
     required this.showIcon,
     this.color,
+    this.compact = false,
   });
 
   final TakeoverSwitch kind;
   final DashboardRowMetrics metrics;
   final bool showIcon;
   final Color? color;
+
+  /// A tile beside its peers in one row, instead of a full-width row of its
+  /// own. The switch and title share the first line, the state the second.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,6 +90,19 @@ class TakeoverRow extends ConsumerWidget {
         : ref
               .read(patchClashConfigProvider.notifier)
               .update((state) => state.copyWith.tun(enable: value));
+    if (compact) {
+      return DashboardSwitchTile(
+        title: title,
+        subtitle: metrics.subtitle
+            ? value
+                ? on
+                : appLocalizations.disabled
+            : null,
+        value: value,
+        onTap: () => change(!value),
+        onChanged: change,
+      );
+    }
     return DashboardSwitchRow(
       glyph: systemProxy ? AppGlyphs.shuffle : AppGlyphs.vpn,
       title: title,

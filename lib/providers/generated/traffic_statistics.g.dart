@@ -102,18 +102,104 @@ final class TrafficHistoryRetentionProvider
 String _$trafficHistoryRetentionHash() =>
     r'7da4a34132b90abcad9afb5078846436d9f187ef';
 
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
+/// Domains blocked by the ad-block module in the last seven days, read from
+/// the same native history the traffic card uses. The sampler below keeps it
+/// fresh, so the dashboard card never shows a stale count.
+
+@ProviderFor(adBlockHitList)
+final adBlockHitListProvider = AdBlockHitListProvider._();
+
+/// Domains blocked by the ad-block module in the last seven days, read from
+/// the same native history the traffic card uses. The sampler below keeps it
+/// fresh, so the dashboard card never shows a stale count.
+
+final class AdBlockHitListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AdBlockHit>>,
+          List<AdBlockHit>,
+          FutureOr<List<AdBlockHit>>
+        >
+    with $FutureModifier<List<AdBlockHit>>, $FutureProvider<List<AdBlockHit>> {
+  /// Domains blocked by the ad-block module in the last seven days, read from
+  /// the same native history the traffic card uses. The sampler below keeps it
+  /// fresh, so the dashboard card never shows a stale count.
+  AdBlockHitListProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'adBlockHitListProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$adBlockHitListHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AdBlockHit>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AdBlockHit>> create(Ref ref) {
+    return adBlockHitList(ref);
+  }
+}
+
+String _$adBlockHitListHash() => r'9e55be4206f178530fc00f2fd26931fcc1b030de';
+
+@ProviderFor(nativeTrafficHistoryEnabled)
+final nativeTrafficHistoryEnabledProvider =
+    NativeTrafficHistoryEnabledProvider._();
+
+final class NativeTrafficHistoryEnabledProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  NativeTrafficHistoryEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nativeTrafficHistoryEnabledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$nativeTrafficHistoryEnabledHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return nativeTrafficHistoryEnabled(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$nativeTrafficHistoryEnabledHash() =>
+    r'82a6756f6e7b0eaececfc48c6e577aa68baefceb';
 
 @ProviderFor(TrafficSampler)
 final trafficSamplerProvider = TrafficSamplerProvider._();
 
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
 final class TrafficSamplerProvider
     extends $NotifierProvider<TrafficSampler, void> {
-  /// Periodically persists the live connection list so the statistics page has
-  /// history. Runs only while the core is connected and the app is visible.
   TrafficSamplerProvider._()
     : super(
         from: null,
@@ -141,10 +227,7 @@ final class TrafficSamplerProvider
   }
 }
 
-String _$trafficSamplerHash() => r'3adbd587d9b19fffbec961d2cbe2c420da981781';
-
-/// Periodically persists the live connection list so the statistics page has
-/// history. Runs only while the core is connected and the app is visible.
+String _$trafficSamplerHash() => r'd4a4539b7cc4c885323792ad6a78e8e7a5670649';
 
 abstract class _$TrafficSampler extends $Notifier<void> {
   void build();
@@ -200,7 +283,7 @@ final class TrafficRangeProvider
   }
 }
 
-String _$trafficRangeHash() => r'3b5639ddf9ca66a27f23cf96141fd1265d2b8037';
+String _$trafficRangeHash() => r'89f576992c497cdb7c6631a564011b57e83d7062';
 
 /// The range a statistics view currently shows: the start of the period.
 
@@ -284,7 +367,7 @@ final class TrafficStatisticsProvider
   }
 }
 
-String _$trafficStatisticsHash() => r'c31220d9ae53c99c83d65455dccd13a727b86890';
+String _$trafficStatisticsHash() => r'9a75e5e12efd751e7d6be6180c942380c385ce36';
 
 /// Loads history for the selected period and aggregates it off-isolate.
 
@@ -367,7 +450,7 @@ final class AppUsageProvider
   }
 }
 
-String _$appUsageHash() => r'2c657ff5209880ce8cbbd74c34903d1a01a91b15';
+String _$appUsageHash() => r'c71e4260360aa79a8189b6e964c49a1ce34790e5';
 
 /// Per-app traffic for one usage period, with installed-app labels resolved.
 

@@ -1,12 +1,14 @@
 export 'app.dart';
 export 'changelog.dart';
-export 'chain.dart';
+export 'proxy_chain.dart';
 export 'clash_config.dart';
 export 'common.dart';
 export 'config.dart';
 export 'core.dart';
 export 'ip_quality.dart';
 export 'profile.dart';
+export 'rcx.dart';
 export 'references.dart';
 export 'state.dart';
 export 'traffic_statistics.dart';
+export 'update.dart';

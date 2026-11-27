@@ -7,6 +7,7 @@ import 'package:skyward/plugins/app.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/ui/ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/svg.dart';
@@ -113,6 +114,20 @@ class CommonTargetIcon extends StatelessWidget {
     }
 
     if (src.isBundleAsset) {
+      // Packaged SVGs (service logos) need the same vector decoder as the
+      // downloaded ones; Image.asset cannot paint them.
+      if (src.isSvg) {
+        return FutureBuilder<ByteData>(
+          future: rootBundle.load(src),
+          builder: (context, snapshot) => snapshot.hasData
+              ? _BytesImage(
+                  bytes: snapshot.data!.buffer.asUint8List(),
+                  isSvg: true,
+                  fallback: _defaultIcon(),
+                )
+              : _defaultIcon(),
+        );
+      }
       final size = IconTheme.of(context).size ?? 24;
       return Image.asset(
         src,
@@ -177,12 +192,12 @@ class GroupMonogram extends StatelessWidget {
   /// Whether [name] is the Core's own GLOBAL group.
   static bool isGlobal(String name) => name == GroupName.GLOBAL.name;
 
-  /// The name the group goes by on screen. GLOBAL's name is an identifier —
-  /// the config, the rules and the Core's API all key on it — so the group
-  /// itself keeps it and only the label changes, to the word the app already
-  /// uses for its global mode. Any other group shows its own name.
-  static String displayName(String name) =>
-      isGlobal(name) ? currentAppLocalizations.global : name;
+  /// The label [name] is shown by. The Core's own group wears the app's word
+  /// for it — the same word the mode switch uses — because GLOBAL is the name
+  /// the Core and every profile know it by, not a label a reader should meet.
+  /// Every other group is shown by its own name.
+  static String labelOf(BuildContext context, String name) =>
+      isGlobal(name) ? context.appLocalizations.global : name;
 
   String get _mark {
     if (isGlobal(name)) {
@@ -232,7 +247,9 @@ abstract final class GroupIconSource {
   /// The app's own mark, which stands in for a group no picture suits.
   static const logo = 'assets/images/icon.png';
 
-  /// The globe the Core's own GLOBAL group wears.
+  /// The globe the Core's own GLOBAL group wears: that group is the
+  /// Core's, not a profile's, so it keeps this picture whatever icon a
+  /// profile names for it.
   static const global = 'assets/images/global.png';
 
   /// The routing groups the default config builds, by the name it gives them:
@@ -282,6 +299,12 @@ abstract final class GroupIconSource {
     'PikPak': 'pikpak.png',
     'Crypto': 'crypto.png',
     'AdBlock': 'adblock.png',
+    'ClaudeCode': 'assets/images/services/claude.svg',
+    'Gemini': 'assets/images/services/gemini.svg',
+    'Copilot': 'github.png',
+    'AI工具': 'spark.png',
+    'AgentTools': 'assets/images/services/openai.svg',
+    'Cursor': 'spark.png',
   };
 
   /// The entry a group wears, or empty for a [GroupBadge] to stand in.
@@ -289,9 +312,9 @@ abstract final class GroupIconSource {
   /// The profile's own picture wins whenever it names one: a bundled mark is
   /// only the face a group wears when its config leaves it bare. That keeps a
   /// subscription's icons authoritative — the same fix [262523e0] first gave
-  /// GoogleFCM, now extended to every group. [GroupName.GLOBAL] is the one
-  /// exception: it is the Core's own group rather than a profile's, so it
-  /// wears its own bundled globe whatever a config names for it.
+  /// GoogleFCM, now extended to every group. The one exception is the Core's
+  /// own GLOBAL: that group is the Core's, not the profile's, so it wears its
+  /// globe whatever a profile draws on it.
   static String of({required String name, required String icon}) {
     if (GroupMonogram.isGlobal(name)) {
       return global;
@@ -305,7 +328,7 @@ abstract final class GroupIconSource {
     }
     final service = _services[name];
     if (service != null) {
-      return '$_dir$service';
+      return service.startsWith('assets/') ? service : '$_dir$service';
     }
     final guessed = _guess(name, _serviceKeywords);
     if (guessed != null) {
@@ -340,7 +363,7 @@ abstract final class GroupIconSource {
     'netflix.png': ['netflix', '奈飞', '网飞', '影视', '国外媒体', '电影'],
     'disney.png': ['disney', '迪士尼'],
     'spotify.png': ['spotify', '音乐'],
-    'chatgpt.png': ['chatgpt', 'openai', 'gpt', 'ai', '人工智能', 'gemini', 'copilot', 'cursor', 'perplexity', 'claude', 'agenttools', 'aider', 'windsurf', '人工智能工具'],
+    'chatgpt.png': ['chatgpt', 'openai', 'gpt', 'ai', '人工智能'],
     'github.png': ['github'],
     'telegram.png': ['telegram', '电报', '纸飞机', 'tg'],
     'twitter.png': ['twitter', '推特'],
@@ -687,7 +710,8 @@ abstract final class GroupIconSource {
 }
 
 /// Stands in for a group whose picture is empty or unreadable: the app's own
-/// mark.
+/// mark. [GroupName.GLOBAL] keeps [GroupMonogram]'s flag, which says where
+/// traffic leaves rather than what the group is.
 class GroupBadge extends StatelessWidget {
   const GroupBadge({super.key, required this.name, this.exitCountryCode});
 
@@ -714,12 +738,10 @@ class GroupBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = IconTheme.of(context).size ?? 24;
-    // A known exit country is more specific than the app mark, so it leads.
-    final code = exitCountryCode;
-    if (code != null && code.isNotEmpty) {
-      return GroupMonogram(name, exitCountryCode: code);
+    if (GroupMonogram.isGlobal(name)) {
+      return GroupMonogram(name, exitCountryCode: exitCountryCode);
     }
+    final size = IconTheme.of(context).size ?? 24;
     final flag = GroupIconSource.flagOf(name);
     if (flag.isNotEmpty) {
       return SizedBox.square(

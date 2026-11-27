@@ -1,0 +1,216 @@
+/* Skyward's brand hue, fed into ReClash's design tokens.
+   Their stylesheet derives every surface, line and glow from --bl/--bc/--bh;
+   only the hue is ours (a red-leaning orange, the app mark's warm counterpart). */
+:root {
+  --bl: 0.7;
+  --bc: 0.19;
+  --bh: 32;
+
+  --good: oklch(0.75 0.15 150);
+  --good-fg: oklch(0.86 0.1 150);
+  --bad: oklch(0.72 0.17 25);
+  --bad-fg: oklch(0.82 0.12 25);
+  --warn: oklch(0.8 0.15 70);
+  --warn-fg: oklch(0.86 0.11 70);
+}
+
+/* Rhythm: their hero and changelog rows breathe a little tighter than the
+   defaults, and the version/date pair in a release row needs a gap. */
+.ph { padding-block: clamp(44px, 5.5vw, 84px); }
+.ph-grid { align-items: center; }
+/* The device render is the hero's visual anchor; the stock 340px column
+   cramps it. Widen the media column on desktop (phones stay single-column). */
+@media (min-width: 961px) {
+  .ph-grid { grid-template-columns: 1fr minmax(300px, 460px); gap: clamp(32px, 4vw, 64px); }
+  .ph-shot { max-width: 460px; }
+}
+.ph-ring { width: min(100%, 440px); }
+/* The product render sits in the hero beside the title. It is a wide shot, so
+   it is capped and given a soft plate; on phones it drops below the title. */
+.ph-shot { position: relative; width: 100%; max-width: 560px; justify-self: end; }
+.ph-shot::before {
+  content: ''; position: absolute; inset: 12% 6%;
+  background: radial-gradient(ellipse at center, var(--glow), transparent 70%);
+  filter: blur(40px); z-index: -1;
+}
+.ph-shot img { display: block; width: 100%; height: auto; }
+@media (max-width: 760px) {
+  .ph-shot { order: 0; justify-self: center; margin-top: 8px; }
+}
+.ph-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+
+/* Their bar is 74% opaque, so headings show through it while scrolling. */
+.nav-bar { background: color-mix(in oklab, var(--bg) 90%, transparent); }
+
+/* On phones the nav keeps the logo, a GitHub link and the burger; the Download
+   CTA, theme and language controls move into the full-screen menu. */
+@media (max-width: 960px) {
+  .nav .dd, .nav .lang { display: none !important; }
+  .nav-bar { gap: 6px; padding: 6px 6px 6px 10px; }
+  .logo { gap: 7px; margin-right: auto; }
+  .logo-mark { height: 22px; }
+}
+
+/* The nav is fixed at inset 14px with a ~58px bar. Their stylesheet leaves
+   ~130px of hero top padding to clear it; the shared token below reduced that
+   to 44px on small screens, which pushed "Latest release" under the bar. */
+@media (max-width: 960px) {
+  .ph { padding-top: clamp(104px, 22vw, 132px); }
+}
+
+/* Menu contents: theme buttons and language links. */
+.menu nav > ul { margin-bottom: 4px; }
+.menu .sub button {
+  display: block; width: 100%; text-align: left; padding: 8px 0;
+  background: none; border: 0; cursor: pointer;
+  font: 500 1.05rem var(--text); color: var(--fg-2);
+}
+.menu .sub button.is-active { color: var(--brand-2); font-weight: 700; }
+.menu .sub a[aria-current='true'] { color: var(--brand-2); font-weight: 700; }
+.menu .sub a[aria-current='false'] { color: var(--fg-2); }
+
+/* Hover feedback for when the motion runtime has not run (or is reduced):
+   their stylesheet only draws these states through a magnetic plate. */
+.asset:hover { background: var(--bg-3); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.asset:hover .dl { opacity: 1; transform: none; }
+.pcard:hover { background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--brand-line); }
+.pcard:hover h3 { font-weight: 800; }
+
+/* Their wordmark is sized for "ReClash"; "Skyward" is wider, so it needs a
+   smaller clamp or it overflows the wrap. */
+.wordmark { font-size: clamp(3.4rem, 14.5vw, 12rem); }
+.importer .btn { justify-self: start; }
+
+/* The mark is a wide flame, not a square glyph. */
+.logo-mark { width: auto; height: 26px; flex: none; }
+.foot .logo-mark { height: 23px; }
+
+/* ---------- themes ----------
+   Their stylesheet ships dark tokens only. A theme is one of these blocks;
+   the switcher in the nav sets data-theme on <html>, and a first visit follows
+   the OS preference. Add a theme by adding another block. */
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: oklch(0.965 0.012 85);
+  --bg-2: oklch(0.995 0.006 85);
+  --bg-3: oklch(0.9 0.022 85);
+  --fg: oklch(0.25 0.022 55);
+  --fg-2: oklch(0.25 0.022 55 / 0.72);
+  --fg-3: oklch(0.25 0.022 55 / 0.5);
+  --line: oklch(0.25 0.022 55 / 0.13);
+  --line-2: oklch(0.25 0.022 55 / 0.24);
+  --bl: 0.6;
+  --bc: 0.18;
+  --bh: 32;
+  --brand-soft: oklch(0.6 0.18 32 / 0.12);
+  --brand-line: oklch(0.6 0.18 32 / 0.36);
+  --glow: oklch(0.6 0.18 32 / 0.2);
+  --on-brand: oklch(0.98 0.01 85);
+}
+
+[data-theme='paper'] {
+  color-scheme: light;
+  --bg: oklch(0.93 0.032 78);
+  --bg-2: oklch(0.965 0.02 78);
+  --bg-3: oklch(0.86 0.05 72);
+  --fg: oklch(0.27 0.03 50);
+  --fg-2: oklch(0.27 0.03 50 / 0.72);
+  --fg-3: oklch(0.27 0.03 50 / 0.5);
+  --line: oklch(0.27 0.03 50 / 0.14);
+  --line-2: oklch(0.27 0.03 50 / 0.25);
+  --bl: 0.58;
+  --bc: 0.17;
+  --bh: 32;
+  --brand-soft: oklch(0.58 0.17 32 / 0.12);
+  --brand-line: oklch(0.58 0.17 32 / 0.34);
+  --glow: oklch(0.58 0.17 32 / 0.2);
+  --on-brand: oklch(0.98 0.01 85);
+}
+
+/* The nav plate is a hard-coded warm white in their stylesheet. */
+[data-theme='light'] .nav-links .mg-ind,
+[data-theme='paper'] .nav-links .mg-ind {
+  background: oklch(0.25 0.022 55 / 0.1);
+}
+
+/* ---------- code blocks our own content generates ---------- */
+.tip { display: grid; gap: 12px; padding: 18px; border-radius: var(--r-m); background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line); }
+.tip h3 { font: 600 1.02rem/1.35 var(--display); letter-spacing: -0.01em; }
+.tip p { margin: 0; color: var(--fg-2); font-size: 0.95rem; }
+.tip pre { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line); color: var(--fg);
+  white-space: pre; overflow-x: auto; min-width: 0; }
+.nowrap { white-space: nowrap; }
+
+/* Their dropdown panel is built for links; ours holds buttons. */
+.dd-panel button { display: block; width: 100%; padding: 11px 14px; border: 0; border-radius: 14px; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dd-panel button b { display: block; font-weight: 600; font-size: 0.95rem; }
+.dd-panel button span.s { display: block; color: var(--fg-3); font-size: 0.84rem; line-height: 1.4; margin-top: 2px; }
+.dd-panel button.is-active { box-shadow: inset 0 0 0 1.5px var(--brand-line); }
+.dd-panel button.is-active b { color: var(--brand-2); }
+button.nav-a { background: none; border: 0; cursor: pointer; font: inherit; }
+.nav-a.icon-btn { padding: 9px; border-radius: 999px; }
+.nav-a .ic { width: 18px; height: 18px; display: block; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 640px) {
+  .plat-tabs { padding: 2px; }
+  .plat-tabs button { padding: 7px 10px; font-size: 0.82rem; }
+  .asset { padding: 10px 12px; }
+  .pick small { font-size: 0.82rem; }
+  .tip { padding: 14px; }
+}
+
+/* The plate travels on a spring, so the label colour must not lag behind it:
+   a fading label is unreadable for a moment on the light pill. */
+.plat-tabs button { transition: none; }
+
+/* The theme panel is centred under its button on wide screens; on a phone the
+   button sits too far left for that, so the panel drops from the top bar and
+   spans the screen's padding instead. */
+@media (max-width: 960px) {
+  #theme-dd .dd-panel { position: fixed; top: 78px; left: var(--pad); right: var(--pad); width: auto;
+    translate: 0 -6px; scale: 0.92 0.7; }
+  #theme-dd.is-open .dd-panel { translate: 0 0; scale: 1; }
+}
+
+
+/* Rust-core build card: a quiet companion to the main stable download list. */
+.rust-card { margin-top: 22px; padding: 18px 20px; border-radius: var(--r-m);
+  border: 1px solid var(--line); background: var(--bg-2); }
+.rust-card-head { display: flex; align-items: center; gap: 12px; }
+.rust-dot { width: 9px; height: 9px; border-radius: 50%; flex: none;
+  background: var(--brand); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand) 18%, transparent); }
+.rust-card-head > div { min-width: 0; margin-right: auto; }
+.rust-title { font: 700 1.02rem var(--display); letter-spacing: -0.01em; }
+.rust-version { font: 500 0.82rem var(--text); color: var(--fg-3); margin-top: 2px; }
+.rust-desc { font: 500 0.88rem/1.5 var(--text); color: var(--fg-2); margin: 12px 0 16px; }
+.rust-assets { display: grid; gap: 8px; }
+.rust-assets .asset { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border-radius: var(--r-s); background: var(--bg-3);
+  color: var(--fg); text-decoration: none; border: 1px solid var(--line); }
+.rust-assets .asset:hover { border-color: var(--brand-line); }
+.rust-assets .asset .n { font: 600 0.9rem var(--text); }
+.rust-assets .asset .s { font: 500 0.8rem var(--text); color: var(--fg-3); white-space: nowrap; }
+
+/* Selected tabs and the active language must stay readable in every theme.
+   ReClash colors a pressed tab with var(--bg), assuming a magnetic light pill
+   sits under it; when that pill is absent or slow the label is invisible. Give
+   the pressed state its own brand-tinted pill and contrasting text instead. */
+.plat-tabs button[aria-pressed='true'],
+.lang a[aria-current='true'] {
+  color: var(--on-brand) !important;
+  background: var(--brand) !important;
+}
+
+/* Menu selections follow the same rule: a brand pill that reads on every base. */
+.menu .sub button.is-active,
+.menu .sub a[aria-current='true'] {
+  color: var(--on-brand) !important;
+  background: var(--brand) !important;
+  border-radius: 999px;
+  padding-inline: 10px;
+}

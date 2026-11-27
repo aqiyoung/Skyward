@@ -62,6 +62,7 @@ export 'selection_mark.dart';
 export 'setting.dart';
 export 'shape.dart';
 export 'sheet.dart';
+export 'stage_sheet.dart';
 export 'sheet_header.dart';
 export 'sheet_navigator.dart';
 export 'side_sheet.dart';

@@ -81,6 +81,7 @@ void main() {
     }
 
     setUpAll(() async {
+      globalState.appEnv = 'dev';
       globalState.packageInfo = PackageInfo(
         appName: 'Skyward',
         packageName: 'com.threely.skyward',
@@ -94,8 +95,8 @@ void main() {
     test('reads the newest beta from the releases list, not only stable', () async {
       final request = requestAnswering({
         'api.github.com': () => ResponseBody.fromString(
-          '[{"tag_name":"preview-2090029901","name":"Skyward 1.0.0.2090029901（预览版）","body":"- 构建号：`2090029901`","draft":false},'
-          '{"tag_name":"v1.1.0.24","name":"Skyward 1.1.0.24（beta）","body":"- 构建号：`2090029902`","draft":false},'
+          '[{"tag_name":"preview-2090029901","name":"Skyward 1.0.0.2090029901（预览版）","body":"- 构建号：`2090029901`","draft":false,"prerelease":true},'
+          '{"tag_name":"v1.1.0.24","name":"Skyward 1.1.0.24（beta）","body":"- 构建号：`2090029902`","draft":false,"prerelease":true},'
           '{"tag_name":"v1.2.0.23","name":"Skyward 1.2.0.23（正式版）","body":"- 构建号：`2090029901`","draft":false}]',
           200,
           headers: {
@@ -105,9 +106,30 @@ void main() {
       });
 
       // The test host is a desktop, where a preview has no package, so it
-      // is skipped and the newer beta is the answer.
+      // is skipped and the newer beta is the answer. Version names decide
+      // now, so run this as an older preview rather than the latest stable.
+      final installed = globalState.packageInfo;
+      addTearDown(() => globalState.packageInfo = installed);
+      globalState.packageInfo = PackageInfo(
+        appName: installed.appName,
+        packageName: installed.packageName,
+        version: '1.0.0.2090029813',
+        buildNumber: '2090029813',
+      );
       final update = await request.checkForUpdate();
       expect(update?['tag_name'], 'v1.1.0.24');
+    });
+
+    test('strips rendered HTML from Atom notes', () {
+      final notes = stripAtomNotes(
+        '&lt;p&gt;head&lt;/p&gt;&lt;ul&gt;&lt;li&gt;line one&lt;/li&gt;'
+        '&lt;li&gt;line two&lt;/li&gt;&lt;/ul&gt;',
+      );
+      expect(notes, isNot(contains('&lt;')));
+      expect(notes, isNot(contains('<li>')));
+      expect(notes, isNot(contains('</p>')));
+      expect(notes, contains('- line one'));
+      expect(notes, contains('- line two'));
     });
 
     test('answers null when the installed build is already the newest', () async {
@@ -172,6 +194,7 @@ void main() {
               'name': 'Skyward 1.1.0.2090029902（beta）',
               'body': '- 构建号：`2090029902`',
               'draft': false,
+              'prerelease': true,
             },
           ]),
         );
