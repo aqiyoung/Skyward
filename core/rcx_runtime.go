@@ -42,8 +42,6 @@ var (
 	rcxRoutes      rcx.AppliedRoutes
 	// Hints the Android service sends before the core is initialized.
 	rcxPendingHints []rcx.Hints
-	// Flattened nested selector → its smart group; replaced whole, never mutated.
-	rcxFlatOwner = map[string]string{}
 	// The mode a scenario holds over the user's own; nil leaves the user's.
 	rcxModeWish atomic.Pointer[tunnel.TunnelMode]
 	rcxUserMode atomic.Pointer[tunnel.TunnelMode]
@@ -318,7 +316,7 @@ func rcxRefreshTopology() {
 	for _, name := range append(targets, fixed...) {
 		smart[name] = true
 	}
-	topology, flat := rcxTopologyOf(proxies, names, smart, rcxReferences(proxies, names, rules))
+	topology, _ := rcxTopologyOf(proxies, names, smart, rcxReferences(proxies, names, rules))
 	topology.Subscription, topology.Main = subscription, main
 	topology.Strategies = strategyGroupList(proxies)
 	topology.Leaves, topology.Routes, topology.User = rcxLeaves(proxies), routes, user
@@ -331,9 +329,6 @@ func rcxRefreshTopology() {
 			}
 		}
 	}
-	rcxMu.Lock()
-	rcxFlatOwner = flat
-	rcxMu.Unlock()
 	e.SetTopology(topology)
 	// The scenario was read from the library before this topology rebuilt
 	// it; a new subscription may name other groups.

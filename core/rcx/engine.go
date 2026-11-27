@@ -414,15 +414,9 @@ func (e *Engine) Close() {
 		e.timer.Stop()
 	}
 	e.saveLocked(e.now())
-}
-
-// SplitTarget is the group DIRECT rules should go through now, or empty. It
-// takes no lock: mihomo asks on every rule match.
-func (e *Engine) SplitTarget() string {
-	if target := e.split.Load(); target != nil {
-		return *target
+	if e.storeOK != nil {
+		logError("rcx: final state save on close failed: %v", e.storeOK)
 	}
-	return ""
 }
 
 func (e *Engine) refreshCounters(topology Topology) {

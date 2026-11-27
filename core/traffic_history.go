@@ -273,7 +273,10 @@ func (h *trafficHistory) read(since uint64) (historyAnswer, error) {
 		return bucket.ForEach(func(_, data []byte) error {
 			var row historyRow
 			if err := json.Unmarshal(data, &row); err != nil {
-				return err
+				// One corrupt row must not hide all history from the host.
+				// Skip it; sampleLocked already rebuilds it on the next tick.
+				logError("traffic history: skipping corrupt row on read: %v", err)
+				return nil
 			}
 			if row.Revision > since {
 				answer.Rows = append(answer.Rows, row)
