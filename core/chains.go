@@ -791,11 +791,6 @@ type chainBuild struct {
 	siblingDir []string
 }
 
-func materializeChains(root *yaml.Node, chains []ChainSpec, mainGroupHint string) []ChainReport {
-	reports, _ := materializeChainsWith(root, chains, mainGroupHint, servedChainLeaves())
-	return reports
-}
-
 func materializeChainsWith(
 	root *yaml.Node,
 	chains []ChainSpec,

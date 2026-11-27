@@ -30,15 +30,6 @@ func (b *eventBus) subscribe() (int, <-chan []byte) {
 	return id, ch
 }
 
-func (b *eventBus) unsubscribe(id int) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	if ch, ok := b.subs[id]; ok {
-		close(ch)
-		delete(b.subs, id)
-	}
-}
-
 // publish drops the event for any subscriber that cannot accept it right now.
 // It never blocks the caller.
 func (b *eventBus) publish(data []byte) {

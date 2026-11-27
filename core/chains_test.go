@@ -490,7 +490,7 @@ func TestMaterializeChainsWithoutChainsLeavesTheDocumentAlone(t *testing.T) {
 	}
 	before, _ := yaml.Marshal(&document)
 
-	reports := materializeChains(document.Content[0], nil, "")
+	reports, _ := materializeChainsWith(document.Content[0], nil, "", servedChainLeaves())
 
 	after, _ := yaml.Marshal(&document)
 	if len(reports) != 0 || string(before) != string(after) {

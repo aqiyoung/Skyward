@@ -734,15 +734,6 @@ func (m *machine) groupOf(key string) []*groupState {
 	return out
 }
 
-func (m *machine) currentOf(key string) bool {
-	for _, g := range m.groupOf(key) {
-		if i, ok := g.byName[g.now]; ok && g.members[i].Key == key {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *machine) keyOf(group, node string) (string, bool) {
 	g := m.groups[group]
 	if g == nil {

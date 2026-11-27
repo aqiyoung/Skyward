@@ -467,55 +467,6 @@ func rcxLeaf(proxies map[string]constant.Proxy, flat map[string]string, name str
 	return name
 }
 
-// A pick of a flattened selector, or inside one, picks its leaf in the owner.
-func rcxPickOf(group, name string) (string, string) {
-	rcxMu.Lock()
-	flat := rcxFlatOwner
-	rcxMu.Unlock()
-	if owner, ok := flat[group]; ok {
-		group = owner
-	}
-	return group, rcxLeaf(tunnel.AllProxies(), flat, name)
-}
-
-// rcxDirectSplit keeps local destinations local: private, CGNAT, link-local
-// and ULA addresses, and names that only resolve on the LAN.
-func rcxDirectSplit(metadata *constant.Metadata) string {
-	e := rcxIfReady()
-	if e == nil {
-		return ""
-	}
-	target := e.SplitTarget()
-	if target == "" || rcxLocal(metadata) {
-		return ""
-	}
-	return target
-}
-
-var rcxCGNAT = netip.MustParsePrefix("100.64.0.0/10")
-
-func rcxLocal(metadata *constant.Metadata) bool {
-	if ip := metadata.DstIP.Unmap(); ip.IsValid() {
-		if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
-			ip.IsMulticast() || ip.IsUnspecified() || rcxCGNAT.Contains(ip) {
-			return true
-		}
-	}
-	host := strings.TrimSuffix(strings.ToLower(metadata.Host), ".")
-	if host == "" {
-		return false
-	}
-	if !strings.Contains(host, ".") {
-		return true
-	}
-	for _, suffix := range []string{".local", ".lan", ".home.arpa", ".internal", ".localdomain", ".localhost"} {
-		if strings.HasSuffix(host, suffix) {
-			return true
-		}
-	}
-	return false
-}
-
 func appendUnique(list []string, value string) []string {
 	if slices.Contains(list, value) {
 		return list
