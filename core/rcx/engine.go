@@ -414,9 +414,6 @@ func (e *Engine) Close() {
 		e.timer.Stop()
 	}
 	e.saveLocked(e.now())
-	if e.storeOK != nil {
-		logError("rcx: final state save on close failed: %v", e.storeOK)
-	}
 }
 
 func (e *Engine) refreshCounters(topology Topology) {
