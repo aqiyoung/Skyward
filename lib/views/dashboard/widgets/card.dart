@@ -172,6 +172,7 @@ class DashboardFitText extends StatelessWidget {
     super.key,
     required this.style,
     this.minScale = 0.75,
+    this.alwaysFit = false,
   });
 
   static const defaultMinScale = 0.75;
@@ -183,6 +184,11 @@ class DashboardFitText extends StatelessWidget {
   /// allowed to clip; short text keeps the ordinary floor.
   final double minScale;
 
+  /// Never fall back to an ellipsis: shrink as far as needed so the whole
+  /// value stays visible. For values whose full text matters more than a
+  /// large glyph size, such as an IP address.
+  final bool alwaysFit;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -190,7 +196,7 @@ class DashboardFitText extends StatelessWidget {
         final width = globalState.measure
             .computeTextSize(Text(text, style: style))
             .width;
-        if (width * minScale <= constraints.maxWidth) {
+        if (alwaysFit || width * minScale <= constraints.maxWidth) {
           return FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
