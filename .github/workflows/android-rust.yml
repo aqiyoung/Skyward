@@ -11,9 +11,11 @@ name: android-rust
 # `com.threely.skyward.rust`, so both can be installed side by side.
 #
 # Two distribution channels, chosen at dispatch time: `release` publishes a
-# GitHub Release and pushes the APK to the Telegram subscription channel;
-# `test` skips both and sends the APK only to the Bot private chat, with a
-# -test.<run> suffix that never touches the formal version sequence.
+# GitHub prerelease and pushes the APK to the Telegram subscription channel;
+# `test` also publishes a GitHub prerelease (under its `rust-test-*` tag) but
+# sends the APK only to the Bot private chat, never to the subscription
+# channel. Test builds carry a -test.<run> suffix so they stay distinct from
+# release versions.
 #
 # The fourth component continues the highest one already published for the
 # requested line (releases, tags, and this channel's own rust-test-* tags),
@@ -36,7 +38,7 @@ on:
         required: false
         default: '1.0.0.99-rust'
       channel:
-        description: 'release = GitHub Release + subscription channel; test = Bot private chat only'
+        description: 'release = prerelease + subscription channel; test = prerelease + Bot private chat only'
         required: false
         type: choice
         options:
@@ -261,26 +263,35 @@ jobs:
             echo "::error::unexpected signer cert (expected $EXPECTED_CERT)"; exit 1
           fi
 
-      - name: Publish GitHub Release
-        if: inputs.channel != 'test'
+      - name: Publish GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ inputs.channel }}
           VERSION: ${{ env.VERSION }}
           CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
-          tag="v${VERSION}"
-          notes="Skyward ${VERSION} - Rust core edition (arm64)."
+          # Test builds use their own recorded tag, so they never collide with
+          # the release line. Both channels are prereleases.
+          if [ "$CHANNEL" = "test" ]; then
+            tag="rust-test-${VERSION}"
+            title="Skyward ${VERSION} (Rust core, test prerelease)"
+            notes="Skyward ${VERSION} - Rust core test prerelease (arm64). Bot private chat only; not published to the subscription channel."
+          else
+            tag="v${VERSION}"
+            title="Skyward ${VERSION} (Rust core)"
+            notes="Skyward ${VERSION} - Rust core edition (arm64)."
+          fi
           if [ -n "${CHANGELOG:-}" ]; then
             notes=$(printf '%s\n\n%s' "$notes" "$CHANGELOG")
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" dist/skyward-rust-core-arm64.apk --clobber
-            gh release edit "$tag" --title "Skyward ${VERSION} (Rust core)" --notes "$notes" --prerelease
+            gh release edit "$tag" --title "$title" --notes "$notes" --prerelease
           else
-            gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "Skyward ${VERSION} (Rust core)" --notes "$notes" --prerelease
+            gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "$title" --notes "$notes" --prerelease
           fi
-          echo "release published: $tag"
+          echo "prerelease published: $tag"
       - name: Push APK to Telegram (subscription channel)
         if: inputs.channel != 'test'
         env:
@@ -322,7 +333,7 @@ jobs:
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
             echo "::error::TG secrets missing"; exit 1
           fi
-          caption="Skyward $VERSION (Rust core TEST build, arm64) - not a release"
+          caption="Skyward $VERSION (Rust core test prerelease, arm64) - Bot private chat only"
           if [ -n "${CHANGELOG:-}" ]; then
             caption=$(printf '%s\n%s' "$caption" "$CHANGELOG")
           fi
