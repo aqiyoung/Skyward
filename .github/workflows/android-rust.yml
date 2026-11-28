@@ -68,10 +68,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Test builds package the branch that dispatched the run, so the APK
-          # carries the exact change under test (logo, cards, UI). Releases
-          # still use rust-core, which carries the Rust Gradle switches + JNI.
-          ref: ${{ inputs.channel == 'test' && github.ref || 'rust-core' }}
+          # Always package the branch that dispatched the run, so a release
+          # carries exactly the code that was validated by the test builds.
+          ref: ${{ github.ref }}
           # pubspec.yaml bundles the Go submodule's CA cert as a Flutter asset;
           # that file must exist even though the core itself is now Rust.
           submodules: recursive
@@ -312,7 +311,7 @@ jobs:
             echo "::error::unexpected signer cert (expected $EXPECTED_CERT)"; exit 1
           fi
 
-      - name: Publish GitHub prerelease
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           CHANNEL: ${{ inputs.channel }}
@@ -320,18 +319,19 @@ jobs:
           CHANGELOG: ${{ inputs.changelog || steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
-          # Test builds use their own recorded tag, so they never collide with
-          # the release line. Both channels are prereleases.
+          # Test builds are prereleases; the release channel is a formal release.
           if [ "$CHANNEL" = "test" ]; then
             # v<version>-rust is understood by older Rust clients too: they
             # filter tags containing "-rust" and strip the leading "v".
             tag="v${VERSION}-rust"
             title="Skyward ${VERSION} (Rust core, test prerelease)"
             notes="Skyward ${VERSION} - Rust core test prerelease (arm64). Bot private chat only; not published to the subscription channel."
+            prerelease="true"
           else
             tag="v${VERSION}"
-            title="Skyward ${VERSION} (Rust core)"
-            notes="Skyward ${VERSION} - Rust core edition (arm64)."
+            title="Skyward ${VERSION}（Rust 正式版）"
+            notes="Skyward ${VERSION} - Rust core stable (arm64)."
+            prerelease="false"
           fi
           # The App reads this marker to tell a rebuild from its original.
           notes="${notes} <!-- skyward:build-number:${{ github.run_number }} -->"
@@ -340,11 +340,11 @@ jobs:
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" dist/skyward-rust-core-arm64.apk --clobber
-            gh release edit "$tag" --title "$title" --notes "$notes" --prerelease
+            gh release edit "$tag" --title "$title" --notes "$notes" --prerelease="$prerelease"
           else
-            gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "$title" --notes "$notes" --prerelease
+            gh release create "$tag" dist/skyward-rust-core-arm64.apk --title "$title" --notes "$notes" --prerelease="$prerelease"
           fi
-          echo "prerelease published: $tag"
+          echo "release published: $tag (prerelease=$prerelease)"
       - name: Push APK to Telegram (subscription channel)
         if: inputs.channel != 'test'
         env:

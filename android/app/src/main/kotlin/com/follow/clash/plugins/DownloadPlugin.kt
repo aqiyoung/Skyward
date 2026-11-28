@@ -27,6 +27,10 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     /// the same download does not open a second installer window.
     private var installerOpenedForDownloadId: Long? = null
 
+    /// The unknown-sources settings page was already shown for this download;
+    /// avoid opening it again while the reader is granting the permission.
+    private var settingsOpenedForDownloadId: Long? = null
+
     /// Expected SHA-256 per download, from the hash the release published
     /// for its APK asset. Kept in memory only: entries are dropped after
     /// the download is handled or cancelled.
@@ -116,6 +120,10 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            // The release asset keeps the same name across builds. Without
+            // this, DownloadManager fails every download after the first one
+            // with "file already exists" and never opens the installer.
+            .setReplaceExistingFile(true)
             // A hands-free download (auto-install / Wi-Fi pre-download) is
             // restricted to unmetered Wi-Fi so it cannot spend mobile data;
             // the manual, user-confirmed path keeps the old permissive rule.
@@ -249,8 +257,13 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
-                context.startActivity(settings)
-                installerOpenedForDownloadId = downloadId
+                if (settingsOpenedForDownloadId != downloadId) {
+                    context.startActivity(settings)
+                    settingsOpenedForDownloadId = downloadId
+                }
+                // Do NOT mark the installer as opened here: after the reader
+                // grants the permission and returns, the Dart-side fallback
+                // install() must still be able to open the installer.
                 return true
             }
             val uri = manager.getUriForDownloadedFile(downloadId) ?: return false
