@@ -722,11 +722,11 @@ class _Legend extends StatelessWidget {
         ),
         // The line is always there, empty or not, so the three columns keep
         // their values on one baseline.
-        DashboardFitText(
+        Text(
           detail ?? ' ',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: DashboardText.label(context),
-          // IPv6 also shows up here; fit it whole instead of clipping it.
-          alwaysFit: true,
         ),
       ],
     );
