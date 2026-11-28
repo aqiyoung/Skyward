@@ -1,7 +1,5 @@
 import 'package:skyward/common/common.dart';
-import 'package:skyward/enum/enum.dart';
 import 'package:skyward/models/models.dart';
-import 'package:skyward/providers/config.dart';
 import 'package:skyward/ui/icons/icons.dart';
 import 'package:skyward/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -60,12 +58,10 @@ class TrackerInfoItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final showIcon = ref.watch(
-      patchClashConfigProvider.select(
-        (state) =>
-            state.findProcessMode == FindProcessMode.always && system.isAndroid,
-      ),
-    );
+    // Show the app logo whenever the core actually identified a process;
+    // gating it on find-process-mode hid the logo on the Go core, whose
+    // default mode is off even while it still reports the process name.
+    final showIcon = system.isAndroid;
     return RecordListItem(
       onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
       header: _buildHeader(context),
