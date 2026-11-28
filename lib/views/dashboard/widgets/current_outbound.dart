@@ -566,9 +566,9 @@ class _IpText extends ConsumerWidget {
     return DashboardFitText(
       hideIp ? ipMask : ip,
       style: style,
-      // Keep the address close to the regular figure size; a long IPv6 that
-      // still will not fit falls back to an ellipsis, as before.
-      minScale: 0.85,
+      // An IPv6 address is never abbreviated with an ellipsis: shrink it to
+      // fit instead, so the whole address stays visible.
+      alwaysFit: true,
     );
   }
 }
