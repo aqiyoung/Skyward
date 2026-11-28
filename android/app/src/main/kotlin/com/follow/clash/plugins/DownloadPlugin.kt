@@ -119,11 +119,14 @@ class DownloadPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             .setDescription(fileName)
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            // The release asset keeps the same name across builds. Without
-            // this, DownloadManager fails every download after the first one
-            // with "file already exists" and never opens the installer.
-            .setReplaceExistingFile(true)
+            // The release asset keeps the same name across builds. DownloadManager
+            // fails a repeat download when the destination already exists, so
+            // give each one a unique name (keeping the .apk extension) rather
+            // than relying on an API that is not available at compile time.
+            .setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                "${System.currentTimeMillis()}-${fileName}",
+            )
             // A hands-free download (auto-install / Wi-Fi pre-download) is
             // restricted to unmetered Wi-Fi so it cannot spend mobile data;
             // the manual, user-confirmed path keeps the old permissive rule.
