@@ -291,6 +291,53 @@ void main() {
   // them would otherwise decide whether GEO databases auto-update — including
   // switching the updater back on after the user turned it off.
   test(
+    'makeRealProfileTask gives a bare subscription a usable group',
+    () async {
+      // Some subscriptions carry only proxies -- no groups and no rules. They
+      // must still come out with a selectable group and a MATCH rule pointing
+      // at it, otherwise the proxy pages are empty and nothing is routed.
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        jsonEncode({
+          'proxies': [
+            {
+              'name': 'Node A',
+              'type': 'ss',
+              'server': 'a.example',
+              'port': 443,
+            },
+            {
+              'name': 'Node B',
+              'type': 'ss',
+              'server': 'b.example',
+              'port': 443,
+            },
+          ],
+        }),
+      );
+      final result = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 7,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(),
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'Skyward-Test',
+        ),
+      );
+      final config = loadYaml(result.yaml) as YamlMap;
+      final groups = config['proxy-groups'] as YamlList;
+      expect(groups.length, 1);
+      expect(groups.first['name'], '自动选择');
+      expect(groups.first['proxies'], ['Node A', 'Node B']);
+      expect((config['rules'] as YamlList).last, 'MATCH,自动选择');
+      expect(result.counts.groups, 1);
+    },
+  );
+
+  test(
     'makeRealProfileTask lets the app setting own the geo updater',
     () async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(

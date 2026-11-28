@@ -419,6 +419,37 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     rawConfig['proxy-groups'] = data.proxyGroups
         .map((item) => item.definition)
         .toList();
+  } else if ((rawConfig['proxy-groups'] as List?)?.isEmpty ?? true) {
+    // Some subscriptions ship nothing but `proxies` -- no groups and no
+    // rules. The core can parse that, but there is no selectable group for
+    // the proxy pages and no terminal rule, so the profile reads as broken.
+    // Give such a bare subscription one auto-select group over all its nodes
+    // and let the MATCH rule below point at it.
+    final proxies = rawConfig['proxies'];
+    if (proxies is List && proxies.isNotEmpty) {
+      final names = <String>[
+        for (final proxy in proxies)
+          if (proxy is Map && proxy['name'] is String) proxy['name'] as String,
+      ];
+      if (names.isNotEmpty) {
+        const groupName = '自动选择';
+        rawConfig['proxy-groups'] = [
+          {
+            'name': groupName,
+            'type': 'url-test',
+            'proxies': names,
+            'url': 'http://www.gstatic.com/generate_204',
+            'interval': 300,
+          },
+        ];
+        // The rules block below defaults an empty rule list to DIRECT; for a
+        // generated group route through it instead so the nodes are actually
+        // used.
+        if (rules.isEmpty) {
+          rules = ['MATCH,$groupName'];
+        }
+      }
+    }
   }
   // The guards sit in front of the profile's own rules, which are otherwise
   // untouched. A profile that carried no rules at all used to leave the core
