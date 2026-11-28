@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/component/tun"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/tunnel/statistic"
@@ -40,8 +41,17 @@ func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
-func handleGetConnections() *statistic.Snapshot {
-	return statistic.DefaultManager.Snapshot()
+func handleGetConnections() []*requestSnapshot {
+	// The live-connections page used to get the raw tracker snapshot, which
+	// never carries the app name -- only the RequestMessage event did. Give
+	// every connection the same process-attributed snapshot so the list and
+	// the request history show the same logo.
+	connections := make([]*requestSnapshot, 0)
+	statistic.DefaultManager.Range(func(track statistic.Tracker) bool {
+		connections = append(connections, snapshotRequest(track.Info(), tun.FindPackageName))
+		return true
+	})
+	return connections
 }
 
 func handleGetConnectionCount() int {
