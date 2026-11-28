@@ -338,6 +338,12 @@ Map<String, dynamic>? newestOfferableRelease(
 /// carries the full version), falling back to the current upstream base.
 String releaseVersionOf(String tag, [String? name]) {
   if (tag.startsWith('v')) return tag.substring(1);
+  // Rust test prereleases are tagged `rust-test-<version>`. Without stripping
+  // the prefix compareVersions sees a first component "rust" and treats the
+  // remote as older than every installed build.
+  if (tag.startsWith('rust-test-')) {
+    return tag.substring('rust-test-'.length);
+  }
   final preview = RegExp(r'^preview-(\d+)$').firstMatch(tag);
   if (preview != null) {
     final named = name == null

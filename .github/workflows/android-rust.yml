@@ -274,7 +274,9 @@ jobs:
           # Test builds use their own recorded tag, so they never collide with
           # the release line. Both channels are prereleases.
           if [ "$CHANNEL" = "test" ]; then
-            tag="rust-test-${VERSION}"
+            # v<version>-rust is understood by older Rust clients too: they
+            # filter tags containing "-rust" and strip the leading "v".
+            tag="v${VERSION}-rust"
             title="Skyward ${VERSION} (Rust core, test prerelease)"
             notes="Skyward ${VERSION} - Rust core test prerelease (arm64). Bot private chat only; not published to the subscription channel."
           else
@@ -282,6 +284,8 @@ jobs:
             title="Skyward ${VERSION} (Rust core)"
             notes="Skyward ${VERSION} - Rust core edition (arm64)."
           fi
+          # The App reads this marker to tell a rebuild from its original.
+          notes="${notes} <!-- skyward:build-number:${{ github.run_number }} -->"
           if [ -n "${CHANGELOG:-}" ]; then
             notes=$(printf '%s\n\n%s' "$notes" "$CHANGELOG")
           fi

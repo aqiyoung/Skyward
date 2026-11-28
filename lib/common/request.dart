@@ -316,6 +316,7 @@ class Request {
         'prerelease':
             tag.startsWith('preview-') ||
             tag.startsWith('dev-') ||
+            tag.startsWith('rust-test-') ||
             name.contains('预览版'),
         'draft': false,
         'assets': [
@@ -458,6 +459,7 @@ class Request {
     if (tag is! String) return false;
     return tag.startsWith('preview-') ||
         tag.startsWith('dev-') ||
+        tag.startsWith('rust-test-') ||
         tag.contains('-beta') ||
         tag.contains('-dev') ||
         tag.contains('-pre');
@@ -469,7 +471,10 @@ final request = Request();
 /// Whether a release tag belongs to this build's core line. A Rust app must
 /// reject Go tags (different signature + applicationId) and vice versa.
 bool isTagForCore(String tag, bool isRustAndroid) {
-  final isRustTag = tag.contains('-rust');
+  // `rust-test-<version>` is the Rust test channel's prerelease tag. It has
+  // no `-rust` suffix, so the old check filtered every test build out of the
+  // Rust app's update list.
+  final isRustTag = tag.startsWith('rust-test-') || tag.contains('-rust');
   return isRustAndroid ? isRustTag : !isRustTag;
 }
 
