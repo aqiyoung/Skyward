@@ -141,6 +141,50 @@ jobs:
           git push origin "rust-test-${resolved}" \
             || echo "::warning::could not record ${resolved} for the next build"
 
+      - name: Collect changelog for the prerelease
+        id: changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The checkout is shallow; deepen so the range actually contains the
+          # commits worth describing.
+          git fetch --unshallow --tags --quiet 2>/dev/null \
+            || git fetch --tags --quiet || true
+          commit="$(git rev-parse HEAD)"
+          # Anchor on the last successful android-rust run, not merely the last
+          # tag: a cancelled run can leave a tag with no shipped artefact.
+          previous="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/android-rust.yml/runs?status=completed&per_page=30" \
+            --jq '[.workflow_runs[] | select(.conclusion == "success" and .head_sha != "'"$commit"'")] | .[0].head_sha // ""' \
+            2>/dev/null || true)"
+          if [ -z "$previous" ] || ! git cat-file -e "${previous}^{commit}" 2>/dev/null; then
+            previous="$(git tag --list 'v*-rust' 'rust-test-*' --sort=-creatordate \
+              | grep -vx "rust-test-${VERSION}" | head -1 || true)"
+          fi
+          entries=""
+          if [ -n "$previous" ]; then
+            # Every user-visible commit carries a Changelog-Zh trailer; one
+            # line each keeps both the Release notes and the TG caption short.
+            entries=$(git log --reverse \
+              --format='%h%x09%(trailers:key=Changelog-Zh,valueonly,separator=%x09)' \
+              "$previous..$commit" 2>/dev/null \
+              | awk -F'\t' 'NF > 1 { for (i = 2; i <= NF; i++) if ($i != "") print "- " $i }' \
+              | awk '!seen[$0]++' | tac | awk 'NR<=8' || true)
+          fi
+          if [ -z "$entries" ] && [ -n "$previous" ]; then
+            # Older commits predate the trailer rule: use their subjects.
+            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+              --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
+              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=12' || true)
+          fi
+          {
+            echo "entries<<CHANGELOG_END"
+            printf '%s\n' "$entries"
+            echo "CHANGELOG_END"
+          } >> "$GITHUB_OUTPUT"
+          echo "changelog baseline: ${previous:0:12}"
+
       - name: Download Rust core .so package
         env:
           GH_TOKEN: ${{ github.token }}
@@ -268,7 +312,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CHANNEL: ${{ inputs.channel }}
           VERSION: ${{ env.VERSION }}
-          CHANGELOG: ${{ inputs.changelog }}
+          CHANGELOG: ${{ inputs.changelog || steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
           # Test builds use their own recorded tag, so they never collide with
@@ -302,7 +346,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           VERSION: ${{ env.VERSION }}
-          CHANGELOG: ${{ inputs.changelog }}
+          CHANGELOG: ${{ inputs.changelog || steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
@@ -331,7 +375,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_PREVIEW_CHAT_ID }}
           VERSION: ${{ env.VERSION }}
-          CHANGELOG: ${{ inputs.changelog }}
+          CHANGELOG: ${{ inputs.changelog || steps.changelog.outputs.entries }}
         run: |
           set -euo pipefail
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
