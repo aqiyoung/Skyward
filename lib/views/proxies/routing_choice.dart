@@ -690,6 +690,9 @@ class _PoolSectionState extends State<_PoolSection> {
               ),
           ],
         ),
+        // Give the chips their own breathing room so the FormRow's rounded
+        // top corners are not covered by a chip sitting on its edge.
+        const SizedBox(height: 8),
         FormRow(
           title: l.rcxServersPattern,
           trailing: FormRowTextField(
