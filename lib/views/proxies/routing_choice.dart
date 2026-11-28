@@ -653,55 +653,65 @@ class _PoolSectionState extends State<_PoolSection> {
     final names = widget.names;
     final matched = rcxCountMatches(_pattern.text.trim(), names);
     final onRemove = widget.onRemove;
-    return generateSection(
-      title: l.rcxChangeTo,
-      footer:
-          widget.error ??
-          (matched == null
-              ? l.rcxPatternInvalid
-              : l.rcxServersMatch(matched, names.length)),
-      items: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _PoolChip(
-              label: l.rcxAnyServer,
-              selected: widget.include.isEmpty,
-              onPressed: () => widget.onChanged(null),
-            ),
-            for (final chip in widget.chips)
-              ContextMenuRegion(
-                menuItems: onRemove != null && widget.removable.contains(chip)
-                    ? [
-                        CommonPopupMenuItem(
-                          label: l.delete,
-                          glyph: AppGlyphs.delete,
-                          danger: true,
-                          onPressed: () => onRemove(chip),
-                        ),
-                      ]
-                    : null,
-                child: _PoolChip(
-                  label: chip.label,
-                  selected: chip.include == widget.include,
-                  onPressed: () => widget.onChanged(chip.include),
+    // The chips and the pattern row are separate groups on purpose: a row
+    // sharing a group with the chips above it only gets bottom corners, so
+    // its top reads as a square edge. Its own group gives it all four.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        generateSection(
+          title: l.rcxChangeTo,
+          items: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _PoolChip(
+                  label: l.rcxAnyServer,
+                  selected: widget.include.isEmpty,
+                  onPressed: () => widget.onChanged(null),
                 ),
-              ),
+                for (final chip in widget.chips)
+                  ContextMenuRegion(
+                    menuItems:
+                        onRemove != null && widget.removable.contains(chip)
+                        ? [
+                            CommonPopupMenuItem(
+                              label: l.delete,
+                              glyph: AppGlyphs.delete,
+                              danger: true,
+                              onPressed: () => onRemove(chip),
+                            ),
+                          ]
+                        : null,
+                    child: _PoolChip(
+                      label: chip.label,
+                      selected: chip.include == widget.include,
+                      onPressed: () => widget.onChanged(chip.include),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
-        // Give the chips their own breathing room so the FormRow's rounded
-        // top corners are not covered by a chip sitting on its edge.
-        const SizedBox(height: 8),
-        FormRow(
-          title: l.rcxServersPattern,
-          trailing: FormRowTextField(
-            controller: _pattern,
-            autocorrect: false,
-            hintText: l.rcxAnyServer,
-            onChanged: (_) => setState(() {}),
-            onFieldSubmitted: _submit,
-          ),
+        generateSection(
+          footer:
+              widget.error ??
+              (matched == null
+                  ? l.rcxPatternInvalid
+                  : l.rcxServersMatch(matched, names.length)),
+          items: [
+            FormRow(
+              title: l.rcxServersPattern,
+              trailing: FormRowTextField(
+                controller: _pattern,
+                autocorrect: false,
+                hintText: l.rcxAnyServer,
+                onChanged: (_) => setState(() {}),
+                onFieldSubmitted: _submit,
+              ),
+            ),
+          ],
         ),
       ],
     );
