@@ -174,9 +174,14 @@ jobs:
           fi
           if [ -z "$entries" ] && [ -n "$previous" ]; then
             # Older commits predate the trailer rule: use their subjects.
-            entries=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
+            subjects=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous}...${commit}" \
               --jq '.commits[].commit.message | split("\n")[0]' 2>/dev/null \
-              | sed '/^$/d; s/^/- /' | grep -v '^- ci' | tac | awk 'NR<=12' || true)
+              | sed '/^$/d; s/^/- /' | tac || true)
+            entries=$(printf '%s\n' "$subjects" | grep -v '^- ci' | awk 'NR<=12' || true)
+            if [ -z "$entries" ]; then
+              # A range that is all ci commits still deserves a log.
+              entries=$(printf '%s\n' "$subjects" | awk 'NR<=12' || true)
+            fi
           fi
           {
             echo "entries<<CHANGELOG_END"
