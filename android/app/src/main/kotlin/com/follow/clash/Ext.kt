@@ -61,9 +61,17 @@ suspend fun PackageManager.getPackageIconPath(packageName: String): String =
             saveDrawableToFile(icon, iconFile)
             iconFile.absolutePath
         } catch (_: Exception) {
-            val defaultIconFile = File(iconDir, "default_icon.webp")
+            // A process name that is not an installed package (a hostname,
+            // a uid, a synthetic name) falls back to our own app icon rather
+            // than the platform's generic Android robot.
+            val defaultIconFile = File(iconDir, "skyward_icon.webp")
             if (!defaultIconFile.exists()) {
-                saveDrawableToFile(defaultActivityIcon, defaultIconFile)
+                val ownIcon = try {
+                    getApplicationIcon(GlobalState.application.packageName)
+                } catch (_: Exception) {
+                    defaultActivityIcon
+                }
+                saveDrawableToFile(ownIcon, defaultIconFile)
             }
             defaultIconFile.absolutePath
         }
