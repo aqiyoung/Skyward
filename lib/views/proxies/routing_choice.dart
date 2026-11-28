@@ -653,52 +653,64 @@ class _PoolSectionState extends State<_PoolSection> {
     final names = widget.names;
     final matched = rcxCountMatches(_pattern.text.trim(), names);
     final onRemove = widget.onRemove;
-    return generateSection(
-      title: l.rcxChangeTo,
-      footer:
-          widget.error ??
-          (matched == null
-              ? l.rcxPatternInvalid
-              : l.rcxServersMatch(matched, names.length)),
-      items: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _PoolChip(
-              label: l.rcxAnyServer,
-              selected: widget.include.isEmpty,
-              onPressed: () => widget.onChanged(null),
-            ),
-            for (final chip in widget.chips)
-              ContextMenuRegion(
-                menuItems: onRemove != null && widget.removable.contains(chip)
-                    ? [
-                        CommonPopupMenuItem(
-                          label: l.delete,
-                          glyph: AppGlyphs.delete,
-                          danger: true,
-                          onPressed: () => onRemove(chip),
-                        ),
-                      ]
-                    : null,
-                child: _PoolChip(
-                  label: chip.label,
-                  selected: chip.include == widget.include,
-                  onPressed: () => widget.onChanged(chip.include),
+    // The chip row is not a list card, so keep it in its own section. Sharing
+    // a group with the FormRow made the FormRow the group's last item: only
+    // its bottom corners were rounded, leaving a square top edge.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        generateSection(
+          title: l.rcxChangeTo,
+          items: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _PoolChip(
+                  label: l.rcxAnyServer,
+                  selected: widget.include.isEmpty,
+                  onPressed: () => widget.onChanged(null),
                 ),
-              ),
+                for (final chip in widget.chips)
+                  ContextMenuRegion(
+                    menuItems: onRemove != null && widget.removable.contains(chip)
+                        ? [
+                            CommonPopupMenuItem(
+                              label: l.delete,
+                              glyph: AppGlyphs.delete,
+                              danger: true,
+                              onPressed: () => onRemove(chip),
+                            ),
+                          ]
+                        : null,
+                    child: _PoolChip(
+                      label: chip.label,
+                      selected: chip.include == widget.include,
+                      onPressed: () => widget.onChanged(chip.include),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
-        FormRow(
-          title: l.rcxServersPattern,
-          trailing: FormRowTextField(
-            controller: _pattern,
-            autocorrect: false,
-            hintText: l.rcxAnyServer,
-            onChanged: (_) => setState(() {}),
-            onFieldSubmitted: _submit,
-          ),
+        generateSection(
+          footer:
+              widget.error ??
+              (matched == null
+                  ? l.rcxPatternInvalid
+                  : l.rcxServersMatch(matched, names.length)),
+          items: [
+            FormRow(
+              title: l.rcxServersPattern,
+              trailing: FormRowTextField(
+                controller: _pattern,
+                autocorrect: false,
+                hintText: l.rcxAnyServer,
+                onChanged: (_) => setState(() {}),
+                onFieldSubmitted: _submit,
+              ),
+            ),
+          ],
         ),
       ],
     );
